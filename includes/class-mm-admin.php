@@ -180,9 +180,10 @@ class MM_Admin {
 			$screen->set_help_sidebar(
 				'<p><strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ' ' . MM_VERSION . '</strong></p>' .
 				'<p><a href="https://metamanager.richardkentgates.com" target="_blank" rel="noopener">' . esc_html__( 'Documentation Website', 'metamanager' ) . ' ↗</a></p>' .
-				'<p><a href="https://github.com/richardkentgates/metamanager" target="_blank" rel="noopener">' . esc_html__( 'GitHub Repository', 'metamanager' ) . ' ↗</a></p>' .
-				'<p><a href="https://github.com/richardkentgates/metamanager/issues" target="_blank" rel="noopener">' . esc_html__( 'Report an Issue', 'metamanager' ) . ' ↗</a></p>' .
-				'<p><a href="https://github.com/richardkentgates/metamanager/blob/main/CHANGELOG.md" target="_blank" rel="noopener">' . esc_html__( 'Changelog', 'metamanager' ) . ' ↗</a></p>'
+				'<p><a href="https://github.com/richardkentgates/metamanager-plugin" target="_blank" rel="noopener">' . esc_html__( 'Plugin Repository', 'metamanager' ) . ' ↗</a></p>' .
+				'<p><a href="https://github.com/richardkentgates/metamanager" target="_blank" rel="noopener">' . esc_html__( 'Server Repository', 'metamanager' ) . ' ↗</a></p>' .
+				'<p><a href="https://github.com/richardkentgates/metamanager-plugin/issues" target="_blank" rel="noopener">' . esc_html__( 'Report an Issue', 'metamanager' ) . ' ↗</a></p>' .
+				'<p><a href="https://github.com/richardkentgates/metamanager-plugin/blob/test/CHANGELOG.md" target="_blank" rel="noopener">' . esc_html__( 'Changelog', 'metamanager' ) . ' ↗</a></p>'
 			);
 		}
 
