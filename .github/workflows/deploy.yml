@@ -88,7 +88,7 @@ jobs:
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ steps.env.outputs.deploy_path }}metamanager-latest.zip"
 
           # Update metadata.json
-         cat > metadata.json << EOF
+          cat > metadata.json << EOF
           {
             "version": "${{ env.PLUGIN_VERSION }}",
             "requires": {
