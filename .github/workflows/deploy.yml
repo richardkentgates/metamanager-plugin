@@ -39,30 +39,24 @@ jobs:
 
       - name: Build plugin zip
         run: |
-          PLUGIN_VERSION=$(grep 'Version:' metamanager.php | awk '{print $2}' | tr -d '[:space:]')
+          PLUGIN_VERSION=$(grep -oP 'Version:\s+\K[^\s]+' metamanager.php)
           ZIP_NAME="metamanager-${PLUGIN_VERSION}.zip"
 
           # Create clean build excluding dev files
           mkdir -p build
-          rsync -a --delete \
-            --exclude='.git/' \
-            --exclude='.github/' \
-            --exclude='tests/' \
-            --exclude='composer.json' \
-            --exclude='phpstan.neon' \
-            --exclude='phpunit.xml.dist' \
-            --exclude='phpunit.xml' \
-            --exclude='.distignore' \
-            --exclude='JOB_QUEUE_SPEC.md' \
-            --exclude='ROADMAP.md' \
-            --exclude='CONTRIBUTING.md' \
-            --exclude='CODE_OF_CONDUCT.md' \
-            --exclude='SECURITY.md' \
-            --exclude='readme.txt' \
-            --exclude='ARCHITECTURE.md' \
-            --exclude='CHANGELOG.md' \
-            --exclude='*.md' \
-            ./ build/
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name '.git' \
+            ! -name '.github' \
+            ! -name 'tests' \
+            ! -name 'build' \
+            ! -name 'composer.json' \
+            ! -name 'phpstan.neon' \
+            ! -name 'phpunit.xml.dist' \
+            ! -name 'phpunit.xml' \
+            ! -name '.distignore' \
+            ! -name 'JOB_QUEUE_SPEC.md' \
+            ! -name '*.md' \
+            -exec cp -r {} build/ \;
 
           cd build
           zip -r "../${ZIP_NAME}" .
@@ -81,12 +75,26 @@ jobs:
       - name: Deploy files to server
         run: |
           DEPLOY_PATH="${{ steps.env.outputs.deploy_path }}"
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no"
 
-          # Sync plugin files
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            build/ \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${DEPLOY_PATH}"
+          # Create target directory
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "mkdir -p ${DEPLOY_PATH}"
+
+          # Upload all files via scp
+          cd build
+          find . -type f | while read -r file; do
+            remote_path="${DEPLOY_PATH}$(echo "${file}" | sed 's|^\./||')"
+            remote_dir=$(dirname "${remote_path}")
+            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+              "mkdir -p ${remote_dir}"
+            scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              "${file}" \
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${remote_path}"
+          done
+          cd ..
 
           # Upload zip
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
