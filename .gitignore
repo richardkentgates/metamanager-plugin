@@ -1,0 +1,48 @@
+# WordPress and OS artifacts
+*.log
+*.pid
+*.lock
+.DS_Store
+Thumbs.db/
+
+# Job queue contents (never commit real job files)
+/wp-content//
+
+# PHP editor and IDE
+.idea/
+.vscode/
+*.swp
+*.swo/
+
+# Node (if ever used for build tooling)
+node_modules/
+package-lock.json/
+
+# Backup files created by install.sh
+*.bak.*
+
+# PHPUnit
+.phpunit.cache/
+tests/wp-tests-config.php
+metamanager.code-workspace
+
+# Composer dev dependencies (not shipped to production)
+vendor/
+
+# Secrets and credentials — NEVER commit these
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+*_rsa
+*_dsa
+*_ed25519
+*_ecdsa
+
+# Server-specific config (deployed via CI, not committed)
+wp-config.php
+*.secret
