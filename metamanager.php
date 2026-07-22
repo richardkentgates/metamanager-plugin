@@ -132,14 +132,6 @@ register_deactivation_hook( MM_PLUGIN_FILE, 'mm_deactivate' );
  * and flush rewrite rules so sitemap URLs resolve immediately.
  */
 function mm_activate_single_site(): void {
-	// Check for daemon package before activation.
-	if ( ! MM_Status::daemon_package_installed() ) {
-		throw new \WP_Error(
-			'metamanager_daemon_missing',
-			__( 'Metamanager requires the daemon package. Install: sudo apt install metamanager', 'metamanager' )
-		);
-	}
-
 	MM_DB::create_or_update_table();
 	MM_Job_Queue::ensure_dirs();
 
