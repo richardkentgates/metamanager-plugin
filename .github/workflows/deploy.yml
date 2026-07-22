@@ -1,0 +1,110 @@
+name: Deploy Plugin to Server
+
+on:
+  push:
+    branches: [ "test", "main" ]
+    paths:
+      - 'includes/**'
+      - 'templates/**'
+      - 'assets/**'
+      - 'languages/**'
+      - 'metamanager.php'
+      - 'uninstall.php'
+      - 'index.php'
+      - '.github/workflows/deploy.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "branch=main" >> $GITHUB_OUTPUT
+            echo "deploy_path=/var/www/html/metamanager/" >> $GITHUB_OUTPUT
+          else
+            echo "branch=test" >> $GITHUB_OUTPUT
+            echo "deploy_path=/var/www/html/metamanager-test/" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build plugin zip
+        run: |
+          PLUGIN_VERSION=$(grep 'Version:' metamanager.php | awk '{print $2}' | tr -d '[:space:]')
+          ZIP_NAME="metamanager-${PLUGIN_VERSION}.zip"
+
+          # Create clean build excluding dev files
+          rsync -a --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='tests/' \
+            --exclude='composer.json' \
+            --exclude='phpstan.neon' \
+            --exclude='phpunit.xml.dist' \
+            --exclude='phpunit.xml' \
+            --exclude='.distignore' \
+            --exclude='JOB_QUEUE_SPEC.md' \
+            --exclude='ROADMAP.md' \
+            --exclude='CONTRIBUTING.md' \
+            --exclude='CODE_OF_CONDUCT.md' \
+            --exclude='SECURITY.md' \
+            --exclude='readme.txt' \
+            --exclude='ARCHITECTURE.md' \
+            --exclude='CHANGELOG.md' \
+            --exclude='*.md' \
+            ./ build/
+
+          cd build
+          zip -r "../${ZIP_NAME}" .
+          cd ..
+
+          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
+          echo "PLUGIN_VERSION=${PLUGIN_VERSION}" >> $GITHUB_ENV
+
+      - name: Deploy to server
+        uses: easingthemes/ssh-deploy@v5
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
+          REMOTE_USER: ${{ secrets.DEPLOY_USER }}
+          SOURCE: "build/"
+          TARGET: ${{ steps.env.outputs.deploy_path }}
+          ARGS: "-avz --delete"
+
+      - name: Deploy zip and metadata
+        run: |
+          # Upload zip
+          scp -o StrictHostKeyChecking=no \
+            "${{ env.ZIP_NAME }}" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ steps.env.outputs.deploy_path }}metamanager-latest.zip"
+
+          # Update metadata.json
+         cat > metadata.json << EOF
+          {
+            "version": "${{ env.PLUGIN_VERSION }}",
+            "requires": {
+              "php": "8.0",
+              "wordpress": "6.2"
+            },
+            "download_url": "https://${{ secrets.DEPLOY_HOST }}/metamanager/metamanager-latest.zip"
+          }
+          EOF
+
+          scp -o StrictHostKeyChecking=no \
+            metadata.json \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ steps.env.outputs.deploy_path }}metadata.json"
+
+      - name: Verify deployment
+        run: |
+          echo "Deployed to ${{ steps.env.outputs.deploy_path }}"
+          echo "Plugin version: ${{ env.PLUGIN_VERSION }}"
+          echo "Zip: ${{ env.ZIP_NAME }}"
