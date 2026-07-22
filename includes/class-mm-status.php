@@ -19,6 +19,35 @@ defined( 'ABSPATH' ) || exit;
 class MM_Status {
 
 	// -----------------------------------------------------------------------
+	// Daemon package detection
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Candidate paths for daemon scripts installed by the .deb package.
+	 */
+	private const DAEMON_PATHS = [
+		'/usr/local/bin/metamanager-compress-daemon.sh',
+		'/usr/local/bin/metamanager-meta-daemon.sh',
+	];
+
+	/**
+	 * Check whether the daemon package is installed.
+	 *
+	 * Looks for the daemon scripts that are installed by the metamanager .deb package.
+	 * This is the primary check used to determine if the plugin can function.
+	 *
+	 * @return bool
+	 */
+	public static function daemon_package_installed(): bool {
+		foreach ( self::DAEMON_PATHS as $path ) {
+			if ( file_exists( $path ) && is_executable( $path ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// -----------------------------------------------------------------------
 	// Tool detection
 	// -----------------------------------------------------------------------
 
@@ -296,6 +325,7 @@ class MM_Status {
 	 */
 	public static function system_status(): array {
 		return [
+			'daemon_package'    => self::daemon_package_installed(),
 			'exiftool'         => self::exiftool_available(),
 			'jpegtran'         => self::jpegtran_available(),
 			'optipng'          => self::optipng_available(),

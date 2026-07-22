@@ -132,6 +132,14 @@ register_deactivation_hook( MM_PLUGIN_FILE, 'mm_deactivate' );
  * and flush rewrite rules so sitemap URLs resolve immediately.
  */
 function mm_activate_single_site(): void {
+	// Check for daemon package before activation.
+	if ( ! MM_Status::daemon_package_installed() ) {
+		throw new \WP_Error(
+			'metamanager_daemon_missing',
+			__( 'Metamanager requires the daemon package. Install: sudo apt install metamanager', 'metamanager' )
+		);
+	}
+
 	MM_DB::create_or_update_table();
 	MM_Job_Queue::ensure_dirs();
 
@@ -443,6 +451,19 @@ if ( is_admin() ) {
 	MM_Admin::init();
 	MM_Settings::init();
 	MM_Updater::init();
+
+	// Persistent admin notice if daemon package is missing.
+	add_action( 'admin_init', function (): void {
+		if ( ! MM_Status::daemon_package_installed() ) {
+			add_action( 'admin_notices', function (): void {
+				printf(
+					'<div class="notice notice-error"><p><strong>%s</strong> %s</p></div>',
+					esc_html__( 'Metamanager:', 'metamanager' ),
+					esc_html__( 'The daemon package is not installed. The plugin cannot function without it. Install: sudo apt install metamanager', 'metamanager' )
+				);
+			} );
+		}
+	} );
 
 	// Display the one-shot notice produced by the manual "Check for Updates" redirect.
 	add_action( 'admin_notices', function (): void {
