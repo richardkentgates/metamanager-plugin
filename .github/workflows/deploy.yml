@@ -43,6 +43,7 @@ jobs:
           ZIP_NAME="metamanager-${PLUGIN_VERSION}.zip"
 
           # Create clean build excluding dev files
+          mkdir -p build
           rsync -a --delete \
             --exclude='.git/' \
             --exclude='.github/' \
@@ -70,24 +71,29 @@ jobs:
           echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
           echo "PLUGIN_VERSION=${PLUGIN_VERSION}" >> $GITHUB_ENV
 
-      - name: Deploy to server
-        uses: easingthemes/ssh-deploy@v5
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
-          REMOTE_USER: ${{ secrets.DEPLOY_USER }}
-          SOURCE: "build/"
-          TARGET: ${{ steps.env.outputs.deploy_path }}
-          ARGS: "-avz --delete"
-
-      - name: Deploy zip and metadata
+      - name: Setup SSH
         run: |
-          # Upload zip
-          scp -o StrictHostKeyChecking=no \
-            "${{ env.ZIP_NAME }}" \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ steps.env.outputs.deploy_path }}metamanager-latest.zip"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-          # Update metadata.json
+      - name: Deploy files to server
+        run: |
+          DEPLOY_PATH="${{ steps.env.outputs.deploy_path }}"
+
+          # Sync plugin files
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            build/ \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${DEPLOY_PATH}"
+
+          # Upload zip
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${{ env.ZIP_NAME }}" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${DEPLOY_PATH}metamanager-latest.zip"
+
+          # Create and upload metadata.json
           cat > metadata.json << EOF
           {
             "version": "${{ env.PLUGIN_VERSION }}",
@@ -99,9 +105,9 @@ jobs:
           }
           EOF
 
-          scp -o StrictHostKeyChecking=no \
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             metadata.json \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ steps.env.outputs.deploy_path }}metadata.json"
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${DEPLOY_PATH}metadata.json"
 
       - name: Verify deployment
         run: |
