@@ -75,12 +75,11 @@ jobs:
       - name: Deploy files to server
         run: |
           DEPLOY_PATH="${{ steps.env.outputs.deploy_path }}"
-          SSH_CMD="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no"
 
           # Create target directory
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            "mkdir -p ${DEPLOY_PATH}"
+            "sudo mkdir -p ${DEPLOY_PATH} && sudo chown -R ${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }} ${DEPLOY_PATH}"
 
           # Upload all files via scp
           cd build
@@ -89,20 +88,26 @@ jobs:
             remote_dir=$(dirname "${remote_path}")
             ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-              "mkdir -p ${remote_dir}"
+              "sudo mkdir -p ${remote_dir}"
             scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
               "${file}" \
-              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${remote_path}"
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/$(basename "${file}")"
+            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+              "sudo mv /tmp/$(basename "${file}") ${remote_path}"
           done
           cd ..
 
           # Upload zip
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${{ env.ZIP_NAME }}" \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${DEPLOY_PATH}metamanager-latest.zip"
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/${{ env.ZIP_NAME }}"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "sudo mv /tmp/${{ env.ZIP_NAME }} ${DEPLOY_PATH}metamanager-latest.zip"
 
           # Create and upload metadata.json
-          cat > metadata.json << EOF
+          cat > /tmp/metadata.json << EOF
           {
             "version": "${{ env.PLUGIN_VERSION }}",
             "requires": {
@@ -114,8 +119,11 @@ jobs:
           EOF
 
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            metadata.json \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${DEPLOY_PATH}metadata.json"
+            /tmp/metadata.json \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/metadata.json"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "sudo mv /tmp/metadata.json ${DEPLOY_PATH}metadata.json && sudo chown -R www-data:www-data ${DEPLOY_PATH}"
 
       - name: Verify deployment
         run: |
