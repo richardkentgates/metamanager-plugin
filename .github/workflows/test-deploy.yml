@@ -1,0 +1,77 @@
+name: Build and Deploy to Apt Server
+
+on:
+  push:
+    branches: ["test"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build plugin zip
+        run: |
+          zip -r metamanager-latest.zip . \
+            -x ".git/*" \
+            -x "docs/*" \
+            -x ".github/*" \
+            -x "tests/*" \
+            -x "stubs/*" \
+            -x "mm-*.zip" \
+            -x ".editorconfig" \
+            -x "phpunit.xml.dist"
+          echo "Built zip: $(ls -lh metamanager-latest.zip)"
+
+      - name: Deploy to apt server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          APT_HOST: ${{ secrets.DEPLOY_HOST }}
+          APT_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${APT_HOST}" >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Ensure plugin hosting directory exists
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${APT_USER}@${APT_HOST}" \
+            "sudo mkdir -p /var/www/html/metamanager && sudo chown -R ${APT_USER}:${APT_USER} /var/www/html/metamanager"
+
+          # Upload zip
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            metamanager-latest.zip \
+            "${APT_USER}@${APT_HOST}:/var/www/html/metamanager/"
+
+          # Update metadata.json
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${APT_USER}@${APT_HOST}" \
+            "sudo tee /var/www/html/metamanager/metadata.json > /dev/null << 'METADATA'
+          {
+            \"version\": \"${{ steps.version.outputs.version }}\",
+            \"requires\": {
+              \"php\": \"8.0\",
+              \"wordpress\": \"6.2\"
+            },
+            \"download_url\": \"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"
+          }
+          METADATA"
+
+          echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server"
