@@ -1,0 +1,21 @@
+<article style="padding:2rem;">
+    <h2>Overview</h2>
+    <p>Metamanager is a WordPress plugin that offloads image compression and metadata embedding to OS-level daemons, keeping WordPress and wp-cron off the hot path.</p>
+    
+    <h3>Requirements</h3>
+    <ul>
+        <li>WordPress 6.2+</li>
+        <li>PHP 8.0+</li>
+        <li>Metamanager daemon package (<code>sudo apt install metamanager</code>)</li>
+    </ul>
+    
+    <h3>Quick Install</h3>
+    <pre><code># Add the apt repository
+echo "deb [signed-by=/usr/share/keyrings/metamanager.gpg] https://apt.richardkentgates.com bookworm main" | sudo tee /etc/apt/sources.list.d/metamanager.list
+
+# Install the daemon package
+sudo apt update && sudo apt install metamanager
+
+# Install the WordPress plugin
+wp plugin install metamanager --activate</code></pre>
+</article>
