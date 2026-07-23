@@ -1,21 +1,67 @@
 <article style="padding:2rem;">
-    <h2>Overview</h2>
-    <p>Metamanager is a WordPress plugin that offloads image compression and metadata embedding to OS-level daemons, keeping WordPress and wp-cron off the hot path.</p>
+    <h2>Installation</h2>
+    <p>Metamanager requires two components: the daemon package (installed via apt) and the WordPress plugin.</p>
     
     <h3>Requirements</h3>
     <ul>
         <li>WordPress 6.2+</li>
         <li>PHP 8.0+</li>
-        <li>Metamanager daemon package (<code>sudo apt install metamanager</code>)</li>
+        <li>Linux server with systemd</li>
+        <li>Root or sudo access</li>
     </ul>
     
-    <h3>Quick Install</h3>
-    <pre><code># Add the apt repository
+    <h3>Step 1: Install the Daemon Package</h3>
+    <p>The daemon package provides OS-level services for image compression and metadata embedding.</p>
+    
+    <h4>Option A: From apt repository (Debian/Ubuntu)</h4>
+    <pre><code># Add the apt repository (replace apt.richardkentgates.com with apt.richardkentgates.com once DNS propagates)
 echo "deb [signed-by=/usr/share/keyrings/metamanager.gpg] https://apt.richardkentgates.com bookworm main" | sudo tee /etc/apt/sources.list.d/metamanager.list
 
-# Install the daemon package
-sudo apt update && sudo apt install metamanager
+# Import the GPG key (coming soon)
+# wget -qO - https://apt.richardkentgates.com/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/metamanager.gpg
 
-# Install the WordPress plugin
-wp plugin install metamanager --activate</code></pre>
+# Install
+sudo apt update && sudo apt install metamanager</code></pre>
+    
+    <h4>Option B: Manual installation</h4>
+    <pre><code># Clone the server repository
+git clone https://github.com/richardkentgates/metamanager.git
+cd metamanager
+
+# Run the installer
+sudo bash metamanager-install.sh</code></pre>
+    
+    <h3>Step 2: Install the WordPress Plugin</h3>
+    
+    <h4>Option A: From GitHub release</h4>
+    <pre><code># Download the latest release
+wget https://github.com/richardkentgates/metamanager-plugin/releases/latest/download/metamanager.zip
+
+# Install via WP-CLI
+wp plugin install metamanager.zip --activate</code></pre>
+    
+    <h4>Option B: Manual installation</h4>
+    <pre><code># Clone the plugin repository
+git clone https://github.com/richardkentgates/metamanager-plugin.git
+
+# Copy to WordPress plugins directory
+cp -r metamanager-plugin /path/to/wordpress/wp-content/plugins/metamanager
+
+# Activate via WP-CLI or WordPress admin
+wp plugin activate metamanager</code></pre>
+    
+    <h3>Step 3: Verify Installation</h3>
+    <pre><code># Check daemon status
+systemctl status metamanager-compress-daemon
+systemctl status metamanager-meta-daemon
+
+# Check plugin status
+wp plugin status metamanager</code></pre>
+    
+    <h3>Updating</h3>
+    <pre><code># Update daemon package
+sudo apt update && sudo apt upgrade metamanager
+
+# Update plugin files (from server)
+sudo bash metamanager-install.sh --update</code></pre>
 </article>
