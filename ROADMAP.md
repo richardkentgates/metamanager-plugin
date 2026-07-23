@@ -5,20 +5,20 @@ Prioritized work items from the May 2026 code audit.
 ## Branch strategy
 
 ```
-dev  ──  all development, PRs merge here
-    test  ──  pre-release validation (auto-deployed from dev)
-        main  ──  promote-only; production releases tagged from main
+dev  ──  all development, direct push; CI runs checks + auto-version bump
+    test  ──  build zip + deploy to apt server on push
+        main  ──  tag + GitHub release on push
 ```
 
-Workflows run on `dev` and `test`. Only Pages/docs deploy from `main`.
+### CI/CD Pipeline
 
-### Branch protection (GitHub repo settings)
-
-| Branch | Rule |
+| Branch | Workflow | Trigger |
 |---|---|---|
-| `main` | PR + 1 approval required. CI must pass. No admin bypass. No force pushes. |
-| `test` | PR required (dev→test). CI must pass. No admin bypass. No force pushes. |
-| `dev` | PR required (feature→dev). CI must pass. No admin bypass. No force pushes. |
+| `dev` | PHP lint, PHPStan, ShellCheck + auto-increment version | Push to `dev` |
+| `test` | Build plugin zip + deploy to apt server | Push to `test` |
+| `main` | Create git tag + GitHub release with zip | Push to `main` |
+
+No branch protection rules. Direct pushes to any branch.
 
 ---
 
