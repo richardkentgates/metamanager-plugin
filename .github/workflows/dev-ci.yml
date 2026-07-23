@@ -82,16 +82,20 @@ jobs:
           sed -i "s/define( 'MM_VERSION',     '${CURRENT}' )/define( 'MM_VERSION',     '${NEW_VERSION}' )/" metamanager.php
           sed -i "s/Stable tag: ${CURRENT}/Stable tag: ${NEW_VERSION}/" readme.txt
 
-          python3 -c "
-          import sys
-          entry = f'\n## [{NEW_VERSION}] - {DATE}\n\n### Changed\n- Auto-incremented version from {CURRENT} to {NEW_VERSION}\n'
-          with open('CHANGELOG.md', 'r') as f:
+          export CURRENT NEW_VERSION DATE
+          python3 << 'PYEOF'
+          import os
+          current = os.environ["CURRENT"]
+          new_version = os.environ["NEW_VERSION"]
+          date = os.environ["DATE"]
+          entry = f"\n## [{new_version}] - {date}\n\n### Changed\n- Auto-incremented version from {current} to {new_version}\n"
+          with open("CHANGELOG.md", "r") as f:
               lines = f.readlines()
-          idx = next((i for i, l in enumerate(lines) if l.startswith('## ')), len(lines))
+          idx = next((i for i, l in enumerate(lines) if l.startswith("## ")), len(lines))
           lines.insert(idx, entry)
-          with open('CHANGELOG.md', 'w') as f:
+          with open("CHANGELOG.md", "w") as f:
               f.writelines(lines)
-          "
+          PYEOF
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
