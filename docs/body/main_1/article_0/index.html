@@ -14,11 +14,11 @@
     <p>The daemon package provides OS-level services for image compression and metadata embedding.</p>
     
     <h4>Option A: From apt repository (Debian/Ubuntu)</h4>
-    <pre><code># Add the apt repository (replace apt.richardkentgates.com with apt.richardkentgates.com once DNS propagates)
-echo "deb [signed-by=/usr/share/keyrings/metamanager.gpg] https://apt.richardkentgates.com bookworm main" | sudo tee /etc/apt/sources.list.d/metamanager.list
+    <pre><code># Import the GPG key
+wget -qO - https://apt.richardkentgates.com/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/metamanager.gpg
 
-# Import the GPG key (coming soon)
-# wget -qO - https://apt.richardkentgates.com/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/metamanager.gpg
+# Add the apt repository
+echo "deb [signed-by=/usr/share/keyrings/metamanager.gpg] https://apt.richardkentgates.com bookworm main" | sudo tee /etc/apt/sources.list.d/metamanager.list
 
 # Install
 sudo apt update && sudo apt install metamanager</code></pre>
