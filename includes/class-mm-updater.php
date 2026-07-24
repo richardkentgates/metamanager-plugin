@@ -1,20 +1,20 @@
 <?php
 /**
- * GitHub-based automatic updater for Metamanager.
+ * Apt-server-based automatic updater for Metamanager.
  *
  * Hooks into the WordPress core plugin-update pipeline so Metamanager appears
  * in Dashboard → Updates exactly like a wordpress.org-hosted plugin.
  *
  * How it works:
  *   1. Every 12 hours (matching WP's own update check interval) this class
- *      asks the GitHub releases API for the latest release tag.
- *   2. If the remote tag is newer than MM_VERSION it injects a
+ *      fetches metadata.json from the apt server.
+ *   2. If the remote version is newer than MM_VERSION it injects a
  *      plugin_information object into the core update transient.
  *   3. WordPress then offers the update in the normal UI and can install it
  *      with a single click — no manual download required.
- *   4. After WordPress downloads the release zip, a filter renames the
- *      extracted folder from GitHub's default (`metamanager-main`) to the
- *      correct slug (`metamanager`) so the plugin path stays stable.
+ *   4. After WordPress downloads the zip, a filter renames the extracted
+ *      folder to the correct slug (`metamanager`) so the plugin path stays
+ *      stable.
  *
  * A "Check for Updates" action link is added to the Plugins list page so
  * admins can force an immediate check without waiting for the next cron cycle.
@@ -29,11 +29,11 @@ defined( 'ABSPATH' ) || exit;
  */
 class MM_Updater {
 
-	/** GitHub repo slug (owner/repo). */
-	private const REPO = 'richardkentgates/metamanager';
+	/** URL of the apt server metadata.json. */
+	private const METADATA_URL = 'http://apt.richardkentgates.com/metamanager/metadata.json';
 
-	/** WordPress option / transient key used to cache the remote release info. */
-	private const TRANSIENT = 'mm_github_latest_release';
+	/** WordPress option / transient key used to cache the remote metadata. */
+	private const TRANSIENT = 'mm_remote_metadata';
 
 	/** How long to cache the remote response (seconds). Mirrors WP's 12-hour cycle. */
 	private const CACHE_TTL = 43200;
@@ -80,16 +80,16 @@ class MM_Updater {
 	}
 
 	// -------------------------------------------------------------------------
-	// GitHub API
+	// Apt server metadata
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Fetch the latest release from GitHub, with caching.
+	 * Fetch the latest metadata from the apt server, with caching.
 	 *
 	 * @param bool $force_refresh Bypass the transient cache when true.
-	 * @return object|null  Decoded release object, or null on failure.
+	 * @return object|null  Decoded metadata object, or null on failure.
 	 */
-	private function get_latest_release( bool $force_refresh = false ): ?object {
+	private function get_metadata( bool $force_refresh = false ): ?object {
 		if ( ! $force_refresh ) {
 			$cached = get_transient( self::TRANSIENT );
 			if ( false !== $cached ) {
@@ -97,36 +97,26 @@ class MM_Updater {
 			}
 		}
 
-		$url      = 'https://api.github.com/repos/' . self::REPO . '/releases/latest';
-		$response = wp_remote_get( $url, [
+		$response = wp_remote_get( self::METADATA_URL, [
 			'timeout'    => 10,
 			'user-agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; Metamanager/' . MM_VERSION,
-			'headers'    => [ 'Accept' => 'application/vnd.github+json' ],
 		] );
 
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
-			// Cache an empty marker so we don't hammer the API on every page load.
+			// Cache an empty marker so we don't hammer the server on every page load.
 			set_transient( self::TRANSIENT, '', self::CACHE_TTL );
 			return null;
 		}
 
-		$release = json_decode( wp_remote_retrieve_body( $response ) );
+		$metadata = json_decode( wp_remote_retrieve_body( $response ) );
 
-		if ( empty( $release->tag_name ) ) {
+		if ( empty( $metadata->version ) || empty( $metadata->download_url ) ) {
 			set_transient( self::TRANSIENT, '', self::CACHE_TTL );
 			return null;
 		}
 
-		set_transient( self::TRANSIENT, $release, self::CACHE_TTL );
-		return $release;
-	}
-
-	/**
-	 * Normalise a git tag to a bare version string.
-	 * Accepts "v1.2.3" or "1.2.3" and always returns "1.2.3".
-	 */
-	private function normalise_version( string $tag ): string {
-		return ltrim( $tag, 'vV' );
+		set_transient( self::TRANSIENT, $metadata, self::CACHE_TTL );
+		return $metadata;
 	}
 
 	// -------------------------------------------------------------------------
@@ -137,7 +127,7 @@ class MM_Updater {
 	 * Inject Metamanager update data into the WP plugin-update transient.
 	 *
 	 * WordPress calls this filter every time it refreshes plugin update info.
-	 * If a newer version is available on GitHub, we add an entry to
+	 * If a newer version is available on the apt server, we add an entry to
 	 * $transient->response so the "Updates" badge appears in the admin menu.
 	 *
 	 * @param  \stdClass $transient The update_plugins site transient.
@@ -148,36 +138,36 @@ class MM_Updater {
 			return $transient;
 		}
 
-		$release = $this->get_latest_release();
-		if ( null === $release ) {
+		$metadata = $this->get_metadata();
+		if ( null === $metadata ) {
 			return $transient;
 		}
 
-		$remote_version = $this->normalise_version( $release->tag_name );
+		$remote_version = $metadata->version;
 
 		if ( version_compare( $remote_version, MM_VERSION, '>' ) ) {
 			$transient->response[ $this->plugin_basename ] = (object) [
-				'id'            => 'github.com/' . self::REPO,
+				'id'            => 'metamanager/apt-server',
 				'slug'          => 'metamanager',
 				'plugin'        => $this->plugin_basename,
 				'new_version'   => $remote_version,
-				'url'           => $release->html_url ?? 'https://github.com/' . self::REPO,
-				'package'       => $release->zipball_url ?? '',
+				'url'           => 'https://github.com/richardkentgates/metamanager',
+				'package'       => $metadata->download_url,
 				'icons'         => [],
 				'banners'       => [],
 				'banners_rtl'   => [],
 				'tested'        => '',
-				'requires_php'  => '8.0',
+				'requires_php'  => $metadata->requires->php ?? '8.0',
 				'compatibility' => new stdClass(),
 			];
 		} else {
 			// No update — ensure we are flagged as up-to-date so WP hides old notices.
 			$transient->no_update[ $this->plugin_basename ] = (object) [
-				'id'          => 'github.com/' . self::REPO,
+				'id'          => 'metamanager/apt-server',
 				'slug'        => 'metamanager',
 				'plugin'      => $this->plugin_basename,
 				'new_version' => MM_VERSION,
-				'url'         => 'https://github.com/' . self::REPO,
+				'url'         => 'https://github.com/richardkentgates/metamanager',
 				'package'     => '',
 			];
 		}
@@ -202,12 +192,14 @@ class MM_Updater {
 			return $result;
 		}
 
-		$release = $this->get_latest_release();
-		if ( null === $release ) {
+		$metadata = $this->get_metadata();
+		if ( null === $metadata ) {
 			return $result;
 		}
 
-		$remote_version = $this->normalise_version( $release->tag_name );
+		$remote_version = $metadata->version;
+		$requires_php   = $metadata->requires->php ?? '8.0';
+		$requires_wp    = $metadata->requires->wordpress ?? '6.0';
 
 		return (object) [
 			'name'              => 'Metamanager',
@@ -216,15 +208,13 @@ class MM_Updater {
 			'author'            => '<a href="https://github.com/richardkentgates">Richard Kent Gates</a>',
 			'author_profile'    => 'https://github.com/richardkentgates',
 			'homepage'          => 'https://metamanager.richardkentgates.com',
-			'requires'          => '6.0',
-			'requires_php'      => '8.0',
-			'download_link'     => $release->zipball_url ?? '',
-			'trunk'             => $release->zipball_url ?? '',
-			'last_updated'      => $release->published_at ?? '',
+			'requires'          => $requires_wp,
+			'requires_php'      => $requires_php,
+			'download_link'     => $metadata->download_url,
+			'trunk'             => $metadata->download_url,
+			'last_updated'      => '',
 			'sections'          => [
-				'description' => $release->body
-					? wp_kses_post( $release->body )
-					: 'Lossless image compression and standards-compliant EXIF/IPTC/XMP metadata embedding for WordPress, powered by OS-level daemons.',
+				'description' => 'Lossless image compression and standards-compliant EXIF/IPTC/XMP metadata embedding for WordPress, powered by OS-level daemons.',
 				'changelog'   => $this->build_changelog_section(),
 			],
 			'banners'           => [],
@@ -233,9 +223,8 @@ class MM_Updater {
 	}
 
 	/**
-	 * Fix the plugin folder name after WordPress extracts the GitHub zip.
+	 * Fix the plugin folder name after WordPress extracts the zip.
 	 *
-	 * GitHub names extracted folders like "metamanager-1.2.3/" or "metamanager-main/".
 	 * WordPress needs the folder to be "metamanager/" to match the installed slug,
 	 * otherwise it treats the update as a new plugin.
 	 *
@@ -296,7 +285,7 @@ class MM_Updater {
 	/**
 	 * Handle the manual update check request.
 	 *
-	 * Clears the cached release transient, forces a fresh GitHub API call,
+	 * Clears the cached metadata transient, forces a fresh apt server call,
 	 * then redirects back to the Plugins page with a result notice.
 	 */
 	public function handle_manual_check(): void {
@@ -314,10 +303,10 @@ class MM_Updater {
 		// Also clear WP's own plugin update transient so it re-evaluates immediately.
 		delete_site_transient( 'update_plugins' );
 
-		$release = $this->get_latest_release( true );
+		$metadata = $this->get_metadata( true );
 
-		if ( $release ) {
-			$remote_version = $this->normalise_version( $release->tag_name );
+		if ( $metadata ) {
+			$remote_version = $metadata->version;
 			if ( version_compare( $remote_version, MM_VERSION, '>' ) ) {
 				$notice = urlencode( sprintf(
 					/* translators: %s = new version number */
@@ -330,7 +319,7 @@ class MM_Updater {
 				$type   = 'updated';
 			}
 		} else {
-			$notice = urlencode( __( 'Could not contact GitHub to check for updates.', 'metamanager' ) );
+			$notice = urlencode( __( 'Could not contact the update server to check for updates.', 'metamanager' ) );
 			$type   = 'error';
 		}
 
@@ -377,7 +366,8 @@ class MM_Updater {
 	 * plugin directory, stripping headings and converting to simple HTML.
 	 * Falls back to an empty string if the file is not present.
 	 */
-	private function build_changelog_section(): string {		$file = MM_PLUGIN_DIR . 'CHANGELOG.md';
+	private function build_changelog_section(): string {
+		$file = MM_PLUGIN_DIR . 'CHANGELOG.md';
 		if ( ! file_exists( $file ) ) {
 			return '';
 		}

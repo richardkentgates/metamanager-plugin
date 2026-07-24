@@ -1,4 +1,4 @@
-name: Build and Deploy to Apt Server
+name: Promote to Test — Build & Deploy
 
 on:
   push:
@@ -63,7 +63,7 @@ jobs:
           # Update metadata.json
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${APT_USER}@${APT_HOST}" \
-            "sudo tee /var/www/html/metamanager/metadata.json > /dev/null << 'METADATA'
+            "cat > /var/www/html/metamanager/metadata.json << 'MMEOF'
           {
             \"version\": \"${{ steps.version.outputs.version }}\",
             \"requires\": {
@@ -72,6 +72,6 @@ jobs:
             },
             \"download_url\": \"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"
           }
-          METADATA"
+          MMEOF"
 
           echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server"

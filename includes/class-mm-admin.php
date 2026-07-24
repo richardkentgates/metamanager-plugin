@@ -1973,7 +1973,7 @@ class MM_Admin {
 						<form method="get" action="<?php echo esc_url( admin_url( 'upload.php' ) ); ?>" style="display:contents;">
 							<input type="hidden" name="page" value="metamanager-bulk-meta">
 							<input type="search" name="s" value="<?php echo esc_attr( $search ); ?>"
-								   placeholder="<?php esc_attr_e( 'Search by title…', 'metamanager' ); ?>"
+								   placeholder="<?php echo esc_attr__( 'Search by title…', 'metamanager' ); ?>"
 								   style="width:180px;">
 							<button class="button"><?php esc_html_e( 'Search', 'metamanager' ); ?></button>
 							<?php if ( $search ) : ?>
