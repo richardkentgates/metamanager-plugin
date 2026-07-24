@@ -42,24 +42,15 @@ jobs:
           PLUGIN_VERSION=$(grep -oP 'Version:\s+\K[^\s]+' metamanager.php)
           ZIP_NAME="metamanager-${PLUGIN_VERSION}.zip"
 
-          # Create clean build excluding dev files
-          mkdir -p build
-          find . -mindepth 1 -maxdepth 1 \
-            ! -name '.git' \
-            ! -name '.github' \
-            ! -name 'tests' \
-            ! -name 'build' \
-            ! -name 'composer.json' \
-            ! -name 'phpstan.neon' \
-            ! -name 'phpunit.xml.dist' \
-            ! -name 'phpunit.xml' \
-            ! -name '.distignore' \
-            ! -name 'JOB_QUEUE_SPEC.md' \
-            ! -name '*.md' \
-            -exec cp -r {} build/ \;
+          mkdir -p build/metamanager
+          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
+            --exclude='build' --exclude='composer.json' --exclude='phpstan.neon' \
+            --exclude='phpunit.xml.dist' --exclude='phpunit.xml' \
+            --exclude='.distignore' --exclude='JOB_QUEUE_SPEC.md' \
+            --exclude='*.md' \
+            ./ build/metamanager/
 
-          cd build
-          zip -r "../${ZIP_NAME}" .
+          cd build && zip -r "../${ZIP_NAME}" metamanager
           cd ..
 
           echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
@@ -114,7 +105,7 @@ jobs:
               "php": "8.0",
               "wordpress": "6.2"
             },
-            "download_url": "https://${{ secrets.DEPLOY_HOST }}/metamanager/metamanager-latest.zip"
+            "download_url": "http://apt.richardkentgates.com/metamanager/metamanager-latest.zip"
           }
           EOF
 
