@@ -34,15 +34,12 @@ jobs:
       - name: Build release zip
         if: steps.check.outputs.exists == 'false'
         run: |
-          zip -r metamanager-${{ steps.version.outputs.version }}.zip . \
-            -x ".git/*" \
-            -x "docs/*" \
-            -x ".github/*" \
-            -x "tests/*" \
-            -x "stubs/*" \
-            -x "mm-*.zip" \
-            -x ".editorconfig" \
-            -x "phpunit.xml.dist"
+          mkdir -p build/metamanager
+          rsync -a --exclude='.git' --exclude='docs' --exclude='.github' \
+            --exclude='tests' --exclude='stubs' --exclude='mm-*.zip' \
+            --exclude='.editorconfig' --exclude='phpunit.xml.dist' \
+            ./ build/metamanager/
+          cd build && zip -r ../metamanager-${{ steps.version.outputs.version }}.zip metamanager
 
       - name: Create tag
         if: steps.check.outputs.exists == 'false'

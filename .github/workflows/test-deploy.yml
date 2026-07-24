@@ -27,16 +27,13 @@ jobs:
 
       - name: Build plugin zip
         run: |
-          zip -r metamanager-latest.zip . \
-            -x ".git/*" \
-            -x "docs/*" \
-            -x ".github/*" \
-            -x "tests/*" \
-            -x "stubs/*" \
-            -x "mm-*.zip" \
-            -x ".editorconfig" \
-            -x "phpunit.xml.dist"
-          echo "Built zip: $(ls -lh metamanager-latest.zip)"
+          mkdir -p build/metamanager
+          rsync -a --exclude='.git' --exclude='docs' --exclude='.github' \
+            --exclude='tests' --exclude='stubs' --exclude='mm-*.zip' \
+            --exclude='.editorconfig' --exclude='phpunit.xml.dist' \
+            ./ build/metamanager/
+          cd build && zip -r ../metamanager-latest.zip metamanager
+          echo "Built zip: $(ls -lh ../metamanager-latest.zip)"
 
       - name: Deploy to apt server
         env:
