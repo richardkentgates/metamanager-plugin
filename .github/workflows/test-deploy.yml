@@ -1,4 +1,4 @@
-name: Build and Deploy to Apt Server
+name: Promote to Test — Build & Deploy
 
 on:
   push:
@@ -63,13 +63,15 @@ jobs:
           # Update metadata.json
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${APT_USER}@${APT_HOST}" \
-            "printf '%s\n' '{' \
-              '  \"version\": \"${{ steps.version.outputs.version }}\",' \
-              '  \"requires\": {' \
-              '    \"php\": \"8.0\",' \
-              '    \"wordpress\": \"6.2\"' \
-              '  },' \
-              '  \"download_url\": \"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"' \
-              '}' | sudo tee /var/www/html/metamanager/metadata.json > /dev/null"
+            "cat > /var/www/html/metamanager/metadata.json << 'MMEOF'
+          {
+            \"version\": \"${{ steps.version.outputs.version }}\",
+            \"requires\": {
+              \"php\": \"8.0\",
+              \"wordpress\": \"6.2\"
+            },
+            \"download_url\": \"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"
+          }
+          MMEOF"
 
           echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server"
