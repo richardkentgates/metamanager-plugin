@@ -52,6 +52,7 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	public function add_rewrite_rules(): void {
+		add_rewrite_rule( '^wp-sitemap\.xml$', 'index.php?mm_meta_sitemap=index', 'top' );
 		add_rewrite_rule( 'sitemap\.xml$', 'index.php?mm_meta_sitemap=index', 'top' );
 		add_rewrite_rule( 'sitemap-post-([a-z0-9_-]+)\.xml$', 'index.php?mm_meta_sitemap=post&mm_meta_sitemap_type=$matches[1]', 'top' );
 		add_rewrite_rule( 'sitemap-tax-([a-z0-9_-]+)\.xml$', 'index.php?mm_meta_sitemap=tax&mm_meta_sitemap_type=$matches[1]', 'top' );

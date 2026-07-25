@@ -60,11 +60,10 @@ class MM_Head_Emitter {
 
 		echo "\n<!-- Metamanager " . esc_html( MM_META_VERSION ) . " -->\n";
 
-		// <title> — only emitted here if the theme does not support title-tag.
-		// Modern themes set the title via the pre_get_document_title filter.
-		if ( $data['title'] && ! current_theme_supports( 'title-tag' ) ) {
-			echo '<title>' . esc_html( $data['title'] ) . '</title>' . "\n";
-		}
+		// <title> is handled exclusively by the pre_get_document_title filter
+		// registered in MM_Metadata_Loader. Direct <title> output removed to
+		// prevent duplicates on themes that call wp_title() (which fires the
+		// filter on WordPress 6.2+).
 
 		// <meta> tags.
 		foreach ( $data['meta'] as $meta ) {

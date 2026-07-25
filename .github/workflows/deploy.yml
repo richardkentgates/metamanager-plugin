@@ -43,11 +43,9 @@ jobs:
           ZIP_NAME="metamanager-${PLUGIN_VERSION}.zip"
 
           mkdir -p build/metamanager
-          rsync -a --exclude='.git' --exclude='.github' --exclude='tests' \
-            --exclude='build' --exclude='composer.json' --exclude='phpstan.neon' \
-            --exclude='phpunit.xml.dist' --exclude='phpunit.xml' \
-            --exclude='.distignore' --exclude='JOB_QUEUE_SPEC.md' \
-            --exclude='*.md' \
+          rsync -a --exclude='.git' --exclude='docs' --exclude='.github' \
+            --exclude='tests' --exclude='stubs' --exclude='mm-*.zip' \
+            --exclude='.editorconfig' --exclude='phpunit.xml.dist' \
             ./ build/metamanager/
 
           cd build && zip -r "../${ZIP_NAME}" metamanager
@@ -98,16 +96,9 @@ jobs:
             "sudo mv /tmp/${{ env.ZIP_NAME }} ${DEPLOY_PATH}metamanager-latest.zip"
 
           # Create and upload metadata.json
-          cat > /tmp/metadata.json << EOF
-          {
-            "version": "${{ env.PLUGIN_VERSION }}",
-            "requires": {
-              "php": "8.0",
-              "wordpress": "6.2"
-            },
-            "download_url": "http://apt.richardkentgates.com/metamanager/metamanager-latest.zip"
-          }
-          EOF
+          printf '%s\n' \
+            '{"version":"'"${{ env.PLUGIN_VERSION }}"'","requires":{"php":"8.0","wordpress":"6.2"},"download_url":"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip"}' \
+            > /tmp/metadata.json
 
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             /tmp/metadata.json \

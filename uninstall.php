@@ -86,7 +86,6 @@ function _mm_uninstall_site(): void {
 		'mm_gps_lat',
 		'mm_gps_lon',
 		'mm_gps_alt',
-		'mm_meta_synced',
 		'mm_duration',
 		'mm_verify_discrepancies',
 		'mm_verified_at',

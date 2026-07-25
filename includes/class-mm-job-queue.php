@@ -89,6 +89,11 @@ class MM_Job_Queue {
 	 *   Only plain .json files are inspected — .processing files are already
 	 *   owned by a running daemon subshell and are never touched here.
 	 *
+	 * Shell cross-reference: The daemon scripts (metamanager-meta-daemon.sh,
+	 * metamanager-compress-daemon.sh) read the JSON files written by this
+	 * method, process them, and write result JSON to MM_JOB_DONE or MM_JOB_FAILED.
+	 * The mm_import_completed_jobs() cron handler then reads those results.
+	 *
 	 * @param string $type          'compression' or 'metadata'.
 	 * @param int    $attachment_id WordPress attachment ID.
 	 * @param string $file_path     Absolute path to the file.
@@ -114,27 +119,18 @@ class MM_Job_Queue {
 		$pending = new \GlobIterator( $dir . $attachment_id . '-' . $size . '-*.json' );
 
 		if ( $pending->count() > 0 ) {
-			if ( 'compression' === $type ) {
-				// Do not write a duplicate compression job. Notify the user and stop.
-				self::push_queue_notice( 'skipped', 'compression', $attachment_id, $size );
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional operational log, not debug output
-				error_log( sprintf(
-					'[Metamanager] Compression job skipped — already pending: attachment %d, size %s.',
-					$attachment_id,
-					$size
-				) );
-				return 'skipped';
-			}
-
-			// Metadata: write the new job (runs in sequence after the existing one).
-			// Notify the user that their update is queued behind the current pending job.
-			self::push_queue_notice( 'queued', 'metadata', $attachment_id, $size );
+			// Skip duplicate jobs for both compression and metadata.
+			// For metadata: the pending job already has the latest WP fields
+			// since get_fields_for_job() reads current values at queue time.
+			self::push_queue_notice( 'skipped', $type, $attachment_id, $size );
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional operational log, not debug output
 			error_log( sprintf(
-				'[Metamanager] Metadata job queued behind existing pending job: attachment %d, size %s.',
+				'[Metamanager] %s job skipped — already pending: attachment %d, size %s.',
+				ucfirst( $type ),
 				$attachment_id,
 				$size
 			) );
+			return 'skipped';
 		}
 
 		// Dimensions from file — only valid for images; skip for video/audio.
@@ -161,8 +157,20 @@ class MM_Job_Queue {
 		$uid      = wp_generate_password( 6, false, false );
 		$filename = $dir . $attachment_id . '-' . $size . '-' . time() . '-' . $uid . '.json';
 
-		$fs = self::get_filesystem();
-		$fs->put_contents( $filename, (string) wp_json_encode( $job ), FS_CHMOD_FILE );
+		$fs    = self::get_filesystem();
+		$bytes = $fs->put_contents( $filename, (string) wp_json_encode( $job ), FS_CHMOD_FILE );
+
+		if ( false === $bytes || 0 === $bytes ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors
+			@error_log( sprintf(
+				'[Metamanager] Failed to write job file: %s (attachment %d, size %s)',
+				$filename,
+				$attachment_id,
+				$size
+			) );
+			return 'failed';
+		}
+
 		MM_DB::log_pending_job( $job );
 
 		return $pending->count() > 0 ? 'queued' : 'written';
@@ -362,6 +370,10 @@ class MM_Job_Queue {
 			foreach ( new \GlobIterator( $dir . $attachment_id . '-*.json' ) as $file ) {
 				wp_delete_file( (string) $file );
 			}
+			// Also remove files the daemon is actively processing.
+			foreach ( new \GlobIterator( $dir . $attachment_id . '-*.json.processing' ) as $file ) {
+				wp_delete_file( (string) $file );
+			}
 		}
 
 		// Remove all Metamanager custom metadata fields.
@@ -380,7 +392,6 @@ class MM_Job_Queue {
 			MM_Metadata::META_GPS_LAT,
 			MM_Metadata::META_GPS_LON,
 			MM_Metadata::META_GPS_ALT,
-			MM_Metadata::META_SYNCED,
 		] as $key ) {
 			delete_post_meta( $attachment_id, $key );
 		}

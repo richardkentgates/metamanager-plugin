@@ -179,7 +179,12 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 					return $settings->resolve( $meta['description'], null, null, $author );
 				}
 				$tpl = $settings->get( 'authors.description_template', '%%author_bio%%' );
-				return $settings->resolve( $tpl, null, null, $author );
+				$resolved = $settings->resolve( $tpl, null, null, $author );
+				if ( $resolved ) {
+					return $resolved;
+				}
+				// Fallback: use site description when author bio is empty.
+				return get_bloginfo( 'description' );
 			}
 		}
 

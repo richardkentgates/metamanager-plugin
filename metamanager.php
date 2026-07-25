@@ -75,6 +75,7 @@ require_once MM_PLUGIN_DIR . 'includes/class-mm-upload-notify.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-admin.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-cli.php';
+require_once MM_PLUGIN_DIR . 'includes/class-mm-frontend.php';
 
 // ---------------------------------------------------------------------------
 // Metadata subsystem — page-level head output, structured data, social tags,
@@ -111,6 +112,11 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-loader.php';
 // the correct order.
 add_action( 'plugins_loaded', function (): void {
 	( new MM_Metadata_Loader() )->run();
+
+	// Media-specific structured data output (ImageObject/VideoObject/AudioObject,
+	// Open Graph for media, license links). Fires on wp_head for attachment pages
+	// and singular pages with a featured image.
+	MM_Frontend::init();
 } );
 
 // Media sitemaps: rewrite rules and template_redirect for /sitemap-media.xml etc.
@@ -271,8 +277,25 @@ add_action( 'mm_import_completed_jobs', 'mm_import_completed_jobs' );
 /**
  * Scan completed/failed result directories and persist to DB.
  * Sends a failure notification email if notifications are enabled.
+ *
+ * Shell cross-reference: This function reads result JSON files written by
+ * the daemon scripts (metamanager-meta-daemon.sh and metamanager-compress-daemon.sh).
+ * The daemons write result files to MM_JOB_DONE or MM_JOB_FAILED after processing
+ * each job. This function runs every 60 seconds via WP-Cron and:
+ *   1. Reads each result JSON
+ *   2. Logs the result to the DB via MM_DB::log_job()
+ *   3. For import jobs: applies embedded tags to WP fields and queues write-back
+ *   4. For metadata write-back: queues a verification read-back
+ *   5. Deletes the result file
  */
 function mm_import_completed_jobs(): void {
+	// Prevent concurrent execution — only one import run at a time.
+	$lock_key = 'mm_import_lock';
+	if ( get_transient( $lock_key ) ) {
+		return;
+	}
+	set_transient( $lock_key, 1, 30 ); // Lock for 30 seconds max.
+
 	$result_dirs = [
 		MM_JOB_DONE   => 'completed',
 		MM_JOB_FAILED => 'failed',
@@ -407,6 +430,9 @@ function mm_import_completed_jobs(): void {
 
 		wp_mail( $to, $subject, implode( "\n", $lines ) );
 	}
+
+	// Release the concurrency lock.
+	delete_transient( $lock_key );
 }
 
 // ---------------------------------------------------------------------------
@@ -424,6 +450,10 @@ MM_Upload_Notify::init();
 
 // When attachment fields are saved in admin, enqueue metadata jobs only.
 add_filter( 'attachment_fields_to_save', [ 'MM_Metadata', 'on_fields_save' ], 10, 2 );
+
+// Catch native metadata field changes from REST API and WP-CLI
+// (which bypass attachment_fields_to_save).
+add_action( 'save_post', [ 'MM_Metadata', 'on_save_post_attachment' ], 20, 2 );
 
 // Extend media edit screen with our custom metadata fields.
 add_filter( 'attachment_fields_to_edit', [ 'MM_Metadata', 'register_fields' ], 10, 2 );

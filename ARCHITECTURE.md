@@ -561,6 +561,55 @@ Both service units include:
 
 ---
 
+## Shell-Plugin Connection Points
+
+> **This section is the single source of truth for all interfaces between the PHP plugin and the bash daemons.** Both repos (`metamanager-plugin` and `metamanager`) must stay in sync at these contract points.
+
+### Job Queue Filesystem Contract
+
+| Contract point | PHP location | Shell location |
+|----------------|--------------|----------------|
+| Job directories | `MM_JOB_COMPRESS`, `MM_JOB_META` constants (`metamanager.php:48-49`) | `JOB_DIR="${JOB_ROOT}/compress"` and `meta` in daemon scripts |
+| Result directories | `MM_JOB_DONE`, `MM_JOB_FAILED` constants (`metamanager.php:50-51`) | `JOB_DONE="${JOB_ROOT}/completed"` and `failed` |
+| PID files | `MM_PID_COMPRESS`, `MM_PID_META` constants (`metamanager.php:61-62`) | `PID_FILE="${JOB_ROOT}/compress-daemon.pid"` and `meta-daemon.pid` |
+| Job file format | `MM_Job_Queue::write_job()` — JSON via `wp_json_encode()` | `jq -r '.file_path'` etc. to parse |
+| Atomic claim | PHP writes `{uuid}.json` | Daemon `mv` to `{uuid}.json.processing` |
+| Result format | `mm_import_completed_jobs()` reads `*.json` from completed/failed | `write_result()` writes JSON with status, completed_at, details |
+
+### Field Map (Metadata Embedding)
+
+The metadata daemon writes the same ExifTool tags that `MM_Metadata::field_map()` defines. Both sides use identical logical field names.
+
+| PHP constant | JSON key | Image ExifTool tags | MP3 tags | QuickTime tags |
+|--------------|----------|---------------------|----------|----------------|
+| `META_CREATOR` | `Creator` | `EXIF:Artist`, `IPTC:By-line`, `XMP:Creator` | `ID3:Artist`, `XMP:Creator` | `QuickTime:Author`, `XMP:Creator` |
+| `META_COPYRIGHT` | `Copyright` | `EXIF:Copyright`, `IPTC:CopyrightNotice`, `XMP:Rights` | `ID3:Copyright`, `XMP:Rights` | `QuickTime:Copyright`, `XMP:Rights` |
+| `META_HEADLINE` | `Headline` | `IPTC:Headline`, `XMP:Headline` | `XMP:Headline` | `XMP:Headline` |
+| `META_KEYWORDS` | `Keywords` | `IPTC:Keywords+=`, `XMP:Subject+=` | `ID3:Genre+=`, `XMP:Subject+=` | `QuickTime:Keywords+=`, `XMP:Subject+=` |
+
+**Cross-reference**: `MM_Metadata::field_map()` in `class-mm-metadata.php` ↔ `exif_args` construction in `metamanager-meta-daemon.sh:200-350`.
+
+### Import Result Contract
+
+The daemon writes `embedded_tags` in the result JSON; PHP reads it in `mm_import_completed_jobs()`:
+
+| Field | PHP reads | Shell writes |
+|-------|-----------|--------------|
+| `embedded_tags` | `$job['embedded_tags']` (`metamanager.php:342`) | `jq --argjson et "${embedded_json}" '. + {embedded_tags: $et}'` |
+| `job_type` | `$job['job_type']` (`metamanager.php:340`) | `jq -r '.job_type // "metadata"'` |
+| `trigger` | `$job['trigger']` (`metamanager.php:341`) | Passed through from original job JSON |
+
+### Daemon Health Checks
+
+PHP reads PID files and checks `/proc/<pid>`:
+
+| PHP method | Reads | Shell writes |
+|------------|-------|--------------|
+| `MM_Status::daemon_running(MM_PID_META)` | `MM_JOB_ROOT . '/meta-daemon.pid'` | `echo $$ > "${PID_FILE}"` |
+| `MM_Status::daemon_running(MM_PID_COMPRESS)` | `MM_JOB_ROOT . '/compress-daemon.pid'` | `echo $$ > "${PID_FILE}"` |
+
+---
+
 ## WP-CLI (`MM_CLI`)
 
 The `wp metamanager` command group provides:

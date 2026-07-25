@@ -73,12 +73,6 @@ class MM_Metadata {
 	public const META_DURATION = 'mm_duration';
 
 	/**
-	 * Flag: ExifTool has run on this file at least once and populated WP fields.
-	 * Value is '1' when synced, unset (empty string) when never scanned.
-	 */
-	public const META_SYNCED = 'mm_meta_synced';
-
-	/**
 	 * JSON-encoded array of discrepancies found during last write-back verification.
 	 * Each entry: { "expected": "...", "found": "..." } keyed by field label.
 	 * Empty JSON array '[]' when last verify passed cleanly.
@@ -206,8 +200,10 @@ class MM_Metadata {
 	 * Logical field map: PHP key => ExifTool tag names to write.
 	 *
 	 * Single source of truth shared with the shell daemon, which declares an
-	 * identical mapping in bash.
+	 * identical mapping in bash. If you add or change a field here, you MUST
+	 * update the corresponding exif_args section in metamanager-meta-daemon.sh.
 	 *
+	 * @see metamanager-meta-daemon.sh — "Format-aware tag building" section
 	 * @return array<string, string[]>
 	 */
 	public static function field_map(): array {
@@ -302,17 +298,6 @@ class MM_Metadata {
 			'sanitize_callback' => fn( $v ) => min( 5, max( 0, (int) $v ) ),
 			'auth_callback'     => fn() => current_user_can( 'upload_files' ),
 			'show_in_rest'      => true,
-		] );
-
-		// Sync flag — set once ExifTool has run a file scan, integer 0/1.
-		register_post_meta( 'attachment', self::META_SYNCED, [
-			'object_subtype'    => 'attachment',
-			'type'              => 'integer',
-			'description'       => __( 'Whether Metamanager has imported metadata from this file.', 'metamanager' ),
-			'single'            => true,
-			'sanitize_callback' => fn( $v ) => (int) (bool) $v,
-			'auth_callback'     => fn() => current_user_can( 'upload_files' ),
-			'show_in_rest'      => false,
 		] );
 
 		// GPS fields — read-only, imported from EXIF Composite group, never user-edited.
@@ -599,6 +584,61 @@ class MM_Metadata {
 		MM_Job_Queue::enqueue_all_sizes( $id, [], 'metadata', [ 'trigger' => 'edit' ] );
 
 		return $post;
+	}
+
+	/**
+	 * save_post hook for attachment post type.
+	 *
+	 * Catches native metadata field changes from REST API and WP-CLI
+	 * (which bypass attachment_fields_to_save). Queues a metadata
+	 * write-back job when native fields are modified.
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 */
+	public static function on_save_post_attachment( int $post_id, \WP_Post $post ): void {
+		// Only fire for actual attachments, skip revisions and auto-saves.
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+		if ( 'attachment' !== $post->post_type ) {
+			return;
+		}
+
+		// Skip if this was triggered by the admin edit screen (attachment_fields_to_save handles it).
+		if ( did_action( 'attachment_fields_to_save' ) ) {
+			return;
+		}
+
+		$mime = (string) get_post_mime_type( $post_id );
+		if ( ! wp_attachment_is_image( $post_id ) && ! self::is_av_mime( $mime ) && ! self::is_pdf_mime( $mime ) ) {
+			return;
+		}
+		if ( 'read_only' === self::write_capability( $mime ) ) {
+			return;
+		}
+
+		// Check if any native metadata fields are present in the request.
+		// REST API sends these as post meta; WP-CLI sets them via wp_postmeta.
+		$native_keys = [
+			self::META_CREATOR, self::META_COPYRIGHT, self::META_OWNER,
+			self::META_HEADLINE, self::META_CREDIT, self::META_KEYWORDS,
+			self::META_DATE, self::META_CITY, self::META_STATE, self::META_COUNTRY,
+			self::META_RATING,
+		];
+
+		$changed = false;
+		foreach ( $native_keys as $key ) {
+			$new_value = get_post_meta( $post_id, $key, true );
+			if ( '' !== $new_value && null !== $new_value ) {
+				$changed = true;
+				break;
+			}
+		}
+
+		if ( $changed ) {
+			MM_Job_Queue::enqueue_all_sizes( $post_id, [], 'metadata', [ 'trigger' => 'edit' ] );
+		}
 	}
 
 	// -----------------------------------------------------------------------

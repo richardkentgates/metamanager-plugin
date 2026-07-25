@@ -25,6 +25,9 @@ class MM_Metadata_Loader {
 		$this->document->add_module( new MM_Mod_Local( $this->settings ) );
 		$this->document->add_module( new MM_Mod_Author( $this->settings ) );
 
+		// Remove WordPress core's rel_canonical — Metamanager owns the canonical.
+		remove_action( 'wp_head', 'rel_canonical' );
+
 		// Emit everything in one wp_head block at priority 2.
 		// Title is handled via pre_get_document_title filter (priority 1).
 		add_action( 'wp_head', [ $this->document, 'render' ], 2 );
