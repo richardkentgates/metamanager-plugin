@@ -60,15 +60,6 @@ jobs:
           # Update metadata.json
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${APT_USER}@${APT_HOST}" \
-            "cat > /var/www/html/metamanager/metadata.json << 'MMEOF'
-          {
-            \"version\": \"${{ steps.version.outputs.version }}\",
-            \"requires\": {
-              \"php\": \"8.0\",
-              \"wordpress\": \"6.2\"
-            },
-            \"download_url\": \"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"
-          }
-          MMEOF"
+            "printf '%s\n' '{' '  \"version\": \"${{ steps.version.outputs.version }}\",' '  \"requires\": {' '    \"php\": \"8.0\",' '    \"wordpress\": \"6.2\"' '  },' '  \"download_url\": \"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"' '}' > /var/www/html/metamanager/metadata.json"
 
           echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server"
