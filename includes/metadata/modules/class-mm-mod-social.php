@@ -60,13 +60,15 @@ class MM_Mod_Social extends MM_Mod_Base {
 				$description = ! empty( $meta['og_description'] ) ? $meta['og_description'] : $description;
 				$url         = get_permalink( $post );
 
-				// Image: custom meta → featured image → site default.
+				// Image: custom meta → featured image → attachment source → site default.
 				if ( ! empty( $meta['og_image_id'] ) ) {
 					$image = $this->image_data( (int) $meta['og_image_id'] );
 				} elseif ( ! empty( $meta['og_image_url'] ) ) {
 					$image = $this->image_data( 0, $meta['og_image_url'] );
 				} elseif ( has_post_thumbnail( $post ) ) {
 					$image = $this->image_data( get_post_thumbnail_id( $post ) );
+				} elseif ( 'attachment' === $post->post_type ) {
+					$image = $this->image_data( $post->ID );
 				} else {
 					$image = $this->default_image( $settings );
 				}

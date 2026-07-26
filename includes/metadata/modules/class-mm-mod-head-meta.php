@@ -43,7 +43,13 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	private function resolve_title( MM_Page_Context $context, MM_Site_Settings $settings ): string {
 		$page = $context->get_page_number();
 
-		// 1. Per-post override.
+		// 1. Front page (must check before is_singular, which also matches static front pages).
+		if ( $context->is_front_page() ) {
+			$tpl = $settings->get( 'titles.home_title', '%%sitetitle%% %%sep%% %%tagline%%' );
+			return $settings->resolve( $tpl );
+		}
+
+		// 2. Per-post override.
 		if ( $context->is_singular() ) {
 			$post = $context->get_post();
 			if ( $post ) {
@@ -58,12 +64,6 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 				$resolved = $settings->resolve( $tpl, $post, null, null, $page );
 				return $this->maybe_append_page( $resolved, $page, $settings );
 			}
-		}
-
-		// 2. Front page.
-		if ( $context->is_front_page() ) {
-			$tpl = $settings->get( 'titles.home_title', '%%sitetitle%% %%sep%% %%tagline%%' );
-			return $settings->resolve( $tpl );
 		}
 
 		// 3. Blog index (posts page).
@@ -134,6 +134,12 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	private function resolve_description( MM_Page_Context $context, MM_Site_Settings $settings ): string {
+		// Front page (must check before is_singular, which also matches static front pages).
+		if ( $context->is_front_page() ) {
+			$desc = $settings->get( 'titles.home_description', '' );
+			return $desc ? $settings->resolve( $desc ) : get_bloginfo( 'description' );
+		}
+
 		// Per-post override.
 		if ( $context->is_singular() ) {
 			$post = $context->get_post();
@@ -146,11 +152,6 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 				$source = $settings->get( "titles.post_types.{$post->post_type}.description_source", 'excerpt' );
 				return $this->auto_description( $post, $source );
 			}
-		}
-
-		if ( $context->is_front_page() ) {
-			$desc = $settings->get( 'titles.home_description', '' );
-			return $desc ? $settings->resolve( $desc ) : get_bloginfo( 'description' );
 		}
 
 		if ( $context->is_home() ) {
@@ -196,6 +197,11 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	private function resolve_canonical( MM_Page_Context $context, MM_Site_Settings $settings ): string {
+		// Front page (must check before is_singular, which also matches static front pages).
+		if ( $context->is_front_page() ) {
+			return home_url( '/' );
+		}
+
 		// Per-post override.
 		if ( $context->is_singular() ) {
 			$post = $context->get_post();
@@ -206,10 +212,6 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 				}
 				return get_permalink( $post );
 			}
-		}
-
-		if ( $context->is_front_page() ) {
-			return home_url( '/' );
 		}
 
 		if ( $context->is_home() ) {
