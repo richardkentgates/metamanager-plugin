@@ -94,6 +94,13 @@ class MM_Mod_Social extends MM_Mod_Base {
 				if ( 'product' === $post->post_type ) {
 					$og_type = 'product';
 				}
+
+				// Front page overrides is_singular() — must be 'website', not 'article'.
+				if ( $context->is_front_page() ) {
+					$og_type  = 'website';
+					$article  = [];
+					$url      = home_url( '/' );
+				}
 			}
 		} elseif ( $context->is_front_page() || $context->is_home() ) {
 			$url   = home_url( '/' );
