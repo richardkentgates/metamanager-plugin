@@ -103,9 +103,11 @@ class MM_Mod_Local extends MM_Mod_Base {
 			$node['areaServed'] = $service_areas;
 		}
 
-		// Social profiles → sameAs.
-		$accounts = $settings->get( 'social.accounts', [] );
-		$same_as  = array_values( array_filter( array_map( 'esc_url_raw', $accounts ) ) );
+		// Social profiles → sameAs (merge both Social settings and Business Profile accounts).
+		$social_accounts = $settings->get( 'social.accounts', [] );
+		$biz_accounts    = $biz['accounts'] ?? [];
+		$all_accounts    = array_merge( $social_accounts, $biz_accounts );
+		$same_as         = array_values( array_filter( array_map( 'esc_url_raw', $all_accounts ) ) );
 		if ( $same_as ) {
 			$node['sameAs'] = $same_as;
 		}
