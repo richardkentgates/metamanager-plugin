@@ -74,7 +74,16 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 			return;
 		}
 
-		$sub       = sanitize_key( get_query_var( 'mm_meta_sitemap_type' ) );
+		$sub = sanitize_key( get_query_var( 'mm_meta_sitemap_type' ) );
+
+		// Bail if the requested post type or taxonomy is disabled in settings.
+		if ( 'post' === $type && $sub && ! in_array( $sub, $this->get_active_post_types(), true ) ) {
+			return;
+		}
+		if ( 'tax' === $type && $sub && ! in_array( $sub, $this->get_active_taxonomies(), true ) ) {
+			return;
+		}
+
 		$cache_key = 'mm_sm_' . $this->get_cache_version() . '_' . $type . ( $sub ? "_$sub" : '' );
 
 		header( 'Content-Type: application/xml; charset=UTF-8' );
