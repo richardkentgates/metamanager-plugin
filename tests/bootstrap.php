@@ -12,5 +12,10 @@ if ( ! file_exists($wp_tests_dir . '/includes/functions.php') ) {
 }
 require_once $wp_tests_dir . '/includes/functions.php';
 
-// Load the plugin.
-require_once dirname(__FILE__) . '/../metamanager.php';
+// Register the plugin to load after WordPress is initialized.
+tests_add_filter( 'muplugins_loaded', function () {
+    require_once dirname( __DIR__ ) . '/metamanager.php';
+} );
+
+// Load WordPress (defines ABSPATH, loads WP functions, then fires registered callbacks).
+require_once $wp_tests_dir . '/includes/bootstrap.php';

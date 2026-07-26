@@ -2,7 +2,7 @@
 
 Tracks settings verification, bug discovery, and test coverage across both repos.
 
-Last updated: 2026-07-26 (Round 4 complete: 44/44 pass)
+Last updated: 2026-07-26 (Round 5 complete: 31/31 pass)
 
 ---
 
@@ -373,19 +373,40 @@ These settings have been tested in Round 3 (46/46 pass):
 
 **No bugs found in Round 4.** All edge cases handled correctly.
 
-### Round 5: Performance & Security
+### Round 5: Performance & Security — COMPLETE: 31/31 PASS
 
-**Goal:** Verify no performance regressions or security issues.
+**Test scripts:** `tests/Integration/Test_MM_Security.php` (12 tests, 19 assertions) + `tests/Integration/Test_MM_Performance.php` (6 tests, 12 assertions) + `/tmp/mm-round5.php` on production (19 assertions).
 
-**Tests:**
-- Query count on homepage (should be minimal)
-- Query count on sitemap.xml (should be cached after first load)
-- Memory usage on attachment pages with large images
-- REST API authentication (verify endpoints require auth)
-- Nonce verification on admin AJAX handlers
-- Capability checks on settings save
-- Output escaping on all rendered HTML
-- SQL injection tests on job queue queries
+**PHPUnit Security Tests:** 12/12 ✅
+- Output escaping: HTML in title, description, OG tags, JSON-LD all escaped ✅
+- SQL injection in orderby rejected ✅
+- IP sanitization strips XSS ✅
+- Settings page requires manage_options ✅
+- Post/term/user meta save rejects unauthorized users ✅
+- REST API requires authentication ✅
+- REST API requires editor role for jobs endpoint ✅
+
+**PHPUnit Performance Tests:** 6/6 ✅
+- Homepage: ≤ 30 queries ✅
+- Single post: ≤ 35 queries ✅
+- Category archive: ≤ 35 queries ✅
+- Sitemap: ≤ 25 queries ✅
+- Sitemap cache reduces queries on second request ✅
+- No N+1 queries on archive with 10 posts ✅
+
+**Production curl Tests:** 19/19 ✅
+- Homepage header count reasonable (45) ✅
+- Sitemap loads in under 3s (0.379s) ✅
+- Sitemap is valid XML with sitemapindex ✅
+- RSS feed is valid XML ✅
+- Homepage JSON-LD valid ✅
+- Post JSON-LD valid ✅
+- No XSS in search results ✅
+- No script tags in tag 404 ✅
+- Homepage has title, description, OG title ✅
+
+**Additional files:**
+- `tests/bootstrap.php` — Fixed to use standard WP test bootstrap pattern (`tests_add_filter` + `includes/bootstrap.php`)
 
 ---
 
