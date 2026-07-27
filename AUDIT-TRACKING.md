@@ -2,7 +2,7 @@
 
 Tracks settings verification, bug discovery, and test coverage across both repos.
 
-Last updated: 2026-07-26 (Round 5 complete: 31/31 pass)
+Last updated: 2026-07-27 (v2.3.10 — Round 6 fixes deployed)
 
 ---
 
@@ -10,7 +10,7 @@ Last updated: 2026-07-26 (Round 5 complete: 31/31 pass)
 
 | Component | Version | Branch |
 |-----------|---------|--------|
-| Plugin | 2.3.8 | main |
+| Plugin | 2.3.10 | main |
 | Server daemon | 2.4.7 | main |
 | Production site | 104.197.172.183 | Ubuntu 20.04 |
 | Apt server | 34.136.87.92 | Debian 13 |
@@ -428,3 +428,66 @@ Before each production deploy:
 - [ ] Smoke test: sitemap.xml
 - [ ] Smoke test: robots.txt
 - [ ] Smoke test: single post output
+
+---
+
+## Round 7: Post-Round-6 Fixes (2026-07-27)
+
+### Fixes Applied
+
+| ID | Fix | Status | Commit |
+|----|-----|--------|--------|
+| FIX-WP-SITEMAP | WP sitemap 404 — core rewrite rule intercepting before MM rule | ✅ Deployed | `3b22ae2`, `330035c`, `b0dcdfc` |
+| FIX-SAMEAS-MERGE | sameAs overwrites social accounts with empty business defaults | ✅ Deployed | `0effdfa` |
+| CI-FIX | PHPUnit Polyfills not found in CI | ✅ Deployed | `da89779` |
+
+### WP Sitemap Fix Details
+
+**Root cause**: WordPress core registers `^wp-sitemap\.xml$ → index.php?sitemap=index` at init priority 1. MetaManager registered `^wp-sitemap\.xml/?$ → index.php?mm_meta_sitemap=index` at priority 10. Core rule matched first, but `wp_sitemaps_enabled=false` meant no handler existed, returning 404.
+
+**Fix**: `unset($wp_rewrite->extra_rules_top['^wp-sitemap\.xml$'])` in `add_rewrite_rules()` to remove core's rule before MM adds its own. Requires rewrite flush after deployment.
+
+**Key insight**: The key in `extra_rules_top` starts with `^` — my first attempt used `wp-sitemap\.xml$` without the anchor, which silently failed to match.
+
+### sameAs Merge Fix Details
+
+**Root cause**: `array_merge($social_accounts, $biz_accounts)` — both arrays have ALL keys (from defaults deep_merge). Business defaults have empty strings for all social platforms, so `array_merge` overwrites non-empty social URLs with empty business values.
+
+**Fix**: `array_filter()` both arrays before merge to remove empty values, so non-empty URLs from either source survive.
+
+### PHPUnit Tests Added
+
+8 new tests in `tests/Integration/Test_MM_Fixes.php`:
+- FIX-21: sameAs includes business profile accounts (1 test)
+- FIX-21: sameAs merges social + business accounts from both sources (1 test)
+- FIX-22: og:type=website for pages (1 test)
+- FIX-22: og:type=article for posts (1 test)
+- FIX-23: auto_description returns empty for empty pages (1 test)
+- FIX-23: auto_description returns excerpt when available (1 test)
+- FIX-23: resolve_description falls back to site description (1 test)
+- FIX-23: per-post meta description takes priority (1 test)
+
+### Business Profile Setup
+
+Production business profile configured:
+- Name: Ashley Hyer
+- Type: InsuranceAgency
+- Phone: +1 850-598-7927
+- Address: 91 Ready Ave NW, Fort Walton Beach, FL 32548, US
+- Hours: Mon-Fri 9-5
+- LinkedIn: https://www.linkedin.com/in/ashley-hyer-bb8922117/
+
+### Production Verification
+
+| URL | Status | Verified |
+|-----|--------|----------|
+| `/wp-sitemap.xml/` | 200 OK | ✅ |
+| `/sitemap.xml/` | 200 OK | ✅ |
+| `/` (homepage) | 200 OK | ✅ |
+| `/contact-me/` | 200 OK | ✅ |
+| JSON-LD sameAs | LinkedIn URL present | ✅ |
+| JSON-LD InsuranceAgency | Full address + phone + hours | ✅ |
+
+### WP-CLI Plugin Update Behavior
+
+**Finding**: `wp plugin update metamanager` reports "Plugin already updated" when installed version matches apt server version. This is correct behavior — the updater works correctly, just needs version bump for WP-CLI to detect an update. The update detection happens via `pre_set_site_transient_update_plugins` filter, which compares `MM_VERSION` against apt server metadata.

@@ -76,12 +76,9 @@ class Test_MM_Fixes extends WP_UnitTestCase {
 	 * Render wp_head with the emitter and return the buffered output.
 	 */
 	private function render_head( MM_Head_Emitter $emitter ): string {
-		add_action( 'wp_head', [ $emitter, 'render' ], 99 );
 		ob_start();
-		do_action( 'wp_head' );
-		$output = ob_get_clean();
-		remove_action( 'wp_head', [ $emitter, 'render' ], 99 );
-		return $output;
+		$emitter->render();
+		return ob_get_clean();
 	}
 
 	/**

@@ -41,7 +41,8 @@ public static function add_command(): void {}
 }
 }
 
-require_once dirname( __DIR__, 2 ) . '/includes/class-mm-cli.php';
+require_once dirname( __DIR__ ) . '/stubs/wp-cli-utils.php';
+require dirname( __DIR__, 2 ) . '/includes/class-mm-cli.php';
 
 /**
  * @covers MM_CLI
