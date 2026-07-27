@@ -17,6 +17,7 @@
             <file>tests/Integration/Test_MM_Mod_Rss.php</file>
             <file>tests/Integration/Test_MM_Security.php</file>
             <file>tests/Integration/Test_MM_Performance.php</file>
+            <file>tests/Integration/Test_MM_Fixes.php</file>
         </testsuite>
     </testsuites>
 
