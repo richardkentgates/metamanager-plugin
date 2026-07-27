@@ -6,6 +6,7 @@
  *
  * Subcommands:
  *   export          Dump current settings as JSON to stdout
+ *   import          Import settings from a JSON file or stdin
  *   reset           Reset all settings to defaults
  *   backfill-links  Extract links from all existing published posts
  *   check-links     Run a full broken-link scan immediately
@@ -51,6 +52,100 @@ class MM_Metadata_CLI {
 		}
 
 		WP_CLI::line( wp_json_encode( compact( 'settings', 'business' ), $flags ) );
+	}
+
+	// -------------------------------------------------------------------------
+	// import
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Import plugin settings from a JSON file or stdin.
+	 *
+	 * Reads a JSON file previously created by `wp metamanager export` and
+	 * applies the settings and/or business profile data. Missing keys are
+	 * filled from factory defaults so the imported data is always complete.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<file>]
+	 * : Path to a JSON file. Omit to read from stdin.
+	 *
+	 * [--dry-run]
+	 * : Show what would be imported without making changes.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *   wp metamanager import backup.json
+	 *   wp metamanager import backup.json --dry-run
+	 *   cat backup.json | wp metamanager import
+	 *
+	 * @when after_wp_load
+	 */
+	public function import( array $args, array $assoc_args ): void {
+		$dry_run = isset( $assoc_args['dry-run'] );
+		$file    = $args[0] ?? '';
+
+		// Read JSON from file or stdin.
+		if ( '' !== $file ) {
+			$file = realpath( $file );
+			if ( ! $file || ! is_readable( $file ) ) {
+				WP_CLI::error( "Cannot read file: {$args[0]}" );
+			}
+			$json = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		} else {
+			$json = '';
+			while ( !feof( STDIN ) ) {
+				$json .= fread( STDIN, 8192 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_operations_read
+			}
+		}
+
+		$data = json_decode( trim( $json ), true );
+		if ( ! is_array( $data ) ) {
+			WP_CLI::error( 'Invalid JSON — expected an object with "settings" and/or "business" keys.' );
+		}
+
+		$has_settings = isset( $data['settings'] ) && is_array( $data['settings'] );
+		$has_business = isset( $data['business'] ) && is_array( $data['business'] );
+
+		if ( ! $has_settings && ! $has_business ) {
+			WP_CLI::error( 'JSON must contain a "settings" and/or "business" key.' );
+		}
+
+		// Deep-merge with defaults so imported data is always complete.
+		$settings = $has_settings
+			? $this->deep_merge( MM_Site_Settings::settings_defaults(), $data['settings'] )
+			: null;
+		$business = $has_business
+			? $this->deep_merge( MM_Site_Settings::business_defaults(), $data['business'] )
+			: null;
+
+		// Show diff.
+		if ( $has_settings ) {
+			$old = get_option( MM_META_OPT_SETTINGS, [] );
+			$this->show_settings_diff( $old, $settings );
+		}
+		if ( $has_business ) {
+			$old = get_option( MM_META_OPT_BUSINESS, [] );
+			$this->show_settings_diff( $old, $business, 'business' );
+		}
+
+		if ( $dry_run ) {
+			WP_CLI::warning( 'Dry run — no changes written.' );
+			return;
+		}
+
+		// Write.
+		if ( $has_settings ) {
+			update_option( MM_META_OPT_SETTINGS, $settings, false );
+		}
+		if ( $has_business ) {
+			update_option( MM_META_OPT_BUSINESS, $business, false );
+		}
+
+		$parts = [];
+		if ( $has_settings ) { $parts[] = 'settings'; }
+		if ( $has_business ) { $parts[] = 'business profile'; }
+		WP_CLI::success( 'Imported ' . implode( ' + ', $parts ) . '.' );
 	}
 
 	// -------------------------------------------------------------------------
@@ -269,6 +364,73 @@ class MM_Metadata_CLI {
 		if ( preg_match( '/<meta\s+name=["\']robots["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i', $body, $m ) ) {
 			WP_CLI::log( "\nmeta robots: " . $m[1] );
 		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Helpers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Recursively merge $override into $base. Arrays are merged by key;
+	 * scalar values in $override replace $base values.
+	 */
+	private function deep_merge( array $base, array $override ): array {
+		$result = $base;
+		foreach ( $override as $key => $value ) {
+			if ( is_array( $value ) && isset( $result[ $key ] ) && is_array( $result[ $key ] ) ) {
+				$result[ $key ] = $this->deep_merge( $result[ $key ], $value );
+			} else {
+				$result[ $key ] = $value;
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Show a flat diff between old and new settings arrays.
+	 */
+	private function show_settings_diff( array $old, array $new, string $label = 'settings' ): void {
+		$flat_old = $this->flatten_array( $old );
+		$flat_new = $this->flatten_array( $new );
+		$all_keys = array_unique( array_merge( array_keys( $flat_old ), array_keys( $flat_new ) ) );
+		sort( $all_keys );
+
+		$changes = 0;
+		foreach ( $all_keys as $key ) {
+			$old_val = $flat_old[ $key ] ?? '(missing)';
+			$new_val = $flat_new[ $key ] ?? '(missing)';
+			if ( $old_val === $new_val ) {
+				continue;
+			}
+			++$changes;
+			WP_CLI::log( "  {$label}: {$key}" );
+			WP_CLI::log( "    - " . wp_json_encode( $old_val ) );
+			WP_CLI::log( "    + " . wp_json_encode( $new_val ) );
+		}
+
+		if ( 0 === $changes ) {
+			WP_CLI::log( "  {$label}: no changes" );
+		} else {
+			WP_CLI::log( "  {$label}: {$changes} change(s)" );
+		}
+	}
+
+	/**
+	 * Flatten a nested array to dot-notation keys.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function flatten_array( array $array, string $prefix = '' ): array {
+		$result = [];
+		foreach ( $array as $key => $value ) {
+			$new_key = '' === $prefix ? $key : "{$prefix}.{$key}";
+			if ( is_array( $value ) && ! empty( $value ) ) {
+				$result += $this->flatten_array( $value, $new_key );
+			} else {
+				$result[ $new_key ] = $value;
+			}
+		}
+		return $result;
 	}
 }
 
