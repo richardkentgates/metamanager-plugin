@@ -271,3 +271,5 @@ class MM_Metadata_CLI {
 		}
 	}
 }
+
+\WP_CLI::add_command( 'metamanager', 'MM_Metadata_CLI' );
