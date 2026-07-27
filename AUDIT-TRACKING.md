@@ -491,3 +491,62 @@ Production business profile configured:
 ### WP-CLI Plugin Update Behavior
 
 **Finding**: `wp plugin update metamanager` reports "Plugin already updated" when installed version matches apt server version. This is correct behavior — the updater works correctly, just needs version bump for WP-CLI to detect an update. The update detection happens via `pre_set_site_transient_update_plugins` filter, which compares `MM_VERSION` against apt server metadata.
+
+---
+
+## Round 8: Backup Restore Testing + CLI Registration (2026-07-27)
+
+### MM_Metadata_CLI Registration Fix
+
+**Bug**: `MM_Metadata_CLI` class was loaded via `require_once` in `metamanager.php:91` but never registered with `WP_CLI::add_command()`. This made 7 subcommands invisible: export, reset, check-links, ping, backfill-links, flush-rewrites, schema-test.
+
+**Fix**: Added `\WP_CLI::add_command( 'metamanager', 'MM_Metadata_CLI' );` at end of `class-mm-metadata-cli.php`. WP-CLI merges subcommands from multiple classes registered under the same parent.
+
+**Commit**: `c1498a2`
+
+### Backup Restore Test Results
+
+| Test | Result | Notes |
+|------|--------|-------|
+| `wp metamanager export` | ✅ Works | Outputs settings + business as JSON |
+| `wp metamanager export --format=pretty` | ✅ Works | Pretty-printed JSON |
+| `wp metamanager reset` | ✅ Works | Writes factory defaults (tested locally) |
+| `wp metamanager import` (restore from export) | ❌ Missing | No import command exists |
+| Admin UI "Reset Settings" | ✅ Works | Same as CLI reset |
+
+### Export Output (Production)
+
+```json
+{
+    "settings": [],
+    "business": {
+        "name": "Ashley Hyer",
+        "type": "InsuranceAgency",
+        "phone": "+1 850-598-7927",
+        "address": { "street": "91 Ready Ave NW", "city": "Fort Walton Beach", "state": "FL", "zip": "32548", "country": "US" },
+        "hours": [...],
+        "accounts": { "linkedin": "https://www.linkedin.com/in/ashley-hyer-bb8922117/" }
+    }
+}
+```
+
+Settings are empty because production uses all defaults (never saved custom settings).
+
+### Gap: No Import/Restore Command
+
+The backup/restore cycle is incomplete:
+- **Backup**: `wp metamanager export > backup.json` ✅
+- **Reset**: `wp metamanager reset` ✅
+- **Restore**: No `wp metamanager import` command to load settings from JSON ❌
+
+This means if settings are lost (accidental reset, migration to new server), there's no way to restore from the export file without manually constructing WP-CLI option updates.
+
+### All WP-CLI Subcommands (Verified)
+
+After fix, `wp metamanager --help` shows 14 subcommands:
+backfill_links, check_links, compress, embed, export, flush_rewrites, import, ping, queue, reset, scan, schema_test, stats
+
+### Test Results
+
+- PHPUnit: 181 tests, 295 assertions — all green
+- PHPStan: no errors
