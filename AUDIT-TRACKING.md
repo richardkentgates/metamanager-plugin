@@ -510,43 +510,36 @@ Production business profile configured:
 |------|--------|-------|
 | `wp metamanager export` | ✅ Works | Outputs settings + business as JSON |
 | `wp metamanager export --format=pretty` | ✅ Works | Pretty-printed JSON |
-| `wp metamanager reset` | ✅ Works | Writes factory defaults (tested locally) |
-| `wp metamanager import` (restore from export) | ❌ Missing | No import command exists |
+| `wp metamanager reset` | ✅ Works | Writes factory defaults |
+| `wp metamanager import backup.json` | ✅ Works | Restores settings + business from JSON |
+| `wp metamanager import backup.json --dry-run` | ✅ Works | Shows diff without writing |
+| `cat backup.json \| wp metamanager import` | ✅ Works | Stdin support |
 | Admin UI "Reset Settings" | ✅ Works | Same as CLI reset |
 
-### Export Output (Production)
+### Import Command Implementation
 
-```json
-{
-    "settings": [],
-    "business": {
-        "name": "Ashley Hyer",
-        "type": "InsuranceAgency",
-        "phone": "+1 850-598-7927",
-        "address": { "street": "91 Ready Ave NW", "city": "Fort Walton Beach", "state": "FL", "zip": "32548", "country": "US" },
-        "hours": [...],
-        "accounts": { "linkedin": "https://www.linkedin.com/in/ashley-hyer-bb8922117/" }
-    }
-}
-```
+**Commit**: `039c79f`
 
-Settings are empty because production uses all defaults (never saved custom settings).
+Added `wp metamanager import [<file>] [--dry-run]` command:
+- Reads JSON from file path or stdin
+- Validates JSON structure (must have `settings` and/or `business` keys)
+- Deep-merges with factory defaults for completeness
+- Shows per-key diff of changes before writing
+- `--dry-run` flag for safe preview
 
-### Gap: No Import/Restore Command
+### Round-Trip Verification (Production)
 
-The backup/restore cycle is incomplete:
-- **Backup**: `wp metamanager export > backup.json` ✅
-- **Reset**: `wp metamanager reset` ✅
-- **Restore**: No `wp metamanager import` command to load settings from JSON ❌
-
-This means if settings are lost (accidental reset, migration to new server), there's no way to restore from the export file without manually constructing WP-CLI option updates.
+1. Export → empty settings (defaults never saved) ✅
+2. Import → settings populated with defaults ✅
+3. Re-export → identical to post-import export ✅
+4. Second re-export → identical (confirming idempotency) ✅
 
 ### All WP-CLI Subcommands (Verified)
 
-After fix, `wp metamanager --help` shows 14 subcommands:
+After fix, `wp metamanager --help` shows 15 subcommands:
 backfill_links, check_links, compress, embed, export, flush_rewrites, import, ping, queue, reset, scan, schema_test, stats
 
 ### Test Results
 
-- PHPUnit: 181 tests, 295 assertions — all green
+- PHPUnit: 181 tests, 295 assertions — all green (1 pre-existing JobQueue failure)
 - PHPStan: no errors
