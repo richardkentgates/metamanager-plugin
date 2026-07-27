@@ -57,7 +57,7 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 		// Remove WordPress core sitemap rewrite rules that intercept wp-sitemap.xml.
 		// Core registers ^wp-sitemap\.xml$ → index.php?sitemap=index (at init priority 1).
 		// We remove it from extra_rules_top before flushing so MM's rule handles the request.
-		unset( $wp_rewrite->extra_rules_top['wp-sitemap\.xml$'] );
+		unset( $wp_rewrite->extra_rules_top['^wp-sitemap\.xml$'] );
 
 		add_rewrite_rule( '^wp-sitemap\.xml/?$', 'index.php?mm_meta_sitemap=index', 'top' );
 		add_rewrite_rule( '^sitemap\.xml/?$', 'index.php?mm_meta_sitemap=index', 'top' );
