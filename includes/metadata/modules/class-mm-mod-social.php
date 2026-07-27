@@ -73,34 +73,35 @@ class MM_Mod_Social extends MM_Mod_Base {
 					$image = $this->default_image( $settings );
 				}
 
-				// Article type for blog posts.
-				if ( 'post' === $post->post_type || in_array( $post->post_type, (array) get_post_types( [ 'public' => true ] ), true ) ) {
-					$og_type = 'article';
-					$author_user = get_userdata( (int) $post->post_author );
+			// Article type for blog posts only — pages get 'website'.
+			if ( 'post' === $post->post_type ) {
+				$og_type = 'article';
+				$author_user = get_userdata( (int) $post->post_author );
 
-					$cats = get_the_category( $post->ID );
-					$tags = get_the_tags( $post->ID );
+				$cats = get_the_category( $post->ID );
+				$tags = get_the_tags( $post->ID );
 
-					$article = [
-						'published_time' => get_the_date( 'c', $post ),
-						'modified_time'  => get_the_modified_date( 'c', $post ),
-						'author'         => $author_user ? get_author_posts_url( $author_user->ID ) : '',
-						'section'        => $cats ? $cats[0]->name : '',
-						'tags'           => $tags ? wp_list_pluck( $tags, 'name' ) : [],
-					];
-				}
+				$article = [
+					'published_time' => get_the_date( 'c', $post ),
+					'modified_time'  => get_the_modified_date( 'c', $post ),
+					'author'         => $author_user ? get_author_posts_url( $author_user->ID ) : '',
+					'section'        => $cats ? $cats[0]->name : '',
+					'tags'           => $tags ? wp_list_pluck( $tags, 'name' ) : [],
+				];
+			} elseif ( 'product' === $post->post_type ) {
+				// WooCommerce product.
+				$og_type = 'product';
+			} else {
+				// Pages and other non-article types → website.
+				$og_type = 'website';
+			}
 
-				// WooCommerce product → og:type product.
-				if ( 'product' === $post->post_type ) {
-					$og_type = 'product';
-				}
-
-				// Front page overrides is_singular() — must be 'website', not 'article'.
-				if ( $context->is_front_page() ) {
-					$og_type  = 'website';
-					$article  = [];
-					$url      = home_url( '/' );
-				}
+			// Front page overrides — must be 'website'.
+			if ( $context->is_front_page() ) {
+				$og_type  = 'website';
+				$article  = [];
+				$url      = home_url( '/' );
+			}
 			}
 		} elseif ( $context->is_front_page() || $context->is_home() ) {
 			$url   = home_url( '/' );

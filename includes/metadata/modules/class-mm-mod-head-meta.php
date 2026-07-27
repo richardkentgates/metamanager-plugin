@@ -148,9 +148,10 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 				if ( ! empty( $meta['description'] ) ) {
 					return $settings->resolve( $meta['description'], $post );
 				}
-				// Fallback chain per config: excerpt | content | none.
+				// Fallback chain per config: excerpt | content | site description.
 				$source = $settings->get( "titles.post_types.{$post->post_type}.description_source", 'excerpt' );
-				return $this->auto_description( $post, $source );
+				$desc = $this->auto_description( $post, $source );
+				return $desc ?: get_bloginfo( 'description' );
 			}
 		}
 
