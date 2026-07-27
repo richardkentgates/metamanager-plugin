@@ -34,6 +34,10 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 		add_filter( 'query_vars', [ $this, 'add_query_var' ] );
 		add_action( 'template_redirect', [ $this, 'maybe_serve' ] );
 
+		// Remove WordPress core sitemap rewrite rules (registered at init priority 1)
+		// so they don't intercept requests meant for MM's sitemap.
+		add_filter( 'wp_rewrite_rules', [ $this, 'remove_core_sitemap_rules' ] );
+
 		// Ping on publish (async).
 		add_action( 'transition_post_status', [ $this, 'schedule_ping' ], 10, 3 );
 		add_action( 'mm_meta_sitemap_ping', [ $this, 'send_ping' ] );
@@ -56,6 +60,24 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 		add_rewrite_rule( '^sitemap\.xml/?$', 'index.php?mm_meta_sitemap=index', 'top' );
 		add_rewrite_rule( '^sitemap-post-([a-z0-9_-]+)\.xml/?$', 'index.php?mm_meta_sitemap=post&mm_meta_sitemap_type=$matches[1]', 'top' );
 		add_rewrite_rule( '^sitemap-tax-([a-z0-9_-]+)\.xml/?$', 'index.php?mm_meta_sitemap=tax&mm_meta_sitemap_type=$matches[1]', 'top' );
+	}
+
+	/**
+	 * Remove WordPress core sitemap rewrite rules that intercept wp-sitemap.xml.
+	 *
+	 * Core registers: ^wp-sitemap\.xml$ → index.php?sitemap=index
+	 * MM registers:   ^wp-sitemap\.xml/?$ → index.php?mm_meta_sitemap=index
+	 *
+	 * Since core's rule is registered first and matches without trailing slash,
+	 * it wins the rewrite match. This filter removes core's rule so MM's rule handles all sitemap requests.
+	 */
+	public function remove_core_sitemap_rules( array $rules ): array {
+		foreach ( $rules as $key => $rule ) {
+			if ( strpos( $rule, 'sitemap=index' ) !== false && strpos( $rule, 'mm_meta_sitemap' ) === false ) {
+				unset( $rules[ $key ] );
+			}
+		}
+		return $rules;
 	}
 
 	public function add_query_var( array $vars ): array {
