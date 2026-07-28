@@ -46,3 +46,4 @@ service-account*.json
 # Server-specific config (deployed via CI, not committed)
 wp-config.php
 *.secret
+*.result.cache
