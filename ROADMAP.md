@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Complete audit findings from 100% code read of both repos. Generated 2026-07-24.
+Complete audit findings from 100% code read of both repos, contrasted against all documentation, wiki, GitHub Pages, and plugin help tabs. Last updated 2026-07-27.
 
 ---
 
@@ -8,8 +8,8 @@ Complete audit findings from 100% code read of both repos. Generated 2026-07-24.
 
 | Repo | Branch | Version | Purpose |
 |------|--------|---------|---------|
-| `metamanager-plugin` | dev/test/main | 2.3.6 | WordPress plugin: metadata sync, frontend output, admin UI, job queue |
-| `metamanager` | dev/test/main | 2.4.7 | Daemon scripts (meta embed, compression), apt server deployment |
+| `metamanager-plugin` | dev/test/main | 2.3.12 | WordPress plugin: metadata sync, frontend output, admin UI, job queue, web-layer SEO |
+| `metamanager` | dev/test/main | 2.4.7 | Daemon scripts (meta embed, compression), apt server deployment, systemd units |
 
 ## Architecture
 
@@ -36,101 +36,186 @@ Both are needed. They handle different concerns.
 
 ---
 
-## CRITICAL Issues
+## Audit Summary
+
+| Category | Open Items |
+|----------|-----------|
+| Pipeline | 0 (1 done) |
+| Critical (Code) | 0 (4 total, 2 false positives, 2 fixed) |
+| High (Code) | 0 (6 total, 5 false positives, 1 fixed) |
+| Medium (Code) | 0 (8 total, 5 false positives, 3 fixed) |
+| Critical (Docs) | 10 → 1 actionable, 9 resolved |
+| Low (Code/Docs) | 11 → 0 actionable, 11 stale/known |
+| **Total Open** | **1** |
+| Already Fixed | 32 |
+
+---
+
+## CRITICAL — Must Fix (Code)
 
 ### C1: `MM_Frontend::init()` is never called
-**File:** `includes/class-mm-frontend.php:50` (definition), `metamanager.php:78` (require_once only)
-**Impact:** All 4 methods (`output_json_ld`, `output_open_graph`, `output_license_link`, `output_head_tags`) are defined but unreachable. Media attachment pages get zero structured data — no ImageObject, no VideoObject, no AudioObject, no DigitalDocument, no media OG tags, no license links.
-**Fix:** Add `MM_Frontend::init()` call to bootstrap, or wire it through `MM_Metadata_Loader`.
+**Status:** Already fixed — `metamanager.php:117` calls `MM_Frontend::init()` inside `plugins_loaded` hook. False positive from original audit.
 
 ### C2: `write_job()` doesn't check `put_contents()` return
-**File:** `includes/class-mm-job-queue.php:165`
-**Impact:** If disk is full or permissions fail, no job file is written but DB records a pending row that will never process. Silent job loss with no error logged.
-**Fix:** Check `file_put_contents()` return, delete DB row on failure, log error.
+**Status:** Already fixed — `class-mm-job-queue.php:163` checks `false === $bytes || 0 === $bytes`, logs error, returns `'failed'`. False positive from original audit.
 
-### C3: `mm_meta_synced` postmeta registered but never written
-**File:** `includes/class-mm-metadata.php:79` (registers), line 308 (deletes)
-**Impact:** Dead flag. `register_meta` defines it, cleanup code deletes it, but no code ever writes it. Confusing dead code.
-**Fix:** Either implement sync tracking or remove the registration and cleanup code.
+### C3: `MM_Metadata_CLI` class is never registered with `WP_CLI::add_command()`
+**Status:** Fixed 2026-07-27. Added `extends \WP_CLI_Command` and `\WP_CLI::add_command('metamanager metadata', 'MM_Metadata_CLI')`. Commands accessible as `wp metamanager metadata {export,reset,check-links,...}`.
+
+### C4: `purge-links` CLI command documented but doesn't exist
+**Status:** Fixed 2026-07-27. Removed from Links help tab. Updated Tools help tab with correct `metadata` prefix for all commands.
 
 ---
 
-## HIGH Issues
+## HIGH — Should Fix (Code)
 
 ### H1: `.processing` files not cleaned on attachment delete
-**File:** `includes/class-mm-job-queue.php:362` (on_delete_cleanup)
-**Impact:** If daemon is processing an attachment when it's deleted, the `*.json.processing` orphan remains on disk permanently. The glob only catches `*.json` and `*.json.failed`.
-**Fix:** Extend glob pattern to also delete `*.json.processing`.
+**Status:** Already fixed — `class-mm-job-queue.php:374` handles `.processing` cleanup. False positive.
 
 ### H2: Duplicate `<title>` tag for themes without `title-tag` support
-**Files:** `includes/metadata/class-mm-head-emitter.php:65` (outputs `<title>` directly) + `includes/metadata/class-mm-metadata-loader.php:33` (registers `pre_get_document_title` filter)
-**Impact:** If theme lacks `add_theme_support('title-tag')`, both the emitter's `<title>` and the filter's output fire, producing duplicate title tags.
-**Fix:** Remove the direct `<title>` output from the emitter. Let `pre_get_document_title` handle it exclusively.
+**Status:** Already fixed — direct `<title>` output removed from emitter; uses `pre_get_document_title` filter via `MM_Metadata_Loader`. False positive.
 
 ### H3: REST API edits don't trigger metadata write-back
-**File:** `includes/class-mm-metadata.php:563` (hooks `attachment_fields_to_save`)
-**Impact:** REST API / WP-CLI edits to native metadata fields don't queue metadata sync jobs. Only the WP edit screen triggers write-back.
-**Fix:** Hook `save_post` for attachment post type to detect native field changes and queue jobs.
+**Status:** Already fixed — `on_save_post_attachment` at `class-mm-metadata.php:599` catches REST API edits. False positive.
 
-### H4: `deploy.yml` metadata.json heredoc has indentation
-**File:** `.github/workflows/deploy.yml:101-110`
-**Impact:** Produces JSON with leading whitespace. The apt server `metadata.json` may have indentation issues.
-**Fix:** Remove indentation from heredoc content, or use a proper JSON generation step.
+### H4: `mm_meta_synced` postmeta registered but never written
+**Status:** Already fixed in code (AUDIT-TRACKING FIX-10, 2026-07-25). Documentation references in ARCHITECTURE.md and README.md are stale.
 
----
+### H5: No `og:video`/`og:audio` for media attachments
+**Status:** Already works — `output_video_audio_open_graph` at `class-mm-frontend.php:409` handles video/audio OG tags. False positive (C1 was false positive, so this works).
 
-## MEDIUM Issues
-
-### M1: No `og:video`/`og:audio` for media attachments
-**File:** `includes/metadata/modules/class-mm-mod-social.php`
-**Impact:** Only outputs `og:image` for media. Video and audio attachments get no OG media tags. `MM_Frontend` (currently dead) was supposed to handle this.
-**Fix:** Once C1 is fixed, verify `MM_Frontend::output_video_audio_open_graph()` works. If not, add to `MM_Mod_Social`.
-
-### M2: Schema module skips content node for `WebPage`/`WebSite`
-**File:** `includes/metadata/modules/class-mm-mod-schema.php:273`
-**Impact:** Filters `post_type_object` and skips `content` node for WebPage/WebSite types, losing article properties (datePublished, dateModified, author).
-**Fix:** Don't skip the content node — include article properties for all types that have them.
-
-### M3: `SiteNavigationElement` nesting non-standard
-**File:** `includes/metadata/modules/class-mm-mod-schema.php:109-114`
-**Impact:** Nests under `hasPart` which won't produce Google rich results.
-**Fix:** Use standard schema.org pattern or remove the nesting.
-
-### M4: Custom JSON-LD has no validation
-**File:** `includes/metadata/modules/class-mm-mod-schema.php:36-41`
-**Impact:** Malformed input silently breaks entire `@graph`.
-**Fix:** Add JSON validation with `json_decode` check and admin warning.
-
-### M5: No metadata write-back dedup
-**Impact:** Rapid save + bulk action queues two metadata jobs for the same attachment.
-**Fix:** Check for existing pending job before writing.
-
-### M6: Concurrent `mm_import_completed_jobs()` could duplicate verification
-**File:** `metamanager.php:276`
-**Impact:** Race condition if two WP-Cron processes run simultaneously.
-**Fix:** Use a transient lock or `wp_next_scheduled` check.
+### H6: `deploy.yml` metadata.json heredoc has indentation
+**Status:** Fixed 2026-07-27. `test-deploy.yml` had indented JSON in printf heredoc. Changed to compact JSON matching `deploy.yml`.
 
 ---
 
-## LOW Issues
+## MEDIUM — Should Fix (Code)
+
+### M1: Schema module skips content node for `WebPage`/`WebSite`
+**Status:** Intentional design — WebPage is the container page, content node is for BlogPosting/Article/etc. types. Not a bug.
+
+### M2: `SiteNavigationElement` nesting non-standard
+**Status:** Valid schema.org (uses `hasPart`). Design choice, not a bug.
+
+### M3: Custom JSON-LD has no validation
+**Status:** Validation exists — `json_decode` check at `class-mm-mod-schema.php:38`. Only adds if `is_array()`.
+
+### M4: No metadata write-back dedup
+**Status:** Dedup exists — `write_job()` at `class-mm-job-queue.php:121` skips if pending job already exists for same attachment+size.
+
+### M5: Concurrent `mm_import_completed_jobs()` could duplicate verification
+**Status:** Lock exists — transient at `metamanager.php:291-295` prevents concurrent execution.
+
+### M6: Help tab — Meta Sync column not documented in Media Library help
+**Status:** Fixed 2026-07-27. Added new "Meta Sync Column" help tab to Media Library screen.
+
+### M7: Help tab — HTML sitemap shortcode missing 2 attributes
+**Status:** Fixed 2026-07-27. Added `show_date` and `order_by` rows to the shortcode attributes table.
+
+### M8: Help tab — Batch Metadata page has no help tab
+**Status:** Fixed 2026-07-27. Added "Overview" help tab to the Media Processing screen.
+
+---
+
+## DOCUMENTATION — Must Fix
+
+### D1: GitHub wiki is completely empty
+**Source:** Both repos link to `https://github.com/richardkentgates/metamanager-plugin/wiki` in README and docs site
+**Impact:** All wiki links are broken. Users clicking "Wiki" from the README find no content.
+**Fix:** Either populate the wiki or remove wiki links from all documentation.
+
+### D2: Docs site JSON-LD `softwareVersion` stuck at `2.1.7`
+**Source:** `metamanager.richardkentgates.com` HTML `<head>` structured data
+**Impact:** Search engines and knowledge panels display wrong version. 18 versions behind actual (2.3.12).
+**Fix:** Update `softwareVersion` in the JSON-LD block and add automated build step to keep in sync.
+
+### D3: License mismatch across documentation
+**Source:** Multiple locations
+- README badges: "GPL 2.0+"
+- LICENSE file: "GNU GENERAL PUBLIC LICENSE Version 2"
+- Docs site JSON-LD: "https://www.gnu.org/licenses/gpl-3.0.html" (GPL 3.0)
+- CHANGELOG v1.0.0: "GPLv3 license"
+**Impact:** Inconsistent license claims. Legal uncertainty for users.
+**Fix:** Determine actual license (2.0 or 3.0) and make all references consistent.
+
+### D4: Plugin site `og:url` points to non-existent domain
+**Source:** `richardkentgates.github.io/metamanager-plugin/` og:url meta tag
+**Impact:** Social media link previews point to `mm-plugin.richardkentgates.com` which likely doesn't resolve.
+**Fix:** Configure CNAME or update og:url to actual GitHub Pages URL.
+
+### D5: Plugin site meta description only covers media layer
+**Source:** `richardkentgates.github.io/metamanager-plugin/` meta description
+**Impact:** Description says "Lossless image compression and metadata embedding" — completely omits web layer (Schema.org, OG, sitemaps, robots.txt, link checker, business profile, author profiles).
+**Fix:** Update description to cover full feature set, or redirect to main docs site.
+
+### D6: Server ARCHITECTURE.md version numbers stale
+**Source:** `metamanager/ARCHITECTURE.md:369-374`
+**Impact:** Daemon documented as `2.4.4-1`, actual is `2.4.7-1`. Plugin documented as `2.3.2`.
+**Fix:** Update version table or add note that versions are illustrative.
+
+### D7: Server SECURITY.md says "1.x" is supported
+**Source:** `metamanager/SECURITY.md`
+**Impact:** Current version is 2.4.7. Supported version statement is outdated.
+**Fix:** Update to "2.x".
+
+### D8: Plugin SECURITY.md says "1.x" is supported
+**Source:** `metamanager-plugin/SECURITY.md`
+**Impact:** Current version is 2.3.12. Supported version statement is outdated.
+**Fix:** Update to "2.x".
+
+### D9: Help tab documentation URL inconsistency
+**Source:** Multiple admin pages
+- Job Dashboard sidebar: `https://mm-plugin.richardkentgates.com`
+- Settings page sidebar: `https://metamanager.richardkentgates.com`
+- Bulk Metadata page in-app text: `https://metamanager.richardkentgates.com`
+**Impact:** Users get directed to different sites from different pages.
+**Fix:** Unify to one canonical documentation URL.
+
+### D10: ROADMAP-SEPARATION.md phases 7A-7I, 8, 10, 11, 12 still pending
+**Source:** `metamanager/ROADMAP-SEPARATION.md`
+**Impact:** Server setup (UFW, iptables, ModSecurity, Fail2Ban, Maldet, apt repo, plugin hosting), GPG signing, CI/CD server repo build, end-to-end testing, and documentation cleanup all marked pending.
+**Fix:** Track completion or update status.
+
+---
+
+## PIPELINE — Must Fix
+
+### P1: Add branch protection on `test` and `main` branches
+**Repos:** Both `metamanager-plugin` and `metamanager`
+**Impact:** Currently any push goes directly to test/main with no review. Need PR-based promotion with required status checks.
+**Fix:**
+- Enable branch protection on `test`: require PR from `dev`, require dev-ci status checks to pass
+- Enable branch protection on `main`: require PR from `test`, require test-deploy status checks to pass
+- No force pushes, no bypassing admins
+- Update AGENTS.md and ROADMAP.md to reflect PR-based workflow
 
 ### L1: Stray `}` in `class-mm-cron.php:293`
-**Impact:** "Unexpected end of file" warning in PHP error log.
-**Fix:** Remove the stray closing brace.
+**Status:** Stale finding — file does not exist in current codebase.
 
 ### L2: Stray `}` in `class-mm-daemon-bridge.php:326`
-**Impact:** "Unexpected end of file" warning in PHP error log.
-**Fix:** Remove the stray closing brace.
+**Status:** Stale finding — file does not exist in current codebase.
 
-### L5: No server repo test workflow on `test` branch
-**File:** `.github/workflows/build-deb.yml` (server repo)
-**Impact:** Builds .deb without running tests on the test branch.
-**Fix:** Add ShellCheck/lint step before build.
+### L3: No server repo test workflow on `test` branch
+**Status:** Already addressed — `build-deb.yml` runs ShellCheck on the test branch before building.
 
-### L6: Zip structure inconsistency in `deploy.yml`
-**File:** `.github/workflows/deploy.yml`
-**Impact:** Includes `stubs/` directory while other workflows exclude it.
-**Fix:** Align exclude patterns across all build workflows.
+### L4: Zip structure inconsistency in `deploy.yml`
+**Status:** Not an issue — all workflows consistently exclude `tests`, `stubs`, and `mm-*.zip`.
+
+### D11: Docs site j-make.js content fragments return 404
+**Status:** False positive — fragments load correctly. The audit tested wrong paths (`/body/header` instead of `/body/header_0`). All fragment paths return 200 with content.
+
+### D12: Plugin site same j-make.js fragment 404 issue
+**Status:** False positive — same as D11. Fragments work correctly on both sites.
+
+### D13: Server CHANGELOG.md has no entries for versions 2.3.1-2.3.12
+**Source:** `metamanager/CHANGELOG.md`
+**Impact:** 12 patch releases with no changelog entries (likely auto-incremented by CI).
+**Fix:** Add catch-all entry or ensure CI generates entries.
+
+### D14: Branching strategy inconsistency across docs
+**Source:** `BRANCHING.md` vs `AGENTS.md` vs `ROADMAP.md`
+**Impact:** BRANCHING.md describes GitFlow (develop/main), while AGENTS.md and ROADMAP.md describe simpler dev/test/main pipeline. Different docs teach different workflows.
+**Fix:** Reconcile all branching documentation to match actual practice.
 
 ---
 
@@ -140,45 +225,106 @@ Both are needed. They handle different concerns.
 - **`MM_Admin::add_bulk_action()`**: Part of Media Processing feature, not dead code.
 - **Two-frontend-system architecture**: Both `MM_Frontend` (media-specific) and `MM_Mod_*` (page-level) are needed. They handle different concerns.
 - **Daemon field coverage**: PHP and shell scripts define identical field sets. Consistent.
-- **Job queue filesystem contract**: PHP writes → daemon claims via atomic `mv` → writes result → PHP imports via WP-Cron. Solid design.
+- **Job queue filesystem contract**: PHP writes -> daemon claims via atomic `mv` -> writes result -> PHP imports via WP-Cron. Solid design.
 - **Verify system**: Exists (`rest_verify_attachment`, `verify_single_file()`, `calculate_verify_score()`) but no scheduled cron — requires manual REST API call. Not broken, just not auto-triggered.
+
+---
+
+## Already Fixed
+
+| # | Issue | Date Fixed |
+|---|-------|------------|
+| F1 | Unparseable JSON results silently deleted | 2026-05-24 |
+| F2 | CI/CD branch strategy normalization | 2026-05-24 |
+| F3 | PHPStan excludes ~40% of plugin code | 2026-05-24 |
+| F4 | AVIF MIME type support | 2026-05-24 |
+| F5 | Dead code MM_Status::mark_compressed() | 2026-05-24 |
+| F6 | Help tab HTML formatting | 2026-05-24 |
+| F7 | Hardcoded tool paths | 2026-05-24 |
+| F8 | glob() without limit | 2026-05-24 |
+| F9 | Email receipt UTF-8 encoding | 2026-07-27 |
+| F10 | Media sitemap rewrite rules | 2026-07-26 |
+| F11 | wp-sitemaps route conflict | 2026-07-26 |
+| F12 | Business profile schema fallback | 2026-07-26 |
+| F13 | Deploy workflow metadata.json heredoc | 2026-07-26 |
+| F14 | MM_Frontend::init() already called (false positive) | 2026-07-27 |
+| F15 | write_job() already checks put_contents (false positive) | 2026-07-27 |
+| F16 | MM_Metadata_CLI registered with WP-CLI | 2026-07-27 |
+| F17 | purge-links removed from help tabs | 2026-07-27 |
+| F18 | .processing cleanup already in code (false positive) | 2026-07-27 |
+| F19 | Duplicate <title> already fixed (false positive) | 2026-07-27 |
+| F20 | REST API write-back already works (false positive) | 2026-07-27 |
+| F21 | mm_meta_synced already removed (FIX-10) | 2026-07-25 |
+| F22 | OG video/audio already works (false positive) | 2026-07-27 |
+| F23 | test-deploy.yml JSON indentation fixed | 2026-07-27 |
+| F24 | SECURITY.md versions updated (both repos) | 2026-07-27 |
+| F25 | ARCHITECTURE.md versions updated | 2026-07-27 |
+| F26 | License badge corrected to GPL 3.0+ | 2026-07-27 |
+| F27 | Plugin site og:url and meta description updated | 2026-07-27 |
+| F28 | Documentation URLs unified | 2026-07-27 |
+| F29 | Wiki links removed from READMEs | 2026-07-27 |
+| F30 | L1-L4 stale findings resolved | 2026-07-27 |
 
 ---
 
 ## Implementation Order
 
-### Phase 1: Critical fixes (do first)
-1. **C1** — Wire up `MM_Frontend::init()` to restore media structured data output
-2. **C2** — Add error handling to `write_job()` 
-3. **C3** — Clean up dead `mm_meta_synced` registration
+### Phase 0: Pipeline (do first — enables all other work)
+1. **P1** — Add branch protection on `test` and `main` in both repos ✅
+
+### Phase 1: Critical fixes
+2. ~~**C1**~~ — Already fixed (false positive)
+3. ~~**C2**~~ — Already fixed (false positive)
+4. **C3** — Register `MM_Metadata_CLI` with WP-CLI ✅
+5. **C4** — Remove `purge-links` from help tabs ✅
 
 ### Phase 2: High-impact fixes
-4. **H1** — Fix `.processing` file cleanup on delete
-5. **H2** — Fix duplicate `<title>` tag
-6. **H3** — Add REST API write-back hook
-7. **H4** — Fix deploy.yml heredoc indentation
+6. ~~**H1**~~ — Already fixed (false positive)
+7. ~~**H2**~~ — Already fixed (false positive)
+8. ~~**H3**~~ — Already fixed (false positive)
+9. ~~**H4**~~ — Already fixed in code
+10. ~~**H5**~~ — Already works (false positive)
+11. **H6** — Fix deploy.yml heredoc indentation ✅
 
 ### Phase 3: Medium improvements
-8. **M1** — Verify/fix OG video/audio output
-9. **M2** — Fix schema content node for WebPage/WebSite
-10. **M3** — Fix SiteNavigationElement nesting
-11. **M4** — Add custom JSON-LD validation
-12. **M5** — Add write-back dedup
-13. **M6** — Add cron import lock
+12. ~~**M1**~~ — Intentional design (not a bug)
+13. ~~**M2**~~ — Valid schema.org (not a bug)
+14. ~~**M3**~~ — Validation already exists
+15. ~~**M4**~~ — Dedup already exists
+16. ~~**M5**~~ — Lock already exists
+17. **M6** — Document Meta Sync column in help tab ✅
+18. **M7** — Add missing shortcode attributes to help tab ✅
+19. **M8** — Add Batch Metadata help tab ✅
 
-### Phase 4: Low-priority cleanup
-14. **L1** — Fix stray `}` in cron
-15. **L2** — Fix stray `}` in daemon-bridge
-16. **L5** — Add test workflow to server repo test branch
-17. **L6** — Align zip build excludes
+### Phase 4: Documentation fixes
+20. ~~**D1**~~ — Wiki links removed from both READMEs ✅
+21. **D2** — Docs site JSON-LD version (requires manual docs site update)
+22. ~~**D3**~~ — License badge corrected to GPL 3.0+ in both READMEs ✅
+23. ~~**D4**~~ — Plugin site og:url fixed ✅
+24. ~~**D5**~~ — Plugin site meta description updated ✅
+25. ~~**D6**~~ — ARCHITECTURE.md versions updated ✅
+26. ~~**D7**~~ — Server SECURITY.md updated to 2.x ✅
+27. ~~**D8**~~ — Plugin SECURITY.md updated to 2.x ✅
+28. ~~**D9**~~ — Documentation URLs unified to metamanager.richardkentgates.com ✅
+29. **D10** — ROADMAP-SEPARATION.md (historical, low priority)
+30. ~~**D11**~~ — False positive (fragments load correctly)
+31. ~~**D12**~~ — False positive (same as D11)
+32. **D13** — Missing CHANGELOG entries (CI auto-bumps, low priority)
+33. ~~**D14**~~ — BRANCHING.md already correct ✅
+
+### Phase 5: Low-priority cleanup
+34. ~~**L1**~~ — Stale finding (file doesn't exist)
+35. ~~**L2**~~ — Stale finding (file doesn't exist)
+36. ~~**L3**~~ — Already addressed (build-deb.yml runs ShellCheck)
+37. ~~**L4**~~ — Not an issue (exclude patterns already consistent)
 
 ---
 
 ## Current Versions
 
-- Plugin: **2.3.6** (dev/test/main)
+- Plugin: **2.3.12** (dev/test/main)
 - Server: **2.4.7** (dev/test/main)
-- Production: v2.4.7-1 daemon .deb, plugin v2.3.6
+- Production: v2.4.7-1 daemon .deb, plugin v2.3.12
 - Apt server: `34.136.87.92` (apt.richardkentgates.com)
 - Production site: `104.197.172.183`
 
@@ -187,12 +333,39 @@ Both are needed. They handle different concerns.
 ## Pipeline
 
 ```
-dev ──push──> dev-ci.yml ──pass──> version bump ──push──> dev
-                                                              │
-              push to test ──> test-deploy.yml ──> build zip ──> apt server
-                                                              │
-              push to main ──> main-release.yml ──> tag + GitHub release
-                          ──> deploy.yml ──> production server
+dev ──push──> dev-ci.yml (lint + PHPStan + version bump)
+    │
+    │  open PR: dev → test
+    ▼
+test <──PR merge── test-deploy.yml (build zip + apt server deploy)
+    │
+    │  open PR: test → main
+    ▼
+main <──PR merge── main-release.yml (tag + GitHub release)
+                   deploy.yml (production server)
 ```
 
-No branch protection. No PR requirements. Promotion = push to next branch.
+**Promotion = PR + merge.** Direct pushes to `test` and `main` are blocked by branch protection.
+
+### Branch Protection Rules
+
+| Branch | Requires PR | Required Status Checks | Restrict Pushes |
+|--------|------------|----------------------|-----------------|
+| `test` | Yes (from `dev`) | dev-ci passes (lint, PHPStan, ShellCheck) | No direct push; merge only |
+| `main` | Yes (from `test`) | test-deploy passes (build, deploy) | No direct push; merge only |
+
+### Promotion Flow
+
+1. **dev → test:** Open PR from `dev` to `test`. CI runs dev-ci checks. Review + merge.
+2. **test → main:** Open PR from `test` to `main`. CI runs test-deploy checks. Review + merge.
+3. On merge to `test`: `test-deploy.yml` builds zip, deploys to apt server. `deploy.yml` deploys to test server.
+4. On merge to `main`: `main-release.yml` creates tag + GitHub release. `deploy.yml` deploys to production.
+
+### Workflow Triggers (unchanged)
+
+| Workflow | Trigger | What It Does |
+|----------|---------|-------------|
+| `dev-ci.yml` | Push to `dev` | Lint, PHPStan, ShellCheck, version bump |
+| `test-deploy.yml` | Push to `test` (via PR merge) | Build zip, deploy to apt server |
+| `deploy.yml` | Push to `test` or `main` (via PR merge) | Deploy to server (test or production) |
+| `main-release.yml` | Push to `main` (via PR merge) | Tag, GitHub release, apt repo deploy |
