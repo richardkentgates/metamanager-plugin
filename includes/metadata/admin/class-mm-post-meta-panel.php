@@ -157,8 +157,8 @@ class MM_Post_Meta_Panel {
 
 		wp_enqueue_media();
 		wp_enqueue_style(
-			'mm-meta-admin',
-			MM_META_URL . 'assets/css/admin.css',
+			'mm-meta-post-panel',
+			MM_META_URL . 'assets/css/metadata-admin.css',
 			[],
 			MM_META_VERSION
 		);
