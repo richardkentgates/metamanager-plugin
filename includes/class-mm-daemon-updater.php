@@ -37,7 +37,6 @@ class MM_Daemon_Updater {
 	 * Register WordPress hooks.
 	 */
 	private function hooks(): void {
-		// Admin notices for daemon update status.
 		add_action( 'admin_notices', [ $this, 'admin_notice' ] );
 	}
 
@@ -104,29 +103,60 @@ class MM_Daemon_Updater {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Check whether exec() is available and not disabled.
+	 *
+	 * @return bool
+	 */
+	private static function exec_available(): bool {
+		if ( ! function_exists( 'exec' ) ) {
+			return false;
+		}
+
+		$disabled = ini_get( 'disable_functions' );
+		if ( $disabled ) {
+			$disabled = array_map( 'trim', explode( ',', $disabled ) );
+			return ! in_array( 'exec', $disabled, true );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Trigger the daemon package update via apt.
 	 *
-	 * Runs three commands:
+	 * Runs commands individually:
 	 *   1. apt-get update (refresh package lists)
 	 *   2. apt-get install -y metamanager (upgrade daemon)
-	 *   3. systemctl restart both daemons
+	 *   3. systemctl restart each daemon separately
 	 *
 	 * Each command is logged to the WordPress error log and OS syslog.
 	 *
 	 * @return array{success: bool, message: string, output: string}
 	 */
 	public static function trigger_update(): array {
+		if ( ! self::exec_available() ) {
+			$message = 'PHP exec() is disabled. Cannot trigger daemon update automatically.';
+			self::log_wordpress( $message, 'error' );
+			self::log_os( "daemon-update/error: {$message}" );
+			self::store_result( false, $message, '' );
+
+			return [
+				'success' => false,
+				'message' => $message,
+				'output'  => '',
+			];
+		}
+
 		$commands = [
-			'update'  => 'sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq',
-			'install' => 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq metamanager',
-			'restart' => 'sudo systemctl restart metamanager-compress-daemon metamanager-meta-daemon',
+			'update'          => 'sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq',
+			'install'         => 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq metamanager',
+			'restart-compress' => 'sudo systemctl restart metamanager-compress-daemon',
+			'restart-meta'    => 'sudo systemctl restart metamanager-meta-daemon',
 		];
 
-		$output   = '';
-		$last_cmd = '';
+		$output = '';
 
 		foreach ( $commands as $step => $cmd ) {
-			$last_cmd = $cmd;
 			$step_out = '';
 			$exit     = 0;
 
@@ -227,15 +257,18 @@ class MM_Daemon_Updater {
 	/**
 	 * Log a message to the WordPress error log.
 	 *
-	 * Respects WP_DEBUG_LOG: only writes when WP_DEBUG is true or
-	 * WP_DEBUG_LOG is explicitly enabled.
+	 * Always logs errors and warnings. In debug mode (WP_DEBUG), also logs
+	 * info-level messages.
 	 *
 	 * @param string $message Log message.
 	 * @param string $level   Log level (info, warning, error).
 	 */
 	private static function log_wordpress( string $message, string $level = 'info' ): void {
-		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-			return;
+		// Always log errors and warnings.
+		if ( 'error' !== $level && 'warning' !== $level ) {
+			if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+				return;
+			}
 		}
 
 		$prefix = '[metamanager-daemon-updater] [' . strtoupper( $level ) . ']';
@@ -246,9 +279,6 @@ class MM_Daemon_Updater {
 	/**
 	 * Log a message to the OS syslog (or /var/log/metamanager-update.log).
 	 *
-	 * Uses the syslog facility when available, falls back to a dedicated
-	 * log file for environments where syslog is not accessible.
-	 *
 	 * @param string $message Log message.
 	 */
 	private static function log_os( string $message ): void {
@@ -257,7 +287,6 @@ class MM_Daemon_Updater {
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_error_log
 		if ( ! @error_log( $line, 3, $log_file ) ) {
-			// Fallback: try syslog when available.
 			if ( function_exists( 'openlog' ) ) {
 				openlog( 'metamanager', LOG_PID, LOG_USER );
 				syslog( LOG_INFO, $message );
@@ -272,6 +301,9 @@ class MM_Daemon_Updater {
 
 	/**
 	 * Store the update result for display in admin notices.
+	 *
+	 * Success notices auto-clear after 7 days. Error notices persist until
+	 * the next successful update clears them.
 	 *
 	 * @param bool   $success Whether the update succeeded.
 	 * @param string $message Human-readable message.
@@ -302,18 +334,22 @@ class MM_Daemon_Updater {
 			return;
 		}
 
-		// Auto-clear after 7 days.
-		if ( isset( $result['timestamp'] ) && ( time() - $result['timestamp'] ) > 7 * DAY_IN_SECONDS ) {
-			delete_option( self::OPTION_RESULT );
-			return;
+		// Success notices auto-clear after 7 days.
+		if ( ! empty( $result['success'] ) && isset( $result['timestamp'] ) ) {
+			if ( ( time() - $result['timestamp'] ) > 7 * DAY_IN_SECONDS ) {
+				delete_option( self::OPTION_RESULT );
+				return;
+			}
 		}
 
-		if ( $result['success'] ) {
+		// Error notices persist — clear only on next successful update.
+		if ( ! empty( $result['success'] ) ) {
 			printf(
 				'<div class="notice notice-success is-dismissible"><p><strong>%s</strong> %s</p></div>',
 				esc_html__( 'Metamanager:', 'metamanager' ),
 				esc_html( $result['message'] )
 			);
+			delete_option( self::OPTION_RESULT );
 		} else {
 			printf(
 				'<div class="notice notice-error"><p><strong>%s</strong> %s</p><p>%s</p></div>',
@@ -321,6 +357,7 @@ class MM_Daemon_Updater {
 				esc_html( $result['message'] ),
 				esc_html__( 'Check /var/log/metamanager-update.log for details.', 'metamanager' )
 			);
+			// Do NOT delete — error persists until resolved.
 		}
 
 		// Debug output when WP_DEBUG is enabled.
@@ -331,8 +368,5 @@ class MM_Daemon_Updater {
 				esc_textarea( $result['output'] )
 			);
 		}
-
-		// Clear after display.
-		delete_option( self::OPTION_RESULT );
 	}
 }
