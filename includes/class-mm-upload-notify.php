@@ -265,7 +265,8 @@ class MM_Upload_Notify {
 	 */
 	private static function send_mail( string $to, string $subject, string $body ): bool {
 		try {
-			$sent = wp_mail( $to, $subject, $body );
+			$headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
+			$sent    = wp_mail( $to, $subject, $body, $headers );
 		} catch ( \Throwable $e ) {
 			error_log( '[Metamanager] wp_mail() threw an exception: ' . $e->getMessage() );
 			$sent = false;

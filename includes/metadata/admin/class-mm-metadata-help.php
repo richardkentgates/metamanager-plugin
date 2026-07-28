@@ -155,12 +155,14 @@ class MM_Metadata_Help {
 					'<pre><code>[mm_sitemap]</code></pre>' .
 					'<p>' . esc_html__( 'Available shortcode attributes (all optional — override the saved settings for this placement only):', 'metamanager' ) . '</p>' .
 					'<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Attribute', 'metamanager' ) . '</th><th>' . esc_html__( 'Example', 'metamanager' ) . '</th><th>' . esc_html__( 'Description', 'metamanager' ) . '</th></tr></thead><tbody>' .
-					'<tr><td><code>post_types</code></td><td><code>post_types="page,post"</code></td><td>' . esc_html__( 'Comma-separated post types to list.', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>taxonomies</code></td><td><code>taxonomies="category"</code></td><td>' . esc_html__( 'Comma-separated taxonomies to include as grouped sections.', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>columns</code></td><td><code>columns="2"</code></td><td>' . esc_html__( 'Number of columns (default: 1).', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>depth</code></td><td><code>depth="2"</code></td><td>' . esc_html__( 'Maximum hierarchy depth for nested pages.', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>exclude</code></td><td><code>exclude="5,12"</code></td><td>' . esc_html__( 'Comma-separated post/page IDs to exclude.', 'metamanager' ) . '</td></tr>' .
-					'</tbody></table>',
+				'<tr><td><code>post_types</code></td><td><code>post_types="page,post"</code></td><td>' . esc_html__( 'Comma-separated post types to list.', 'metamanager' ) . '</td></tr>' .
+				'<tr><td><code>taxonomies</code></td><td><code>taxonomies="category"</code></td><td>' . esc_html__( 'Comma-separated taxonomies to include as grouped sections.', 'metamanager' ) . '</td></tr>' .
+				'<tr><td><code>columns</code></td><td><code>columns="2"</code></td><td>' . esc_html__( 'Number of columns (default: 1).', 'metamanager' ) . '</td></tr>' .
+				'<tr><td><code>depth</code></td><td><code>depth="2"</code></td><td>' . esc_html__( 'Maximum hierarchy depth for nested pages.', 'metamanager' ) . '</td></tr>' .
+				'<tr><td><code>exclude</code></td><td><code>exclude="5,12"</code></td><td>' . esc_html__( 'Comma-separated post/page IDs to exclude.', 'metamanager' ) . '</td></tr>' .
+				'<tr><td><code>show_date</code></td><td><code>show_date="yes"</code></td><td>' . esc_html__( 'Show post dates next to titles (default: no).', 'metamanager' ) . '</td></tr>' .
+				'<tr><td><code>order_by</code></td><td><code>order_by="title"</code></td><td>' . esc_html__( 'Sort order: menu_order (default), title, or date.', 'metamanager' ) . '</td></tr>' .
+				'</tbody></table>',
 			];
 		}
 
@@ -186,9 +188,7 @@ class MM_Metadata_Help {
 				'title'   => __( 'WP-CLI', 'metamanager' ),
 				'content' =>
 					'<p>' . esc_html__( 'Run a full link scan from the command line (bypasses batch size limits):', 'metamanager' ) . '</p>' .
-					'<pre><code>wp metamanager check-links --all</code></pre>' .
-					'<p>' . esc_html__( 'Purge the link table and start fresh:', 'metamanager' ) . '</p>' .
-					'<pre><code>wp metamanager purge-links</code></pre>',
+					'<pre><code>wp metamanager check-links --all</code></pre>',
 			];
 		}
 
@@ -199,14 +199,14 @@ class MM_Metadata_Help {
 				'content' =>
 					'<p>' . esc_html__( 'All tools are also available as WP-CLI subcommands under wp metamanager:', 'metamanager' ) . '</p>' .
 					'<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Command', 'metamanager' ) . '</th><th>' . esc_html__( 'What it does', 'metamanager' ) . '</th></tr></thead><tbody>' .
-					'<tr><td><code>wp metamanager export</code></td><td>' . esc_html__( 'Dump all settings as JSON to stdout.', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>wp metamanager export --format=pretty</code></td><td>' . esc_html__( 'Pretty-print JSON for readability.', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>wp metamanager reset</code></td><td>' . esc_html__( 'Reset all settings to factory defaults (with confirmation prompt).', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>wp metamanager check-links</code></td><td>' . esc_html__( 'Run one batch of the link checker immediately.', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>wp metamanager check-links --all</code></td><td>' . esc_html__( 'Run all batches until every link is checked.', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>wp metamanager ping</code></td><td>' . esc_html__( 'Ping Google and Bing with the sitemap URL immediately.', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>wp metamanager flush-rewrites</code></td><td>' . esc_html__( 'Flush WordPress rewrite rules.', 'metamanager' ) . '</td></tr>' .
-					'<tr><td><code>wp metamanager schema-test &lt;url&gt;</code></td><td>' . esc_html__( 'Fetch a page URL and print its JSON-LD schema.', 'metamanager' ) . '</td></tr>' .
+					'<tr><td><code>wp metamanager metadata export</code></td><td>' . esc_html__( 'Dump all settings as JSON to stdout.', 'metamanager' ) . '</td></tr>' .
+					'<tr><td><code>wp metamanager metadata export --format=pretty</code></td><td>' . esc_html__( 'Pretty-print JSON for readability.', 'metamanager' ) . '</td></tr>' .
+					'<tr><td><code>wp metamanager metadata reset</code></td><td>' . esc_html__( 'Reset all settings to factory defaults (with confirmation prompt).', 'metamanager' ) . '</td></tr>' .
+					'<tr><td><code>wp metamanager metadata check-links</code></td><td>' . esc_html__( 'Run one batch of the link checker immediately.', 'metamanager' ) . '</td></tr>' .
+					'<tr><td><code>wp metamanager metadata check-links --all</code></td><td>' . esc_html__( 'Run all batches until every link is checked.', 'metamanager' ) . '</td></tr>' .
+					'<tr><td><code>wp metamanager metadata ping</code></td><td>' . esc_html__( 'Ping Google and Bing with the sitemap URL immediately.', 'metamanager' ) . '</td></tr>' .
+					'<tr><td><code>wp metamanager metadata flush-rewrites</code></td><td>' . esc_html__( 'Flush WordPress rewrite rules.', 'metamanager' ) . '</td></tr>' .
+					'<tr><td><code>wp metamanager metadata schema-test &lt;url&gt;</code></td><td>' . esc_html__( 'Fetch a page URL and print its JSON-LD schema.', 'metamanager' ) . '</td></tr>' .
 					'</tbody></table>',
 			];
 		}

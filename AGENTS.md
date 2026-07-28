@@ -20,7 +20,7 @@ The only exception is temporary testing during active development sessions, wher
 
 ## Conventions
 
-- No branch protection, no PR requirements
-- All changes go through dev → test → main pipeline (promotion, not push)
+- Branch protection on `test` and `main`: PRs required, no direct pushes
+- Promotion = open PR from `dev` → `test` or `test` → `main`, CI runs, merge
 - Shell scripts/daemons update via apt; plugin updates via WordPress native update
 - PHP 8.2 for WP-CLI (`php8.2 /usr/local/bin/wp --path=/srv/www/wordpress`)
