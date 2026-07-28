@@ -73,6 +73,7 @@ require_once MM_PLUGIN_DIR . 'includes/class-mm-sitemap.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-upload-notify.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-admin.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-updater.php';
+require_once MM_PLUGIN_DIR . 'includes/class-mm-daemon-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-cli.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-frontend.php';
 
@@ -471,6 +472,7 @@ if ( is_admin() ) {
 	MM_Admin::init();
 	MM_Settings::init();
 	MM_Updater::init();
+	MM_Daemon_Updater::init();
 
 	// Persistent admin notice if daemon package is missing.
 	add_action( 'admin_init', function (): void {
