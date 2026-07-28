@@ -104,8 +104,9 @@ class MM_Mod_Local extends MM_Mod_Base {
 		}
 
 		// Social profiles → sameAs (merge both Social settings and Business Profile accounts).
-		$social_accounts = $settings->get( 'social.accounts', [] );
-		$biz_accounts    = $biz['accounts'] ?? [];
+		// Filter empty values first so non-empty social URLs aren't overwritten by empty business defaults.
+		$social_accounts = array_filter( $settings->get( 'social.accounts', [] ) );
+		$biz_accounts    = array_filter( $biz['accounts'] ?? [] );
 		$all_accounts    = array_merge( $social_accounts, $biz_accounts );
 		$same_as         = array_values( array_filter( array_map( 'esc_url_raw', $all_accounts ) ) );
 		if ( $same_as ) {

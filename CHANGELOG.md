@@ -20,7 +20,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 
 
-
 ## [2.3.15] - 2026-07-28
 
 ### Changed
