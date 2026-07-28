@@ -2,7 +2,7 @@
 /**
  * MM_Metadata_CLI — WP-CLI command group.
  *
- * Usage: wp metamanager <subcommand> [options]
+ * Usage: wp metamanager metadata <subcommand> [options]
  *
  * Subcommands:
  *   export          Dump current settings as JSON to stdout
@@ -20,7 +20,7 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 	return;
 }
 
-class MM_Metadata_CLI {
+class MM_Metadata_CLI extends \WP_CLI_Command {
 
 	// -------------------------------------------------------------------------
 	// export
@@ -434,4 +434,4 @@ class MM_Metadata_CLI {
 	}
 }
 
-\WP_CLI::add_command( 'metamanager', 'MM_Metadata_CLI' );
+\WP_CLI::add_command( 'metamanager metadata', 'MM_Metadata_CLI' );

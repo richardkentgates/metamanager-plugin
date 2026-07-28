@@ -179,7 +179,7 @@ class MM_Admin {
 
 			$screen->set_help_sidebar(
 				'<p><strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ' ' . MM_VERSION . '</strong></p>' .
-				'<p><a href="https://mm-plugin.richardkentgates.com" target="_blank" rel="noopener">' . esc_html__( 'Documentation Website', 'metamanager' ) . ' ↗</a></p>' .
+				'<p><a href="https://metamanager.richardkentgates.com" target="_blank" rel="noopener">' . esc_html__( 'Documentation Website', 'metamanager' ) . ' ↗</a></p>' .
 				'<p><a href="https://github.com/richardkentgates/metamanager-plugin" target="_blank" rel="noopener">' . esc_html__( 'Plugin Repository', 'metamanager' ) . ' ↗</a></p>' .
 				'<p><a href="https://github.com/richardkentgates/metamanager" target="_blank" rel="noopener">' . esc_html__( 'Server Repository', 'metamanager' ) . ' ↗</a></p>' .
 				'<p><a href="https://github.com/richardkentgates/metamanager-plugin/issues" target="_blank" rel="noopener">' . esc_html__( 'Report an Issue', 'metamanager' ) . ' ↗</a></p>' .
@@ -204,6 +204,34 @@ class MM_Admin {
 					'<li><strong style="color:#888;">' . esc_html__( 'Not compressed', 'metamanager' ) . '</strong> — ' . esc_html__( 'No compression job has run yet. Use Compress Lossless from the Bulk Actions menu.', 'metamanager' ) . '</li>' .
 					'</ul>' .
 					'<p><a href="' . esc_url( admin_url( 'admin.php?page=metamanager' ) ) . '">' . esc_html__( 'View Job Dashboard →', 'metamanager' ) . '</a></p>',
+			] );
+
+			$screen->add_help_tab( [
+				'id'      => 'mm_help_media_meta_sync',
+				'title'   => __( 'Meta Sync Column', 'metamanager' ),
+				'content' =>
+					'<h2>' . esc_html__( 'Metamanager Meta Sync Column', 'metamanager' ) . '</h2>' .
+					'<p>' . esc_html__( 'The Meta Sync column shows whether file-level metadata (EXIF, IPTC, XMP) has been embedded into the media file.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'Status meanings:', 'metamanager' ) . '</p>' .
+					'<ul>' .
+					'<li><strong style="color:#13bb2c;">' . esc_html__( 'Embedded', 'metamanager' ) . '</strong> — ' . esc_html__( 'Metadata has been written into the file by the daemon.', 'metamanager' ) . '</li>' .
+					'<li><strong style="color:#e6b800;">' . esc_html__( 'Queued (clock icon)', 'metamanager' ) . '</strong> — ' . esc_html__( 'A metadata embedding job is pending. The daemon will write WP fields into the file shortly.', 'metamanager' ) . '</li>' .
+					'<li><strong style="color:#e54c3c;">' . esc_html__( 'Not embedded', 'metamanager' ) . '</strong> — ' . esc_html__( 'No metadata has been written to the file yet. Use Embed Metadata from the Bulk Actions menu, or save the attachment to trigger automatic embedding.', 'metamanager' ) . '</li>' .
+					'</ul>' .
+					'<p>' . esc_html__( 'Metadata embedding happens automatically on upload. You can also trigger it manually from the Media Library bulk actions or the attachment edit screen.', 'metamanager' ) . '</p>',
+			] );
+		}
+
+		// Batch Metadata (Media Processing) help.
+		if ( 'metamanager_page_metamanager-bulk-meta' === $screen->id ) {
+			$screen->add_help_tab( [
+				'id'      => 'mm_help_bulk_meta_overview',
+				'title'   => __( 'Overview', 'metamanager' ),
+				'content' =>
+					'<h2>' . esc_html__( 'Media Processing', 'metamanager' ) . '</h2>' .
+					'<p>' . esc_html__( 'This page lets you bulk-edit metadata fields across multiple media files at once. Select files, choose a field, set a value, and apply — the changes are saved to WordPress and queued for daemon embedding into the files.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'Fields available for bulk editing: Creator, Copyright, Owner, Headline, Credit, Keywords, Date, City, State, Country, Rating.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'Changes are applied immediately to WordPress post meta. A metadata write-back job is then queued for each affected file so the daemon embeds the new values into EXIF/IPTC/XMP.', 'metamanager' ) . '</p>',
 			] );
 		}
 

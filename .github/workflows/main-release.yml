@@ -1,4 +1,4 @@
-name: Promote to Release — Tag & GitHub Release
+name: Promote to Release — Tag, Build & Deploy
 
 on:
   push:
@@ -8,8 +8,9 @@ permissions:
   contents: write
 
 jobs:
-  tag-and-release:
+  tag-build-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,7 +32,7 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build release zip
+      - name: Build plugin zip
         if: steps.check.outputs.exists == 'false'
         run: |
           mkdir -p build/metamanager
@@ -40,6 +41,7 @@ jobs:
             --exclude='.editorconfig' --exclude='phpunit.xml.dist' \
             ./ build/metamanager/
           cd build && zip -r ../metamanager-${{ steps.version.outputs.version }}.zip metamanager
+          echo "Built zip: $(ls -lh ../metamanager-${{ steps.version.outputs.version }}.zip)"
 
       - name: Create tag
         if: steps.check.outputs.exists == 'false'
@@ -57,3 +59,33 @@ jobs:
           name: "v${{ steps.version.outputs.version }}"
           files: metamanager-${{ steps.version.outputs.version }}.zip
           generate_release_notes: true
+
+      - name: Deploy to apt server
+        if: steps.check.outputs.exists == 'false'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          APT_HOST: ${{ secrets.DEPLOY_HOST }}
+          APT_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${APT_HOST}" >> ~/.ssh/known_hosts 2>/dev/null
+
+          # Ensure plugin hosting directory exists
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${APT_USER}@${APT_HOST}" \
+            "sudo mkdir -p /var/www/html/metamanager && sudo chown -R ${APT_USER}:${APT_USER} /var/www/html/metamanager"
+
+          # Upload zip
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            metamanager-${{ steps.version.outputs.version }}.zip \
+            "${APT_USER}@${APT_HOST}:/var/www/html/metamanager/metamanager-latest.zip"
+
+          # Update metadata.json
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${APT_USER}@${APT_HOST}" \
+            "printf '%s\n' '{\"version\":\"${{ steps.version.outputs.version }}\",\"requires\":{\"php\":\"8.0\",\"wordpress\":\"6.2\"},\"download_url\":\"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"}' > /var/www/html/metamanager/metadata.json"
+
+          echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server"
