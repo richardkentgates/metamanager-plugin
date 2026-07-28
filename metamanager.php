@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.10
+ * Version:      2.3.12
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.10' );
+define( 'MM_VERSION',     '2.3.12' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -32,7 +32,6 @@ define( 'MM_META_VERSION',      MM_VERSION );
 define( 'MM_META_FILE',         __FILE__ );
 define( 'MM_META_DIR',          MM_PLUGIN_DIR );
 define( 'MM_META_URL',          MM_PLUGIN_URL );
-define( 'MM_META_BASENAME',     plugin_basename( __FILE__ ) );
 define( 'MM_META_OPT_SETTINGS', 'mm_meta_settings' );
 define( 'MM_META_OPT_BUSINESS', 'mm_meta_business' );
 define( 'MM_META_KEY',          '_mm_meta' );
@@ -87,7 +86,6 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-page-context.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-head-emitter.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-schema-types.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-biz-card-css.php';
-require_once MM_META_DIR . 'includes/metadata/class-mm-importer.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-cli.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-head-meta.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-social.php';
