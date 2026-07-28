@@ -4,6 +4,9 @@
  * No Composer autoload — this is a server plugin.
  */
 
+// Tell WP test suite where PHPUnit Polyfills are.
+define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', dirname( __DIR__ ) . '/vendor/yoast/phpunit-polyfills' );
+
 // Load WordPress test suite (set up by wp-phpunit).
 $wp_tests_dir = getenv('WP_TESTS_DIR') ?: '/tmp/wordpress-tests-lib';
 if ( ! file_exists($wp_tests_dir . '/includes/functions.php') ) {
