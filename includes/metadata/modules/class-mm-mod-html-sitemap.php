@@ -32,6 +32,8 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	public function render_shortcode( $atts ): string {
+		wp_enqueue_style( 'mm-html-sitemap', MM_META_URL . 'assets/css/html-sitemap.css', [], MM_META_VERSION );
+
 		$cfg = $this->settings->get( 'sitemap.html_sitemap', [] );
 
 		$atts = shortcode_atts( [
