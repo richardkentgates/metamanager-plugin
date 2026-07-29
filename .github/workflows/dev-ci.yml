@@ -71,6 +71,36 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Validate compatibility map
+        run: |
+          CURRENT=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
+
+          if ! grep -q "\"${NEXT}\"" daemon-compatibility.json; then
+            # Find the daemon version from the most recent entry.
+            DAEMON_VER=$(head -1 daemon-compatibility.json | grep -oP '"2\.\d+\.\d+"' | head -1 | tr -d '"')
+            if [ -z "$DAEMON_VER" ]; then
+              DAEMON_VER="2.4.8"
+            fi
+
+            echo ""
+            echo "═══════════════════════════════════════════════════════════════"
+            echo "  FAIL: daemon-compatibility.json missing entry for ${NEXT}"
+            echo "═══════════════════════════════════════════════════════════════"
+            echo ""
+            echo "  Add this line to the TOP of daemon-compatibility.json:"
+            echo ""
+            echo "    \"${NEXT}\": \"${DAEMON_VER}\","
+            echo ""
+            echo "  If daemon code changed, use the NEW daemon version instead."
+            echo "  See AGENTS.md → Release Checklist for details."
+            echo ""
+            echo "═══════════════════════════════════════════════════════════════"
+            exit 1
+          fi
+          echo "✓ daemon-compatibility.json has entry for ${NEXT}"
+
       - name: Bump patch version
         run: |
           CURRENT=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
