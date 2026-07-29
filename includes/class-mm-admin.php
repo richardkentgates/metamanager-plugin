@@ -37,7 +37,7 @@ class MM_Admin {
 		add_action( 'manage_media_custom_column', [ __CLASS__, 'render_media_column' ], 10, 2 );
 
 		// Per-image metadata pane (single image edit screen).
-		add_action( 'edit_form_after_title', [ __CLASS__, 'render_attachment_meta_pane' ] );
+		add_action( 'edit_form_advanced', [ __CLASS__, 'render_attachment_meta_pane' ] );
 
 		// Bulk actions.
 		add_filter( 'bulk_actions-upload', [ __CLASS__, 'register_bulk_actions' ] );
@@ -2208,8 +2208,8 @@ class MM_Admin {
 		?>
 		<div class="notice notice-warning">
 			<p>
-				<strong><?php esc_html_e( 'Metamanager updated — daemon restart required.', 'metamanager' ); ?></strong><br>
-				<?php esc_html_e( 'Please SSH into the server and run:', 'metamanager' ); ?>
+				<strong><?php esc_html_e( 'Metamanager daemon auto-update failed.', 'metamanager' ); ?></strong><br>
+				<?php esc_html_e( 'Please SSH into the server and restart the daemons manually:', 'metamanager' ); ?>
 				<code>sudo systemctl restart metamanager-compress-daemon metamanager-meta-daemon</code>
 			</p>
 			<p><a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'metamanager' ); ?></a></p>
