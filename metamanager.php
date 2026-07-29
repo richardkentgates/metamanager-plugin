@@ -88,6 +88,8 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-head-emitter.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-schema-types.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-biz-card-css.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-cli.php';
+require_once MM_META_DIR . 'includes/metadata/class-mm-abilities.php';
+require_once MM_META_DIR . 'includes/metadata/class-mm-mcp-server.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-head-meta.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-social.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-schema.php';
@@ -100,11 +102,13 @@ require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-local.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-html-sitemap.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-business-contact.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-rss.php';
+require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-discovery.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-metadata-help.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-metadata-admin.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-post-meta-panel.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-term-meta-panel.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-user-meta-panel.php';
+require_once MM_META_DIR . 'includes/metadata/admin/class-mm-nav-menu-admin.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-loader.php';
 
 // Boot the metadata subsystem after all plugins are loaded so hooks fire in

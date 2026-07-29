@@ -15,6 +15,40 @@ if ( ! file_exists($wp_tests_dir . '/includes/functions.php') ) {
 }
 require_once $wp_tests_dir . '/includes/functions.php';
 
+// Load shared test helpers.
+require_once __DIR__ . '/Helpers/helpers.php';
+
+// Define WP_CLI stubs before the plugin loads, so class-mm-cli.php and
+// class-mm-metadata-cli.php define their classes instead of returning early.
+if ( ! defined( 'WP_CLI' ) ) {
+	define( 'WP_CLI', true );
+}
+if ( ! class_exists( 'WP_CLI_Command' ) ) {
+	class WP_CLI_Command {} // phpcs:ignore Generic.Classes.OpeningBraceSameLine
+}
+if ( ! class_exists( 'WP_CLI' ) ) {
+	class WP_CLI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
+		public static array $output = [];
+		public static function success( string $msg ): void {
+			self::$output[] = [ 'type' => 'success', 'msg' => $msg ];
+		}
+		public static function error( string $msg, bool $exit = true ): void {
+			self::$output[] = [ 'type' => 'error', 'msg' => $msg ];
+			if ( $exit ) {
+				throw new \RuntimeException( $msg );
+			}
+		}
+		public static function line( string $msg = '' ): void {
+			self::$output[] = [ 'type' => 'line', 'msg' => $msg ];
+		}
+		public static function add_command(): void {}
+		public static function log( string $msg = '' ): void {
+			self::$output[] = [ 'type' => 'log', 'msg' => $msg ];
+		}
+		public static function confirm( string $msg ): void {}
+	}
+}
+
 // Register the plugin to load after WordPress is initialized.
 tests_add_filter( 'muplugins_loaded', function () {
     require_once dirname( __DIR__ ) . '/metamanager.php';
