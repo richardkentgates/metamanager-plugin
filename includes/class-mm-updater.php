@@ -144,22 +144,30 @@ class MM_Updater {
 	 * If a newer version is available on the apt server, we add an entry to
 	 * $transient->response so the "Updates" badge appears in the admin menu.
 	 *
-	 * @param  \stdClass $transient The update_plugins site transient.
-	 * @return object            (possibly modified) transient.
+	 * This is a `pre_` filter — returning a non-false value replaces WP's own
+	 * update check. We must return false (not the transient) when we cannot
+	 * operate so that WordPress populates the checked/plugin data normally.
+	 *
+	 * @param  \stdClass|false $transient The update_plugins site transient.
+	 * @return \stdClass|false           Modified transient, or false to let WP handle it.
 	 */
-	public function inject_update( object $transient ): object {
-		if ( empty( $transient->checked ) ) {
-			return $transient;
-		}
-
+	public function inject_update( $transient ) {
 		$metadata = $this->get_metadata();
 		if ( null === $metadata ) {
-			return $transient;
+			return false;
 		}
 
 		$remote_version = $metadata->version;
 
 		if ( version_compare( $remote_version, MM_VERSION, '>' ) ) {
+			// Ensure transient is an object we can modify.
+			if ( ! is_object( $transient ) ) {
+				$transient = new \stdClass();
+			}
+			if ( ! isset( $transient->response ) ) {
+				$transient->response = new \stdClass();
+			}
+
 			$transient->response[ $this->plugin_basename ] = (object) [
 				'id'            => 'metamanager/apt-server',
 				'slug'          => 'metamanager',
@@ -173,21 +181,15 @@ class MM_Updater {
 				'tested'        => $metadata->requires->wordpress ?? '6.2',
 				'requires'      => $metadata->requires->wordpress ?? '6.2',
 				'requires_php'  => $metadata->requires->php ?? '8.0',
-				'compatibility' => new stdClass(),
+				'compatibility' => new \stdClass(),
 			];
-		} else {
-			// No update — ensure we are flagged as up-to-date so WP hides old notices.
-			$transient->no_update[ $this->plugin_basename ] = (object) [
-				'id'          => 'metamanager/apt-server',
-				'slug'        => 'metamanager',
-				'plugin'      => $this->plugin_basename,
-				'new_version' => MM_VERSION,
-				'url'         => 'https://github.com/richardkentgates/metamanager',
-				'package'     => '',
-			];
+
+			return $transient;
 		}
 
-		return $transient;
+		// No update available — return false so WordPress runs its normal
+		// update check and populates the transient correctly.
+		return false;
 	}
 
 	/**
