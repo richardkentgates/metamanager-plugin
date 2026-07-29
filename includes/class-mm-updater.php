@@ -115,6 +115,20 @@ class MM_Updater {
 			return null;
 		}
 
+		// Ensure requires object exists with php and wordpress keys.
+		if ( empty( $metadata->requires ) || ! is_object( $metadata->requires ) ) {
+			$metadata->requires = (object) [
+				'php'      => '8.0',
+				'wordpress' => '6.2',
+			];
+		}
+		if ( empty( $metadata->requires->php ) ) {
+			$metadata->requires->php = '8.0';
+		}
+		if ( empty( $metadata->requires->wordpress ) ) {
+			$metadata->requires->wordpress = '6.2';
+		}
+
 		set_transient( self::TRANSIENT, $metadata, self::CACHE_TTL );
 		return $metadata;
 	}
@@ -359,6 +373,10 @@ class MM_Updater {
 		if ( ! in_array( $this->plugin_basename, (array) $updated_plugins, true ) ) {
 			return;
 		}
+
+		// Clear stale metadata cache so the next check fetches fresh data.
+		delete_transient( self::TRANSIENT );
+		delete_site_transient( 'update_plugins' );
 
 		// Trigger automatic daemon update.
 		$daemon_result = MM_Daemon_Updater::handle_plugin_update();

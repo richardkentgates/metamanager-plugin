@@ -341,6 +341,11 @@ class MM_Site_Settings {
 				'feed_copyright'           => '',
 			],
 
+			'discovery' => [
+				'llms_txt_enabled' => true,
+				'mcp_server'       => true,
+			],
+
 		];
 	}
 

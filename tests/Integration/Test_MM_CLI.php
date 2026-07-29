@@ -2,47 +2,13 @@
 /**
  * Integration tests for MM_CLI.
  *
- * WP-CLI is not available in the WP test environment, so this file defines
- * minimal stubs and loads class-mm-cli.php directly.
- *
- * The WP_CLI\Utils stubs live in tests/stubs/wp-cli-utils.php (separate file)
- * so this file contains no namespace declarations and remains Intelephense-clean.
+ * WP-CLI stubs are defined in tests/bootstrap.php before the plugin loads,
+ * so class-mm-cli.php defines its class normally.
  *
  * @package Metamanager\Tests\Integration
  */
 
 defined( 'ABSPATH' ) || exit;
-
-if ( ! defined( 'WP_CLI' ) ) {
-define( 'WP_CLI', true );
-}
-
-if ( ! class_exists( 'WP_CLI_Command' ) ) {
-class WP_CLI_Command {} // phpcs:ignore Generic.Classes.OpeningBraceSameLine
-}
-
-if ( ! class_exists( 'WP_CLI' ) ) {
-class WP_CLI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
-public static array $output = [];
-
-public static function success( string $msg ): void {
-self::$output[] = [ 'type' => 'success', 'msg' => $msg ];
-}
-public static function error( string $msg, bool $exit = true ): void {
-self::$output[] = [ 'type' => 'error', 'msg' => $msg ];
-if ( $exit ) {
-throw new RuntimeException( 'WP_CLI::error: ' . esc_html( $msg ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- test stub, not user-facing output
-}
-}
-public static function line( string $msg = '' ): void {
-self::$output[] = [ 'type' => 'line', 'msg' => $msg ];
-}
-public static function add_command(): void {}
-}
-}
-
-require_once dirname( __DIR__ ) . '/stubs/wp-cli-utils.php';
-require dirname( __DIR__, 2 ) . '/includes/class-mm-cli.php';
 
 /**
  * @covers MM_CLI

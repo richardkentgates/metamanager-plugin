@@ -21,6 +21,10 @@
   },
   "scripts": {
     "analyse": "phpstan analyse --configuration phpstan.neon",
-    "phpunit": "phpunit --configuration tests/phpunit.xml"
+    "phpunit": "phpunit --configuration phpunit.xml",
+    "phpunit-unit": "phpunit --configuration phpunit.xml --testsuite Unit",
+    "phpunit-integration": "phpunit --configuration phpunit.xml --testsuite Integration",
+    "lint": "find . -name '*.php' -not -path './vendor/*' -not -path './tests/*' -not -path './stubs/*' -exec php -l {} \\; 2>&1 | grep -v 'No syntax errors' || echo 'All files OK'",
+    "test": ["phpunit"]
   }
 }
