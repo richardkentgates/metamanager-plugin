@@ -156,7 +156,8 @@ class MM_Updater {
 				'icons'         => [],
 				'banners'       => [],
 				'banners_rtl'   => [],
-				'tested'        => '',
+				'tested'        => $metadata->requires->wordpress ?? '6.2',
+				'requires'      => $metadata->requires->wordpress ?? '6.2',
 				'requires_php'  => $metadata->requires->php ?? '8.0',
 				'compatibility' => new stdClass(),
 			];
