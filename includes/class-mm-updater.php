@@ -362,7 +362,7 @@ class MM_Updater {
 		// Trigger automatic daemon update.
 		$daemon_result = MM_Daemon_Updater::handle_plugin_update();
 
-		if ( $daemon_result['update_needed'] && $daemon_result['result']['success'] ) {
+		if ( $daemon_result['update_needed'] && ! $daemon_result['result']['success'] ) {
 			set_transient( 'mm_daemon_restart_notice', '1', 7 * DAY_IN_SECONDS );
 		}
 	}
