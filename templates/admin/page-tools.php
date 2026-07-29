@@ -46,6 +46,20 @@ defined( 'ABSPATH' ) || exit;
 	<h2>System Info</h2>
 	<table class="form-table gcm-form-table">
 		<tr><th>Plugin Version</th><td><?php echo esc_html(MM_META_VERSION); ?></td></tr>
+		<?php
+		$daemon = MM_Daemon_Updater::diagnose();
+		if ( 'ok' === $daemon['status'] ) {
+			printf( '<tr><th>Daemon Version</th><td><span style="color:green">✓ %s</span></td></tr>', esc_html( $daemon['current'] ) );
+		} elseif ( 'mismatch' === $daemon['status'] ) {
+			printf(
+				'<tr><th>Daemon Version</th><td><span style="color:orange">✗ Installed: %s — Expected: %s</span></td></tr>',
+				esc_html( $daemon['current'] ?? 'unknown' ),
+				esc_html( $daemon['required'] ?? 'unknown' )
+			);
+		} else {
+			printf( '<tr><th>Daemon Version</th><td><span style="color:red">✗ %s</span></td></tr>', esc_html( $daemon['message'] ) );
+		}
+		?>
 		<tr><th>WordPress Version</th><td><?php echo esc_html(get_bloginfo('version')); ?></td></tr>
 		<tr><th>PHP Version</th><td><?php echo esc_html(PHP_VERSION); ?></td></tr>
 		<tr><th>Home URL</th><td><code><?php echo esc_html(home_url()); ?></code></td></tr>
