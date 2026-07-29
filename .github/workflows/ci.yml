@@ -88,4 +88,4 @@ jobs:
           WP_TESTS_TAG: ${{ matrix.wp }}
 
       - name: Run PHPUnit
-        run: phpunit --configuration tests/phpunit.xml
+        run: phpunit --configuration phpunit.xml --testsuite Integration

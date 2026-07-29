@@ -79,26 +79,34 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	private function add_navigation_node( array &$data ): void {
-		$menus = wp_get_nav_menus();
-		if ( empty( $menus ) ) {
+		// Find the menu designated as primary (checkbox on menu edit screen).
+		$primary = get_posts( [
+			'post_type'   => 'nav_menu',
+			'meta_key'    => '_mm_nav_menu_primary',
+			'meta_value'  => '1',
+			'numberposts' => 1,
+		] );
+
+		if ( empty( $primary ) ) {
+			// No menu checked — no navigation schema.
+			return;
+		}
+
+		$menu_term_id = $primary[0]->ID;
+		$menu_items   = wp_get_nav_menu_items( $menu_term_id );
+		if ( ! is_array( $menu_items ) || empty( $menu_items ) ) {
 			return;
 		}
 
 		$nav_items = [];
-		foreach ( $menus as $menu ) {
-			$menu_items = wp_get_nav_menu_items( $menu );
-			if ( ! is_array( $menu_items ) ) {
-				continue;
-			}
-			foreach ( $menu_items as $item ) {
-				if ( $item->url && $item->title ) {
-					$nav_items[] = [
-						'@type'    => 'SiteNavigationElement',
-						'name'     => $item->title,
-						'url'      => $item->url,
-						'position' => count( $nav_items ) + 1,
-					];
-				}
+		foreach ( $menu_items as $item ) {
+			if ( $item->url && $item->title ) {
+				$nav_items[] = [
+					'@type'    => 'SiteNavigationElement',
+					'name'     => $item->title,
+					'url'      => $item->url,
+					'position' => count( $nav_items ) + 1,
+				];
 			}
 		}
 
@@ -106,10 +114,12 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			return;
 		}
 
+		$menu_name = get_the_title( $menu_term_id ) ?: 'Main Navigation';
+
 		$this->add_node( $data, [
 			'@type'   => 'SiteNavigationElement',
 			'@id'     => $this->site_id( 'navigation' ),
-			'name'    => 'Main Navigation',
+			'name'    => $menu_name,
 			'hasPart' => $nav_items,
 		] );
 

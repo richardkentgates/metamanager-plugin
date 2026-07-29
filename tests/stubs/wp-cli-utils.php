@@ -1,30 +1,32 @@
 <?php
 /**
- * Minimal stubs for the WP_CLI\Utils namespace.
+ * WP_CLI utility stubs for the PHPUnit test environment.
  *
- * Loaded by Test_MM_CLI.php so that class-mm-cli.php can be required in a
- * plain-namespace test file without mixing namespace blocks.
- *
- * Bracketed namespace syntax is required so the ABSPATH guard can appear
- * before the named namespace declaration (PHP requires namespace to be
- * the first statement; a global namespace block satisfies this).
+ * Loaded by tests/bootstrap.php before the plugin, so class-mm-cli.php
+ * and class-mm-metadata-cli.php can define their classes.
  *
  * @package Metamanager\Tests\Stubs
  */
 
-// phpcs:ignore WordPress.NamingConventions -- mixed global/named namespace blocks required here.
-namespace {
-	defined( 'ABSPATH' ) || exit;
-}
+namespace WP_CLI\Utils;
 
-namespace WP_CLI\Utils {
-
-	function make_progress_bar( string $msg, int $count ): object {
-		return new class {
+if ( ! function_exists( 'WP_CLI\Utils\make_progress_bar' ) ) {
+	/**
+	 * Stub for WP_CLI\Utils\make_progress_bar().
+	 */
+	function make_progress_bar( string $message, int $count = 0 ) {
+		return new class( $message, $count ) {
+			public function __construct( string $message, int $count ) {}
 			public function tick(): void {}
 			public function finish(): void {}
+			public function display(): void {}
 		};
 	}
+}
 
+if ( ! function_exists( 'WP_CLI\Utils\format_items' ) ) {
+	/**
+	 * Stub for WP_CLI\Utils\format_items().
+	 */
 	function format_items( string $format, array $items, array $columns ): void {}
 }
