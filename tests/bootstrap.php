@@ -49,6 +49,9 @@ if ( ! class_exists( 'WP_CLI' ) ) {
 	}
 }
 
+// Load WP_CLI utility stubs (functions can't be in conditional blocks in PHP).
+require_once __DIR__ . '/stubs/wp-cli-utils.php';
+
 // Register the plugin to load after WordPress is initialized.
 tests_add_filter( 'muplugins_loaded', function () {
     require_once dirname( __DIR__ ) . '/metamanager.php';
