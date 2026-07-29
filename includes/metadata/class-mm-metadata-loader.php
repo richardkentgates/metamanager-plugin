@@ -42,6 +42,11 @@ class MM_Metadata_Loader {
 		( new MM_Mod_Html_Sitemap( $this->settings ) )->register_hooks();
 		( new MM_Mod_Business_Contact( $this->settings ) )->register_hooks();
 		( new MM_Mod_Rss( $this->settings ) )->register_hooks();
+		( new MM_Mod_Discovery( $this->settings ) )->register_hooks();
+
+		// --- AI integration (Abilities API + MCP) ------------------------------
+		( new MM_Abilities() )->register_hooks();
+		( new MM_MCP_Server() )->register_hooks();
 
 		// --- Admin ---------------------------------------------------------------
 		if ( is_admin() ) {
@@ -49,6 +54,7 @@ class MM_Metadata_Loader {
 			( new MM_Post_Meta_Panel( $this->settings ) )->register_hooks();
 			( new MM_Term_Meta_Panel( $this->settings ) )->register_hooks();
 			( new MM_User_Meta_Panel( $this->settings ) )->register_hooks();
+			( new MM_Nav_Menu_Admin() )->register_hooks();
 		}
 	}
 

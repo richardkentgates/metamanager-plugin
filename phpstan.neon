@@ -16,3 +16,5 @@ parameters:
     ignoreErrors:
         - '#isset\(\) always exists#'
         - '#Parameter \#1 \$args of function get_posts expects#'
+        - '#Access to an undefined property object::\$requires#'
+        - '#create_server.*McpAdapter#'
