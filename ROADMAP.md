@@ -8,8 +8,8 @@ Complete audit findings from 100% code read of both repos, contrasted against al
 
 | Repo | Branch | Version | Purpose |
 |------|--------|---------|---------|
-| `metamanager-plugin` | dev/test/main | 2.3.12 | WordPress plugin: metadata sync, frontend output, admin UI, job queue, web-layer SEO |
-| `metamanager` | dev/test/main | 2.4.7 | Daemon scripts (meta embed, compression), apt server deployment, systemd units |
+| `metamanager-plugin` | dev/test/main | Auto-bumped by CI | WordPress plugin: metadata sync, frontend output, admin UI, job queue, web-layer SEO |
+| `metamanager` | dev/test/main | Auto-bumped by CI | Daemon scripts (meta embed, compression), apt server deployment, systemd units |
 
 ## Architecture
 
@@ -152,6 +152,7 @@ Both are needed. They handle different concerns.
 **Source:** `metamanager/ARCHITECTURE.md:369-374`
 **Impact:** Daemon documented as `2.4.4-1`, actual is `2.4.7-1`. Plugin documented as `2.3.2`.
 **Fix:** Update version table or add note that versions are illustrative.
+**Status:** Fixed — table now shows format placeholders with "auto-bumped by CI" note.
 
 ### D7: Server SECURITY.md says "1.x" is supported
 **Source:** `metamanager/SECURITY.md`
@@ -322,9 +323,8 @@ Both are needed. They handle different concerns.
 
 ## Current Versions
 
-- Plugin: **2.3.12** (dev/test/main)
-- Server: **2.4.7** (dev/test/main)
-- Production: v2.4.7-1 daemon .deb, plugin v2.3.12
+- Plugin: Auto-bumped by CI on dev push (see `MM_VERSION` in `metamanager.php`)
+- Server: Auto-bumped by CI on dev push (see `debian/changelog` and `VERSION`)
 - Apt server: `34.136.87.92` (apt.richardkentgates.com)
 - Production site: `104.197.172.183`
 
