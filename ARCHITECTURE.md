@@ -89,7 +89,7 @@ metamanager/
 
 | Constant | Value | Purpose |
 |----------|-------|---------|
-| `MM_VERSION` | `'2.1.7'` | Displayed in help sidebars; used by the updater |
+| `MM_VERSION` | Auto-bumped by CI | Displayed in help sidebars; used by the updater |
 | `MM_PLUGIN_FILE` | `__FILE__` | Passed to activation/deactivation hooks |
 | `MM_PLUGIN_DIR` | `plugin_dir_path(__FILE__)` | Absolute filesystem path |
 | `MM_PLUGIN_URL` | `plugin_dir_url(__FILE__)` | URL for enqueuing assets |

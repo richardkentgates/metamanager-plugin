@@ -63,12 +63,18 @@ class MM_Daemon_Updater {
 	 * Read the compatibility map and return the required daemon version
 	 * for the current plugin version.
 	 *
-	 * @return string|null Required daemon version, or null if not in map.
+	 * @return array{required: string|null, map_exists: bool, version_in_map: bool, raw_map: array}
 	 */
-	public static function get_required_daemon_version(): ?string {
+	public static function get_required_daemon_version(): array {
 		$map_file = MM_PLUGIN_DIR . self::COMPAT_MAP_FILE;
+
 		if ( ! file_exists( $map_file ) ) {
-			return null;
+			return [
+				'required'       => null,
+				'map_exists'     => false,
+				'version_in_map' => false,
+				'raw_map'        => [],
+			];
 		}
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
@@ -76,10 +82,111 @@ class MM_Daemon_Updater {
 		$map  = json_decode( $json, true );
 
 		if ( ! is_array( $map ) ) {
-			return null;
+			return [
+				'required'       => null,
+				'map_exists'     => true,
+				'version_in_map' => false,
+				'raw_map'        => [],
+			];
 		}
 
-		return $map[ MM_VERSION ] ?? null;
+		$version_in_map = isset( $map[ MM_VERSION ] );
+
+		return [
+			'required'       => $map[ MM_VERSION ] ?? null,
+			'map_exists'     => true,
+			'version_in_map' => $version_in_map,
+			'raw_map'        => $map,
+		];
+	}
+
+	/**
+	 * Diagnose the current version state.
+	 *
+	 * Returns a structured array describing exactly what is wrong (if anything),
+	 * so callers can produce clear, specific error messages.
+	 *
+	 * @return array{status: string, message: string, current: string|null, required: string|null}
+	 */
+	public static function diagnose(): array {
+		$current = self::get_daemon_version();
+		$info    = self::get_required_daemon_version();
+
+		// Case 1: VERSION file missing.
+		if ( null === $current && ! file_exists( self::DAEMON_VERSION_FILE ) ) {
+			return [
+				'status'   => 'error',
+				'message'  => sprintf(
+					'Daemon VERSION file not found at %s. The daemon package may not be installed.',
+					self::DAEMON_VERSION_FILE
+				),
+				'current'  => null,
+				'required' => null,
+			];
+		}
+
+		// Case 2: VERSION file exists but unreadable/empty.
+		if ( null === $current ) {
+			return [
+				'status'   => 'error',
+				'message'  => sprintf(
+					'Daemon VERSION file exists at %s but is empty or unreadable.',
+					self::DAEMON_VERSION_FILE
+				),
+				'current'  => null,
+				'required' => null,
+			];
+		}
+
+		// Case 3: Compatibility map file missing.
+		if ( ! $info['map_exists'] ) {
+			return [
+				'status'   => 'error',
+				'message'  => sprintf(
+					'Compatibility map not found at %s. Cannot determine required daemon version for plugin v%s.',
+					MM_PLUGIN_DIR . self::COMPAT_MAP_FILE,
+					MM_VERSION
+				),
+				'current'  => $current,
+				'required' => null,
+			];
+		}
+
+		// Case 4: Plugin version not in compatibility map.
+		if ( ! $info['version_in_map'] ) {
+			return [
+				'status'   => 'error',
+				'message'  => sprintf(
+					'Plugin v%s is not listed in daemon-compatibility.json. Add an entry mapping "%s" to the correct daemon version.',
+					MM_VERSION,
+					MM_VERSION
+				),
+				'current'  => $current,
+				'required' => null,
+			];
+		}
+
+		// Case 5: Versions match — everything is fine.
+		if ( $current === $info['required'] ) {
+			return [
+				'status'   => 'ok',
+				'message'  => sprintf( 'Daemon v%s is up to date.', $current ),
+				'current'  => $current,
+				'required' => $info['required'],
+			];
+		}
+
+		// Case 6: Version mismatch — update needed.
+		return [
+			'status'   => 'mismatch',
+			'message'  => sprintf(
+				'Daemon version mismatch: installed v%s, required v%s.',
+				$current,
+				$info['required']
+			),
+			'current'  => $current,
+			'required' => $info['required'],
+		];
 	}
 
 	/**
@@ -88,13 +195,12 @@ class MM_Daemon_Updater {
 	 * @return array{match: bool, current: string|null, required: string|null}
 	 */
 	public static function check_version(): array {
-		$current  = self::get_daemon_version();
-		$required = self::get_required_daemon_version();
+		$diagnosis = self::diagnose();
 
 		return [
-			'match'    => ( $current !== null && $required !== null && $current === $required ),
-			'current'  => $current,
-			'required' => $required,
+			'match'    => ( 'ok' === $diagnosis['status'] ),
+			'current'  => $diagnosis['current'],
+			'required' => $diagnosis['required'],
 		];
 	}
 
@@ -135,7 +241,7 @@ class MM_Daemon_Updater {
 	 */
 	public static function trigger_update(): array {
 		if ( ! self::exec_available() ) {
-			$message = 'PHP exec() is disabled. Cannot trigger daemon update automatically.';
+			$message = 'PHP exec() is disabled. Cannot trigger daemon update automatically. Enable exec() or update the daemon manually via: sudo apt-get install -y metamanager';
 			self::log_wordpress( $message, 'error' );
 			self::log_os( "daemon-update/error: {$message}" );
 			self::store_result( false, $message, '' );
@@ -148,10 +254,10 @@ class MM_Daemon_Updater {
 		}
 
 		$commands = [
-			'update'          => 'sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq',
-			'install'         => 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq metamanager',
+			'update'           => 'sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq',
+			'install'          => 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq metamanager',
 			'restart-compress' => 'sudo systemctl restart metamanager-compress-daemon',
-			'restart-meta'    => 'sudo systemctl restart metamanager-meta-daemon',
+			'restart-meta'     => 'sudo systemctl restart metamanager-meta-daemon',
 		];
 
 		$output = '';
@@ -168,7 +274,11 @@ class MM_Daemon_Updater {
 			self::log_os( "daemon-update/{$step}: exit={$exit} " . trim( $step_out ) );
 
 			if ( $exit !== 0 ) {
-				$message = "Daemon update failed at step '{$step}' (exit code {$exit}).";
+				$message = sprintf(
+					'Daemon update failed at step "%s" (exit code %d). Check /var/log/metamanager-update.log for details.',
+					$step,
+					$exit
+				);
 				self::log_wordpress( $message, 'error' );
 				self::store_result( false, $message, $output );
 
@@ -182,12 +292,25 @@ class MM_Daemon_Updater {
 
 		// Verify the new version matches expectations.
 		$new_version = self::get_daemon_version();
-		$required    = self::get_required_daemon_version();
+		$info        = self::get_required_daemon_version();
+		$required    = $info['required'];
+
+		if ( null === $new_version ) {
+			$message = 'Daemon update completed but VERSION file is now unreadable. The daemon may not be installed correctly.';
+			self::log_wordpress( $message, 'error' );
+			self::store_result( false, $message, $output );
+
+			return [
+				'success' => false,
+				'message' => $message,
+				'output'  => $output,
+			];
+		}
 
 		if ( $new_version !== $required ) {
 			$message = sprintf(
-				'Daemon updated but version mismatch: got %s, expected %s.',
-				$new_version ?? 'unknown',
+				'Daemon update completed but version mismatch persists: installed v%s, required v%s. The apt repository may not have the required version yet.',
+				$new_version,
 				$required ?? 'unknown'
 			);
 			self::log_wordpress( $message, 'warning' );
@@ -218,16 +341,18 @@ class MM_Daemon_Updater {
 	/**
 	 * Handle post-plugin-update logic.
 	 *
-	 * Called by MM_Updater::on_plugin_updated(). Checks version compatibility
-	 * and triggers daemon update if needed.
+	 * Called by MM_Updater::on_plugin_updated(). Diagnoses the version state
+	 * and triggers daemon update only when there is a real version mismatch.
+	 * Produces clear error messages for infrastructure problems (missing files,
+	 * missing map entries) instead of running unnecessary apt upgrades.
 	 *
 	 * @return array{update_needed: bool, result: array|null}
 	 */
 	public static function handle_plugin_update(): array {
-		$check = self::check_version();
+		$diagnosis = self::diagnose();
 
-		if ( $check['match'] ) {
-			// Clear any stale error from a previous failed update attempt.
+		// Versions match — clear any stale error and exit.
+		if ( 'ok' === $diagnosis['status'] ) {
 			$previous = get_option( self::OPTION_RESULT );
 			if ( ! empty( $previous ) && empty( $previous['success'] ) ) {
 				delete_option( self::OPTION_RESULT );
@@ -239,11 +364,29 @@ class MM_Daemon_Updater {
 			];
 		}
 
+		// Infrastructure error (missing VERSION file, missing map, version not in map).
+		// Store the error but do NOT run apt — it won't help.
+		if ( 'error' === $diagnosis['status'] ) {
+			self::log_wordpress( $diagnosis['message'], 'error' );
+			self::log_os( 'daemon-update/error: ' . $diagnosis['message'] );
+			self::store_result( false, $diagnosis['message'], '' );
+
+			return [
+				'update_needed' => false,
+				'result'       => [
+					'success' => false,
+					'message' => $diagnosis['message'],
+					'output'  => '',
+				],
+			];
+		}
+
+		// Actual version mismatch — trigger the update.
 		self::log_wordpress(
 			sprintf(
 				'Daemon version mismatch detected: installed=%s, required=%s. Triggering update.',
-				$check['current'] ?? 'unknown',
-				$check['required'] ?? 'unknown'
+				$diagnosis['current'] ?? 'unknown',
+				$diagnosis['required'] ?? 'unknown'
 			),
 			'info'
 		);
@@ -357,11 +500,15 @@ class MM_Daemon_Updater {
 			);
 			delete_option( self::OPTION_RESULT );
 		} else {
+			$log_hint = ! empty( $result['output'] )
+				? esc_html__( 'Check /var/log/metamanager-update.log for details.', 'metamanager' )
+				: esc_html__( 'No update was attempted — fix the issue above and re-save to retry.', 'metamanager' );
+
 			printf(
 				'<div class="notice notice-error"><p><strong>%s</strong> %s</p><p>%s</p></div>',
 				esc_html__( 'Metamanager:', 'metamanager' ),
 				esc_html( $result['message'] ),
-				esc_html__( 'Check /var/log/metamanager-update.log for details.', 'metamanager' )
+				$log_hint
 			);
 			// Do NOT delete — error persists until resolved.
 		}
