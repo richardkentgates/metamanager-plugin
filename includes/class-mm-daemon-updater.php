@@ -227,6 +227,12 @@ class MM_Daemon_Updater {
 		$check = self::check_version();
 
 		if ( $check['match'] ) {
+			// Clear any stale error from a previous failed update attempt.
+			$previous = get_option( self::OPTION_RESULT );
+			if ( ! empty( $previous ) && empty( $previous['success'] ) ) {
+				delete_option( self::OPTION_RESULT );
+			}
+
 			return [
 				'update_needed' => false,
 				'result'       => null,
