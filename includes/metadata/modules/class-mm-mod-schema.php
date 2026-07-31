@@ -80,19 +80,24 @@ class MM_Mod_Schema extends MM_Mod_Base {
 
 	private function add_navigation_node( array &$data ): void {
 		// Find the menu designated as primary (checkbox on menu edit screen).
-		$primary = get_posts( [
-			'post_type'   => 'nav_menu',
-			'meta_key'    => '_mm_nav_menu_primary',
-			'meta_value'  => '1',
-			'numberposts' => 1,
+		$primary = get_terms( [
+			'taxonomy'   => 'nav_menu',
+			'meta_query' => [
+				[
+					'key'   => '_mm_nav_menu_primary',
+					'value' => '1',
+				],
+			],
+			'number'     => 1,
+			'hide_empty' => false,
 		] );
 
-		if ( empty( $primary ) ) {
+		if ( is_wp_error( $primary ) || empty( $primary ) ) {
 			// No menu checked — no navigation schema.
 			return;
 		}
 
-		$menu_term_id = $primary[0]->ID;
+		$menu_term_id = (int) $primary[0]->term_id;
 		$menu_items   = wp_get_nav_menu_items( $menu_term_id );
 		if ( ! is_array( $menu_items ) || empty( $menu_items ) ) {
 			return;
@@ -114,7 +119,8 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			return;
 		}
 
-		$menu_name = get_the_title( $menu_term_id ) ?: 'Main Navigation';
+		$menu_obj  = get_term( $menu_term_id, 'nav_menu' );
+		$menu_name = ( $menu_obj && ! is_wp_error( $menu_obj ) ) ? $menu_obj->name : 'Main Navigation';
 
 		$this->add_node( $data, [
 			'@type'   => 'SiteNavigationElement',
