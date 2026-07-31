@@ -46,10 +46,6 @@ class MM_Sitemap {
 	const OPT_IMAGES            = 'mm_sitemap_images';
 	/** bool — serve /sitemap-video.xml at all (default true). */
 	const OPT_VIDEO             = 'mm_sitemap_video';
-	/** bool — extract YouTube embeds for /sitemap-video.xml (default true). */
-	const OPT_VIDEO_YOUTUBE     = 'mm_sitemap_video_youtube';
-	/** bool — extract Vimeo embeds for /sitemap-video.xml (default true). */
-	const OPT_VIDEO_VIMEO       = 'mm_sitemap_video_vimeo';
 	/** bool — extract self-hosted <video> tags for /sitemap-video.xml (default true). */
 	const OPT_VIDEO_SELFHOSTED  = 'mm_sitemap_video_selfhosted';
 	/** bool — serve /sitemap-media.xml at all (default true). */
@@ -168,14 +164,12 @@ class MM_Sitemap {
 	 * @return string  Complete XML document.
 	 */
 	private static function render_video_sitemap(): string {
-		$yt_enabled   = (bool) get_option( self::OPT_VIDEO_YOUTUBE, true );
-		$vimeo_enabled = (bool) get_option( self::OPT_VIDEO_VIMEO, true );
 		$self_enabled  = (bool) get_option( self::OPT_VIDEO_SELFHOSTED, true );
 
 		$entries = []; // keyed by page permalink to deduplicate
 
-		// --- 1. Embedded video in published posts ---
-		if ( $yt_enabled || $vimeo_enabled || $self_enabled ) {
+		// --- 1. Self-hosted <video> tags in published posts ---
+		if ( $self_enabled ) {
 			$posts = get_posts( [
 				'post_type'      => 'post',
 				'post_status'    => 'publish',
@@ -189,15 +183,7 @@ class MM_Sitemap {
 					continue;
 				}
 
-				$videos = [];
-
-				if ( $yt_enabled || $vimeo_enabled ) {
-					$videos = array_merge( $videos, self::extract_embed_videos( $post, $yt_enabled, $vimeo_enabled ) );
-				}
-
-				if ( $self_enabled ) {
-					$videos = array_merge( $videos, self::extract_selfhosted_videos( $post ) );
-				}
+				$videos = self::extract_selfhosted_videos( $post );
 
 				if ( $videos ) {
 					$entries[ $permalink ] = $videos;
@@ -249,71 +235,6 @@ class MM_Sitemap {
 	// -----------------------------------------------------------------------
 	// Video extraction helpers
 	// -----------------------------------------------------------------------
-
-	/**
-	 * Extract YouTube and/or Vimeo embedded video records from a post.
-	 *
-	 * @param  WP_Post $post           The post to scan.
-	 * @param  bool    $yt_enabled     Whether to look for YouTube embeds.
-	 * @param  bool    $vimeo_enabled  Whether to look for Vimeo embeds.
-	 * @return array[]                 Video record arrays.
-	 */
-	private static function extract_embed_videos( WP_Post $post, bool $yt_enabled, bool $vimeo_enabled ): array {
-		$content = $post->post_content;
-		$records = [];
-
-		if ( $yt_enabled ) {
-			preg_match_all(
-				'/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/',
-				$content,
-				$matches
-			);
-			foreach ( array_unique( $matches[1] ) as $id ) {
-				$watch_url = 'https://www.youtube.com/watch?v=' . $id;
-				$oembed    = self::get_cached_oembed( $watch_url );
-				$records[] = [
-					'thumbnail'   => $oembed['thumbnail_url'] ?? 'https://img.youtube.com/vi/' . $id . '/hqdefault.jpg',
-					'title'       => $oembed['title'] ?? get_the_title( $post ),
-					'description' => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 20, '' ) ),
-					'player_loc'  => 'https://www.youtube.com/embed/' . $id,
-					'content_loc' => '',
-					'duration'    => isset( $oembed['duration'] ) ? (int) $oembed['duration'] : null,
-					'pub_date'    => null,
-					'rating'      => null,
-					'tags'        => [],
-					'uploader'    => null,
-					'uploader_url'=> null,
-				];
-			}
-		}
-
-		if ( $vimeo_enabled ) {
-			preg_match_all(
-				'/vimeo\.com\/(?:video\/)?(\d+)/',
-				$content,
-				$matches
-			);
-			foreach ( array_unique( $matches[1] ) as $id ) {
-				$vimeo_url = 'https://vimeo.com/' . $id;
-				$oembed    = self::get_cached_oembed( $vimeo_url );
-				$records[] = [
-					'thumbnail'   => $oembed['thumbnail_url'] ?? '',
-					'title'       => $oembed['title'] ?? get_the_title( $post ),
-					'description' => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 20, '' ) ),
-					'player_loc'  => 'https://player.vimeo.com/video/' . $id,
-					'content_loc' => '',
-					'duration'    => isset( $oembed['duration'] ) ? (int) $oembed['duration'] : null,
-					'pub_date'    => null,
-					'rating'      => null,
-					'tags'        => [],
-					'uploader'    => null,
-					'uploader_url'=> null,
-				];
-			}
-		}
-
-		return $records;
-	}
 
 	/**
 	 * Extract self-hosted video records from a post's content.
@@ -428,30 +349,6 @@ class MM_Sitemap {
 		}
 
 		return $record;
-	}
-
-	/**
-	 * Fetch oEmbed data for a remote video URL, caching the result for one week.
-	 *
-	 * @param  string $url  The canonical video URL (watch page or profile page).
-	 * @return array        oEmbed response fields, or an empty array on failure.
-	 */
-	private static function get_cached_oembed( string $url ): array {
-		$cache_key = 'mm_oembed_' . md5( $url );
-		$cached    = get_transient( $cache_key );
-		if ( false !== $cached ) {
-			return (array) $cached;
-		}
-
-		$oembed = _wp_oembed_get_object();
-		$data   = $oembed->get_data( $url, [] );
-		$result = is_object( $data ) ? (array) $data : [];
-
-		if ( $result ) {
-			set_transient( $cache_key, $result, WEEK_IN_SECONDS );
-		}
-
-		return $result;
 	}
 
 	/**
@@ -740,7 +637,7 @@ class MM_Sitemap {
 				. '<p>' . esc_html__( 'Lists all attachment pages for images, video, audio, and PDF files. Image entries include title, caption, license URL (when Copyright is a URL), and GPS location when available. Video entries include duration, keywords, rating, publication date, and uploader.', 'metamanager' ) . '</p>'
 				. '<h3>' . esc_html__( 'Video sitemap', 'metamanager' ) . '</h3>'
 				. '<p><code>' . esc_html( $video_url ) . '</code></p>'
-				. '<p>' . esc_html__( 'Covers three sources: YouTube embeds, Vimeo embeds, and self-hosted &lt;video&gt; tags found in published post content, plus video attachment pages. oEmbed data for YouTube and Vimeo is cached for one week. Duration, keywords, rating, and other video-specific tags are populated from Metamanager metadata for hosted video files.', 'metamanager' ) . '</p>'
+				. '<p>' . esc_html__( 'Covers two sources: self-hosted &lt;video&gt; tags found in published post content, plus video attachment pages. Duration, keywords, rating, and other video-specific tags are populated from Metamanager metadata for hosted video files.', 'metamanager' ) . '</p>'
 				. '<h3>' . esc_html__( 'Submitting to Google Search Console', 'metamanager' ) . '</h3>'
 				. '<ol>'
 				. '<li>' . esc_html__( 'Open Google Search Console and select your property.', 'metamanager' ) . '</li>'
@@ -774,8 +671,6 @@ class MM_Sitemap {
 
 		register_setting( $group, self::OPT_IMAGES,           $bool );
 		register_setting( $group, self::OPT_VIDEO,            $bool );
-		register_setting( $group, self::OPT_VIDEO_YOUTUBE,    $bool );
-		register_setting( $group, self::OPT_VIDEO_VIMEO,      $bool );
 		register_setting( $group, self::OPT_VIDEO_SELFHOSTED, $bool );
 		register_setting( $group, self::OPT_MEDIA,            $bool );
 
@@ -786,7 +681,7 @@ class MM_Sitemap {
 				echo '<p>' . wp_kses(
 					sprintf(
 						/* translators: %1$s, %2$s: example sitemap URLs */
-						__( 'Metamanager generates two dedicated XML sitemaps: <code>%1$s</code> for media attachment pages and <code>%2$s</code> for video content. Submit these directly to Google Search Console alongside the main WordPress sitemap.', 'metamanager' ),
+						__( 'Metamanager generates two dedicated XML sitemaps: <code>%1$s</code> for media attachment pages and <code>%2$s</code> for self-hosted video content. Submit these directly to Google Search Console alongside the main WordPress sitemap.', 'metamanager' ),
 						esc_html( home_url( '/sitemap-media.xml' ) ),
 						esc_html( home_url( '/sitemap-video.xml' ) )
 					),
@@ -866,25 +761,17 @@ class MM_Sitemap {
 		echo '<fieldset style="margin-top:8px;padding-left:20px;">';
 		echo '<legend class="screen-reader-text">' . esc_html__( 'Video sources', 'metamanager' ) . '</legend>';
 
-		$sources = [
-			self::OPT_VIDEO_YOUTUBE    => __( 'YouTube embeds', 'metamanager' ),
-			self::OPT_VIDEO_VIMEO      => __( 'Vimeo embeds', 'metamanager' ),
-			self::OPT_VIDEO_SELFHOSTED => __( 'Self-hosted &lt;video&gt; tags', 'metamanager' ),
-		];
-
-		foreach ( $sources as $opt => $label ) {
-			$cb_checked = (bool) get_option( $opt, true );
-			printf(
-				'<label style="display:block;margin-bottom:4px;"><input type="checkbox" name="%s" value="1"%s> %s</label>',
-				esc_attr( $opt ),
-				checked( $cb_checked, true, false ),
-				wp_kses( $label, [] )
-			);
-		}
+		$self_checked = (bool) get_option( self::OPT_VIDEO_SELFHOSTED, true );
+		printf(
+			'<label style="display:block;margin-bottom:4px;"><input type="checkbox" name="%s" value="1"%s> %s</label>',
+			esc_attr( self::OPT_VIDEO_SELFHOSTED ),
+			checked( $self_checked, true, false ),
+			esc_html__( 'Self-hosted &lt;video&gt; tags found in post content', 'metamanager' )
+		);
 
 		echo '</fieldset>';
 		echo '<p class="description">'
-			. esc_html__( 'Video attachments are always included. The checkboxes above control extraction of embedded videos from post content.', 'metamanager' )
+			. esc_html__( 'Video attachment pages are always included. The checkbox above controls extraction of self-hosted video tags from post content.', 'metamanager' )
 			. '</p>';
 	}
 
