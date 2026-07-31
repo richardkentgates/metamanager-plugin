@@ -31,11 +31,12 @@ class MM_Nav_Menu_Admin {
 	/**
 	 * Render the checkbox inside the meta box.
 	 *
-	 * @param WP_Post $menu The nav_menu post object.
+	 * @param object $menu The nav_menu term object passed by WordPress.
 	 */
-	public function render_meta_box( WP_Post $menu ): void {
-		$checked = get_post_meta( $menu->ID, '_mm_nav_menu_primary', true );
-		wp_nonce_field( 'mm_nav_menu_primary_' . $menu->ID, '_mm_nav_menu_primary_nonce' );
+	public function render_meta_box( $menu ): void {
+		$term_id = is_object( $menu ) ? ( $menu->term_id ?? $menu->ID ?? 0 ) : 0;
+		$checked = get_term_meta( $term_id, '_mm_nav_menu_primary', true );
+		wp_nonce_field( 'mm_nav_menu_primary_' . $term_id, '_mm_nav_menu_primary_nonce' );
 		?>
 		<p>
 			<label>
@@ -54,7 +55,7 @@ class MM_Nav_Menu_Admin {
 	/**
 	 * Save the checkbox value when a menu is updated.
 	 *
-	 * @param int      $menu_id  The menu term ID (post ID).
+	 * @param int      $menu_id  The menu term ID.
 	 * @param int|null $menu_id_from_db Unused.
 	 * @param array    $menu_data Parsed menu data from the form.
 	 */
@@ -72,20 +73,28 @@ class MM_Nav_Menu_Admin {
 
 		if ( $is_primary ) {
 			// Uncheck any other menu that was previously primary.
-			$old_primary = get_posts( [
-				'post_type'   => 'nav_menu',
-				'meta_key'    => '_mm_nav_menu_primary',
-				'meta_value'  => '1',
-				'exclude'     => [ $menu_id ],
-				'numberposts' => -1,
+			$old_menus = get_terms( [
+				'taxonomy'   => 'nav_menu',
+				'meta_query' => [
+					[
+						'key'   => '_mm_nav_menu_primary',
+						'value' => '1',
+					],
+				],
+				'number'     => 0,
+				'hide_empty' => false,
 			] );
-			foreach ( $old_primary as $old ) {
-				delete_post_meta( $old->ID, '_mm_nav_menu_primary' );
+			if ( ! is_wp_error( $old_menus ) ) {
+				foreach ( $old_menus as $old ) {
+					if ( (int) $old->term_id !== $menu_id ) {
+						delete_term_meta( $old->term_id, '_mm_nav_menu_primary' );
+					}
+				}
 			}
 
-			update_post_meta( $menu_id, '_mm_nav_menu_primary', '1' );
+			update_term_meta( $menu_id, '_mm_nav_menu_primary', '1' );
 		} else {
-			delete_post_meta( $menu_id, '_mm_nav_menu_primary' );
+			delete_term_meta( $menu_id, '_mm_nav_menu_primary' );
 		}
 	}
 }
