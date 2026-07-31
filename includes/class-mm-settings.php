@@ -26,8 +26,6 @@
  *   mm_sitemap_media            — Serve /sitemap-media.xml (bool, default true).
  *   mm_sitemap_images           — Include <image:image> nodes in media sitemap (bool, default true).
  *   mm_sitemap_video            — Serve /sitemap-video.xml (bool, default true).
- *   mm_sitemap_video_youtube    — Extract YouTube embeds for video sitemap (bool, default true).
- *   mm_sitemap_video_vimeo      — Extract Vimeo embeds for video sitemap (bool, default true).
  *   mm_sitemap_video_selfhosted — Extract self-hosted <video> tags for video sitemap (bool, default true).
  *
  * @package Metamanager
@@ -126,7 +124,7 @@ class MM_Settings {
 		add_settings_section(
 			'mm_section_compression',
 			esc_html__( 'Compression', 'metamanager' ),
-			fn() => esc_html_e( 'Controls how aggressively PNG and WebP files are optimised. JPEG lossless compression is always at maximum quality and is unaffected by this setting.', 'metamanager' ),
+			fn() => esc_html_e( 'All compression is 100% lossless. This controls optimisation effort for PNG and WebP files — higher effort produces slightly smaller files but takes longer. JPEG compression is always at maximum lossless quality and is not affected by this setting.', 'metamanager' ),
 			'metamanager-settings'
 		);
 
@@ -287,11 +285,11 @@ class MM_Settings {
 		echo '<select id="mm_compress_level" name="' . esc_attr( self::OPTION_COMPRESS_LEVEL ) . '">';
 		for ( $i = 1; $i <= 7; $i++ ) {
 			$label = match ( $i ) {
-				1       => esc_html__( '1 — Minimal (fastest)', 'metamanager' ),
-				2       => esc_html__( '2 — Default (recommended)', 'metamanager' ),
-				3, 4, 5 => esc_html( (string) $i ),
-				6       => esc_html__( '6 — High', 'metamanager' ),
-				default => esc_html__( '7 — Maximum (slowest)', 'metamanager' ),
+				1       => esc_html__( '1 — Minimal effort (fastest)', 'metamanager' ),
+				2       => esc_html__( '2 — Default effort (recommended)', 'metamanager' ),
+				3, 4, 5 => esc_html( (string) $i . ' — Medium effort' ),
+				6       => esc_html__( '6 — High effort', 'metamanager' ),
+				default => esc_html__( '7 — Maximum effort (slowest)', 'metamanager' ),
 			};
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $i is an integer; esc_html() on $label is idempotent (pre-escaped in match above)
 			printf(
@@ -302,7 +300,7 @@ class MM_Settings {
 			);
 		}
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Applied to optipng (PNG) and cwebp (WebP). Higher levels produce smaller files but take longer.', 'metamanager' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'All compression is lossless — this controls optimisation effort for PNG (optipng) and WebP (cwebp). JPEG is always compressed at maximum lossless quality. Higher effort produces slightly smaller files but takes longer.', 'metamanager' ) . '</p>';
 	}
 
 	public static function field_notify_enabled(): void {

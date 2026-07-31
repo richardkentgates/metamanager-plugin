@@ -41,8 +41,6 @@ function _mm_uninstall_site(): void {
 		'mm_sitemap_media',
 		'mm_sitemap_images',
 		'mm_sitemap_video',
-		'mm_sitemap_video_youtube',
-		'mm_sitemap_video_vimeo',
 		'mm_sitemap_video_selfhosted',
 		'mm_auto_provenance',
 	];
@@ -53,22 +51,6 @@ function _mm_uninstall_site(): void {
 	// Transients used by the plugin.
 	delete_transient( 'mm_github_latest_release' );
 	delete_transient( 'mm_upload_batch' );
-
-	// Wildcard transients: mm_oembed_{md5} (written by MM_Sitemap::get_cached_oembed()).
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$wpdb->query(
-		$wpdb->prepare(
-			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-			$wpdb->esc_like( '_transient_mm_oembed_' ) . '%'
-		)
-	);
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$wpdb->query(
-		$wpdb->prepare(
-			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-			$wpdb->esc_like( '_transient_timeout_mm_oembed_' ) . '%'
-		)
-	);
 
 	// Exact post meta keys.
 	$meta_keys = [
