@@ -313,7 +313,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		// Author — link to Person node (added by Author module or built inline).
 		if ( in_array( $type, [ 'BlogPosting', 'Article', 'NewsArticle' ], true ) ) {
 			$author = get_userdata( (int) $post->post_author );
-			if ( $author && $settings->get( 'schema.author_persons', true ) ) {
+			if ( $author && $settings->get( 'authors.person_schema', true ) ) {
 				$node['author']    = [ '@id' => get_author_posts_url( $author->ID ) . '#person' ];
 				$node['publisher'] = [ '@id' => $this->site_id( 'organization' ) ];
 			}

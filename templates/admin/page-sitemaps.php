@@ -119,21 +119,12 @@ unset($public_taxs['post_format']);
 		<tr>
 			<th>Video Sources</th>
 			<td>
-				<label style="display:block;margin-bottom:4px">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[sitemap][video_youtube]" value="1"
-						<?php checked( $s->get('sitemap.video_youtube', true) ); ?>>
-					YouTube embeds
-				</label>
-				<label style="display:block;margin-bottom:4px">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[sitemap][video_vimeo]" value="1"
-						<?php checked( $s->get('sitemap.video_vimeo', true) ); ?>>
-					Vimeo embeds
-				</label>
 				<label style="display:block">
 					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[sitemap][video_selfhosted]" value="1"
 						<?php checked( $s->get('sitemap.video_selfhosted', true) ); ?>>
-					Self-hosted <code>&lt;video&gt;</code> files (.mp4 / .webm)
+					Extract self-hosted <code>&lt;video&gt;</code> tags from post content
 				</label>
+				<p class="description">Video attachment pages are always included in the video sitemap.</p>
 			</td>
 		</tr>
 	</table>

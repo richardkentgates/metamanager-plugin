@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Complete audit findings from 100% code read of both repos, contrasted against all documentation, wiki, GitHub Pages, and plugin help tabs. Last updated 2026-07-27.
+Full codebase audit — 100% source read of both repos, contrasted against all documentation, wiki, GitHub Pages, and plugin help tabs. Last updated 2026-07-31.
 
 ---
 
@@ -36,202 +36,63 @@ Both are needed. They handle different concerns.
 
 ---
 
-## Audit Summary
+## BUGS — Active (from full codebase audit 2026-07-31)
 
-| Category | Open Items |
-|----------|-----------|
-| Pipeline | 0 (1 done) |
-| Critical (Code) | 0 (4 total, 2 false positives, 2 fixed) |
-| High (Code) | 0 (6 total, 5 false positives, 1 fixed) |
-| Medium (Code) | 0 (8 total, 5 false positives, 3 fixed) |
-| Critical (Docs) | 10 → 1 actionable, 9 resolved |
-| Low (Code/Docs) | 11 → 0 actionable, 11 stale/known |
-| **Total Open** | **1** |
-| Already Fixed | 32 |
+### BUG-1: Video sitemap indexes YouTube/Vimeo embeds (HIGH)
+**File:** `includes/class-mm-sitemap.php:170-206`
+**Problem:** `render_video_sitemap()` extracts YouTube and Vimeo embeds from post content and includes them in the video sitemap via `extract_embed_videos()`. Per user requirement, video sitemaps should ONLY index self-hosted videos. Indexing embeds is hard on hardware and produces low-quality sitemap entries (no duration, no keywords, no rating for embeds).
+**Current behavior:** Three sources: YouTube embeds, Vimeo embeds, self-hosted `<video>` tags + video attachments.
+**Required behavior:** Only self-hosted `<video>` tags + video attachment pages.
+**Fix:** Remove `extract_embed_videos()` call from `render_video_sitemap()`. Remove `OPT_VIDEO_YOUTUBE` and `OPT_VIDEO_VIMEO` settings and their UI checkboxes. Remove `get_cached_oembed()`. Update settings field to only show self-hosted toggle. Update help tab text.
 
----
+### BUG-2: Organization/LocalBusiness schema not rendering on production (HIGH)
+**File:** `includes/metadata/modules/class-mm-mod-local.php`
+**Problem:** On the production site (104.197.172.183), only SoftwareApplication schema (hardcoded in theme) is visible. No `@graph` JSON-LD output from the plugin. The `MM_Mod_Local::populate()` method generates Organization/LocalBusiness schema but it's not appearing in the frontend.
+**Possible causes:**
+1. Business name is empty in `mm_meta_business` option → minimal Organization node emitted
+2. `MM_Mod_Local` module not being loaded by `MM_Metadata_Admin::get_documents()`
+3. `MM_Mod_Schema` not calling `MM_Head_Emitter::render()` on frontend pages
+**Fix:** Requires SSH verification of: (a) business profile option values, (b) module registration in `get_documents()`, (c) frontend page source for JSON-LD output.
 
-## CRITICAL — Must Fix (Code)
+### BUG-3: Compression UI labels imply lossy quality levels (MEDIUM)
+**File:** `includes/class-mm-settings.php:285-306`
+**Problem:** The compression dropdown labels ("1 — Minimal (fastest)", "7 — Maximum (slowest)") and description ("Higher levels produce smaller files but take longer") imply lossy quality trade-offs. ALL compression in the plugin is lossless only:
+- optipng: effort level 1-7 (lossless PNG optimization)
+- jpegtran: `-copy all -optimize -progressive` (lossless JPEG)
+- cwebp: `-m 6 -q 100` (hardcoded lossless WebP)
+- ffmpeg: `-c copy` (lossless remux)
+**Fix:** Update field description to explicitly state "All compression is lossless — this controls optimization effort, not quality." Consider renaming labels to "Lossless effort level" or similar.
 
-### C1: `MM_Frontend::init()` is never called
-**Status:** Already fixed — `metamanager.php:117` calls `MM_Frontend::init()` inside `plugins_loaded` hook. False positive from original audit.
+### BUG-4: Author settings save — values don't persist (MEDIUM)
+**File:** `templates/admin/page-authors.php`, `includes/metadata/admin/class-mm-metadata-admin.php`
+**Problem:** User reports toggling "Enable Author SEO" and "noindex for author" shows success notice but values don't persist on page reload.
+**Code analysis:** The save mechanism appears correct — `sanitize_section()` properly extracts `$raw['authors']`, runs `deep_sanitize()` against defaults, and merges back into the full settings array. Checkboxes that are unchecked are missing from POST data and default to `false` in `deep_sanitize()`.
+**Possible causes:**
+1. User tested on old Media → Settings page instead of Metamanager → Authors
+2. Object cache (Redis/Memcached) returning stale option values
+3. Nonce mismatch causing silent save failure
+4. Another plugin hooking `sanitize_option_mm_meta_settings` and overwriting
+**Fix:** Requires live verification on production via SSH. Check: (a) `get_option('mm_meta_settings')` values, (b) `wp_options` table directly, (c)是否存在 object cache.
 
-### C2: `write_job()` doesn't check `put_contents()` return
-**Status:** Already fixed — `class-mm-job-queue.php:163` checks `false === $bytes || 0 === $bytes`, logs error, returns `'failed'`. False positive from original audit.
+### BUG-5: Two separate sitemap configuration locations (LOW)
+**Files:** `includes/class-mm-sitemap.php`, `includes/metadata/modules/class-mm-mod-sitemap.php`
+**Problem:** Sitemap settings exist in two places:
+1. **Preferences → Sitemaps** (`MM_Sitemap::register_settings()`): controls media/video sitemap toggles, YouTube/Vimeo/self-hosted extraction
+2. **Metamanager → Sitemaps** (`MM_Mod_Sitemap_Web`): controls post types, taxonomies, records per file, HTML sitemap
+**Impact:** Confusing UX — users don't know which page to configure.
+**Fix:** Consolidate all sitemap settings into one admin page (Metamanager → Sitemaps). Remove duplicate from Preferences page.
 
-### C3: `MM_Metadata_CLI` class is never registered with `WP_CLI::add_command()`
-**Status:** Fixed 2026-07-27. Added `extends \WP_CLI_Command` and `\WP_CLI::add_command('metamanager metadata', 'MM_Metadata_CLI')`. Commands accessible as `wp metamanager metadata {export,reset,check-links,...}`.
-
-### C4: `purge-links` CLI command documented but doesn't exist
-**Status:** Fixed 2026-07-27. Removed from Links help tab. Updated Tools help tab with correct `metadata` prefix for all commands.
-
----
-
-## HIGH — Should Fix (Code)
-
-### H1: `.processing` files not cleaned on attachment delete
-**Status:** Already fixed — `class-mm-job-queue.php:374` handles `.processing` cleanup. False positive.
-
-### H2: Duplicate `<title>` tag for themes without `title-tag` support
-**Status:** Already fixed — direct `<title>` output removed from emitter; uses `pre_get_document_title` filter via `MM_Metadata_Loader`. False positive.
-
-### H3: REST API edits don't trigger metadata write-back
-**Status:** Already fixed — `on_save_post_attachment` at `class-mm-metadata.php:599` catches REST API edits. False positive.
-
-### H4: `mm_meta_synced` postmeta registered but never written
-**Status:** Already fixed in code (AUDIT-TRACKING FIX-10, 2026-07-25). Documentation references in ARCHITECTURE.md and README.md are stale.
-
-### H5: No `og:video`/`og:audio` for media attachments
-**Status:** Already works — `output_video_audio_open_graph` at `class-mm-frontend.php:409` handles video/audio OG tags. False positive (C1 was false positive, so this works).
-
-### H6: `deploy.yml` metadata.json heredoc has indentation
-**Status:** Fixed 2026-07-27. `test-deploy.yml` had indented JSON in printf heredoc. Changed to compact JSON matching `deploy.yml`.
-
----
-
-## MEDIUM — Should Fix (Code)
-
-### M1: Schema module skips content node for `WebPage`/`WebSite`
-**Status:** Intentional design — WebPage is the container page, content node is for BlogPosting/Article/etc. types. Not a bug.
-
-### M2: `SiteNavigationElement` nesting non-standard
-**Status:** Valid schema.org (uses `hasPart`). Design choice, not a bug.
-
-### M3: Custom JSON-LD has no validation
-**Status:** Validation exists — `json_decode` check at `class-mm-mod-schema.php:38`. Only adds if `is_array()`.
-
-### M4: No metadata write-back dedup
-**Status:** Dedup exists — `write_job()` at `class-mm-job-queue.php:121` skips if pending job already exists for same attachment+size.
-
-### M5: Concurrent `mm_import_completed_jobs()` could duplicate verification
-**Status:** Lock exists — transient at `metamanager.php:291-295` prevents concurrent execution.
-
-### M6: Help tab — Meta Sync column not documented in Media Library help
-**Status:** Fixed 2026-07-27. Added new "Meta Sync Column" help tab to Media Library screen.
-
-### M7: Help tab — HTML sitemap shortcode missing 2 attributes
-**Status:** Fixed 2026-07-27. Added `show_date` and `order_by` rows to the shortcode attributes table.
-
-### M8: Help tab — Batch Metadata page has no help tab
-**Status:** Fixed 2026-07-27. Added "Overview" help tab to the Media Processing screen.
+### BUG-6: Schema `author_persons` vs Authors `person_schema` duplicate control (LOW)
+**Files:** `includes/metadata/class-mm-site-settings.php:261`, `templates/admin/page-authors.php:58-65`
+**Problem:** Two separate settings control Person schema emission:
+1. `schema.author_persons` (default: `true`) — in Schema settings section
+2. `authors.person_schema` (default: `true`) — in Authors settings section
+Both control whether Person JSON-LD nodes are emitted. Users may change one and not the other, leading to confusion.
+**Fix:** Remove one of the two settings. The Authors page `person_schema` is the more logical place. Remove `schema.author_persons` from defaults and schema settings page.
 
 ---
 
-## DOCUMENTATION — Must Fix
-
-### D1: GitHub wiki is completely empty
-**Source:** Both repos link to `https://github.com/richardkentgates/metamanager-plugin/wiki` in README and docs site
-**Impact:** All wiki links are broken. Users clicking "Wiki" from the README find no content.
-**Fix:** Either populate the wiki or remove wiki links from all documentation.
-
-### D2: Docs site JSON-LD `softwareVersion` stuck at `2.1.7`
-**Source:** `metamanager.richardkentgates.com` HTML `<head>` structured data
-**Impact:** Search engines and knowledge panels display wrong version. 18 versions behind actual (2.3.12).
-**Fix:** Update `softwareVersion` in the JSON-LD block and add automated build step to keep in sync.
-
-### D3: License mismatch across documentation
-**Source:** Multiple locations
-- README badges: "GPL 2.0+"
-- LICENSE file: "GNU GENERAL PUBLIC LICENSE Version 2"
-- Docs site JSON-LD: "https://www.gnu.org/licenses/gpl-3.0.html" (GPL 3.0)
-- CHANGELOG v1.0.0: "GPLv3 license"
-**Impact:** Inconsistent license claims. Legal uncertainty for users.
-**Fix:** Determine actual license (2.0 or 3.0) and make all references consistent.
-
-### D4: Plugin site `og:url` points to non-existent domain
-**Source:** `richardkentgates.github.io/metamanager-plugin/` og:url meta tag
-**Impact:** Social media link previews point to `mm-plugin.richardkentgates.com` which likely doesn't resolve.
-**Fix:** Configure CNAME or update og:url to actual GitHub Pages URL.
-
-### D5: Plugin site meta description only covers media layer
-**Source:** `richardkentgates.github.io/metamanager-plugin/` meta description
-**Impact:** Description says "Lossless image compression and metadata embedding" — completely omits web layer (Schema.org, OG, sitemaps, robots.txt, link checker, business profile, author profiles).
-**Fix:** Update description to cover full feature set, or redirect to main docs site.
-
-### D6: Server ARCHITECTURE.md version numbers stale
-**Source:** `metamanager/ARCHITECTURE.md:369-374`
-**Impact:** Daemon documented as `2.4.4-1`, actual is `2.4.7-1`. Plugin documented as `2.3.2`.
-**Fix:** Update version table or add note that versions are illustrative.
-**Status:** Fixed — table now shows format placeholders with "auto-bumped by CI" note.
-
-### D7: Server SECURITY.md says "1.x" is supported
-**Source:** `metamanager/SECURITY.md`
-**Impact:** Current version is 2.4.7. Supported version statement is outdated.
-**Fix:** Update to "2.x".
-
-### D8: Plugin SECURITY.md says "1.x" is supported
-**Source:** `metamanager-plugin/SECURITY.md`
-**Impact:** Current version is 2.3.12. Supported version statement is outdated.
-**Fix:** Update to "2.x".
-
-### D9: Help tab documentation URL inconsistency
-**Source:** Multiple admin pages
-- Job Dashboard sidebar: `https://mm-plugin.richardkentgates.com`
-- Settings page sidebar: `https://metamanager.richardkentgates.com`
-- Bulk Metadata page in-app text: `https://metamanager.richardkentgates.com`
-**Impact:** Users get directed to different sites from different pages.
-**Fix:** Unify to one canonical documentation URL.
-
-### D10: ROADMAP-SEPARATION.md phases 7A-7I, 8, 10, 11, 12 still pending
-**Source:** `metamanager/ROADMAP-SEPARATION.md`
-**Impact:** Server setup (UFW, iptables, ModSecurity, Fail2Ban, Maldet, apt repo, plugin hosting), GPG signing, CI/CD server repo build, end-to-end testing, and documentation cleanup all marked pending.
-**Fix:** Track completion or update status.
-
----
-
-## PIPELINE — Must Fix
-
-### P1: Add branch protection on `test` and `main` branches
-**Repos:** Both `metamanager-plugin` and `metamanager`
-**Impact:** Currently any push goes directly to test/main with no review. Need PR-based promotion with required status checks.
-**Fix:**
-- Enable branch protection on `test`: require PR from `dev`, require dev-ci status checks to pass
-- Enable branch protection on `main`: require PR from `test`, require test-deploy status checks to pass
-- No force pushes, no bypassing admins
-- Update AGENTS.md and ROADMAP.md to reflect PR-based workflow
-
-### L1: Stray `}` in `class-mm-cron.php:293`
-**Status:** Stale finding — file does not exist in current codebase.
-
-### L2: Stray `}` in `class-mm-daemon-bridge.php:326`
-**Status:** Stale finding — file does not exist in current codebase.
-
-### L3: No server repo test workflow on `test` branch
-**Status:** Already addressed — `build-deb.yml` runs ShellCheck on the test branch before building.
-
-### L4: Zip structure inconsistency in `deploy.yml`
-**Status:** Not an issue — all workflows consistently exclude `tests`, `stubs`, and `mm-*.zip`.
-
-### D11: Docs site j-make.js content fragments return 404
-**Status:** False positive — fragments load correctly. The audit tested wrong paths (`/body/header` instead of `/body/header_0`). All fragment paths return 200 with content.
-
-### D12: Plugin site same j-make.js fragment 404 issue
-**Status:** False positive — same as D11. Fragments work correctly on both sites.
-
-### D13: Server CHANGELOG.md has no entries for versions 2.3.1-2.3.12
-**Source:** `metamanager/CHANGELOG.md`
-**Impact:** 12 patch releases with no changelog entries (likely auto-incremented by CI).
-**Fix:** Add catch-all entry or ensure CI generates entries.
-
-### D14: Branching strategy inconsistency across docs
-**Source:** `BRANCHING.md` vs `AGENTS.md` vs `ROADMAP.md`
-**Impact:** BRANCHING.md describes GitFlow (develop/main), while AGENTS.md and ROADMAP.md describe simpler dev/test/main pipeline. Different docs teach different workflows.
-**Fix:** Reconcile all branching documentation to match actual practice.
-
----
-
-## Verified NOT Issues
-
-- **Media Processing page**: Intentionally kept. Needed for batch metadata operations.
-- **`MM_Admin::add_bulk_action()`**: Part of Media Processing feature, not dead code.
-- **Two-frontend-system architecture**: Both `MM_Frontend` (media-specific) and `MM_Mod_*` (page-level) are needed. They handle different concerns.
-- **Daemon field coverage**: PHP and shell scripts define identical field sets. Consistent.
-- **Job queue filesystem contract**: PHP writes -> daemon claims via atomic `mv` -> writes result -> PHP imports via WP-Cron. Solid design.
-- **Verify system**: Exists (`rest_verify_attachment`, `verify_single_file()`, `calculate_verify_score()`) but no scheduled cron — requires manual REST API call. Not broken, just not auto-triggered.
-
----
-
-## Already Fixed
+## BUGS — Already Fixed (from prior work)
 
 | # | Issue | Date Fixed |
 |---|-------|------------|
@@ -265,68 +126,80 @@ Both are needed. They handle different concerns.
 | F28 | Documentation URLs unified | 2026-07-27 |
 | F29 | Wiki links removed from READMEs | 2026-07-27 |
 | F30 | L1-L4 stale findings resolved | 2026-07-27 |
+| F31 | Updater filter fix — returns `false` when no update to inject | 2026-07-29 |
+| F32 | Metadata transient stale cache cleared | 2026-07-29 |
+| F33 | Version header drift fixed (CI sed hardened) | 2026-07-29 |
+| F34 | Production update_plugins option rebuilt | 2026-07-29 |
+| F35 | All promotions completed through PR #32 (v2.3.40) | 2026-07-30 |
+| F36 | MM_CLI fatal error fix (redundant WP_CLI stubs removed) | 2026-07-30 |
+| F37 | CI phpunit.xml path fix | 2026-07-30 |
+| F38 | WP_CLI\Utils function stubs added | 2026-07-30 |
 
 ---
 
-## Implementation Order
+## AUDIT — Verified NOT Issues
 
-### Phase 0: Pipeline (do first — enables all other work)
-1. **P1** — Add branch protection on `test` and `main` in both repos ✅
-
-### Phase 1: Critical fixes
-2. ~~**C1**~~ — Already fixed (false positive)
-3. ~~**C2**~~ — Already fixed (false positive)
-4. **C3** — Register `MM_Metadata_CLI` with WP-CLI ✅
-5. **C4** — Remove `purge-links` from help tabs ✅
-
-### Phase 2: High-impact fixes
-6. ~~**H1**~~ — Already fixed (false positive)
-7. ~~**H2**~~ — Already fixed (false positive)
-8. ~~**H3**~~ — Already fixed (false positive)
-9. ~~**H4**~~ — Already fixed in code
-10. ~~**H5**~~ — Already works (false positive)
-11. **H6** — Fix deploy.yml heredoc indentation ✅
-
-### Phase 3: Medium improvements
-12. ~~**M1**~~ — Intentional design (not a bug)
-13. ~~**M2**~~ — Valid schema.org (not a bug)
-14. ~~**M3**~~ — Validation already exists
-15. ~~**M4**~~ — Dedup already exists
-16. ~~**M5**~~ — Lock already exists
-17. **M6** — Document Meta Sync column in help tab ✅
-18. **M7** — Add missing shortcode attributes to help tab ✅
-19. **M8** — Add Batch Metadata help tab ✅
-
-### Phase 4: Documentation fixes
-20. ~~**D1**~~ — Wiki links removed from both READMEs ✅
-21. **D2** — Docs site JSON-LD version (requires manual docs site update)
-22. ~~**D3**~~ — License badge corrected to GPL 3.0+ in both READMEs ✅
-23. ~~**D4**~~ — Plugin site og:url fixed ✅
-24. ~~**D5**~~ — Plugin site meta description updated ✅
-25. ~~**D6**~~ — ARCHITECTURE.md versions updated ✅
-26. ~~**D7**~~ — Server SECURITY.md updated to 2.x ✅
-27. ~~**D8**~~ — Plugin SECURITY.md updated to 2.x ✅
-28. ~~**D9**~~ — Documentation URLs unified to metamanager.richardkentgates.com ✅
-29. **D10** — ROADMAP-SEPARATION.md (historical, low priority)
-30. ~~**D11**~~ — False positive (fragments load correctly)
-31. ~~**D12**~~ — False positive (same as D11)
-32. **D13** — Missing CHANGELOG entries (CI auto-bumps, low priority)
-33. ~~**D14**~~ — BRANCHING.md already correct ✅
-
-### Phase 5: Low-priority cleanup
-34. ~~**L1**~~ — Stale finding (file doesn't exist)
-35. ~~**L2**~~ — Stale finding (file doesn't exist)
-36. ~~**L3**~~ — Already addressed (build-deb.yml runs ShellCheck)
-37. ~~**L4**~~ — Not an issue (exclude patterns already consistent)
+- **Media Processing page**: Intentionally kept. Needed for batch metadata operations.
+- **`MM_Admin::add_bulk_action()`**: Part of Media Processing feature, not dead code.
+- **Two-frontend-system architecture**: Both `MM_Frontend` (media-specific) and `MM_Mod_*` (page-level) are needed. They handle different concerns.
+- **Daemon field coverage**: PHP and shell scripts define identical field sets. Consistent.
+- **Job queue filesystem contract**: PHP writes -> daemon claims via atomic `mv` -> writes result -> PHP imports via WP-Cron. Solid design.
+- **Verify system**: Exists (`rest_verify_attachment`, `verify_single_file()`, `calculate_verify_score()`) but no scheduled cron — requires manual REST API call. Not broken, just not auto-triggered.
+- **Schema primary menu**: No menu checked = NO SiteNavigationElement schema (intentional design).
 
 ---
 
-## Current Versions
+## Implementation Plan
 
-- Plugin: Auto-bumped by CI on dev push (see `MM_VERSION` in `metamanager.php`)
-- Server: Auto-bumped by CI on dev push (see `debian/changelog` and `VERSION`)
-- Apt server: `34.136.87.92` (apt.richardkentgates.com)
-- Production site: `104.197.172.183`
+### Phase 1: Fix Active Bugs (priority order)
+
+**1. BUG-1 — Remove YouTube/Vimeo from video sitemap** (HIGH, straightforward)
+- Remove `extract_embed_videos()` call from `render_video_sitemap()`
+- Remove `OPT_VIDEO_YOUTUBE` and `OPT_VIDEO_VIMEO` constants and settings
+- Remove `get_cached_oembed()` method
+- Remove YouTube/Vimeo checkboxes from `field_sitemap_video()`
+- Update sitemap settings description
+- Update help tab text
+- Run tests to verify no regressions
+
+**2. BUG-2 — Verify Organization schema on production** (HIGH, requires SSH)
+- SSH to production server
+- Check `mm_meta_business` option values via WP-CLI
+- Check if business name is empty
+- Verify module loading in `MM_Metadata_Admin::get_documents()`
+- Check frontend page source for JSON-LD output
+- Fix root cause based on findings
+
+**3. BUG-3 — Fix compression UI labels** (MEDIUM, straightforward)
+- Update `field_compress_level()` description to state "All compression is lossless"
+- Update section description to clarify lossless behavior
+- Consider renaming dropdown labels to emphasize effort, not quality
+
+**4. BUG-4 — Verify author settings save** (MEDIUM, requires SSH)
+- SSH to production
+- Check `get_option('mm_meta_settings')` via WP-CLI
+- Check if author settings are in the saved array
+- Check for object cache interference
+- Test save via WP-CLI: `wp option update mm_meta_settings ...`
+
+**5. BUG-5 — Consolidate sitemap settings** (LOW, UX improvement)
+- Merge Preferences → Sitemaps settings into Metamanager → Sitemaps
+- Remove duplicate from Preferences page
+- Update admin menu registration
+
+**6. BUG-6 — Remove duplicate Person schema control** (LOW, cleanup)
+- Remove `schema.author_persons` from defaults and Schema settings page
+- Keep `authors.person_schema` as the single control
+- Update any references
+
+### Phase 2: Verification
+
+After all fixes:
+1. Run full test suite (`php vendor/bin/phpunit`)
+2. Run PHPStan (`php vendor/bin/phpstan analyse`)
+3. Run lint (`composer lint`)
+4. Promote through pipeline: dev → test → main
+5. Verify on production via browser
 
 ---
 
@@ -354,18 +227,11 @@ main <──PR merge── main-release.yml (tag + GitHub release)
 | `test` | Yes (from `dev`) | dev-ci passes (lint, PHPStan, ShellCheck) | No direct push; merge only |
 | `main` | Yes (from `test`) | test-deploy passes (build, deploy) | No direct push; merge only |
 
-### Promotion Flow
+---
 
-1. **dev → test:** Open PR from `dev` to `test`. CI runs dev-ci checks. Review + merge.
-2. **test → main:** Open PR from `test` to `main`. CI runs test-deploy checks. Review + merge.
-3. On merge to `test`: `test-deploy.yml` builds zip, deploys to apt server. `deploy.yml` deploys to test server.
-4. On merge to `main`: `main-release.yml` creates tag + GitHub release. `deploy.yml` deploys to production.
+## Current Versions
 
-### Workflow Triggers (unchanged)
-
-| Workflow | Trigger | What It Does |
-|----------|---------|-------------|
-| `dev-ci.yml` | Push to `dev` | Lint, PHPStan, ShellCheck, version bump |
-| `test-deploy.yml` | Push to `test` (via PR merge) | Build zip, deploy to apt server |
-| `deploy.yml` | Push to `test` or `main` (via PR merge) | Deploy to server (test or production) |
-| `main-release.yml` | Push to `main` (via PR merge) | Tag, GitHub release, apt repo deploy |
+- Plugin: Auto-bumped by CI on dev push (see `MM_VERSION` in `metamanager.php`)
+- Server: Auto-bumped by CI on dev push (see `debian/changelog` and `VERSION`)
+- Apt server: `34.136.87.92` (apt.richardkentgates.com)
+- Production site: `104.197.172.183`

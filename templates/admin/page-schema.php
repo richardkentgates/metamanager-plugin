@@ -47,16 +47,6 @@ $schema_types = MM_Schema_Types::get_schema_types();
 			</td>
 		</tr>
 		<tr>
-			<th>Author Person nodes</th>
-			<td>
-				<label>
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[schema][author_persons]" value="1"
-						<?php checked( $s->get('schema.author_persons', true) ); ?>>
-					Include author <code>Person</code> nodes referenced from <code>BlogPosting</code>/<code>Article</code>
-				</label>
-			</td>
-		</tr>
-		<tr>
 			<th>Archive ItemList</th>
 			<td>
 				<label>

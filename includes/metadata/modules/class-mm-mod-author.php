@@ -19,13 +19,13 @@ class MM_Mod_Author extends MM_Mod_Base {
 		// Build Person node on author archive pages.
 		if ( $context->is_author() ) {
 			$author = $context->get_author();
-			if ( $author && $settings->get( 'schema.author_persons', true ) ) {
+			if ( $author && $settings->get( 'authors.person_schema', true ) ) {
 				$this->add_node( $data, $this->build_person_node( $author, $settings ) );
 			}
 		}
 
 		// Build Person node for singular posts (author of post, not archive visitor).
-		if ( $context->is_singular() && $settings->get( 'schema.author_persons', true ) ) {
+		if ( $context->is_singular() && $settings->get( 'authors.person_schema', true ) ) {
 			$post = $context->get_post();
 			if ( $post ) {
 				$author = get_userdata( (int) $post->post_author );

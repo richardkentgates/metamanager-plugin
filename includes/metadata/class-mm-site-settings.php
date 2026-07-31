@@ -255,11 +255,10 @@ class MM_Site_Settings {
 			],
 
 			'schema' => [
-				'knowledge_entity'      => 'LocalBusiness',
-				'website_searchaction'  => true,
-				'breadcrumbs'           => true,
-				'author_persons'        => true,
-				'archive_itemlist'      => true,
+			'knowledge_entity'      => 'LocalBusiness',
+			'website_searchaction'  => true,
+			'breadcrumbs'           => true,
+			'archive_itemlist'      => true,
 				'post_type_types'       => [
 					'post'    => 'BlogPosting',
 					'page'    => 'WebPage',
@@ -274,10 +273,8 @@ class MM_Site_Settings {
 				'post_types'                 => [ 'post' => true, 'page' => true ],
 				'taxonomies'                 => [ 'category' => true ],
 				'images'                     => true,
-				'video'                      => true,
-				'video_youtube'              => true,
-				'video_vimeo'                => true,
-				'video_selfhosted'           => true,
+			'video'                      => true,
+			'video_selfhosted'           => true,
 				'exclude_password_protected' => true,
 				'exclude_noindexed'          => true,
 				'records_per_file'           => 1000,
