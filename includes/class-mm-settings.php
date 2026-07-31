@@ -22,11 +22,11 @@
  *   mm_upload_receipt — Whether the user wants to receive upload receipt emails (bool, default true).
  *                       The site admin always receives receipts regardless of this setting.
  *
- * Sitemap options (managed by MM_Sitemap::register_settings()):
- *   mm_sitemap_media            — Serve /sitemap-media.xml (bool, default true).
- *   mm_sitemap_images           — Include <image:image> nodes in media sitemap (bool, default true).
- *   mm_sitemap_video            — Serve /sitemap-video.xml (bool, default true).
- *   mm_sitemap_video_selfhosted — Extract self-hosted <video> tags for video sitemap (bool, default true).
+ * Sitemap options (stored in mm_meta_settings['sitemap'], managed by page-sitemaps.php):
+ *   sitemap.enabled          — Serve /sitemap-media.xml (bool, default true).
+ *   sitemap.images           — Include <image:image> nodes in media sitemap (bool, default true).
+ *   sitemap.video            — Serve /sitemap-video.xml (bool, default true).
+ *   sitemap.video_selfhosted — Extract self-hosted <video> tags for video sitemap (bool, default true).
  *
  * @package Metamanager
  */
