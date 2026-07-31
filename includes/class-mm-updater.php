@@ -164,9 +164,9 @@ class MM_Updater {
 			if ( ! is_object( $transient ) ) {
 				$transient = new \stdClass();
 			}
-			if ( ! isset( $transient->response ) ) {
-				$transient->response = new \stdClass();
-			}
+		if ( ! isset( $transient->response ) || ! is_array( $transient->response ) ) {
+			$transient->response = [];
+		}
 
 			$transient->response[ $this->plugin_basename ] = (object) [
 				'id'            => 'metamanager/apt-server',
