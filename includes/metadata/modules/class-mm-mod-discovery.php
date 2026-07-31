@@ -25,7 +25,8 @@ class MM_Mod_Discovery {
 		}
 
 		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
-		add_action( 'template_redirect', [ $this, 'maybe_serve' ] );
+		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
+		add_action( 'template_redirect', [ $this, 'maybe_serve' ], 1 );
 		add_action( 'wp_ajax_mm_regenerate_discovery', [ $this, 'ajax_regenerate' ] );
 		add_action( 'update_option_mm_meta_settings', [ $this, 'clear_cache' ] );
 	}
@@ -35,11 +36,16 @@ class MM_Mod_Discovery {
 	// -------------------------------------------------------------------------
 
 	public function add_rewrite_rules(): void {
-		// llms.txt at site root.
-		add_rewrite_endpoint( 'llms', EP_ROOT, 'llms' );
+		add_rewrite_rule( '^llms-full\.txt/?$', 'index.php?mm_llms_full=1', 'top' );
+		add_rewrite_rule( '^llms\.txt/?$', 'index.php?mm_llms=1', 'top' );
+		add_rewrite_rule( '^\.well-known/api-catalog/?$', 'index.php?mm_api_catalog=1', 'top' );
+	}
 
-		// .well-known/api-catalog.
-		add_rewrite_endpoint( 'api-catalog', EP_ROOT, 'api_catalog' );
+	public function add_query_vars( array $vars ): array {
+		$vars[] = 'mm_llms';
+		$vars[] = 'mm_llms_full';
+		$vars[] = 'mm_api_catalog';
+		return $vars;
 	}
 
 	/**
@@ -48,17 +54,17 @@ class MM_Mod_Discovery {
 	public function maybe_serve(): void {
 		global $wp_query;
 
-		if ( ! empty( $wp_query->get( 'llms' ) ) ) {
+		if ( $wp_query->get( 'mm_llms' ) ) {
 			$this->serve_llms_txt( false );
 			exit;
 		}
 
-		if ( ! empty( $wp_query->get( 'llms_full' ) ) ) {
+		if ( $wp_query->get( 'mm_llms_full' ) ) {
 			$this->serve_llms_txt( true );
 			exit;
 		}
 
-		if ( ! empty( $wp_query->get( 'api_catalog' ) ) ) {
+		if ( $wp_query->get( 'mm_api_catalog' ) ) {
 			$this->serve_api_catalog();
 			exit;
 		}
@@ -206,7 +212,7 @@ class MM_Mod_Discovery {
 		];
 
 		// MCP endpoint.
-		if ( class_exists( 'WP\MCP\Core\McpAdapter::class' ) ) {
+		if ( class_exists( 'WP\MCP\Core\McpAdapter' ) ) {
 			$catalog['linkset'][] = [
 				'rel'   => 'mcp-server',
 				'href'  => home_url( '/wp-json/metamanager-mcp/mcp' ),
