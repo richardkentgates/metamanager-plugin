@@ -28,6 +28,16 @@ class MM_Mod_Local extends MM_Mod_Base {
 		}
 
 		$type = $biz['type'] ?: 'LocalBusiness';
+
+		// Validate against known schema.org types — silently fall back to
+		// LocalBusiness if the stored type is not in the recognised list.
+		$valid_types = [];
+		foreach ( self::get_business_types() as $group ) {
+			$valid_types += $group;
+		}
+		if ( ! isset( $valid_types[ $type ] ) ) {
+			$type = 'LocalBusiness';
+		}
 		$node = [
 			'@type'  => $type,
 			'@id'    => $this->site_id( 'organization' ),
