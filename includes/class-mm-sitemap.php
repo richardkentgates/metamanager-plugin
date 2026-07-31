@@ -39,17 +39,11 @@ class MM_Sitemap {
 	const NS_VIDEO   = 'http://www.google.com/schemas/sitemap-video/0.9';
 
 	// -----------------------------------------------------------------------
-	// Settings option keys
+	// Settings keys (read from MM_Site_Settings via mm_meta_settings)
 	// -----------------------------------------------------------------------
 
-	/** bool — include image extension nodes in sitemap-media.xml (default true). */
-	const OPT_IMAGES            = 'mm_sitemap_images';
-	/** bool — serve /sitemap-video.xml at all (default true). */
-	const OPT_VIDEO             = 'mm_sitemap_video';
-	/** bool — extract self-hosted <video> tags for /sitemap-video.xml (default true). */
-	const OPT_VIDEO_SELFHOSTED  = 'mm_sitemap_video_selfhosted';
-	/** bool — serve /sitemap-media.xml at all (default true). */
-	const OPT_MEDIA             = 'mm_sitemap_media';
+	// Legacy standalone option constants removed — all sitemap settings are
+	// now stored in mm_meta_settings['sitemap'] and read via MM_Site_Settings.
 
 	// Transient keys and TTL for server-side XML caching.
 	const CACHE_KEY_MEDIA = 'mm_sitemap_cache_media';
@@ -67,8 +61,6 @@ class MM_Sitemap {
 		add_action( 'init',                                    [ __CLASS__, 'add_rewrite_rules' ] );
 		add_filter( 'query_vars',                              [ __CLASS__, 'register_query_vars' ] );
 		add_action( 'template_redirect',                       [ __CLASS__, 'maybe_serve_sitemap' ] );
-		add_action( 'admin_init',                              [ __CLASS__, 'register_settings' ] );
-		add_action( 'load-media_page_metamanager-settings',    [ __CLASS__, 'add_settings_help_tab' ] );
 		// Append Sitemap: directives to WordPress-generated robots.txt.
 		add_filter( 'robots_txt',                              [ __CLASS__, 'append_robots_txt' ], 10, 2 );
 		// Flush cached XML whenever media or post content changes.
@@ -117,6 +109,8 @@ class MM_Sitemap {
 			return;
 		}
 
+		$settings = MM_Site_Settings::get_instance();
+
 		nocache_headers();
 		header( 'Content-Type: application/xml; charset=UTF-8' );
 
@@ -124,7 +118,7 @@ class MM_Sitemap {
 			case 'video':
 				$cached = get_transient( self::CACHE_KEY_VIDEO );
 				if ( false === $cached ) {
-					$cached = get_option( self::OPT_VIDEO, true )
+					$cached = $settings->get( 'sitemap.video', true )
 						? self::render_video_sitemap()
 						: self::render_empty_urlset( self::NS_VIDEO, 'video' );
 					set_transient( self::CACHE_KEY_VIDEO, $cached, self::CACHE_TTL );
@@ -136,7 +130,7 @@ class MM_Sitemap {
 			case 'media':
 				$cached = get_transient( self::CACHE_KEY_MEDIA );
 				if ( false === $cached ) {
-					$cached = get_option( self::OPT_MEDIA, true )
+					$cached = $settings->get( 'sitemap.enabled', true )
 						? self::render_media_sitemap()
 						: self::render_empty_urlset( '', '' );
 					set_transient( self::CACHE_KEY_MEDIA, $cached, self::CACHE_TTL );
@@ -164,7 +158,8 @@ class MM_Sitemap {
 	 * @return string  Complete XML document.
 	 */
 	private static function render_video_sitemap(): string {
-		$self_enabled  = (bool) get_option( self::OPT_VIDEO_SELFHOSTED, true );
+		$settings    = MM_Site_Settings::get_instance();
+		$self_enabled = (bool) $settings->get( 'sitemap.video_selfhosted', true );
 
 		$entries = []; // keyed by page permalink to deduplicate
 
@@ -396,7 +391,8 @@ class MM_Sitemap {
 		}
 
 		// Determine which namespaces are actually needed.
-		$include_images = (bool) get_option( self::OPT_IMAGES, true );
+		$settings      = MM_Site_Settings::get_instance();
+		$include_images = (bool) $settings->get( 'sitemap.images', true );
 		$has_images     = false;
 		$has_videos     = false;
 		foreach ( $attachments as $att ) {
@@ -609,172 +605,6 @@ class MM_Sitemap {
 		return $xml;
 	}
 
-	// -----------------------------------------------------------------------
-	// Admin help tab
-	// -----------------------------------------------------------------------
-
-	/**
-	 * Add a contextual help tab for the Sitemaps section on the MM Settings screen.
-	 * Hooked to 'load-media_page_metamanager-settings'.
-	 */
-	public static function add_settings_help_tab(): void {
-		$screen = get_current_screen();
-		if ( ! $screen ) {
-			return;
-		}
-
-		$media_url  = home_url( '/sitemap-media.xml' );
-		$video_url  = home_url( '/sitemap-video.xml' );
-
-		$screen->add_help_tab( [
-			'id'      => 'mm_help_sitemaps',
-			'title'   => esc_html__( 'Sitemaps', 'metamanager' ),
-			'content' =>
-				'<h2>' . esc_html__( 'Metamanager XML Sitemaps', 'metamanager' ) . '</h2>'
-				. '<p>' . esc_html__( 'Metamanager generates two dedicated XML sitemap files that you can submit to search engines alongside your main WordPress sitemap.', 'metamanager' ) . '</p>'
-				. '<h3>' . esc_html__( 'Media sitemap', 'metamanager' ) . '</h3>'
-				. '<p><code>' . esc_html( $media_url ) . '</code></p>'
-				. '<p>' . esc_html__( 'Lists all attachment pages for images, video, audio, and PDF files. Image entries include title, caption, license URL (when Copyright is a URL), and GPS location when available. Video entries include duration, keywords, rating, publication date, and uploader.', 'metamanager' ) . '</p>'
-				. '<h3>' . esc_html__( 'Video sitemap', 'metamanager' ) . '</h3>'
-				. '<p><code>' . esc_html( $video_url ) . '</code></p>'
-				. '<p>' . esc_html__( 'Covers two sources: self-hosted &lt;video&gt; tags found in published post content, plus video attachment pages. Duration, keywords, rating, and other video-specific tags are populated from Metamanager metadata for hosted video files.', 'metamanager' ) . '</p>'
-				. '<h3>' . esc_html__( 'Submitting to Google Search Console', 'metamanager' ) . '</h3>'
-				. '<ol>'
-				. '<li>' . esc_html__( 'Open Google Search Console and select your property.', 'metamanager' ) . '</li>'
-				. '<li>' . esc_html__( 'Navigate to Indexing → Sitemaps.', 'metamanager' ) . '</li>'
-				// translators: %s is an XML sitemap filename wrapped in a code element.
-				. '<li>' . sprintf( esc_html__( 'Enter %s and click Submit.', 'metamanager' ), '<code>sitemap-media.xml</code>' ) . '</li>'
-				// translators: %s is an XML sitemap filename wrapped in a code element.
-				. '<li>' . sprintf( esc_html__( 'Repeat for %s.', 'metamanager' ), '<code>sitemap-video.xml</code>' ) . '</li>'
-				. '</ol>'
-				. '<p>' . esc_html__( 'Both sitemaps can be toggled and fine-tuned on this page under the Sitemaps section.', 'metamanager' ) . '</p>',
-		] );
-	}
-
-	// -----------------------------------------------------------------------
-	// Settings
-	// -----------------------------------------------------------------------
-
-	/**
-	 * Register sitemap settings and add a "Sitemaps" section to the existing
-	 * Media → MM Settings page. Hooked to 'admin_init'.
-	 */
-	public static function register_settings(): void {
-		$group = 'mm_settings_group';
-		$page  = 'metamanager-settings';
-
-		$bool = [
-			'type'              => 'boolean',
-			'sanitize_callback' => 'rest_sanitize_boolean',
-			'default'           => true,
-		];
-
-		register_setting( $group, self::OPT_IMAGES,           $bool );
-		register_setting( $group, self::OPT_VIDEO,            $bool );
-		register_setting( $group, self::OPT_VIDEO_SELFHOSTED, $bool );
-		register_setting( $group, self::OPT_MEDIA,            $bool );
-
-		add_settings_section(
-			'mm_section_sitemaps',
-			esc_html__( 'Sitemaps', 'metamanager' ),
-			static function (): void {
-				echo '<p>' . wp_kses(
-					sprintf(
-						/* translators: %1$s, %2$s: example sitemap URLs */
-						__( 'Metamanager generates two dedicated XML sitemaps: <code>%1$s</code> for media attachment pages and <code>%2$s</code> for self-hosted video content. Submit these directly to Google Search Console alongside the main WordPress sitemap.', 'metamanager' ),
-						esc_html( home_url( '/sitemap-media.xml' ) ),
-						esc_html( home_url( '/sitemap-video.xml' ) )
-					),
-					[ 'code' => [] ]
-				) . '</p>';
-			},
-			$page
-		);
-
-		add_settings_field(
-			'mm_sitemap_media',
-			esc_html__( 'Media sitemap', 'metamanager' ),
-			[ __CLASS__, 'field_sitemap_media' ],
-			$page,
-			'mm_section_sitemaps'
-		);
-
-		add_settings_field(
-			'mm_sitemap_images',
-			esc_html__( 'Image extension nodes', 'metamanager' ),
-			[ __CLASS__, 'field_sitemap_images' ],
-			$page,
-			'mm_section_sitemaps'
-		);
-
-		add_settings_field(
-			'mm_sitemap_video',
-			esc_html__( 'Video sitemap', 'metamanager' ),
-			[ __CLASS__, 'field_sitemap_video' ],
-			$page,
-			'mm_section_sitemaps'
-		);
-	}
-
-	// -----------------------------------------------------------------------
-	// Settings field renderers
-	// -----------------------------------------------------------------------
-
-	public static function field_sitemap_media(): void {
-		$checked = (bool) get_option( self::OPT_MEDIA, true );
-		printf(
-			'<input type="checkbox" id="mm_sitemap_media" name="%s" value="1"%s>',
-			esc_attr( self::OPT_MEDIA ),
-			checked( $checked, true, false )
-		);
-		echo ' <label for="mm_sitemap_media">'
-			. esc_html__( 'Enable /sitemap-media.xml (image, video, audio, and PDF attachment pages)', 'metamanager' )
-			. '</label>';
-	}
-
-	public static function field_sitemap_images(): void {
-		$checked = (bool) get_option( self::OPT_IMAGES, true );
-		printf(
-			'<input type="checkbox" id="mm_sitemap_images" name="%s" value="1"%s>',
-			esc_attr( self::OPT_IMAGES ),
-			checked( $checked, true, false )
-		);
-		echo ' <label for="mm_sitemap_images">'
-			. esc_html__( 'Include <image:image> extension nodes in the media sitemap', 'metamanager' )
-			. '</label>';
-		echo '<p class="description">'
-			. esc_html__( 'Adds title, caption, license, and GPS location to each image entry.', 'metamanager' )
-			. '</p>';
-	}
-
-	public static function field_sitemap_video(): void {
-		$checked = (bool) get_option( self::OPT_VIDEO, true );
-		printf(
-			'<input type="checkbox" id="mm_sitemap_video" name="%s" value="1"%s>',
-			esc_attr( self::OPT_VIDEO ),
-			checked( $checked, true, false )
-		);
-		echo ' <label for="mm_sitemap_video">'
-			. esc_html__( 'Enable /sitemap-video.xml', 'metamanager' )
-			. '</label>';
-
-		echo '<fieldset style="margin-top:8px;padding-left:20px;">';
-		echo '<legend class="screen-reader-text">' . esc_html__( 'Video sources', 'metamanager' ) . '</legend>';
-
-		$self_checked = (bool) get_option( self::OPT_VIDEO_SELFHOSTED, true );
-		printf(
-			'<label style="display:block;margin-bottom:4px;"><input type="checkbox" name="%s" value="1"%s> %s</label>',
-			esc_attr( self::OPT_VIDEO_SELFHOSTED ),
-			checked( $self_checked, true, false ),
-			esc_html__( 'Self-hosted &lt;video&gt; tags found in post content', 'metamanager' )
-		);
-
-		echo '</fieldset>';
-		echo '<p class="description">'
-			. esc_html__( 'Video attachment pages are always included. The checkbox above controls extraction of self-hosted video tags from post content.', 'metamanager' )
-			. '</p>';
-	}
-
 	// -------------------------------------------------------------------------
 	// Cache management helpers
 	// -------------------------------------------------------------------------
@@ -798,10 +628,11 @@ class MM_Sitemap {
 		if ( ! $public ) {
 			return $output;
 		}
-		if ( get_option( self::OPT_MEDIA, true ) ) {
+		$settings = MM_Site_Settings::get_instance();
+		if ( $settings->get( 'sitemap.enabled', true ) ) {
 			$output .= "\nSitemap: " . home_url( '/sitemap-media.xml' );
 		}
-		if ( get_option( self::OPT_VIDEO, true ) ) {
+		if ( $settings->get( 'sitemap.video', true ) ) {
 			$output .= "\nSitemap: " . home_url( '/sitemap-video.xml' );
 		}
 		return $output;
@@ -812,11 +643,12 @@ class MM_Sitemap {
 	 * Requests are non-blocking so they never slow down the publish action.
 	 */
 	public static function ping_search_engines(): void {
+		$settings    = MM_Site_Settings::get_instance();
 		$sitemap_urls = [];
-		if ( get_option( self::OPT_MEDIA, true ) ) {
+		if ( $settings->get( 'sitemap.enabled', true ) ) {
 			$sitemap_urls[] = home_url( '/sitemap-media.xml' );
 		}
-		if ( get_option( self::OPT_VIDEO, true ) ) {
+		if ( $settings->get( 'sitemap.video', true ) ) {
 			$sitemap_urls[] = home_url( '/sitemap-video.xml' );
 		}
 		foreach ( $sitemap_urls as $sitemap_url ) {
