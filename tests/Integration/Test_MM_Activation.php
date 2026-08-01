@@ -33,10 +33,11 @@ class Test_MM_Activation extends WP_UnitTestCase {
 
 		global $wpdb;
 		$table = $wpdb->prefix . MM_JOB_TABLE;
-		// Query the table directly — returns false on error (table doesn't exist).
+		// Use SHOW TABLES — does not emit a DB error on missing table (unlike
+		// SELECT which PHPUnit would catch as an Error).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
-		$this->assertNotFalse( $result, "Table {$table} should exist after activation." );
+		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		$this->assertNotEmpty( $exists, "Table {$table} should exist after activation." );
 	}
 
 	public function test_activate_migrates_legacy_options(): void {

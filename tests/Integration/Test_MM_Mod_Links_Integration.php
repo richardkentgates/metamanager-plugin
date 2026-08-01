@@ -27,8 +27,8 @@ class Test_MM_Mod_Links_Integration extends WP_UnitTestCase {
 		global $wpdb;
 		$table   = MM_Mod_Links::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result  = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
-		if ( false === $result ) {
+		$exists  = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		if ( empty( $exists ) ) {
 			$this->markTestSkipped( "Links table {$table} could not be created." );
 		}
 		$this->settings = MM_Site_Settings::get_instance();
@@ -80,18 +80,25 @@ class Test_MM_Mod_Links_Integration extends WP_UnitTestCase {
 	}
 
 	public function test_extract_from_post_skips_javascript_links(): void {
+		global $wpdb;
+		$table = MM_Mod_Links::table_name();
+
 		$post_id = $this->factory->post->create( [
 			'post_content' => '<p><a href="javascript:void(0)">Click</a>.</p>',
 			'post_status'  => 'publish',
 		] );
 
+		// The save_post hook may fire during factory->create() and insert data
+		// before we get here. Measure the delta to isolate extract_from_post().
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$before = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE post_id = %d", $post_id ) );
+
 		$this->links->extract_from_post( $post_id, get_post( $post_id ) );
 
-		global $wpdb;
-		$table = MM_Mod_Links::table_name();
-		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE post_id = %d", $post_id ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$after = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE post_id = %d", $post_id ) );
 
-		$this->assertSame( 0, $count );
+		$this->assertSame( $before, $after, 'extract_from_post should not insert javascript links' );
 	}
 
 	public function test_extract_from_post_skips_draft_posts(): void {
