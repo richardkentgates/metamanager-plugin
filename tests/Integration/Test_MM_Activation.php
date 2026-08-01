@@ -33,10 +33,11 @@ class Test_MM_Activation extends WP_UnitTestCase {
 
 		global $wpdb;
 		$table = $wpdb->prefix . MM_JOB_TABLE;
-		// Use SHOW TABLES — does not emit a DB error on missing table (unlike
-		// SELECT which PHPUnit would catch as an Error).
+		// Use SHOW TABLES with esc_like — does not emit a DB error on missing
+		// table (unlike SELECT which PHPUnit would catch as an Error), and
+		// esc_like ensures `_` is treated literally, not as a LIKE wildcard.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
 		$this->assertNotEmpty( $exists, "Table {$table} should exist after activation." );
 	}
 
