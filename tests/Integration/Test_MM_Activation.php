@@ -67,7 +67,9 @@ class Test_MM_Activation extends WP_UnitTestCase {
 		mm_activate_single_site();
 
 		$current = get_option( MM_META_OPT_SETTINGS );
-		$this->assertSame( 'Custom %%title%%', $current['titles']['title_template'] );
+		$this->assertIsArray( $current, 'MM_META_OPT_SETTINGS should be an array after activation.' );
+		$this->assertArrayHasKey( 'titles', $current, 'Settings should contain a titles key.' );
+		$this->assertSame( 'Custom %%title%%', $current['titles']['title_template'] ?? '' );
 
 		// Cleanup.
 		delete_option( MM_META_OPT_SETTINGS );
