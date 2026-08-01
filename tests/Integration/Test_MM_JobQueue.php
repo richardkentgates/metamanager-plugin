@@ -192,6 +192,11 @@ class Test_MM_JobQueue extends WP_UnitTestCase {
 	// -----------------------------------------------------------------------
 
 	public function test_on_upload_fresh_image_queues_both_job_types(): void {
+		// Import job requires ExifTool; skip if not available in CI.
+		if ( ! MM_Status::exiftool_available() ) {
+			$this->markTestSkipped( 'ExifTool is not available.' );
+		}
+
 		[ $attachment_id ] = $this->create_tmp_attachment( 'image/jpeg' );
 
 		// No completed jobs in DB → treated as a fresh upload.

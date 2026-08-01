@@ -124,9 +124,14 @@ class MM_Mod_Links extends MM_Mod_Base {
 		// Extract <a href="...">anchor</a>.
 		if ( preg_match_all( '/<a[^>]+href=["\']([^"\'#][^"\']*)["\'][^>]*>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER ) ) {
 			foreach ( $matches as $m ) {
-				$url    = esc_url_raw( $m[1] );
+				$raw_url = $m[1];
+				// Check scheme before esc_url_raw() transforms the URL.
+				if ( strpos( $raw_url, 'mailto:' ) === 0 || strpos( $raw_url, 'javascript:' ) === 0 ) {
+					continue;
+				}
+				$url    = esc_url_raw( $raw_url );
 				$anchor = wp_strip_all_tags( $m[2] );
-				if ( ! $url || strpos( $url, 'mailto:' ) === 0 || strpos( $url, 'javascript:' ) === 0 ) {
+				if ( ! $url ) {
 					continue;
 				}
 				// Make relative URLs absolute.

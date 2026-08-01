@@ -32,14 +32,14 @@ class Test_MM_Activation extends WP_UnitTestCase {
 		mm_activate_single_site();
 
 		global $wpdb;
-		$table   = $wpdb->prefix . 'mm_jobs';
+		$table   = $wpdb->prefix . MM_JOB_TABLE;
 		$exists  = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
 		$this->assertSame( $table, $exists );
 	}
 
 	public function test_activate_migrates_legacy_options(): void {
 		// Simulate legacy option.
-		update_option( 'gcm_meta_settings', [ 'titles' => [ 'title_template' => '%%title%%' ] ] );
+		update_option( 'gcm_seo_settings', [ 'titles' => [ 'title_template' => '%%title%%' ] ] );
 		delete_option( MM_META_OPT_SETTINGS );
 
 		mm_activate_single_site();
@@ -49,14 +49,14 @@ class Test_MM_Activation extends WP_UnitTestCase {
 		$this->assertNotFalse( $new_value );
 
 		// Cleanup.
-		delete_option( 'gcm_meta_settings' );
+		delete_option( 'gcm_seo_settings' );
 		delete_option( MM_META_OPT_SETTINGS );
 	}
 
 	public function test_activate_does_not_overwrite_existing_options(): void {
 		$existing = [ 'titles' => [ 'title_template' => 'Custom %%title%%' ] ];
 		update_option( MM_META_OPT_SETTINGS, $existing );
-		update_option( 'gcm_meta_settings', [ 'titles' => [ 'title_template' => 'Legacy' ] ] );
+		update_option( 'gcm_seo_settings', [ 'titles' => [ 'title_template' => 'Legacy' ] ] );
 
 		mm_activate_single_site();
 
@@ -65,7 +65,7 @@ class Test_MM_Activation extends WP_UnitTestCase {
 
 		// Cleanup.
 		delete_option( MM_META_OPT_SETTINGS );
-		delete_option( 'gcm_meta_settings' );
+		delete_option( 'gcm_seo_settings' );
 	}
 
 	// ------------------------------------------------------------------

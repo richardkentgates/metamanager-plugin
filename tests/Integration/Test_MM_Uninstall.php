@@ -43,7 +43,7 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 
 	public function test_uninstall_drops_jobs_table(): void {
 		global $wpdb;
-		$table = $wpdb->prefix . 'mm_jobs';
+		$table = $wpdb->prefix . MM_JOB_TABLE;
 
 		// Create the table directly via SQL (dbDelta can be unreliable in test env).
 		$charset = $wpdb->get_charset_collate();

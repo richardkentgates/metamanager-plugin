@@ -137,7 +137,7 @@ class Test_MM_Import_Completed_Jobs extends WP_UnitTestCase {
 		// Check the job was logged.
 		global $wpdb;
 		$logged = $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}mm_jobs WHERE job_id = %s",
+			"SELECT COUNT(*) FROM {$wpdb->prefix}" . MM_JOB_TABLE . " WHERE job_id = %s",
 			'test-log-001'
 		) );
 
