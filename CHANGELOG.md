@@ -7,6 +7,31 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.3.51] — 2026-08-01
+
+### Fixed
+- CI workflows: version bumps, auto-triggered promotions, and branch divergence issues.
+- `METADATA_URL` using HTTP instead of HTTPS in `MM_Updater`.
+- Plugin URI pointing to server repo instead of plugin repo.
+- GPL license mismatch (LICENSE file is GPL-3.0, headers were GPL-2.0).
+
+### Removed
+- Orphan `class-mm-importer.php` (never loaded).
+- Deprecated `wpmu_new_blog` hook (plugin requires WP 6.2+).
+- `sslverify => false` from link checker for security.
+- Person-to-Organization `worksFor` linkage in author schema.
+
+### Added
+- Unit tests for `MM_Mod_Head_Meta`, `MM_Mod_Local`, `MM_Mod_Social`, `MM_Mod_Author`.
+
+---
+
+## [2.3.52] — 2026-08-01
+
+### Changed
+- Auto-incremented version from 2.3.51 to 2.3.52.
+
+## [2.3.0] — 2026-07-07
 
 
 
@@ -36,19 +61,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 
 
+## [2.3.52] - 2026-08-01
 
+### Changed
+- Auto-incremented version from 2.3.51 to 2.3.52
+## [2.3.51] - 2026-08-01
 
-
-
-
-
-
-
-
-
-
-
-
+### Changed
+- Auto-incremented version from 2.3.50 to 2.3.51
 ## [2.3.50] - 2026-08-01
 
 ### Changed
@@ -215,13 +235,46 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Auto-incremented version from 2.3.2 to 2.3.3
 ## [2.3.2] - 2026-07-24
 
-### Changed
-- Auto-incremented version from 2.3.1 to 2.3.2
-## [2.3.1] - 2026-07-23
-
-### Changed
-- Auto-incremented version from 2.3.0 to 2.3.1
 ## [2.3.0] — 2026-07-07
+
+### Added
+
+- **Debian package** — Metamanager is now distributable as a `.deb` so it can be
+  installed via `apt` from a hosted repository. The package is thin: it stages
+  the plugin tree, daemons, and systemd units to `/usr/local/lib/metamanager/`
+  and `postinst` runs `metamanager-install.sh --no-deps` to auto-detect the
+  WordPress content directory, copy the plugin into place, patch the daemon
+  scripts and systemd units with the detected path, enable and start both
+  daemons, and activate the plugin via WP-CLI. `Depends` declares
+  `jq`, `inotify-tools`, `libimage-exiftool-perl`, `libjpeg-turbo-progs`,
+  `optipng`, `webp`, `ffmpeg` so `apt` provisions the OS-level toolchain.
+- **`--no-deps` flag** for `metamanager-install.sh` — skips the apt/dnf
+  dependency install step, for reuse from contexts where dependencies are
+  already declared (e.g. a `.deb` postinst).
+- **GitHub Actions workflow** (`build-deb.yml`) — builds the `.deb` on `v*`
+  tags and attaches it to the GitHub release.
+
+### Fixed
+
+- **Version drift** — the plugin header and `readme.txt` stable tag were stuck
+  at `2.1.7` while the `MM_VERSION` constant had advanced to `2.2.0`. All three
+  version strings are now synchronised at `2.3.0`.
+
+---
+
+## [2.2.0] — 2026-03-22
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Added
 

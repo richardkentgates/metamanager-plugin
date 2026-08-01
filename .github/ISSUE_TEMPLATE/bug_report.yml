@@ -1,0 +1,80 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill out the sections below.
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: "Found in Media → MM Settings → Help sidebar, or `wp metamanager --version`"
+      placeholder: "e.g. 2.3.51"
+    validations:
+      required: true
+
+  - type: input
+    id: daemon-version
+    attributes:
+      label: Daemon version
+      description: "Run `cat /usr/local/lib/metamanager/VERSION` on the server"
+      placeholder: "e.g. 2.4.8"
+    validations:
+      required: false
+
+  - type: input
+    id: wp-version
+    attributes:
+      label: WordPress version
+      placeholder: "e.g. 6.9"
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "e.g. 8.2"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: Describe the bug. What did you expect to happen? What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Step-by-step instructions to reproduce the behavior.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Server environment
+      description: "OS, web server, MySQL version, any relevant extensions"
+      placeholder: "e.g. Ubuntu 20.04, Nginx 1.18, MySQL 8.0"
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: "Paste any relevant WordPress debug log or syslog entries. Check `WP_DEBUG_LOG` and `/var/log/syslog`."
+      render: shell
+    validations:
+      required: false
