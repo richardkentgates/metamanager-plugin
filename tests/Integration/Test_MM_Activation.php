@@ -60,16 +60,18 @@ class Test_MM_Activation extends WP_UnitTestCase {
 	}
 
 	public function test_activate_does_not_overwrite_existing_options(): void {
-		$existing = [ 'titles' => [ 'title_template' => 'Custom %%title%%' ] ];
+		// Use 'separator' — it exists in settings_defaults so intercept_save
+		// won't strip it during the pre_update_option_ filter.
+		$existing = [ 'titles' => [ 'separator' => 'CustomSep' ] ];
 		update_option( MM_META_OPT_SETTINGS, $existing );
-		update_option( 'gcm_seo_settings', [ 'titles' => [ 'title_template' => 'Legacy' ] ] );
+		update_option( 'gcm_seo_settings', [ 'titles' => [ 'separator' => 'LegacySep' ] ] );
 
 		mm_activate_single_site();
 
 		$current = get_option( MM_META_OPT_SETTINGS );
 		$this->assertIsArray( $current, 'MM_META_OPT_SETTINGS should be an array after activation.' );
 		$this->assertArrayHasKey( 'titles', $current, 'Settings should contain a titles key.' );
-		$this->assertSame( 'Custom %%title%%', $current['titles']['title_template'] ?? '' );
+		$this->assertSame( 'CustomSep', $current['titles']['separator'] ?? '' );
 
 		// Cleanup.
 		delete_option( MM_META_OPT_SETTINGS );
