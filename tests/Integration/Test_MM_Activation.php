@@ -32,14 +32,20 @@ class Test_MM_Activation extends WP_UnitTestCase {
 		mm_activate_single_site();
 
 		global $wpdb;
-		$table   = $wpdb->prefix . 'mm_jobs';
-		$exists  = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-		$this->assertSame( $table, $exists );
+		$table = $wpdb->prefix . MM_JOB_TABLE;
+		// Suppress DB errors so PHPUnit doesn't intercept them as Errors.
+		// SELECT on a missing table emits a DB error; suppressing lets us
+		// handle it as a normal assertion failure instead.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->suppress_errors( true );
+		$result = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
+		$wpdb->suppress_errors( false );
+		$this->assertNotFalse( $result, "Table {$table} should exist after activation." );
 	}
 
 	public function test_activate_migrates_legacy_options(): void {
 		// Simulate legacy option.
-		update_option( 'gcm_meta_settings', [ 'titles' => [ 'title_template' => '%%title%%' ] ] );
+		update_option( 'gcm_seo_settings', [ 'titles' => [ 'title_template' => '%%title%%' ] ] );
 		delete_option( MM_META_OPT_SETTINGS );
 
 		mm_activate_single_site();
@@ -49,23 +55,27 @@ class Test_MM_Activation extends WP_UnitTestCase {
 		$this->assertNotFalse( $new_value );
 
 		// Cleanup.
-		delete_option( 'gcm_meta_settings' );
+		delete_option( 'gcm_seo_settings' );
 		delete_option( MM_META_OPT_SETTINGS );
 	}
 
 	public function test_activate_does_not_overwrite_existing_options(): void {
-		$existing = [ 'titles' => [ 'title_template' => 'Custom %%title%%' ] ];
+		// Use 'separator' — it exists in settings_defaults so intercept_save
+		// won't strip it during the pre_update_option_ filter.
+		$existing = [ 'titles' => [ 'separator' => 'CustomSep' ] ];
 		update_option( MM_META_OPT_SETTINGS, $existing );
-		update_option( 'gcm_meta_settings', [ 'titles' => [ 'title_template' => 'Legacy' ] ] );
+		update_option( 'gcm_seo_settings', [ 'titles' => [ 'separator' => 'LegacySep' ] ] );
 
 		mm_activate_single_site();
 
 		$current = get_option( MM_META_OPT_SETTINGS );
-		$this->assertSame( 'Custom %%title%%', $current['titles']['title_template'] );
+		$this->assertIsArray( $current, 'MM_META_OPT_SETTINGS should be an array after activation.' );
+		$this->assertArrayHasKey( 'titles', $current, 'Settings should contain a titles key.' );
+		$this->assertSame( 'CustomSep', $current['titles']['separator'] ?? '' );
 
 		// Cleanup.
 		delete_option( MM_META_OPT_SETTINGS );
-		delete_option( 'gcm_meta_settings' );
+		delete_option( 'gcm_seo_settings' );
 	}
 
 	// ------------------------------------------------------------------

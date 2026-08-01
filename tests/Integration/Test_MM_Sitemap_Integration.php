@@ -26,16 +26,19 @@ class Test_MM_Sitemap_Integration extends WP_UnitTestCase {
 	// ------------------------------------------------------------------
 
 	public function test_append_robots_txt_adds_sitemap_when_media_enabled(): void {
-		update_option( MM_Sitemap::OPT_MEDIA, true );
-		update_option( MM_Sitemap::OPT_VIDEO, false );
+		MM_Site_Settings::reset_instance();
+		update_option( MM_META_OPT_SETTINGS, [
+			'sitemap' => [ 'enabled' => true, 'video' => false ],
+		] );
+		MM_Site_Settings::reset_instance();
 
 		$output = MM_Sitemap::append_robots_txt( "User-agent: *\nDisallow: /wp-admin/\n", true );
 
 		$this->assertStringContainsString( 'Sitemap:', $output );
 		$this->assertStringContainsString( 'sitemap-media.xml', $output );
 
-		delete_option( MM_Sitemap::OPT_MEDIA );
-		delete_option( MM_Sitemap::OPT_VIDEO );
+		delete_option( MM_META_OPT_SETTINGS );
+		MM_Site_Settings::reset_instance();
 	}
 
 	public function test_append_robots_txt_no_change_when_private(): void {
@@ -46,21 +49,19 @@ class Test_MM_Sitemap_Integration extends WP_UnitTestCase {
 	}
 
 	public function test_append_robots_txt_no_sitemap_when_disabled(): void {
-		// Use delete_option to ensure get_option returns the default (true),
-		// then explicitly set to a falsy value. '0' is more reliable than
-		// boolean false in the WP test environment.
-		delete_option( MM_Sitemap::OPT_MEDIA );
-		delete_option( MM_Sitemap::OPT_VIDEO );
-		update_option( MM_Sitemap::OPT_MEDIA, '0' );
-		update_option( MM_Sitemap::OPT_VIDEO, '0' );
+		MM_Site_Settings::reset_instance();
+		update_option( MM_META_OPT_SETTINGS, [
+			'sitemap' => [ 'enabled' => false, 'video' => false ],
+		] );
+		MM_Site_Settings::reset_instance();
 
 		$original = "User-agent: *\nDisallow: /wp-admin/\n";
 		$output   = MM_Sitemap::append_robots_txt( $original, true );
 
 		$this->assertStringNotContainsString( 'Sitemap:', $output );
 
-		delete_option( MM_Sitemap::OPT_MEDIA );
-		delete_option( MM_Sitemap::OPT_VIDEO );
+		delete_option( MM_META_OPT_SETTINGS );
+		MM_Site_Settings::reset_instance();
 	}
 
 	// ------------------------------------------------------------------
@@ -68,14 +69,17 @@ class Test_MM_Sitemap_Integration extends WP_UnitTestCase {
 	// ------------------------------------------------------------------
 
 	public function test_ping_search_engines_does_not_error(): void {
-		update_option( MM_Sitemap::OPT_MEDIA, false );
-		update_option( MM_Sitemap::OPT_VIDEO, false );
+		MM_Site_Settings::reset_instance();
+		update_option( MM_META_OPT_SETTINGS, [
+			'sitemap' => [ 'enabled' => false, 'video' => false ],
+		] );
+		MM_Site_Settings::reset_instance();
 
 		MM_Sitemap::ping_search_engines();
 		$this->assertTrue( true );
 
-		delete_option( MM_Sitemap::OPT_MEDIA );
-		delete_option( MM_Sitemap::OPT_VIDEO );
+		delete_option( MM_META_OPT_SETTINGS );
+		MM_Site_Settings::reset_instance();
 	}
 
 	// ------------------------------------------------------------------

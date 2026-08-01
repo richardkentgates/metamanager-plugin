@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Full codebase audit — 100% source read of both repos, contrasted against all documentation, wiki, GitHub Pages, and plugin help tabs. Last updated 2026-07-31 (SiteNavigationElement fix pending push).
+Full codebase audit — 100% source read of both repos, contrasted against all documentation, wiki, GitHub Pages, and plugin help tabs. Last updated 2026-07-31.
 
 ---
 
@@ -25,53 +25,71 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 │ MM_Frontend (media output)  │          │  - jpegtran/optipng/cwebp   │
 │ MM_Head_Emitter + Modules   │          │  - ffmpeg remux             │
 │  (page-level SEO)           │          │                             │
+│ MM_Abilities (AI API)       │          │                             │
+│ MM_MCP_Server (AI tools)    │          │                             │
+│ MM_Mod_Discovery (llms.txt) │          │                             │
 └─────────────────────────────┘          └─────────────────────────────┘
 ```
 
-**Two frontend output systems coexist:**
+**Frontend output systems:**
 - `MM_Frontend` — media-specific structured data (ImageObject/VideoObject/AudioObject/DigitalDocument + OG for media + license links)
-- `MM_Mod_*` via `MM_Head_Emitter` — page-level SEO (title/desc/canonical/robots + WebSite/BlogPosting schema + OG/Twitter cards)
+- `MM_Mod_*` via `MM_Head_Emitter` — page-level SEO (title/desc/canonical/robots + WebSite/BlogPosting/LocalBusiness schema + OG/Twitter cards)
+- `MM_Mod_Discovery` — machine-readable AI agent discovery files (`/llms.txt`, `/llms-full.txt`, `/.well-known/api-catalog`)
 
-Both are needed. They handle different concerns.
-
----
-
-## BUGS — All Fixed (from full codebase audit 2026-07-31)
-
-### BUG-1: Video sitemap indexes YouTube/Vimeo embeds (HIGH) — FIXED 2026-07-31
-**File:** `includes/class-mm-sitemap.php:170-206`
-**Problem:** `render_video_sitemap()` extracted YouTube and Vimeo embeds from post content and included them in the video sitemap via `extract_embed_videos()`. Per user requirement, video sitemaps should ONLY index self-hosted videos.
-**Fix:** Removed `extract_embed_videos()` call from `render_video_sitemap()`. Removed `OPT_VIDEO_YOUTUBE` and `OPT_VIDEO_VIMEO` constants and settings. Removed `get_cached_oembed()` method. Updated sitemap settings description. Released as v2.3.41.
-
-### BUG-2: Organization/LocalBusiness schema not rendering on production (HIGH) — FIXED 2026-07-31
-**File:** `includes/metadata/modules/class-mm-mod-local.php`
-**Problem:** Organization schema used `ProfessionalService` which is not a valid schema.org type (was proposed but never added to spec). Validator silently skipped the node.
-**Fix:** Added validation in `MM_Mod_Local::populate()` to check stored type against `get_business_types()` and fall back to `LocalBusiness`. Released as v2.3.45.
-
-### BUG-3: Compression UI labels imply lossy quality levels (MEDIUM) — FIXED 2026-07-31
-**File:** `includes/class-mm-settings.php:285-306`
-**Problem:** Compression dropdown labels implied lossy quality trade-offs. ALL compression is lossless only.
-**Fix:** Updated dropdown labels to "Effort Level 1 (fast)" through "Effort Level 7 (slow)" with description "All compression is lossless — this controls optimization effort, not quality." Released as v2.3.41.
-
-### BUG-4: Author settings save — values don't persist (MEDIUM) — CONFIRMED WORKING
-**File:** `templates/admin/page-authors.php`, `includes/metadata/admin/class-mm-metadata-admin.php`
-**Problem:** User reported toggling settings shows success notice but values don't persist.
-**Finding:** Save mechanism was correct — `sanitize_section()` properly extracts and merges settings. Values persist in `mm_meta_settings` option. Issue was not reproducible.
-**Resolution:** Verified working on production via WP-CLI. No fix needed.
-
-### BUG-5: Two separate sitemap configuration locations (LOW) — FIXED 2026-07-31
-**Files:** `includes/class-mm-sitemap.php`, `includes/metadata/modules/class-mm-mod-sitemap.php`
-**Problem:** Sitemap settings existed in two places — Preferences → Sitemaps and Metamanager → Sitemaps.
-**Fix:** Consolidated all sitemap settings into `MM_Site_Settings` singleton. Removed standalone options from `MM_Sitemap`. Released as v2.3.43.
-
-### BUG-6: Schema `author_persons` vs Authors `person_schema` duplicate control (LOW) — FIXED 2026-07-31
-**Files:** `includes/metadata/class-mm-site-settings.php:261`, `templates/admin/page-authors.php:58-65`
-**Problem:** Two separate settings controlled Person schema emission.
-**Fix:** Removed `schema.author_persons` from defaults and schema settings page. `authors.person_schema` is now the single control. Released as v2.3.41.
+**AI integration:**
+- `MM_Abilities` — registers 6 SEO capabilities with WordPress Abilities API (requires WP 6.9+, gracefully degrades)
+- `MM_MCP_Server` — exposes abilities as MCP tools via WordPress MCP Adapter plugin (gracefully degrades)
+- `MM_Mod_Discovery` — generates `llms.txt` and API catalog for AI agent discovery
 
 ---
 
-## BUGS — Already Fixed (from prior work)
+## Current Status — Production
+
+| Item | Value |
+|------|-------|
+| Plugin on production | v2.3.45 (manually updated 2026-07-31) |
+| Plugin on apt server | v2.3.47 (CI deployed) |
+| Daemon version | v2.4.8 |
+| WordPress version | 7.0.2 |
+| Production URL | https://thepeosolution.com |
+| Production IP | 104.197.172.183 |
+| Apt server IP | 34.136.87.92 (apt.richardkentgates.com) |
+
+**WordPress updater**: Will detect v2.3.47 on next scheduled check (every 12 hours). Metadata transient was cleared.
+
+---
+
+## Audit Bugs — All Fixed
+
+All 6 bugs from the full codebase audit (2026-07-31) are fixed and deployed.
+
+| # | Bug | Priority | Fix | Version |
+|---|-----|----------|-----|---------|
+| BUG-1 | Video sitemap indexes YouTube/Vimeo embeds | HIGH | Removed embed extraction, YouTube/Vimeo settings, `get_cached_oembed()` | v2.3.41 |
+| BUG-2 | Organization schema uses invalid type `ProfessionalService` | HIGH | Validate against `get_business_types()`, fall back to `LocalBusiness` | v2.3.45 |
+| BUG-3 | Compression UI labels imply lossy quality | MEDIUM | Updated labels to "Effort Level" with lossless clarification | v2.3.41 |
+| BUG-4 | Author settings don't persist | MEDIUM | Confirmed working — values persist correctly, not reproducible | N/A |
+| BUG-5 | Two separate sitemap configuration pages | LOW | Consolidated into `MM_Site_Settings`, removed standalone options | v2.3.43 |
+| BUG-6 | Duplicate Person schema controls | LOW | Removed `schema.author_persons`, kept `authors.person_schema` | v2.3.41 |
+
+---
+
+## Additional Fixes (Post-Audit)
+
+| # | Issue | Version |
+|---|-------|---------|
+| F39 | Video sitemap YouTube/Vimeo embed removal | v2.3.41 |
+| F40 | Compression UI labels lossless clarification | v2.3.41 |
+| F41 | Person schema duplicate control consolidation | v2.3.41 |
+| F42 | Sitemap settings consolidation into MM_Site_Settings | v2.3.43 |
+| F43 | Updater fatal error — stdClass used as array in `inject_update()` | v2.3.44 |
+| F44 | Organization schema business type validation | v2.3.45 |
+| F45 | SiteNavigationElement — nav_menu taxonomy term_meta fix | v2.3.46 |
+| F46 | Discovery files rewrite rules for .txt extensions, `class_exists` bug | v2.3.47 |
+
+---
+
+## Earlier Fixes (May-July 2026)
 
 | # | Issue | Date Fixed |
 |---|-------|------------|
@@ -88,23 +106,7 @@ Both are needed. They handle different concerns.
 | F11 | wp-sitemaps route conflict | 2026-07-26 |
 | F12 | Business profile schema fallback | 2026-07-26 |
 | F13 | Deploy workflow metadata.json heredoc | 2026-07-26 |
-| F14 | MM_Frontend::init() already called (false positive) | 2026-07-27 |
-| F15 | write_job() already checks put_contents (false positive) | 2026-07-27 |
-| F16 | MM_Metadata_CLI registered with WP-CLI | 2026-07-27 |
-| F17 | purge-links removed from help tabs | 2026-07-27 |
-| F18 | .processing cleanup already in code (false positive) | 2026-07-27 |
-| F19 | Duplicate <title> already fixed (false positive) | 2026-07-27 |
-| F20 | REST API write-back already works (false positive) | 2026-07-27 |
-| F21 | mm_meta_synced already removed (FIX-10) | 2026-07-25 |
-| F22 | OG video/audio already works (false positive) | 2026-07-27 |
-| F23 | test-deploy.yml JSON indentation fixed | 2026-07-27 |
-| F24 | SECURITY.md versions updated (both repos) | 2026-07-27 |
-| F25 | ARCHITECTURE.md versions updated | 2026-07-27 |
-| F26 | License badge corrected to GPL 3.0+ | 2026-07-27 |
-| F27 | Plugin site og:url and meta description updated | 2026-07-27 |
-| F28 | Documentation URLs unified | 2026-07-27 |
-| F29 | Wiki links removed from READMEs | 2026-07-27 |
-| F30 | L1-L4 stale findings resolved | 2026-07-27 |
+| F14-F30 | Stale findings, false positives, doc updates | 2026-07-27 |
 | F31 | Updater filter fix — returns `false` when no update to inject | 2026-07-29 |
 | F32 | Metadata transient stale cache cleared | 2026-07-29 |
 | F33 | Version header drift fixed (CI sed hardened) | 2026-07-29 |
@@ -113,59 +115,92 @@ Both are needed. They handle different concerns.
 | F36 | MM_CLI fatal error fix (redundant WP_CLI stubs removed) | 2026-07-30 |
 | F37 | CI phpunit.xml path fix | 2026-07-30 |
 | F38 | WP_CLI\Utils function stubs added | 2026-07-30 |
-| F39 | Video sitemap YouTube/Vimeo embed removal (BUG-1) | 2026-07-31 |
-| F40 | Compression UI labels lossless clarification (BUG-3) | 2026-07-31 |
-| F41 | Person schema duplicate control consolidation (BUG-6) | 2026-07-31 |
-| F42 | Sitemap settings consolidation into MM_Site_Settings (BUG-5) | 2026-07-31 |
-| F43 | Updater fatal error — stdClass used as array in inject_update() | 2026-07-31 |
-| F44 | Organization schema business type validation (BUG-2) | 2026-07-31 |
-| F45 | SiteNavigationElement — nav_menu taxonomy term_meta fix | 2026-07-31 |
 
 ---
 
-## AUDIT — Verified NOT Issues
+## Verified NOT Issues
 
 - **Media Processing page**: Intentionally kept. Needed for batch metadata operations.
 - **`MM_Admin::add_bulk_action()`**: Part of Media Processing feature, not dead code.
-- **Two-frontend-system architecture**: Both `MM_Frontend` (media-specific) and `MM_Mod_*` (page-level) are needed. They handle different concerns.
+- **Two-frontend-system architecture**: Both `MM_Frontend` (media-specific) and `MM_Mod_*` (page-level) are needed. Different concerns.
 - **Daemon field coverage**: PHP and shell scripts define identical field sets. Consistent.
 - **Job queue filesystem contract**: PHP writes -> daemon claims via atomic `mv` -> writes result -> PHP imports via WP-Cron. Solid design.
-- **Verify system**: Exists (`rest_verify_attachment`, `verify_single_file()`, `calculate_verify_score()`) but no scheduled cron — requires manual REST API call. Not broken, just not auto-triggered.
+- **Verify system**: Exists but no scheduled cron — requires manual REST API call. Not broken, just not auto-triggered.
 - **Schema primary menu**: No menu checked = NO SiteNavigationElement schema (intentional design).
+- **All compression is lossless**: optipng effort 1-7, jpegtran `-copy all -optimize -progressive`, cwebp `-m 6 -q 100`, ffmpeg `-c copy`.
 
 ---
 
-## Implementation Plan
+## Production State
 
-### Phase 1: Fix Active Bugs — COMPLETE
+### What's Deployed (v2.3.45, manually installed)
 
-All 6 bugs from the full codebase audit have been fixed:
+- [x] All 6 audit bugs fixed
+- [x] SiteNavigationElement — term_meta fix (primary checkbox on menus)
+- [x] Organization schema — business type validation
+- [x] Video sitemap — self-hosted only
+- [x] Compression — lossless labels
+- [x] Sitemap settings — consolidated
+- [x] Person schema — single control
+- [x] Updater — fatal error fixed, filter returns false when no update
 
-| Bug | Priority | Status | Version |
-|-----|----------|--------|---------|
-| BUG-1: Video sitemap YouTube/Vimeo | HIGH | Fixed | v2.3.41 |
-| BUG-2: Organization schema validation | HIGH | Fixed | v2.3.45 |
-| BUG-3: Compression UI labels | MEDIUM | Fixed | v2.3.41 |
-| BUG-4: Author settings save | MEDIUM | Confirmed working | N/A |
-| BUG-5: Sitemap settings consolidation | LOW | Fixed | v2.3.43 |
-| BUG-6: Person schema duplicate | LOW | Fixed | v2.3.41 |
+### What's on Apt Server (v2.3.47, CI deployed)
 
-### Phase 2: SiteNavigationElement Fix — COMPLETE
+- [x] All of v2.3.45
+- [x] Discovery files — rewrite rules for .txt extensions fixed
+- [x] Discovery files — `class_exists` bug fixed
+- [x] `add_rewrite_rule` replaces broken `add_rewrite_endpoint`
+- [x] Priority 1 on `template_redirect` to prevent canonical redirect interception
 
-Fixed nav_menu taxonomy term_meta issue where both `class-mm-nav-menu-admin.php` and `class-mm-mod-schema.php` incorrectly used `post_meta` storage and `get_posts(['post_type' => 'nav_menu'])` query. Now uses `term_meta` and `get_terms()` with `meta_query`.
+### Discovery Files — Verified Working on Production
 
-### Phase 3: Verification — COMPLETE
+| Endpoint | Status | Content-Type |
+|----------|--------|-------------|
+| `/llms.txt` | 200 OK | text/plain |
+| `/llms-full.txt` | 200 OK | text/plain |
+| `/.well-known/api-catalog` | 200 OK | application/linkset+json |
 
-- Full test suite: 49 unit tests (261 assertions) — ALL PASS
-- Integration tests: 252 tests (403 assertions) — 11 failures (env-specific, not code bugs)
-- PHPStan: 0 errors
-- Production verification: Schema output correct, video sitemap empty (correct), compression labels updated
+### AI Integration — Graceful Degradation
 
-### Next Steps
+| Component | Status | Reason |
+|-----------|--------|--------|
+| Abilities API | Degrades gracefully | WP 7.0.2 doesn't have `wp_register_ability` yet |
+| MCP Server | Degrades gracefully | MCP Adapter plugin not installed |
+| Discovery files | Working | All 3 endpoints serving |
 
-1. Push SiteNavigationElement fix to dev branch and promote through pipeline
-2. Test AI integration (Abilities API, MCP server, discovery files) on production
-3. Run WordPress Plugin Checker against plugin on production
+---
+
+## Pending Tasks
+
+### Immediate
+
+- [ ] Update production plugin to v2.3.47 via WordPress updater (apt server has it, transient cleared)
+
+### Short-term
+
+- [ ] Install WordPress MCP Adapter plugin on production when available
+- [ ] Re-test Abilities API when WordPress adds `wp_register_ability` (planned for WP 6.9+, may be in future minor release)
+- [ ] Add integration tests for discovery file endpoints
+- [ ] Add integration tests for nav_menu term_meta operations
+
+### Medium-term
+
+- [ ] WordPress Plugin Checker — run via browser admin (hangs over SSH due to runtime HTTP checks)
+- [ ] Consider adding `wpseo`/`rank-math` schema compatibility imports
+- [ ] Consider structured data validation endpoint (check schema.org compliance)
+
+---
+
+## Release History
+
+| Version | Key Changes | Date |
+|---------|------------|------|
+| v2.3.41 | Video sitemap self-hosted only, compression labels, person schema consolidation | 2026-07-31 |
+| v2.3.43 | Sitemap settings consolidation into MM_Site_Settings | 2026-07-31 |
+| v2.3.44 | Updater fatal error fix (stdClass → array) | 2026-07-31 |
+| v2.3.45 | Organization schema business type validation | 2026-07-31 |
+| v2.3.46 | SiteNavigationElement term_meta fix | 2026-07-31 |
+| v2.3.47 | Discovery files rewrite rules fix | 2026-07-31 |
 
 ---
 
@@ -193,11 +228,32 @@ main <──PR merge── main-release.yml (tag + GitHub release)
 | `test` | Yes (from `dev`) | dev-ci passes (lint, PHPStan, ShellCheck) | No direct push; merge only |
 | `main` | Yes (from `test`) | test-deploy passes (build, deploy) | No direct push; merge only |
 
+### CI Workflows
+
+| Branch | Workflow | Trigger |
+|--------|----------|---------|
+| `dev` | ShellCheck + lint + PHPStan + auto-version bump | Push to `dev` |
+| `test` | Build zip + deploy to apt repo | PR merge from `dev` |
+| `main` | Create git tag + GitHub release + deploy to apt repo | PR merge from `test` |
+
+### Compatibility Map
+
+`daemon-compatibility.json` maps plugin versions to daemon versions. CI auto-bumps `MM_VERSION` on every dev push. Developers must add an entry for `current_version + 1` before pushing.
+
 ---
 
-## Current Versions
+## Conventions
 
-- Plugin: v2.3.45 (production, manually updated 2026-07-31)
-- Server: v2.4.8
-- Apt server: `34.136.87.92` (apt.richardkentgates.com)
-- Production site: `104.197.172.183`
+- Branch protection on `test` and `main`: PRs required, no direct pushes
+- Promotion = open PR from `dev` → `test` or `test` → `main`, CI runs, merge
+- VERSION file must stay in sync with debian/changelog (CI handles this automatically)
+- CI auto-bumps both `debian/changelog` and `VERSION` on every dev push — never edit either file manually
+- PHP 8.2 for WP-CLI (`php8.2 /usr/local/bin/wp --path=/srv/www/wordpress`)
+- SSH user: `richardkentgates` (not root); use default SSH key (no `-i` flag)
+- Plugin triggers daemon updates automatically — no manual SSH prompts on success, only on failure
+- No system reboot required for daemon updates — `systemctl restart` in-place
+- Always log errors/warnings to WordPress error log and OS syslog; info-level only when WP_DEBUG enabled
+- Never assume causes — run controlled tests to identify and isolate issues
+- Never SCP files to production outside active development sessions — always use native update systems
+- Compression is lossless ONLY — no lossy compression allowed anywhere
+- Video sitemaps index self-hosted videos only — not YouTube/Vimeo embeds

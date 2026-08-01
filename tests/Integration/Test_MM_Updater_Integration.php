@@ -43,12 +43,15 @@ class Test_MM_Updater_Integration extends WP_UnitTestCase {
 	// ------------------------------------------------------------------
 
 	public function test_inject_update_with_empty_checked(): void {
+		$this->set_mock_metadata( '999.0.0' );
+
 		$updater   = $this->create_updater();
 		$transient = new stdClass();
 		$transient->checked = [];
 
 		$result = $updater->inject_update( $transient );
 
+		$this->assertIsObject( $result );
 		$this->assertObjectHasProperty( 'checked', $result );
 		$this->assertEmpty( $result->checked );
 	}
@@ -64,8 +67,9 @@ class Test_MM_Updater_Integration extends WP_UnitTestCase {
 
 		$result = $updater->inject_update( $transient );
 
-		$basename = plugin_basename( MM_PLUGIN_FILE );
-		$this->assertArrayHasKey( $basename, $result->no_update );
+		// When remote version matches current, inject_update returns false
+		// so WordPress runs its normal update check.
+		$this->assertFalse( $result );
 	}
 
 	// ------------------------------------------------------------------

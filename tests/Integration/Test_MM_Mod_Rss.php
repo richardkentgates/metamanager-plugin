@@ -300,7 +300,7 @@ class Test_MM_Mod_Rss extends WP_UnitTestCase {
 		$this->assertStringContainsString( '2026 Example Inc.', $output );
 	}
 
-	/** Copyright output is properly escaped. */
+	/** Copyright output is sanitized (HTML tags stripped, entities escaped). */
 	public function test_rss2_head_escapes_copyright_value(): void {
 		$mod = $this->make_module( [
 			'feed' => [ 'cleanup_enabled' => true, 'feed_copyright' => '<b>Bad</b> & "Worse"' ],
@@ -311,8 +311,11 @@ class Test_MM_Mod_Rss extends WP_UnitTestCase {
 		do_action( 'rss2_head' );
 		$output = ob_get_clean();
 
+		// sanitize_text_field strips HTML tags; esc_html escapes entities.
 		$this->assertStringNotContainsString( '<b>', $output );
-		$this->assertStringContainsString( '&lt;b&gt;', $output );
+		$this->assertStringContainsString( 'Bad', $output );
+		$this->assertStringContainsString( '&amp;', $output );
+		$this->assertStringContainsString( '&quot;', $output );
 	}
 
 	/** Our copyright action is NOT added when feed_copyright is empty. */

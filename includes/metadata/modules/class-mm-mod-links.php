@@ -70,6 +70,29 @@ class MM_Mod_Links extends MM_Mod_Base {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+
+		// dbDelta silently fails on some MySQL/MariaDB versions. Always run a
+		// raw CREATE TABLE IF NOT EXISTS as a fallback — it's idempotent and
+		// avoids information_schema queries that can return stale results inside
+		// WP test suite transactions.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
+			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			url         TEXT            NOT NULL,
+			url_hash    CHAR(32)        NOT NULL,
+			post_id     BIGINT UNSIGNED NOT NULL DEFAULT 0,
+			anchor_text VARCHAR(500)    NOT NULL DEFAULT '',
+			link_type   ENUM('internal','external') NOT NULL DEFAULT 'external',
+			http_code   SMALLINT UNSIGNED          NOT NULL DEFAULT 0,
+			is_broken   TINYINT(1)                 NOT NULL DEFAULT 0,
+			is_ignored  TINYINT(1)                 NOT NULL DEFAULT 0,
+			last_checked DATETIME                  NULL,
+			created     DATETIME                   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY url_post (url_hash, post_id),
+			KEY is_broken (is_broken),
+			KEY last_checked (last_checked)
+		) {$charset};" );
 	}
 
 	public static function table_name(): string {
@@ -124,9 +147,14 @@ class MM_Mod_Links extends MM_Mod_Base {
 		// Extract <a href="...">anchor</a>.
 		if ( preg_match_all( '/<a[^>]+href=["\']([^"\'#][^"\']*)["\'][^>]*>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER ) ) {
 			foreach ( $matches as $m ) {
-				$url    = esc_url_raw( $m[1] );
+				$raw_url = $m[1];
+				// Reject non-HTTP schemes before esc_url_raw() can mangle them.
+				if ( preg_match( '/^(mailto|javascript|tel):/i', $raw_url ) ) {
+					continue;
+				}
+				$url    = esc_url_raw( $raw_url );
 				$anchor = wp_strip_all_tags( $m[2] );
-				if ( ! $url || strpos( $url, 'mailto:' ) === 0 || strpos( $url, 'javascript:' ) === 0 ) {
+				if ( ! $url || preg_match( '/^(mailto|javascript|tel):/i', $url ) ) {
 					continue;
 				}
 				// Make relative URLs absolute.

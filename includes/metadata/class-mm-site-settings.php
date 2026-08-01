@@ -19,6 +19,7 @@ class MM_Site_Settings {
 	public static function get_instance(): self {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
+			add_filter( 'pre_update_option_' . MM_META_OPT_SETTINGS, [ self::class, 'intercept_save' ], 10, 3 );
 		}
 		return self::$instance;
 	}
@@ -118,6 +119,109 @@ class MM_Site_Settings {
 	public function save_business( array $data ): void {
 		update_option( MM_META_OPT_BUSINESS, $data, false );
 		$this->business_data = null;
+	}
+
+	// -------------------------------------------------------------------------
+	// options.php save interception
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Intercept options.php save to merge the submitted section into the full option.
+	 *
+	 * options.php calls update_option() which first runs sanitize_option(). When
+	 * multiple sections register sanitize_callbacks on the same shared option,
+	 * they chain in the sanitize_option filter — each callback reloads from DB
+	 * via get_option(), destroying the POST data by the time the matching
+	 * section's callback fires. So the sanitize callbacks cannot be used for
+	 * partial saves on a shared option.
+	 *
+	 * This pre_update_option filter handles it instead. It fires after
+	 * sanitize_option() with the (now stale from DB) value, but detects partial
+	 * saves by checking for a single known section key, then loads the POST
+	 * data from the $old_value comparison to produce the correct merged result.
+	 *
+	 * NOTE: Because the sanitize callbacks were removed from register_setting()
+	 * for the shared option, the value here IS the raw POST data (unmodified
+	 * by sanitize_option). This is the correct behavior.
+	 */
+	public static function intercept_save( $value, $old_value, $option ) {
+		if ( ! is_array( $value ) ) {
+			return $value;
+		}
+
+		$defaults       = self::settings_defaults();
+		$known_sections = array_keys( $defaults );
+		$value_keys     = array_keys( $value );
+
+		// Only intercept partial saves (single section from options.php form).
+		if ( count( $value_keys ) !== 1 || ! in_array( $value_keys[0], $known_sections, true ) ) {
+			return $value;
+		}
+
+		$section   = $value_keys[0];
+		$submitted = $value[ $section ];
+
+		if ( ! is_array( $submitted ) ) {
+			return $value;
+		}
+
+		// Use the old value (current full option from the database).
+		$current = is_array( $old_value ) ? $old_value : $defaults;
+
+		// Sanitize the submitted section against defaults (casts types, fills missing keys).
+		$section_defaults = $defaults[ $section ];
+		$sanitized        = self::deep_sanitize_section( $submitted, $section_defaults );
+
+		// Merge the sanitized section into the full option.
+		$current[ $section ] = $sanitized;
+
+		return $current;
+	}
+
+	/**
+	 * Recursively sanitize $input against $defaults.
+	 * Static version of MM_Metadata_Admin::deep_sanitize() for use in the save filter.
+	 */
+	private static function deep_sanitize_section( array $input, array $defaults ): array {
+		$out = [];
+		foreach ( $defaults as $key => $default_val ) {
+			if ( ! array_key_exists( $key, $input ) ) {
+				$out[ $key ] = is_bool( $default_val ) ? false : $default_val;
+				continue;
+			}
+
+			$val = $input[ $key ];
+
+			if ( is_array( $default_val ) && is_array( $val ) ) {
+				$is_list = empty( $default_val ) || ( array_keys( $default_val ) === range( 0, count( $default_val ) - 1 ) );
+				if ( $is_list ) {
+					$out[ $key ] = array_values( array_map(
+						function ( $item ) {
+							return is_array( $item )
+								? array_map( 'sanitize_text_field', $item )
+								: sanitize_text_field( (string) $item );
+						},
+						$val
+					) );
+				} else {
+					$out[ $key ] = self::deep_sanitize_section( $val, $default_val );
+				}
+			} elseif ( is_bool( $default_val ) ) {
+				$out[ $key ] = (bool) $val;
+			} elseif ( is_int( $default_val ) ) {
+				$out[ $key ] = (int) $val;
+			} else {
+				$str = (string) $val;
+				if ( strpos( $key, 'custom' ) !== false || strpos( $key, 'json' ) !== false ) {
+					$out[ $key ] = sanitize_textarea_field( $str );
+				} elseif ( strpos( $key, 'url' ) !== false || strpos( $key, '_image' ) !== false ) {
+					$out[ $key ] = esc_url_raw( $str );
+				} else {
+					$out[ $key ] = sanitize_text_field( $str );
+				}
+			}
+		}
+		return $out;
 	}
 
 	// -------------------------------------------------------------------------
@@ -397,7 +501,9 @@ class MM_Site_Settings {
 	private static function deep_merge( array $base, array $override ): array {
 		foreach ( $override as $key => $value ) {
 			if ( isset( $base[ $key ] ) && is_array( $base[ $key ] ) && is_array( $value ) ) {
-				$base[ $key ] = self::deep_merge( $base[ $key ], $value );
+				// Numeric lists (robots.disallow, etc.) are replaced, not merged.
+				$is_list = array_is_list( $base[ $key ] ) && array_is_list( $value );
+				$base[ $key ] = $is_list ? $value : self::deep_merge( $base[ $key ], $value );
 			} else {
 				$base[ $key ] = $value;
 			}
