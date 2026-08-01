@@ -84,20 +84,18 @@ jobs:
               DAEMON_VER="2.4.8"
             fi
 
-            echo ""
-            echo "═══════════════════════════════════════════════════════════════"
-            echo "  FAIL: daemon-compatibility.json missing entry for ${NEXT}"
-            echo "═══════════════════════════════════════════════════════════════"
-            echo ""
-            echo "  Add this line to the TOP of daemon-compatibility.json:"
-            echo ""
-            echo "    \"${NEXT}\": \"${DAEMON_VER}\","
-            echo ""
-            echo "  If daemon code changed, use the NEW daemon version instead."
-            echo "  See AGENTS.md → Release Checklist for details."
-            echo ""
-            echo "═══════════════════════════════════════════════════════════════"
-            exit 1
+            echo "Auto-adding daemon-compatibility.json entry: ${NEXT} -> ${DAEMON_VER}"
+
+            # Add entry to the top of the JSON object.
+            python3 -c "
+          import json
+          with open('daemon-compatibility.json', 'r') as f:
+              data = json.load(f)
+          data = {'${NEXT}': '${DAEMON_VER}', **data}
+          with open('daemon-compatibility.json', 'w') as f:
+              json.dump(data, f, indent=2)
+              f.write('\n')
+          "
           fi
           echo "✓ daemon-compatibility.json has entry for ${NEXT}"
 
@@ -129,6 +127,6 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add metamanager.php readme.txt CHANGELOG.md
+          git add metamanager.php readme.txt CHANGELOG.md daemon-compatibility.json
           git commit -m "chore: bump version to ${NEW_VERSION}"
           git push
