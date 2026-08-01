@@ -1,0 +1,89 @@
+name: Deploy Test Build to Apt
+
+on:
+  push:
+    branches: ["test"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build plugin zip
+        run: |
+          mkdir -p build/metamanager
+          rsync -a --exclude='.git' --exclude='docs' --exclude='.github' \
+            --exclude='tests' --exclude='stubs' --exclude='mm-*.zip' \
+            --exclude='.editorconfig' --exclude='phpunit.xml.dist' \
+            ./ build/metamanager/
+          cd build && zip -r ../metamanager-latest.zip metamanager
+          echo "Built zip: $(ls -lh ../metamanager-latest.zip)"
+
+      - name: Deploy to apt server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          APT_HOST: ${{ secrets.DEPLOY_HOST }}
+          APT_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${APT_HOST}" >> ~/.ssh/known_hosts 2>/dev/null
+
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${APT_USER}@${APT_HOST}" \
+            "sudo mkdir -p /var/www/html/metamanager && sudo chown -R ${APT_USER}:${APT_USER} /var/www/html/metamanager"
+
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            metamanager-latest.zip \
+            "${APT_USER}@${APT_HOST}:/var/www/html/metamanager/"
+
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${APT_USER}@${APT_HOST}" \
+            "printf '%s\n' '{\"version\":\"${{ steps.version.outputs.version }}\",\"requires\":{\"php\":\"8.0\",\"wordpress\":\"6.2\"},\"download_url\":\"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"}' > /var/www/html/metamanager/metadata.json"
+
+          echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server"
+
+      - name: Validate deployed metadata
+        run: |
+          echo "Waiting for metadata to propagate..."
+          sleep 5
+
+          METADATA_URL="http://apt.richardkentgates.com/metamanager/metadata.json"
+          METADATA=$(curl -sf "$METADATA_URL" 2>/dev/null)
+
+          if [ -z "$METADATA" ]; then
+            echo "ERROR: Could not fetch metadata.json from $METADATA_URL"
+            exit 1
+          fi
+
+          ERRORS=""
+          VERSION=$(echo "$METADATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('version',''))" 2>/dev/null)
+          DOWNLOAD=$(echo "$METADATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('download_url',''))" 2>/dev/null)
+
+          [ -z "$VERSION" ] && ERRORS="${ERRORS}  - missing 'version'\n"
+          [ -z "$DOWNLOAD" ] && ERRORS="${ERRORS}  - missing 'download_url'\n"
+
+          if [ -n "$ERRORS" ]; then
+            echo "FAIL: metadata.json is missing required fields"
+            printf "$ERRORS"
+            exit 1
+          fi
+
+          echo "metadata.json is valid: version=${VERSION}"
