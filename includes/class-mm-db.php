@@ -82,7 +82,12 @@ class MM_DB {
 		// dbDelta silently fails on some MySQL/MariaDB versions. Verify the table
 		// exists and fall back to raw CREATE TABLE if dbDelta didn't create it.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+		$table_exists = $wpdb->get_var( $wpdb->prepare(
+			'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+			$wpdb->dbname,
+			$table
+		) );
+		if ( ! $table_exists ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 			$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
 				id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,

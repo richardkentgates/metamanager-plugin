@@ -32,9 +32,14 @@ class Test_MM_Activation extends WP_UnitTestCase {
 		mm_activate_single_site();
 
 		global $wpdb;
-		$table   = $wpdb->prefix . MM_JOB_TABLE;
-		$exists  = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-		$this->assertSame( $table, $exists );
+		$table = $wpdb->prefix . MM_JOB_TABLE;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$exists = $wpdb->get_var( $wpdb->prepare(
+			'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+			$wpdb->dbname,
+			$table
+		) );
+		$this->assertGreaterThan( 0, (int) $exists, "Table {$table} should exist after activation." );
 	}
 
 	public function test_activate_migrates_legacy_options(): void {

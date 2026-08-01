@@ -70,6 +70,34 @@ class MM_Mod_Links extends MM_Mod_Base {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+
+		// dbDelta silently fails on some MySQL/MariaDB versions. Fall back to raw SQL.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$table_exists = $wpdb->get_var( $wpdb->prepare(
+			'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+			$wpdb->dbname,
+			$table
+		) );
+		if ( ! $table_exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
+				id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				url         TEXT            NOT NULL,
+				url_hash    CHAR(32)        NOT NULL,
+				post_id     BIGINT UNSIGNED NOT NULL DEFAULT 0,
+				anchor_text VARCHAR(500)    NOT NULL DEFAULT '',
+				link_type   ENUM('internal','external') NOT NULL DEFAULT 'external',
+				http_code   SMALLINT UNSIGNED          NOT NULL DEFAULT 0,
+				is_broken   TINYINT(1)                 NOT NULL DEFAULT 0,
+				is_ignored  TINYINT(1)                 NOT NULL DEFAULT 0,
+				last_checked DATETIME                  NULL,
+				created     DATETIME                   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				UNIQUE KEY url_post (url_hash, post_id),
+				KEY is_broken (is_broken),
+				KEY last_checked (last_checked)
+			) {$charset};" );
+		}
 	}
 
 	public static function table_name(): string {
