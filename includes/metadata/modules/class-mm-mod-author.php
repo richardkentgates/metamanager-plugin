@@ -84,9 +84,6 @@ class MM_Mod_Author extends MM_Mod_Base {
 			$node['sameAs'] = $same_as;
 		}
 
-		// Link author to organisation.
-		$node['worksFor'] = [ '@id' => $this->site_id( 'organization' ) ];
-
 		return $node;
 	}
 }

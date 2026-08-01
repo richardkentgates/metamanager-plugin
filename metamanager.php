@@ -1,15 +1,15 @@
 <?php
 /**
  * Plugin Name:  Metamanager
- * Plugin URI:   https://github.com/richardkentgates/metamanager
+ * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
  * Version:      2.3.52
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
  * Author URI:   https://github.com/richardkentgates
- * License:      GPL-2.0-or-later
- * License URI:  https://www.gnu.org/licenses/gpl-2.0.html
+ * License:      GPL-3.0-or-later
+ * License URI:  https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain:  metamanager
  * Domain Path:  /languages
  *
@@ -214,8 +214,7 @@ function mm_deactivate( bool $network_wide = false ): void {
 // Multisite: set up new sites when this plugin is network-activated
 // ---------------------------------------------------------------------------
 
-add_action( 'wp_initialize_site', 'mm_on_new_site' ); // WP 5.1+
-add_action( 'wpmu_new_blog',      'mm_on_new_blog'  ); // WP < 5.1 (deprecated but harmless)
+add_action( 'wp_initialize_site', 'mm_on_new_site' );
 
 /**
  * Create the DB table and schedule cron for a brand-new site (WP 5.1+).
@@ -230,23 +229,6 @@ function mm_on_new_site( WP_Site $site ): void {
 		return;
 	}
 	switch_to_blog( (int) $site->blog_id );
-	mm_activate_single_site();
-	restore_current_blog();
-}
-
-/**
- * Create the DB table and schedule cron for a brand-new blog (WP < 5.1 compat).
- *
- * @param int $blog_id The new blog ID.
- */
-function mm_on_new_blog( int $blog_id ): void {
-	if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
-		require_once ABSPATH . 'wp-admin/includes/plugin.php';
-	}
-	if ( ! is_plugin_active_for_network( plugin_basename( MM_PLUGIN_FILE ) ) ) {
-		return;
-	}
-	switch_to_blog( $blog_id );
 	mm_activate_single_site();
 	restore_current_blog();
 }
