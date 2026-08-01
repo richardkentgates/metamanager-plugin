@@ -86,6 +86,11 @@ register_setting( 'mm_meta_business_group', MM_META_OPT_BUSINESS, [
 ] );
 
 // Each section registers its own group → same shared option key.
+// NO sanitize_callback here — the pre_update_option_mm_meta_settings filter
+// in MM_Site_Settings handles the section merge. Registering sanitize_callbacks
+// on a shared option is destructive because they chain in sanitize_option():
+// each callback reloads from DB via get_option(), so the POST data from the
+// form is lost by the time the matching section's callback fires.
 $section_groups = [
 'mm_meta_titles_group'   => 'titles',
 'mm_meta_social_group'   => 'social',
@@ -93,15 +98,13 @@ $section_groups = [
 'mm_meta_sitemaps_group' => 'sitemap',
 'mm_meta_robots_group'   => 'robots',
 'mm_meta_authors_group'  => 'authors',
-'mm_meta_hygiene_group'  => 'hygiene',			'mm_meta_feed_group'     => 'feed','mm_meta_links_group'    => 'links',
+'mm_meta_hygiene_group'  => 'hygiene',
+'mm_meta_feed_group'     => 'feed',
+'mm_meta_links_group'    => 'links',
 ];
 
 foreach ( $section_groups as $group => $section ) {
-register_setting( $group, MM_META_OPT_SETTINGS, [
-'sanitize_callback' => function ( $raw ) use ( $section ) {
-return $this->sanitize_section( $raw, $section );
-},
-] );
+register_setting( $group, MM_META_OPT_SETTINGS );
 }
 
 // Contact card style — standalone option.
