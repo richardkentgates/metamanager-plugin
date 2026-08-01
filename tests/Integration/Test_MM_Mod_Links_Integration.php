@@ -26,9 +26,11 @@ class Test_MM_Mod_Links_Integration extends WP_UnitTestCase {
 		}
 		global $wpdb;
 		$table   = MM_Mod_Links::table_name();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$exists  = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
-		if ( empty( $exists ) ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->suppress_errors( true );
+		$result = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
+		$wpdb->suppress_errors( false );
+		if ( false === $result ) {
 			$this->markTestSkipped( "Links table {$table} could not be created." );
 		}
 		$this->settings = MM_Site_Settings::get_instance();
