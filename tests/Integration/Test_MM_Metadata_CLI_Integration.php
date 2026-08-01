@@ -40,26 +40,24 @@ class Test_MM_Metadata_CLI_Integration extends WP_UnitTestCase {
 	// ------------------------------------------------------------------
 
 	public function test_export_reads_post_metadata(): void {
-		$post_id = $this->factory->post->create( [
-			'post_title'  => 'Export Test',
-			'post_status' => 'publish',
+		// export() reads site-wide options (MM_META_OPT_SETTINGS / MM_META_OPT_BUSINESS),
+		// not per-post metadata. Seed the options and verify they appear in output.
+		update_option( MM_META_OPT_SETTINGS, [
+			'titles' => [ 'separator' => '>>>' ],
 		] );
-
-		update_post_meta( $post_id, MM_META_KEY, wp_json_encode( [
-			'title'       => 'Custom SEO Title',
-			'description' => 'Custom meta description',
-		] ) );
 
 		WP_CLI::$output = [];
 		$cli = new MM_Metadata_CLI();
-		$cli->export( [ $post_id ], [] );
+		$cli->export( [], [] );
 
 		$combined = '';
 		foreach ( WP_CLI::$output as $entry ) {
 			$combined .= $entry['msg'];
 		}
 
-		$this->assertStringContainsString( 'Custom SEO Title', $combined );
+		$this->assertStringContainsString( '>>>', $combined );
+
+		delete_option( MM_META_OPT_SETTINGS );
 	}
 
 	// ------------------------------------------------------------------

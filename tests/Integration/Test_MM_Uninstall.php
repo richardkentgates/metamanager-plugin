@@ -43,7 +43,7 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 
 	public function test_uninstall_drops_jobs_table(): void {
 		global $wpdb;
-		$table = $wpdb->prefix . 'mm_jobs';
+		$table = $wpdb->prefix . MM_JOB_TABLE;
 
 		// Create the table directly via SQL (dbDelta can be unreliable in test env).
 		$charset = $wpdb->get_charset_collate();
@@ -58,12 +58,23 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 			PRIMARY KEY (id)
 		) {$charset};" );
 
-		$this->assertNotNull( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) );
+		// Suppress DB errors so PHPUnit doesn't intercept them as Errors.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->suppress_errors( true );
+		$result = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
+		$wpdb->suppress_errors( false );
+		$this->assertNotFalse( $result, "Table {$table} should exist after CREATE TABLE." );
 
 		// Drop it.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
-		$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) );
+
+		// Verify table no longer exists.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->suppress_errors( true );
+		$result = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
+		$wpdb->suppress_errors( false );
+		$this->assertFalse( $result, "Table {$table} should not exist after DROP TABLE." );
 	}
 
 	// ------------------------------------------------------------------

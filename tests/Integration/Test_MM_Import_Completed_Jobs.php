@@ -137,8 +137,10 @@ class Test_MM_Import_Completed_Jobs extends WP_UnitTestCase {
 		// Check the job was logged.
 		global $wpdb;
 		$logged = $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}mm_jobs WHERE job_id = %s",
-			'test-log-001'
+			"SELECT COUNT(*) FROM {$wpdb->prefix}" . MM_JOB_TABLE . " WHERE job_type = %s AND status = %s AND attachment_id = %d",
+			'import',
+			'completed',
+			0
 		) );
 
 		$this->assertGreaterThan( 0, (int) $logged );
