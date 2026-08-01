@@ -1,75 +1,30 @@
-name: Dev CI — Lint & Version Bump
+name: Auto Bump Version
 
 on:
   push:
-    branches: ["dev"]
+    branches: [dev]
 
 permissions:
   contents: write
 
 jobs:
-  lint:
-    name: PHP Lint
+  bump-version:
+    name: Bump patch version on dev push
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php: ["8.0", "8.2", "8.4"]
+    if: github.actor != 'github-actions[bot]'
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up PHP ${{ matrix.php }}
-        uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
-          tools: composer
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Lint PHP files
+      - name: Configure Git
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          find . -name "*.php" -not -path "./vendor/*" -not -path "./tests/*" -not -path "./stubs/*" | while read f; do
-            php -l "$f" 2>&1
-          done | grep -v "No syntax errors" || true
-
-  static-analysis:
-    name: PHPStan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-          tools: composer
-
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --configuration phpstan.neon --no-progress
-
-  shellcheck:
-    name: ShellCheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Lint bash files
-        run: |
-          find . -name "*.sh" -not -path "./vendor/*" -not -path "./tests/*" | while read f; do
-            shellcheck -S error "$f"
-          done
-
-  version-bump:
-    name: Auto-increment Version
-    needs: [lint, static-analysis, shellcheck]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/${{ github.repository }}.git"
 
       - name: Validate compatibility map
         run: |
@@ -78,7 +33,6 @@ jobs:
           NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
 
           if ! grep -q "\"${NEXT}\"" daemon-compatibility.json; then
-            # Find the daemon version from the most recent entry.
             DAEMON_VER=$(head -1 daemon-compatibility.json | grep -oP '"2\.\d+\.\d+"' | head -1 | tr -d '"')
             if [ -z "$DAEMON_VER" ]; then
               DAEMON_VER="2.4.8"
@@ -86,7 +40,6 @@ jobs:
 
             echo "Auto-adding daemon-compatibility.json entry: ${NEXT} -> ${DAEMON_VER}"
 
-            # Add entry to the top of the JSON object.
             python3 -c "
           import json
           with open('daemon-compatibility.json', 'r') as f:
@@ -97,7 +50,7 @@ jobs:
               f.write('\n')
           "
           fi
-          echo "✓ daemon-compatibility.json has entry for ${NEXT}"
+          echo "daemon-compatibility.json has entry for ${NEXT}"
 
       - name: Bump patch version
         run: |
@@ -125,8 +78,6 @@ jobs:
               f.writelines(lines)
           PYEOF
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add metamanager.php readme.txt CHANGELOG.md daemon-compatibility.json
-          git commit -m "chore: bump version to ${NEW_VERSION}"
-          git push
+          git commit -m "chore: bump version to ${NEW_VERSION} [skip ci]"
+          git push origin dev

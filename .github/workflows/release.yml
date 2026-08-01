@@ -1,14 +1,17 @@
-name: Promote to Release — Tag, Build & Deploy
+name: Release
 
 on:
   push:
-    branches: ["main"]
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  tag-build-deploy:
+  release:
+    name: Tag, Build & Deploy
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -67,23 +70,19 @@ jobs:
           APT_HOST: ${{ secrets.DEPLOY_HOST }}
           APT_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          # Setup SSH
           mkdir -p ~/.ssh
           echo "${SSH_PRIVATE_KEY}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${APT_HOST}" >> ~/.ssh/known_hosts 2>/dev/null
 
-          # Ensure plugin hosting directory exists
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${APT_USER}@${APT_HOST}" \
             "sudo mkdir -p /var/www/html/metamanager && sudo chown -R ${APT_USER}:${APT_USER} /var/www/html/metamanager"
 
-          # Upload zip
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             metamanager-${{ steps.version.outputs.version }}.zip \
             "${APT_USER}@${APT_HOST}:/var/www/html/metamanager/metamanager-latest.zip"
 
-          # Update metadata.json
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${APT_USER}@${APT_HOST}" \
             "printf '%s\n' '{\"version\":\"${{ steps.version.outputs.version }}\",\"requires\":{\"php\":\"8.0\",\"wordpress\":\"6.2\"},\"download_url\":\"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"}' > /var/www/html/metamanager/metadata.json"
@@ -104,7 +103,6 @@ jobs:
             exit 1
           fi
 
-          # Validate required fields exist and are non-empty.
           ERRORS=""
           VERSION=$(echo "$METADATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('version',''))" 2>/dev/null)
           DOWNLOAD=$(echo "$METADATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('download_url',''))" 2>/dev/null)
@@ -131,4 +129,4 @@ jobs:
             exit 1
           fi
 
-          echo "✓ metadata.json is valid: version=${VERSION}, requires.php=${PHP_REQ}, requires.wordpress=${WP_REQ}"
+          echo "metadata.json is valid: version=${VERSION}, requires.php=${PHP_REQ}, requires.wordpress=${WP_REQ}"
