@@ -79,38 +79,32 @@ class MM_DB {
 
 		dbDelta( $sql );
 
-		// dbDelta silently fails on some MySQL/MariaDB versions. Verify the table
-		// exists and fall back to raw CREATE TABLE if dbDelta didn't create it.
+		// dbDelta silently fails on some MySQL/MariaDB versions. Always run a
+		// raw CREATE TABLE IF NOT EXISTS as a fallback — it's idempotent and
+		// avoids information_schema queries that can return stale results inside
+		// WP test suite transactions.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
-		$table_exists = $wpdb->get_var( $wpdb->prepare(
-			'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
-			$wpdb->dbname,
-			$table
-		) );
-		if ( ! $table_exists ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
-			$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
-				id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				attachment_id BIGINT(20) UNSIGNED NOT NULL,
-				image_name VARCHAR(255) NOT NULL DEFAULT '',
-				job_type VARCHAR(32) NOT NULL DEFAULT '',
-				job_trigger VARCHAR(64) NOT NULL DEFAULT '',
-				file_path TEXT NOT NULL,
-				size VARCHAR(64) NOT NULL DEFAULT '',
-				dimensions VARCHAR(32) NOT NULL DEFAULT '',
-				bytes_before BIGINT(20) UNSIGNED DEFAULT NULL,
-				bytes_after BIGINT(20) UNSIGNED DEFAULT NULL,
-				status VARCHAR(32) NOT NULL DEFAULT 'pending',
-				submitted_at DATETIME NOT NULL,
-				completed_at DATETIME DEFAULT NULL,
-				details LONGTEXT DEFAULT NULL,
-				PRIMARY KEY (id),
-				UNIQUE KEY uniq_job (attachment_id, job_type, size),
-				KEY idx_attachment (attachment_id),
-				KEY idx_job_type (job_type),
-				KEY idx_status (status)
-			) {$charset_collate};" );
-		}
+		$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			attachment_id BIGINT(20) UNSIGNED NOT NULL,
+			image_name VARCHAR(255) NOT NULL DEFAULT '',
+			job_type VARCHAR(32) NOT NULL DEFAULT '',
+			job_trigger VARCHAR(64) NOT NULL DEFAULT '',
+			file_path TEXT NOT NULL,
+			size VARCHAR(64) NOT NULL DEFAULT '',
+			dimensions VARCHAR(32) NOT NULL DEFAULT '',
+			bytes_before BIGINT(20) UNSIGNED DEFAULT NULL,
+			bytes_after BIGINT(20) UNSIGNED DEFAULT NULL,
+			status VARCHAR(32) NOT NULL DEFAULT 'pending',
+			submitted_at DATETIME NOT NULL,
+			completed_at DATETIME DEFAULT NULL,
+			details LONGTEXT DEFAULT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY uniq_job (attachment_id, job_type, size),
+			KEY idx_attachment (attachment_id),
+			KEY idx_job_type (job_type),
+			KEY idx_status (status)
+		) {$charset_collate};" );
 	}
 
 	/**

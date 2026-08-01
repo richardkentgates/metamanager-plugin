@@ -58,25 +58,20 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 			PRIMARY KEY (id)
 		) {$charset};" );
 
+		// Verify table exists using a direct query (information_schema returns
+		// stale results inside WP test suite transactions).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = (int) $wpdb->get_var( $wpdb->prepare(
-			'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
-			$wpdb->dbname,
-			$table
-		) );
-		$this->assertGreaterThan( 0, $count, "Table {$table} should exist after CREATE TABLE." );
+		$result = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
+		$this->assertNotFalse( $result, "Table {$table} should exist after CREATE TABLE." );
 
 		// Drop it.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
 
+		// Verify table no longer exists.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = (int) $wpdb->get_var( $wpdb->prepare(
-			'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
-			$wpdb->dbname,
-			$table
-		) );
-		$this->assertSame( 0, $count, "Table {$table} should not exist after DROP TABLE." );
+		$result = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
+		$this->assertFalse( $result, "Table {$table} should not exist after DROP TABLE." );
 	}
 
 	// ------------------------------------------------------------------

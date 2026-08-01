@@ -19,6 +19,18 @@ class Test_MM_Mod_Links_Integration extends WP_UnitTestCase {
 
 	public function set_up(): void {
 		parent::set_up();
+		// Ensure the links table exists — DDL in set_up_before_class() can
+		// fail silently inside WP test transactions.
+		if ( class_exists( 'MM_Mod_Links' ) ) {
+			MM_Mod_Links::create_table();
+		}
+		global $wpdb;
+		$table   = MM_Mod_Links::table_name();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result  = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
+		if ( false === $result ) {
+			$this->markTestSkipped( "Links table {$table} could not be created." );
+		}
 		$this->settings = MM_Site_Settings::get_instance();
 		$this->links    = new MM_Mod_Links( $this->settings );
 	}
