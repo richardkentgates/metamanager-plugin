@@ -58,10 +58,11 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 			PRIMARY KEY (id)
 		) {$charset};" );
 
-		// Verify using SHOW TABLES (does not emit a DB error on missing table,
-		// unlike SELECT which PHPUnit would catch as an Error).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		// Verify using SHOW TABLES with direct interpolation (safe since
+		// $table is a controlled constant). SHOW TABLES doesn't emit a DB
+		// error on missing table, unlike SELECT which PHPUnit catches.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 		$this->assertNotEmpty( $exists, "Table {$table} should exist after CREATE TABLE." );
 
 		// Drop it.
@@ -69,8 +70,8 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
 
 		// Verify table no longer exists.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 		$this->assertEmpty( $exists, "Table {$table} should not exist after DROP TABLE." );
 	}
 

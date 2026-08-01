@@ -33,10 +33,12 @@ class Test_MM_Activation extends WP_UnitTestCase {
 
 		global $wpdb;
 		$table = $wpdb->prefix . MM_JOB_TABLE;
-		// Use SHOW TABLES — does not emit a DB error on missing table (unlike
-		// SELECT which PHPUnit would catch as an Error).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		// Use SHOW TABLES with direct interpolation — $wpdb->prepare escapes
+		// the value in a way that SHOW TABLES doesn't understand. Direct
+		// interpolation is safe here since $table is a controlled constant.
+		// SHOW TABLES doesn't emit a DB error on missing table (unlike SELECT).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" );
 		$this->assertNotEmpty( $exists, "Table {$table} should exist after activation." );
 	}
 
