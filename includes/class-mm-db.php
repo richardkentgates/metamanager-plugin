@@ -78,6 +78,34 @@ class MM_DB {
 		$sql = implode( "\n", array_map( 'ltrim', explode( "\n", $sql ) ) );
 
 		dbDelta( $sql );
+
+		// dbDelta silently fails on some MySQL/MariaDB versions. Verify the table
+		// exists and fall back to raw CREATE TABLE if dbDelta didn't create it.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
+				id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				attachment_id BIGINT(20) UNSIGNED NOT NULL,
+				image_name VARCHAR(255) NOT NULL DEFAULT '',
+				job_type VARCHAR(32) NOT NULL DEFAULT '',
+				job_trigger VARCHAR(64) NOT NULL DEFAULT '',
+				file_path TEXT NOT NULL,
+				size VARCHAR(64) NOT NULL DEFAULT '',
+				dimensions VARCHAR(32) NOT NULL DEFAULT '',
+				bytes_before BIGINT(20) UNSIGNED DEFAULT NULL,
+				bytes_after BIGINT(20) UNSIGNED DEFAULT NULL,
+				status VARCHAR(32) NOT NULL DEFAULT 'pending',
+				submitted_at DATETIME NOT NULL,
+				completed_at DATETIME DEFAULT NULL,
+				details LONGTEXT DEFAULT NULL,
+				PRIMARY KEY (id),
+				UNIQUE KEY uniq_job (attachment_id, job_type, size),
+				KEY idx_attachment (attachment_id),
+				KEY idx_job_type (job_type),
+				KEY idx_status (status)
+			) {$charset_collate};" );
+		}
 	}
 
 	/**

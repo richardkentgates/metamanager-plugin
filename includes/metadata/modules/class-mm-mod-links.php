@@ -125,13 +125,13 @@ class MM_Mod_Links extends MM_Mod_Base {
 		if ( preg_match_all( '/<a[^>]+href=["\']([^"\'#][^"\']*)["\'][^>]*>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER ) ) {
 			foreach ( $matches as $m ) {
 				$raw_url = $m[1];
-				// Check scheme before esc_url_raw() transforms the URL.
-				if ( strpos( $raw_url, 'mailto:' ) === 0 || strpos( $raw_url, 'javascript:' ) === 0 ) {
+				// Reject non-HTTP schemes before esc_url_raw() can mangle them.
+				if ( preg_match( '/^(mailto|javascript|tel):/i', $raw_url ) ) {
 					continue;
 				}
 				$url    = esc_url_raw( $raw_url );
 				$anchor = wp_strip_all_tags( $m[2] );
-				if ( ! $url ) {
+				if ( ! $url || preg_match( '/^(mailto|javascript|tel):/i', $url ) ) {
 					continue;
 				}
 				// Make relative URLs absolute.
