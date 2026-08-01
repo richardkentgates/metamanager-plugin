@@ -52,6 +52,7 @@ All REST endpoints under `/wp-json/metamanager/v1/` enforce WordPress capability
 | `/jobs/{id}` | GET | `edit_others_posts` |
 | `/attachment/{id}/status` | GET | `upload_files` |
 | `/attachment/{id}/compress` | POST | `edit_others_posts` |
+| `/attachment/{id}/embed` | POST | `edit_others_posts` |
 | `/compression-status` | POST | `upload_files` |
 
 All endpoints also validate a `X-WP-Nonce` header or cookie on every request. The entire API can be disabled, or restricted to a list of allowed IP addresses, from **Media → MM Settings → REST API** — blocked requests receive `403 Forbidden` before any WordPress capability check runs.

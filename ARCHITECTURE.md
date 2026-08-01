@@ -22,7 +22,6 @@ This document describes the internal design of the Metamanager plugin: how its c
 metamanager/
 ├── metamanager.php           Plugin bootstrap, constants, activation/deactivation hooks
 ├── uninstall.php             Opt-in data removal on plugin deletion
-├── metamanager-install.sh    Server installer: installs OS deps, systemd daemons, activates plugin
 │
 ├── includes/
 │   ├── class-mm-db.php           Database table schema, query layer, deduplication migration
@@ -43,7 +42,6 @@ metamanager/
 │       ├── class-mm-page-context.php      WP query resolver — returns context string for each request type
 │       ├── class-mm-head-emitter.php      wp_head coordinator — assembles title, meta, canonical, OG, JSON-LD
 │       ├── class-mm-schema-types.php      Schema.org type registry and JSON-LD builder
-│       ├── class-mm-importer.php          Bulk import: migrates from third-party SEO plugins
 │       ├── class-mm-metadata-cli.php      WP-CLI commands: mm metadata *
 │       ├── class-mm-biz-card-css.php      Dynamic CSS for the business contact card block
 │       │
@@ -67,12 +65,6 @@ metamanager/
 │           ├── class-mm-mod-hygiene.php       Head cleanup and content audit tools
 │           ├── class-mm-mod-business-contact.php  Contact card block, widget, and shortcode
 │           └── class-mm-mod-rss.php            RSS 2.0 feed cleanup — strips noise tags via output buffering
-│
-├── daemons/
-│   ├── metamanager-compress-daemon.sh    Bash: inotifywait loop — jpegtran/optipng/cwebp/ffmpeg
-│   ├── metamanager-meta-daemon.sh        Bash: inotifywait loop — ExifTool read/write
-│   ├── metamanager-compress-daemon.service   systemd unit template
-│   └── metamanager-meta-daemon.service       systemd unit template
 │
 ├── assets/
 │   └── js/mm-status.js           Frontend JS for live Media Library column polling
@@ -500,17 +492,20 @@ The web-layer XML sitemaps module (`MM_Mod_Sitemap`) generates the SEO sitemap i
 
 Routes are registered under `metamanager/v1`:
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| `GET` | `/status` | Live compression/metadata status for one or more attachment IDs |
-| `GET` | `/jobs` | Paginated, filterable job history |
-| `POST` | `/requeue/{id}` | Re-queue a failed job by DB row ID |
-| `POST` | `/compress/{id}` | Queue compression for a single attachment |
+| Method | Endpoint | Purpose | Capability |
+|--------|----------|---------|------------|
+| `GET` | `/stats` | Aggregate compression stats | `edit_others_posts` |
+| `GET` | `/jobs` | Paginated, filterable job history | `edit_others_posts` |
+| `GET` | `/jobs/{id}` | Single job by DB row ID | `edit_others_posts` |
+| `GET` | `/attachment/{id}/status` | Compression + sync status for one attachment | `upload_files` |
+| `POST` | `/attachment/{id}/compress` | Queue compression for one attachment | `edit_others_posts` |
+| `POST` | `/attachment/{id}/embed` | Queue metadata embedding for one attachment | `edit_others_posts` |
+| `POST` | `/compression-status` | Batch compression status (Media Library column polling) | `upload_files` |
 
 Access control runs before capability checks:
 1. If `mm_api_disabled` is set → `403` immediately.
 2. If `mm_api_allowed_ips` is non-empty and the request IP is not in the list → `403`.
-3. Standard `edit_posts` capability check for write endpoints.
+3. Standard capability check (see table above) for each endpoint.
 
 Logged-in requests (valid nonce or cookie) bypass the IP allowlist entirely.
 

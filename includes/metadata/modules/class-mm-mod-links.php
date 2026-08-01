@@ -257,7 +257,6 @@ class MM_Mod_Links extends MM_Mod_Base {
 		$response = wp_remote_head( $url, [
 			'timeout'     => $timeout,
 			'redirection' => 3,
-			'sslverify'   => false,
 			'user-agent'  => 'GCM-SEO-LinkChecker/1.0',
 		] );
 		if ( is_wp_error( $response ) ) {

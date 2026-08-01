@@ -5,33 +5,35 @@
 This is a WordPress plugin with bash daemons — no Composer dependencies.
 
 ### Requirements
-- PHP 8.1+
+- PHP 8.2+
 - WordPress 6.4+
 - ExifTool (`sudo apt install libimage-exiftool-perl`)
 
 ### Local Testing
 
-Download PHPUnit and PHPStan as PHARs:
+Install dependencies and set up the test suite:
 
 ```bash
-# PHPUnit
-curl -L https://phar.phpunit.de/phpunit-9.6.0.phar -o /usr/local/bin/phpunit
-chmod +x /usr/local/bin/phpunit
+# Install Composer dev dependencies (phpunit, phpstan, etc.)
+composer install --no-interaction --prefer-dist
 
-# PHPStan
-curl -L https://github.com/phpstan/phpstan/releases/latest/download/phpstan.phar -o /usr/local/bin/phpstan
-chmod +x /usr/local/bin/phpstan
-```
+# Set up WordPress test suite (MySQL + WP core + test libs)
+make install
 
-Run WordPress tests:
-```bash
-bash tests/bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 latest false
-phpunit --configuration tests/phpunit.xml
-```
+# Run all tests
+make test
 
-Run static analysis:
-```bash
-phpstan analyse --configuration phpstan.neon
+# Run unit tests only (no database required)
+make test-unit
+
+# Run integration tests only (requires WP test DB)
+make test-integration
+
+# Run static analysis
+make analyse
+
+# Lint PHP files
+make lint
 ```
 
 ## Pull Requests
