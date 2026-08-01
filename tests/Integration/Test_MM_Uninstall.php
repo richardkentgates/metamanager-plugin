@@ -58,10 +58,10 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 			PRIMARY KEY (id)
 		) {$charset};" );
 
-		// Verify using SHOW TABLES with esc_like (does not emit a DB error on
-		// missing table, unlike SELECT which PHPUnit would catch as an Error).
+		// Verify using SHOW TABLES (does not emit a DB error on missing table,
+		// unlike SELECT which PHPUnit would catch as an Error).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
 		$this->assertNotEmpty( $exists, "Table {$table} should exist after CREATE TABLE." );
 
 		// Drop it.
@@ -70,7 +70,7 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 
 		// Verify table no longer exists.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
 		$this->assertEmpty( $exists, "Table {$table} should not exist after DROP TABLE." );
 	}
 

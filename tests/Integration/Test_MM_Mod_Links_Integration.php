@@ -27,7 +27,7 @@ class Test_MM_Mod_Links_Integration extends WP_UnitTestCase {
 		global $wpdb;
 		$table   = MM_Mod_Links::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$exists  = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+		$exists  = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
 		if ( empty( $exists ) ) {
 			$this->markTestSkipped( "Links table {$table} could not be created." );
 		}
