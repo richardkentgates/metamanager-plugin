@@ -254,6 +254,14 @@ class MM_Mod_Links extends MM_Mod_Base {
 	}
 
 	private function head_request( string $url, int $timeout ): int {
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		if ( $host ) {
+			$ip = gethostbyname( $host );
+			if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) === false ) {
+				return 0;
+			}
+		}
+
 		$response = wp_remote_head( $url, [
 			'timeout'     => $timeout,
 			'redirection' => 3,

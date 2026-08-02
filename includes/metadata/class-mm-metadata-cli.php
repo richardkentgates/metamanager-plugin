@@ -337,7 +337,6 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 
 		$response = wp_remote_get( $url, [
 			'timeout'   => 15,
-			'sslverify' => false,
 			'user-agent' => 'GCM-SEO-CLI/1.0',
 		] );
 
