@@ -26,7 +26,7 @@ class Test_MM_Updater_Integration extends WP_UnitTestCase {
 	private function set_mock_metadata( string $version ): void {
 		$metadata              = new stdClass();
 		$metadata->version     = $version;
-		$metadata->download_url = 'http://apt.richardkentgates.com/metamanager/metamanager.zip';
+		$metadata->download_url = 'https://apt.richardkentgates.com/metamanager/metamanager.zip';
 		$metadata->requires    = new stdClass();
 		$metadata->requires->php      = '8.0';
 		$metadata->requires->wordpress = '6.2';
