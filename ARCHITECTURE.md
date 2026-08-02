@@ -35,6 +35,8 @@ metamanager/
 │   ├── class-mm-upload-notify.php  Upload receipt emails with 60-second batching and retry
 │   ├── class-mm-updater.php      Native WordPress update pipeline integration (GitHub releases)
 │   ├── class-mm-cli.php          WP-CLI command group: compress, embed, import, queue, scan, stats
+│   ├── class-mm-daemon-updater.php  Reads daemon-compatibility.json, triggers apt upgrade on version mismatch
+│   ├── class-mm-db.php           Database layer: job log table, CRUD, stats, self-healing schema
 │   │
 │   └── metadata/                 Web-layer metadata subsystem (integrated from gcm-seo-core)
 │       ├── class-mm-metadata-loader.php   Bootstraps all metadata modules
@@ -44,15 +46,19 @@ metamanager/
 │       ├── class-mm-schema-types.php      Schema.org type registry and JSON-LD builder
 │       ├── class-mm-metadata-cli.php      WP-CLI commands: mm metadata *
 │       ├── class-mm-biz-card-css.php      Dynamic CSS for the business contact card block
+│       ├── class-mm-abilities.php         WordPress Abilities API integration for AI agents
+│       ├── class-mm-mcp-server.php        MCP server for AI agent interaction
 │       │
 │       ├── admin/                         Admin screens for all metadata settings
 │       │   ├── class-mm-metadata-admin.php    Submenu registration + tabbed settings page renderer
 │       │   ├── class-mm-metadata-help.php     Contextual help tab content for all metadata pages
 │       │   ├── class-mm-post-meta-panel.php   Per-post SEO metabox
 │       │   ├── class-mm-term-meta-panel.php   Per-term SEO fields
-│       │   └── class-mm-user-meta-panel.php   Per-author SEO fields
+│       │   ├── class-mm-user-meta-panel.php   Per-author SEO fields
+│       │   └── class-mm-nav-menu-admin.php    Nav menu checkbox for business contact
 │       │
 │       └── modules/                       Output modules — each extends MM_Mod_Base
+│           ├── class-mm-mod-base.php          Abstract base class for all modules
 │           ├── class-mm-mod-head-meta.php     Title, description, canonical, robots per-page meta
 │           ├── class-mm-mod-social.php        Open Graph and Twitter/X Card tags
 │           ├── class-mm-mod-schema.php        Schema.org JSON-LD (20+ types)
@@ -64,6 +70,8 @@ metamanager/
 │           ├── class-mm-mod-author.php        Author archive Person JSON-LD
 │           ├── class-mm-mod-hygiene.php       Head cleanup and content audit tools
 │           ├── class-mm-mod-business-contact.php  Contact card block, widget, and shortcode
+│           ├── class-mm-mod-discovery.php     AI agent discovery files (/llms.txt)
+│           ├── class-mm-mod-rss.php           RSS feed cleanup module
 │           └── class-mm-mod-rss.php            RSS 2.0 feed cleanup — strips noise tags via output buffering
 │
 ├── assets/
@@ -98,12 +106,12 @@ metamanager/
 
 1. Define constants.
 2. `require_once` all class files (no autoloader — simpler, no Composer dependency at runtime).
-3. Register `plugins_loaded` hooks for `MM_Admin::init()`, `MM_Settings::init()`, `MM_Upload_Notify::init()`, and `MM_Metadata_Loader::boot()` (initialises the full web-layer metadata subsystem).
+3. Register `plugins_loaded` hook for `MM_Metadata_Loader::run()` (initialises the full web-layer metadata subsystem). Admin-only classes (`MM_Admin`, `MM_Settings`, `MM_Updater`, `MM_Daemon_Updater`) are initialized inside `if (is_admin())` at `plugins_loaded` priority 5. `MM_Upload_Notify::init()` is called unconditionally.
 4. Register `rest_api_init` hook for REST routes unconditionally (REST requests are not `is_admin()`).
 5. Register `admin_init` hook for `MM_DB::create_or_update_table()` (safe to run on every request — `dbDelta` is a no-op when no schema changes are needed).
 6. Register WP-Cron intervals and the `mm_import_completed_jobs` event handler.
 7. Register `delete_attachment` hook for `MM_DB::delete_jobs_for_attachment()`.
-8. `MM_Frontend::init()` only when `!is_admin()`.
+8. `MM_Frontend::init()` registers `wp_head` hook unconditionally; output is suppressed in admin/non-attachment contexts by the resolver returning 0.
 9. `MM_Sitemap::init()` unconditionally (rewrites must register on every request).
 10. Register activation/deactivation hooks.
 
@@ -342,7 +350,7 @@ All keys are registered via `register_post_meta()` with sanitise callbacks and `
 | `admin_notices` | `status_banner()` | Daemon health + missing-tool warnings at top of relevant screens |
 | `manage_upload_columns` | `add_media_column()` | Adds `mm_meta_sync` column to Media Library |
 | `manage_media_custom_column` | `render_media_column()` | Outputs compression/metadata status cell |
-| `edit_form_after_title` | `render_attachment_meta_pane()` | Metadata fields + pending/compression notice on attachment edit |
+| `edit_form_advanced` | `render_attachment_meta_pane()` | Metadata fields + pending/compression notice on attachment edit |
 | `bulk_actions-upload` | `register_bulk_actions()` | Adds "Compress Lossless" and "Inject Site Info" |
 | `handle_bulk_actions-upload` | `handle_bulk_actions()` | Processes selected attachments |
 | `admin_enqueue_scripts` | `enqueue_assets()` | Enqueues `mm-status.js` and inline REST nonce |

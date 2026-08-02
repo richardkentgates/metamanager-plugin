@@ -9,40 +9,33 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 
 
+## [2.3.60] - 2026-08-02
 
-
-
-
-
+### Changed
+- Auto-incremented version from 2.3.59 to 2.3.60
 ## [2.3.59] - 2026-08-02
 
 ### Changed
 - Auto-incremented version from 2.3.58 to 2.3.59
+
 ## [2.3.58] - 2026-08-02
 
-### Changed
-- Auto-incremented version from 2.3.57 to 2.3.58
+### Fixed
+- Null `$file` passed to `write_job()` for video compression via REST API.
+- Removed dead `clear_history()` method from `MM_DB`.
+
 ## [2.3.57] - 2026-08-02
 
-### Changed
-- Auto-incremented version from 2.3.56 to 2.3.57
+### Fixed
+- Removed `sslverify => false` from `MM_Metadata_CLI` schema-test command (SSRF risk).
+- Added private/reserved IP check to link checker `head_request()` to prevent internal network scanning.
+
 ## [2.3.56] - 2026-08-02
 
-### Changed
-- Auto-incremented version from 2.3.55 to 2.3.56
-## [2.3.55] - 2026-08-02
+### Fixed
+- Enabled HTTPS on apt server — full security upgrade for metadata and download URLs.
 
-### Changed
-- Auto-incremented version from 2.3.54 to 2.3.55
-## [2.3.54] - 2026-08-01
-
-### Changed
-- Auto-incremented version from 2.3.53 to 2.3.54
 ## [2.3.53] - 2026-08-01
-
-### Changed
-- Auto-incremented version from 2.3.52 to 2.3.53
-## [2.3.51] — 2026-08-01
 
 ### Fixed
 - CI workflows: version bumps, auto-triggered promotions, and branch divergence issues.
@@ -58,258 +51,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 - Unit tests for `MM_Mod_Head_Meta`, `MM_Mod_Local`, `MM_Mod_Social`, `MM_Mod_Author`.
+- Full documentation overhaul: REST API table, apt install instructions, issue/PR templates.
 
 ---
 
-## [2.3.52] — 2026-08-01
-
-### Changed
-- Auto-incremented version from 2.3.51 to 2.3.52.
-
 ## [2.3.0] — 2026-07-07
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## [2.3.52] - 2026-08-01
-
-### Changed
-- Auto-incremented version from 2.3.51 to 2.3.52
-## [2.3.51] - 2026-08-01
-
-### Changed
-- Auto-incremented version from 2.3.50 to 2.3.51
-## [2.3.50] - 2026-08-01
-
-### Changed
-- Auto-incremented version from 2.3.49 to 2.3.50
-## [2.3.49] - 2026-08-01
-
-### Changed
-- Auto-incremented version from 2.3.48 to 2.3.49
-## [2.3.48] - 2026-08-01
-
-### Changed
-- Auto-incremented version from 2.3.47 to 2.3.48
-## [2.3.47] - 2026-07-31
-
-### Changed
-- Auto-incremented version from 2.3.46 to 2.3.47
-## [2.3.46] - 2026-07-31
-
-### Changed
-- Auto-incremented version from 2.3.45 to 2.3.46
-## [2.3.45] - 2026-07-31
-
-### Changed
-- Auto-incremented version from 2.3.44 to 2.3.45
-## [2.3.44] - 2026-07-31
-
-### Changed
-- Auto-incremented version from 2.3.43 to 2.3.44
-## [2.3.43] - 2026-07-31
-
-### Changed
-- Auto-incremented version from 2.3.42 to 2.3.43
-## [2.3.42] - 2026-07-31
-
-### Changed
-- Auto-incremented version from 2.3.41 to 2.3.42
-## [2.3.41] - 2026-07-31
-
-### Changed
-- Auto-incremented version from 2.3.40 to 2.3.41
-## [2.3.40] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.39 to 2.3.40
-## [2.3.39] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.38 to 2.3.39
-## [2.3.38] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.37 to 2.3.38
-## [2.3.37] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.36 to 2.3.37
-## [2.3.36] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.35 to 2.3.36
-## [2.3.35] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.34 to 2.3.35
-## [2.3.34] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.33 to 2.3.34
-## [2.3.31] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.30 to 2.3.31
-## [2.3.30] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.29 to 2.3.30
-## [2.3.28] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.27 to 2.3.28
-## [2.3.26] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.25 to 2.3.26
-## [2.3.24] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.23 to 2.3.24
-## [2.3.22] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.21 to 2.3.22
-## [2.3.21] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.20 to 2.3.21
-## [2.3.20] - 2026-07-29
-
-### Changed
-- Auto-incremented version from 2.3.19 to 2.3.20
-## [2.3.19] - 2026-07-28
-
-### Changed
-- Auto-incremented version from 2.3.18 to 2.3.19
-## [2.3.18] - 2026-07-28
-
-### Changed
-- Auto-incremented version from 2.3.17 to 2.3.18
-## [2.3.17] - 2026-07-28
-
-### Changed
-- Auto-incremented version from 2.3.16 to 2.3.17
-## [2.3.16] - 2026-07-28
-
-### Changed
-- Auto-incremented version from 2.3.15 to 2.3.16
-## [2.3.15] - 2026-07-28
-
-### Changed
-- Auto-incremented version from 2.3.14 to 2.3.15
-## [2.3.14] - 2026-07-28
-
-### Changed
-- Auto-incremented version from 2.3.13 to 2.3.14
-## [2.3.13] - 2026-07-28
-
-### Changed
-- Auto-incremented version from 2.3.12 to 2.3.13
-## [2.3.12] - 2026-07-28
-
-### Changed
-- Auto-incremented version from 2.3.11 to 2.3.12
-## [2.3.10] - 2026-07-27
-
-### Changed
-- Auto-incremented version from 2.3.9 to 2.3.10
-## [2.3.9] - 2026-07-27
-
-### Changed
-- Auto-incremented version from 2.3.8 to 2.3.9
-## [2.3.8] - 2026-07-25
-
-### Changed
-- Auto-incremented version from 2.3.7 to 2.3.8
-## [2.3.7] - 2026-07-25
-
-### Changed
-- Auto-incremented version from 2.3.6 to 2.3.7
-## [2.3.6] - 2026-07-24
-
-### Changed
-- Auto-incremented version from 2.3.5 to 2.3.6
-## [2.3.5] - 2026-07-24
-
-### Changed
-- Auto-incremented version from 2.3.4 to 2.3.5
-## [2.3.4] - 2026-07-24
-
-### Changed
-- Auto-incremented version from 2.3.3 to 2.3.4
-## [2.3.3] - 2026-07-24
-
-### Changed
-- Auto-incremented version from 2.3.2 to 2.3.3
-## [2.3.2] - 2026-07-24
-
-## [2.3.0] — 2026-07-07
-
-### Added
-
-- **Debian package** — Metamanager is now distributable as a `.deb` so it can be
-  installed via `apt` from a hosted repository. The package is thin: it stages
-  the plugin tree, daemons, and systemd units to `/usr/local/lib/metamanager/`
-  and `postinst` runs `metamanager-install.sh --no-deps` to auto-detect the
-  WordPress content directory, copy the plugin into place, patch the daemon
-  scripts and systemd units with the detected path, enable and start both
-  daemons, and activate the plugin via WP-CLI. `Depends` declares
-  `jq`, `inotify-tools`, `libimage-exiftool-perl`, `libjpeg-turbo-progs`,
-  `optipng`, `webp`, `ffmpeg` so `apt` provisions the OS-level toolchain.
-- **`--no-deps` flag** for `metamanager-install.sh` — skips the apt/dnf
-  dependency install step, for reuse from contexts where dependencies are
-  already declared (e.g. a `.deb` postinst).
-- **GitHub Actions workflow** (`build-deb.yml`) — builds the `.deb` on `v*`
-  tags and attaches it to the GitHub release.
-
-### Fixed
-
-- **Version drift** — the plugin header and `readme.txt` stable tag were stuck
-  at `2.1.7` while the `MM_VERSION` constant had advanced to `2.2.0`. All three
-  version strings are now synchronised at `2.3.0`.
-
----
-
-## [2.2.0] — 2026-03-22
-
-
-
-
-
-
-
-
-
-
-
-
 
 ### Added
 
@@ -425,6 +171,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   accidentally placed inside the `if(empty($ids))` branch instead of the `else`
   branch, so the grid only appeared when there were no images and was hidden
   when images were present. (`class-mm-admin.php`).
+
+---
+
 ## [2.1.7] — 2026-03-15
 
 ### Added
@@ -859,66 +608,3 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **Open Graph tags**: `og:image`, `og:image:secure_url`, `og:image:width`, `og:image:height`, `og:image:type`, `og:image:alt`
 - **License link**: `<link rel="license">` when the copyright field contains a URL; `<meta name="copyright">` for plain-text copyright notices
 - **Grouped attachment edit UI**: four labelled sections (Attribution & Rights, Editorial, Classification, Location); date picker (`<input type="date">`); 0–5 star rating `<select>`; inline tag hint on every field
-- **`register_post_meta()` declarations** for all 14 custom attachment fields — provides type, sanitise callback, auth callback, and REST API visibility at `/wp/v2/media/<id>`
-- `MM_Job_Queue::on_upload()` calls `import_from_file()` before enqueueing jobs so the job payload already contains imported values
-- `add_action('init', ['MM_Metadata', 'register_meta'])` — meta registration now happens before any WP request
-- Help tab metadata table in the admin screen expanded with all new field groups
-
-### Changed
-- Meta daemon (`metamanager-meta-daemon.sh`) updated with ExifTool tag mappings for Headline, Credit, Keywords (multi-value loop), DateCreated, Rating, City, State/Province, Country
-- `get_fields_for_job()` now uses class constants and includes all new fields in the job payload
-
----
-
-## [1.0.1] — 2026-03-02
-
-### Added
-- Native WordPress auto-updater (`MM_Updater`) — hooks into the core plugin-update pipeline so Metamanager appears in Dashboard → Updates automatically when a new GitHub release is published
-- "Check for Updates" action link on the Plugins page for immediate on-demand update checks
-- `metamanager-install.sh --update` flag — updates plugin PHP/JS/asset files only without re-installing daemons, dependencies, or systemd services; flushes WordPress object cache via WP-CLI when available
-- Contextual help tabs on the Media → Metamanager admin screen (via WordPress Screen API)
-- Inline help section on the job dashboard with explanations of the queue, history, bulk actions, daemon statuses, and metadata field behaviour
-
-### Changed
-- README.md: added Updating section, auto-updates feature, and `--update` usage
-
----
-
-## [1.0.0] — 2026-03-02
-
-### Added
-- Initial public release
-- Lossless JPEG compression via `jpegtran -copy all -optimize -progressive`
-- Lossless PNG compression via `optipng -o2 -preserve`
-- Files are only replaced when the compressed result is smaller than the original
-- Full EXIF, IPTC, and XMP metadata embedding via ExifTool in a single pass
-- Custom metadata fields (Creator, Copyright, Owner) on every image edit screen
-- Metadata fields are intentionally never set in bulk — per-image attribution only
-- Bulk action: Compress Lossless — queues compression for all uncompressed sizes
-- Bulk action: Inject Site Info — adds Publisher (site name) and Website (site URL) only; neutral provenance, not an ownership claim
-- Real-time compression status column in the WordPress Media Library
-- Embedded metadata read-out pane on the single image edit screen (live ExifTool readout)
-- Metamanager admin page under Media → Metamanager with live job queue and searchable/paginated history
-- Re-queue button on any failed job in the history table
-- Clear History button (admin-only)
-- Daemon health indicator in status banner using PID files — no `systemctl` privilege required
-- Two systemd daemons watching job queue directories with `inotifywait`
-- Result JSON written to `completed/` or `failed/` directories by daemons
-- WP-Cron imports daemon results into the database every 60 seconds
-- One-command `metamanager-install.sh` supporting apt (Debian/Ubuntu) and dnf (RHEL/Rocky)
-- `metamanager-install.sh` patches daemon scripts at deploy time with the actual `WP_CONTENT_DIR` — no hardcoded paths
-- WP-CLI activation support in `metamanager-install.sh` when WP-CLI is available
-- GitHub Pages documentation website at `metamanager.richardkentgates.com`
-- GPLv3 license
-- PHP 8.0+ minimum requirement
-- WordPress 6.0+ minimum requirement
-
----
-
-## Upcoming
-
-### Possible future improvements
-- Lossy compression option with configurable quality target (separate from lossless jobs)
-- AVIF output support (`avifenc`)
-- Per-attachment compression stats widget in the Media Library list view
-- WP-CLI `wp metamanager export` command to download job history as CSV

@@ -52,7 +52,7 @@ PHP's role throughout is coordinator only: write the instruction, let the daemon
 
 - **Title & description control**: per-post/page/term/user override with template tokens (`%%post_title%%`, `%%sitetitle%%`, `%%sep%%`, `%%search_query%%`, and more); configurable default template per post type and taxonomy; dedicated templates for search results and 404 pages
 - **Open Graph**: `og:title`, `og:description`, `og:image` for all content; `og:image:width/height/type/alt` for media; `og:video` and `og:audio` for media attachments; `article:published_time` and `article:modified_time` for posts; Twitter/X card output
-- **Schema.org JSON-LD**: 20+ types — `Article`, `BlogPosting`, `WebPage`, `BreadcrumbList`, `ImageObject`, `VideoObject`, `AudioObject`, `DigitalDocument`, `Product`, `FAQPage`, `HowTo`, `Recipe`, `Event`, `Course`, `JobPosting`, `Review`, `Service`, `TouristTrip`, `RealEstateListing`, `Organization`, `LocalBusiness`, `Person`
+- **Schema.org JSON-LD**: 19 types — `Article`, `BlogPosting`, `WebPage`, `WebSite`, `SearchResultsPage`, `BreadcrumbList`, `ImageObject`, `VideoObject`, `AudioObject`, `DigitalDocument`, `Product`, `FAQPage`, `HowTo`, `Event`, `Service`, `TouristTrip`, `TouristAttraction`, `RealEstateListing`, `Organization`, `LocalBusiness`, `Person`
 - **XML sitemaps**: `/sitemap.xml` (all public content), `/sitemap-media.xml` (images + video), `/sitemap-video.xml` (Google Video format); 1-hour transient caching; auto-flush on publish; configurable per post type and taxonomy; Google and Bing pinged on publish
 - **HTML sitemap**: `[mm_sitemap]` shortcode embeds a formatted sitemap on any page; supports `post_types`, `taxonomies`, and `depth` attributes
 - **Robots.txt**: active sitemaps appended as `Sitemap:` directives automatically; per-post-type global noindex; per-post noindex/nofollow/noarchive/nosnippet from the metadata panel
@@ -72,7 +72,7 @@ PHP's role throughout is coordinator only: write the instruction, let the daemon
 - **Upload receipt emails**: batched digest email (one per 60-second window); per-user opt-in; configurable CC address; failed sends surfaced as a dismissible notice with retry
 - **Auto-updates**: native WordPress update pipeline integration — updates appear in Dashboard → Updates; includes "Check for Updates" link; notice prompts daemon restart after updates
 - **Multisite compatible**: network activation creates the DB table and schedules cron on every existing site; new blog creation handled via `wp_initialize_site`
-- **Clean uninstall**: opt-in "Remove all data on uninstall" setting wipes options, post meta, job log table, job queue directory, and updater transient — nothing removed by default
+- **Clean uninstall**: opt-in "Remove all data on uninstall" setting wipes options, post meta (17 keys), job log table, job queue directory, and updater transients — nothing removed by default
 
 ---
 
@@ -649,18 +649,23 @@ If you deleted the plugin without enabling the data-removal setting, you can cle
 -- Job log table
 DROP TABLE IF EXISTS wp_metamanager_jobs;
 
--- Plugin settings
+-- Plugin options
 DELETE FROM wp_options WHERE option_name IN
   ('mm_compress_level','mm_notify_enabled','mm_notify_email','mm_delete_data_on_uninstall',
    'mm_api_disabled','mm_api_allowed_ips',
-   'mm_upload_notify_extra_email','mm_failed_upload_notices');
+   'mm_upload_notify_enabled','mm_upload_notify_extra_email','mm_failed_upload_notices',
+   'mm_sitemap_media','mm_sitemap_images','mm_sitemap_video','mm_sitemap_video_selfhosted',
+   'mm_auto_provenance');
 
--- Attachment metadata
+-- Transients
+DELETE FROM wp_options WHERE option_name LIKE '_transient_mm_%' OR option_name LIKE '_transient_timeout_mm_%';
+
+-- Attachment metadata (17 keys)
 DELETE FROM wp_postmeta WHERE meta_key IN
   ('mm_creator','mm_copyright','mm_owner','mm_headline','mm_credit','mm_keywords',
    'mm_date_created','mm_location_city','mm_location_state','mm_location_country',
-   'mm_rating','mm_gps_lat','mm_gps_lon','mm_gps_alt','mm_meta_synced',
-   'mm_verify_discrepancies','mm_verified_at','mm_duration');
+   'mm_rating','mm_gps_lat','mm_gps_lon','mm_gps_alt',
+   'mm_duration','mm_verify_discrepancies','mm_verified_at');
 DELETE FROM wp_postmeta WHERE meta_key LIKE '_mm_compressed_%';
 ```
 

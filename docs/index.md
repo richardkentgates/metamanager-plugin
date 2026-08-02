@@ -11,9 +11,9 @@ Lossless image compression and standards-compliant metadata embedding for WordPr
 ## Quick Links
 
 - [GitHub](https://github.com/richardkentgates/metamanager-plugin)
-- [Architecture Reference](https://github.com/richardkentgates/metamanager-plugin/blob/dev/ARCHITECTURE.md)
-- [Changelog](https://github.com/richardkentgates/metamanager-plugin/blob/dev/CHANGELOG.md)
-- [Contributing](https://github.com/richardkentgates/metamanager-plugin/blob/dev/CONTRIBUTING.md)
+- [Architecture Reference](https://github.com/richardkentgates/metamanager-plugin/blob/main/ARCHITECTURE.md)
+- [Changelog](https://github.com/richardkentgates/metamanager-plugin/blob/main/CHANGELOG.md)
+- [Contributing](https://github.com/richardkentgates/metamanager-plugin/blob/main/CONTRIBUTING.md)
 
 ## What is Metamanager?
 
@@ -27,7 +27,7 @@ Metamanager is a WordPress plugin that provides:
 ## Requirements
 
 - WordPress 6.2+
-- PHP 8.2+
+- PHP 8.0+
 - **Metamanager daemon package** (`sudo apt install metamanager`) — installs the OS-level tools and bash daemons that process media files:
 
 | Component | Purpose |
@@ -166,7 +166,7 @@ No manual SSH required — the plugin handles daemon updates automatically.
 
 | Section | Description |
 |---------|-------------|
-| [Architecture](https://github.com/richardkentgates/metamanager-plugin/blob/dev/ARCHITECTURE.md) | Internal design, component map, connection points |
-| [Changelog](https://github.com/richardkentgates/metamanager-plugin/blob/dev/CHANGELOG.md) | Release history and changes |
-| [Contributing](https://github.com/richardkentgates/metamanager-plugin/blob/dev/CONTRIBUTING.md) | Development setup and PR guidelines |
-| [Security](https://github.com/richardkentgates/metamanager-plugin/blob/dev/SECURITY.md) | Vulnerability reporting and security model |
+| [Architecture](https://github.com/richardkentgates/metamanager-plugin/blob/main/ARCHITECTURE.md) | Internal design, component map, connection points |
+| [Changelog](https://github.com/richardkentgates/metamanager-plugin/blob/main/CHANGELOG.md) | Release history and changes |
+| [Contributing](https://github.com/richardkentgates/metamanager-plugin/blob/main/CONTRIBUTING.md) | Development setup and PR guidelines |
+| [Security](https://github.com/richardkentgates/metamanager-plugin/blob/main/SECURITY.md) | Vulnerability reporting and security model |

@@ -4,7 +4,7 @@ Tags: seo, metadata, sitemap, schema, open-graph
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 2.3.59
+Stable tag: 2.3.60
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -172,7 +172,3 @@ Yes. All web/SEO features are fully functional without the OS daemons. Jobs are 
 = 2.1.5 =
 * Initial public release with media compression and metadata embedding features.
 
-== Upgrade Notice ==
-
-= 2.1.7 =
-Security hardening update. Recommended for all users.
