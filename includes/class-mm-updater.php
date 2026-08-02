@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
 class MM_Updater {
 
 	/** URL of the apt server metadata.json. */
-	private const METADATA_URL = 'https://apt.richardkentgates.com/metamanager/metadata.json';
+	private const METADATA_URL = 'http://apt.richardkentgates.com/metamanager/metadata.json';
 
 	/** WordPress option / transient key used to cache the remote metadata. */
 	private const TRANSIENT = 'mm_remote_metadata';
