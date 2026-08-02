@@ -54,7 +54,7 @@ Queued by PHP when an image is uploaded or regenerated.
 | `size` | string | Yes | Image size slug (`"full"`, `"thumbnail"`, etc.) |
 | `image_name` | string | Yes | Original filename for logging |
 | `submitted_at` | string | Yes | ISO 8601 timestamp |
-| `optimize_level` | int | No | Compression level (1-3, default 2) |
+| `optimize_level` | int | Yes | Compression level (1-3, default 2) |
 
 **Daemon Processing:**
 - JPEG: `jpegtran -copy all -optimize -progressive`
@@ -93,7 +93,7 @@ Queued by PHP when metadata is saved or after import.
 | `size` | string | Yes | Image size slug |
 | `metadata` | object | Yes | Key-value pairs to embed |
 | `submitted_at` | string | Yes | ISO 8601 timestamp |
-| `trigger` | string | No | `"save"` (default) or `"import"` |
+| `trigger` | string | No | `"upload"` (default), `"edit"`, `"scan"`, `"bulk"`, `"rest_api"`, `"cli"`, `"import"`, `"verify"`, or `"manual"` |
 
 **Metadata Fields:**
 | Key | EXIF | IPTC | XMP |
@@ -137,7 +137,7 @@ Written to `completed/` directory.
 
 ```json
 {
-  "job_type": "compress",
+  "job_type": "compression",
   "attachment_id": 1234,
   "file_path": "/var/www/html/wp-content/uploads/2026/07/image.jpg",
   "size": "full",
@@ -158,7 +158,7 @@ Written to `failed/` directory.
 
 ```json
 {
-  "job_type": "compress",
+  "job_type": "compression",
   "attachment_id": 1234,
   "file_path": "/var/www/html/wp-content/uploads/2026/07/image.jpg",
   "size": "full",

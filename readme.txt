@@ -172,7 +172,3 @@ Yes. All web/SEO features are fully functional without the OS daemons. Jobs are 
 = 2.1.5 =
 * Initial public release with media compression and metadata embedding features.
 
-== Upgrade Notice ==
-
-= 2.1.7 =
-Security hardening update. Recommended for all users.
