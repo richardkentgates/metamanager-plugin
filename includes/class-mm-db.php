@@ -449,15 +449,6 @@ class MM_DB {
 		return $ids ? array_map( 'intval', $ids ) : [];
 	}
 
-	/**
-	 * Truncate the entire jobs history table.
-	 */
-	public static function clear_history(): void {
-		global $wpdb;
-		$table = self::table_name();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table ) );
-	}
 }
 
 // Run on every admin_init to self-heal if the table drifts (e.g. after manual DB restore).
