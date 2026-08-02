@@ -1155,6 +1155,9 @@ class MM_Admin {
 
 		if ( $is_video ) {
 			$file = get_attached_file( $id );
+			if ( ! $file || ! file_exists( $file ) ) {
+				return new \WP_Error( 'file_not_found', __( 'Video file not found on disk.', 'metamanager' ), [ 'status' => 404 ] );
+			}
 			MM_Job_Queue::write_job( 'compression', $id, $file, 'full', [ 'trigger' => 'rest_api' ] );
 		} else {
 			MM_Job_Queue::enqueue_all_sizes( $id, [], 'compression', [ 'trigger' => 'rest_api' ] );
