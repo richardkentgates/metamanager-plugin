@@ -56,7 +56,7 @@ jobs:
 
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${APT_USER}@${APT_HOST}" \
-            "printf '%s\n' '{\"version\":\"${{ steps.version.outputs.version }}\",\"requires\":{\"php\":\"8.0\",\"wordpress\":\"6.2\"},\"download_url\":\"http://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"}' > /var/www/html/metamanager/metadata.json"
+            "printf '%s\n' '{\"version\":\"${{ steps.version.outputs.version }}\",\"requires\":{\"php\":\"8.0\",\"wordpress\":\"6.2\"},\"download_url\":\"https://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"}' > /var/www/html/metamanager/metadata.json"
 
           echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server"
 
@@ -65,7 +65,7 @@ jobs:
           echo "Waiting for metadata to propagate..."
           sleep 5
 
-          METADATA_URL="http://apt.richardkentgates.com/metamanager/metadata.json"
+          METADATA_URL="https://apt.richardkentgates.com/metamanager/metadata.json"
           METADATA=$(curl -sf "$METADATA_URL" 2>/dev/null)
 
           if [ -z "$METADATA" ]; then
