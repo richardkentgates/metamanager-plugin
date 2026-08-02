@@ -52,7 +52,7 @@ class MM_Metadata_Help {
 
 			'links' => '<p>' . esc_html__( 'The Links page shows all internal and external links extracted from your post content and their last-checked HTTP status code. Broken links (4xx/5xx) are highlighted in red.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Links are extracted automatically when a post is saved. The WP-Cron checker runs twice daily by default, checking a configurable batch size to avoid server timeouts.', 'metamanager' ) . '</p>' .
-				'<p>' . esc_html__( 'You can ignore individual links or entire domains. The "Re-check" button forces an immediate HEAD request for a single URL. Use WP-CLI (wp metamanager check-links --all) for a full one-shot scan.', 'metamanager' ) . '</p>',
+				'<p>' . esc_html__( 'You can ignore individual links or entire domains. The "Re-check" button forces an immediate HEAD request for a single URL. Use WP-CLI (wp metamanager metadata check-links --all) for a full one-shot scan.', 'metamanager' ) . '</p>',
 
 			'tools' => '<p>' . esc_html__( 'The Tools page provides one-click maintenance actions. Actions run via AJAX and report success or failure inline — no page reload required.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Flush Rewrites re-registers all sitemap URL patterns in the WordPress rewrite table — run this after activating the plugin on a new server or after changing permalink settings.', 'metamanager' ) . '</p>' .
@@ -188,7 +188,7 @@ class MM_Metadata_Help {
 				'title'   => __( 'WP-CLI', 'metamanager' ),
 				'content' =>
 					'<p>' . esc_html__( 'Run a full link scan from the command line (bypasses batch size limits):', 'metamanager' ) . '</p>' .
-					'<pre><code>wp metamanager check-links --all</code></pre>',
+					'<pre><code>wp metamanager metadata check-links --all</code></pre>',
 			];
 		}
 
@@ -257,7 +257,7 @@ class MM_Metadata_Help {
 					'<li><code>/gcm-biz-export/json/</code> — ' . esc_html__( 'JSON file with name, phone, email, address, and coordinates.', 'metamanager' ) . '</li>' .
 					'<li><code>/gcm-biz-export/csv/</code> — ' . esc_html__( 'CSV file importable by spreadsheet applications and CRMs.', 'metamanager' ) . '</li>' .
 					'</ul>' .
-					'<p>' . esc_html__( 'If any endpoint returns 404, go to SEO → Tools → Flush Rewrite Rules.', 'metamanager' ) . '</p>',
+					'<p>' . esc_html__( 'If any endpoint returns 404, go to Metamanager → Tools → Flush Rewrite Rules.', 'metamanager' ) . '</p>',
 			];
 		}
 
