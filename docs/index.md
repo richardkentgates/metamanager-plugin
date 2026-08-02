@@ -92,8 +92,8 @@ The apt server hosts two types of daemon packages:
 
 | Channel | Version format | Example | Source |
 |---------|---------------|---------|--------|
-| **Release** | `X.Y.Z` | `2.4.11` | `main` branch (tagged releases) |
-| **Test** | `X.Y.Z~testEPOCH` | `2.4.11~test1722500000` | `test` branch (pre-release builds) |
+| **Release** | `X.Y.Z` | `2.4.15` | `main` branch (tagged releases) |
+| **Test** | `X.Y.Z~testEPOCH` | `2.4.15~test1722500000` | `test` branch (pre-release builds) |
 
 ### Release (stable)
 
@@ -102,10 +102,10 @@ The apt server hosts two types of daemon packages:
 sudo apt update && sudo apt install metamanager
 
 # Pin to a specific version
-sudo apt install metamanager=2.4.11
+sudo apt install metamanager=2.4.15
 ```
 
-`apt upgrade` always prefers release builds over test builds because Debian version ordering treats `~` as sorting before everything (`2.4.11~test...` < `2.4.11`). This means upgrading from a test build to a release build works automatically.
+`apt upgrade` always prefers release builds over test builds because Debian version ordering treats `~` as sorting before everything (`2.4.15~test...` < `2.4.15`). This means upgrading from a test build to a release build works automatically.
 
 ### Test (pre-release)
 
@@ -116,7 +116,7 @@ Test builds are produced from the `test` branch. They include the latest fixes b
 apt-cache policy metamanager
 
 # Install a specific test version
-sudo apt install metamanager=2.4.11~test1722500000
+sudo apt install metamanager=2.4.15~test1722500000
 
 # Prevent apt from "downgrading" back to release
 # (optional — only if you want to stay on test)
