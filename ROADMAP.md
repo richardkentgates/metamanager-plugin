@@ -47,9 +47,9 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 
 | Item | Value |
 |------|-------|
-| Plugin on production | v2.3.50 (auto-updated via apt) |
-| Plugin on apt server | v2.3.51 (CI deployed) |
-| Daemon version | v2.4.8 |
+| Plugin on production | v2.3.58 (auto-updated via apt) |
+| Plugin on apt server | v2.3.63 (CI deployed) |
+| Daemon version | v2.4.27 |
 | WordPress version | 6.9 |
 | Production URL | https://thepeosolution.com |
 | Production IP | 104.197.172.183 |
