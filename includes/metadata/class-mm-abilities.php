@@ -342,36 +342,12 @@ class MM_Abilities {
 	 * @return array|WP_Error
 	 */
 	public function ability_get_navigation( array $input ) {
-		$primary = get_posts( [
-			'post_type'   => 'nav_menu',
-			'meta_key'    => '_mm_nav_menu_primary',
-			'meta_value'  => '1',
-			'numberposts' => 1,
-		] );
-
-		if ( empty( $primary ) ) {
+		$menu = MM_Mod_Base::get_primary_menu();
+		if ( ! $menu ) {
 			return [ 'menu_name' => '', 'items' => [] ];
 		}
 
-		$menu_term_id = $primary[0]->ID;
-		$menu_items   = wp_get_nav_menu_items( $menu_term_id );
-		$menu_name    = get_the_title( $menu_term_id ) ?: 'Navigation';
-
-		$items = [];
-		$position = 1;
-		if ( is_array( $menu_items ) ) {
-			foreach ( $menu_items as $item ) {
-				if ( $item->url && $item->title ) {
-					$items[] = [
-						'name'     => $item->title,
-						'url'      => $item->url,
-						'position' => $position++,
-					];
-				}
-			}
-		}
-
-		return [ 'menu_name' => $menu_name, 'items' => $items ];
+		return [ 'menu_name' => $menu['name'], 'items' => $menu['items'] ];
 	}
 
 	// -------------------------------------------------------------------------
