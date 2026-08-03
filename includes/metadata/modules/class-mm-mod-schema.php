@@ -79,53 +79,24 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	private function add_navigation_node( array &$data ): void {
-		// Find the menu designated as primary (checkbox on menu edit screen).
-		$primary = get_terms( [
-			'taxonomy'   => 'nav_menu',
-			'meta_query' => [
-				[
-					'key'   => '_mm_nav_menu_primary',
-					'value' => '1',
-				],
-			],
-			'number'     => 1,
-			'hide_empty' => false,
-		] );
-
-		if ( is_wp_error( $primary ) || empty( $primary ) ) {
-			// No menu checked — no navigation schema.
+		$menu = self::get_primary_menu();
+		if ( ! $menu || empty( $menu['items'] ) ) {
 			return;
 		}
 
-		$menu_term_id = (int) $primary[0]->term_id;
-		$menu_items   = wp_get_nav_menu_items( $menu_term_id );
-		if ( ! is_array( $menu_items ) || empty( $menu_items ) ) {
-			return;
-		}
-
-		$nav_items = [];
-		foreach ( $menu_items as $item ) {
-			if ( $item->url && $item->title ) {
-				$nav_items[] = [
-					'@type'    => 'SiteNavigationElement',
-					'name'     => $item->title,
-					'url'      => $item->url,
-					'position' => count( $nav_items ) + 1,
-				];
-			}
-		}
-
-		if ( empty( $nav_items ) ) {
-			return;
-		}
-
-		$menu_obj  = get_term( $menu_term_id, 'nav_menu' );
-		$menu_name = ( $menu_obj && ! is_wp_error( $menu_obj ) ) ? $menu_obj->name : 'Main Navigation';
+		$nav_items = array_map( function ( $item ) {
+			return [
+				'@type'    => 'SiteNavigationElement',
+				'name'     => $item['name'],
+				'url'      => $item['url'],
+				'position' => $item['position'],
+			];
+		}, $menu['items'] );
 
 		$this->add_node( $data, [
 			'@type'   => 'SiteNavigationElement',
 			'@id'     => $this->site_id( 'navigation' ),
-			'name'    => $menu_name,
+			'name'    => $menu['name'],
 			'hasPart' => $nav_items,
 		] );
 

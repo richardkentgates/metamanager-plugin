@@ -119,13 +119,49 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 
 ---
 
-## What's Left
+## Audit #3 — 2026-08-03
 
-### Code
+Full codebase audit covering orphans, parallel logic, security, missing logic, and WordPress coding standards.
 
-| # | Severity | Issue | File |
-|---|----------|-------|------|
-| C5 | LOW | `exit` missing in business contact download sub-methods | `class-mm-mod-business-contact.php:73-84` |
+### Orphans / Dead Code
+
+| # | Item | File | Severity | Status |
+|---|------|------|----------|--------|
+| O-1 | `calculate_batch_size()` — never called in production | `class-mm-memory-manager.php:139` | MEDIUM | OPEN |
+| O-2 | `estimate_job_cost()` — only caller is O-1 | `class-mm-memory-manager.php:92` | LOW | OPEN |
+| O-3 | `field_map()` — defined but never called anywhere | `class-mm-metadata.php:209` | MEDIUM | OPEN |
+| O-4 | `drop_table()` — only called by tests, uninstall.php inlines its own | `class-mm-db.php:34` | MEDIUM | OPEN |
+| O-5 | `check_version()` — only called by tests | `class-mm-daemon-updater.php:197` | LOW | OPEN |
+| O-6 | 5× `*_path()` methods — public, only called internally | `class-mm-status.php` | LOW | OPEN |
+
+### Parallel Logic
+
+| # | Finding | Severity | Status |
+|---|---------|----------|--------|
+| P-1 | Old metadata system (`MM_Metadata`, `MM_Frontend`, `MM_Sitemap`) still active alongside new module system | HIGH | OPEN |
+| P-2 | Two sitemap implementations register same rewrite rules | HIGH | OPEN |
+| P-3 | Two frontend/schema implementations emit duplicate tags | HIGH | OPEN |
+| P-4 | `$pick` closure defined twice in `MM_Metadata` | HIGH | OPEN |
+| P-5 | `deep_merge()` defined in two classes | MEDIUM | OPEN |
+| P-6 | PostalAddress built with/without sanitization across modules | MEDIUM | OPEN |
+| P-7 | `enqueue_all_sizes()` guard pattern repeated 16 times | MEDIUM | OPEN |
+
+### Security
+
+No CRITICAL or HIGH findings. One LOW: `@exec()` suppression in daemon updater.
+
+### Missing Logic / Gaps
+
+| # | Finding | Severity | Status |
+|---|---------|----------|--------|
+| G-1 | `get_term_link()` return not type-checked — WP_Error flows into og:url | MEDIUM | OPEN |
+| G-2 | LinkedIn prefix empty string — produces bare handle, not URL | MEDIUM | OPEN |
+| G-3 | FAQ extraction only supports `<details>/<summary>` — no other patterns | MEDIUM | OPEN |
+| G-4 | HTML sitemap flat queries hardcap at 500 posts, no pagination | MEDIUM | OPEN |
+| G-5 | HTML sitemap hierarchical queries unlimited — OOM risk on large sites | MEDIUM | OPEN |
+| G-6 | `remove_wp_dns_prefetch` setting removes ALL resource hints, not just DNS prefetch | MEDIUM | OPEN |
+| G-7 | No deactivation hook — cron events and tables persist after deactivation | MEDIUM | OPEN |
+| G-8 | `exit` missing in business contact download sub-methods | LOW | OPEN |
 
 ### Test Coverage — Priority 2
 

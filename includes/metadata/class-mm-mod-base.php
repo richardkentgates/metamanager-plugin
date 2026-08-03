@@ -29,6 +29,56 @@ abstract class MM_Mod_Base {
 	// Shared helpers available to all modules
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Get the primary navigation menu from WordPress theme locations.
+	 *
+	 * Returns the first assigned menu, or null if no menus are assigned.
+	 *
+	 * @return array{id: int, name: string, items: array}|null
+	 */
+	public static function get_primary_menu(): ?array {
+		$locations = wp_get_nav_menu_locations();
+		if ( empty( $locations ) ) {
+			return null;
+		}
+
+		$menu_id = 0;
+		foreach ( $locations as $assigned ) {
+			if ( $assigned ) {
+				$menu_id = $assigned;
+				break;
+			}
+		}
+
+		if ( ! $menu_id ) {
+			return null;
+		}
+
+		$menu_items = wp_get_nav_menu_items( $menu_id );
+		$menu_obj  = get_term( $menu_id, 'nav_menu' );
+		$menu_name = ( $menu_obj && ! is_wp_error( $menu_obj ) ) ? $menu_obj->name : 'Navigation';
+
+		$items = [];
+		if ( is_array( $menu_items ) ) {
+			$position = 1;
+			foreach ( $menu_items as $item ) {
+				if ( $item->url && $item->title ) {
+					$items[] = [
+						'name'     => $item->title,
+						'url'      => $item->url,
+						'position' => $position++,
+					];
+				}
+			}
+		}
+
+		return [
+			'id'    => $menu_id,
+			'name'  => $menu_name,
+			'items' => $items,
+		];
+	}
+
 	/** Add a meta tag to the data array, preventing duplicates by name/property. */
 	protected function add_meta( array &$data, array $attrs ): void {
 		$key = $attrs['name'] ?? $attrs['property'] ?? null;
