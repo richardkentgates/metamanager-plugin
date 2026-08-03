@@ -1448,8 +1448,23 @@ class MM_Admin {
 			wp_send_json_error( 'Permission denied.' );
 		}
 
+		// Memory gate: pause if memory is critically low.
+		if ( MM_Memory_Manager::should_pause() ) {
+			MM_Memory_Manager::set_notice();
+			wp_send_json_success( [
+				'count'  => 0,
+				'offset' => 0,
+				'total'  => 0,
+				'done'   => false,
+				'paused' => true,
+				'message' => 'Memory limit reached — batch paused, will resume automatically.',
+			] );
+		}
+		MM_Memory_Manager::clear_notice();
+
 		$offset     = max( 0, (int) wp_unslash( $_POST['offset']     ?? 0 ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- (int) cast is sanitization
 		$batch_size = max( 1, min( 200, (int) wp_unslash( $_POST['batch_size'] ?? 50 ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$batch_size = min( $batch_size, MM_Settings::get_batch_size() );
 
 		// Include images plus all supported video and audio MIME types.
 		$all_mime_types = array_merge(

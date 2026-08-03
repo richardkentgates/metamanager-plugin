@@ -46,6 +46,7 @@ class MM_Settings {
 	const OPTION_API_ALLOWED_IPS        = 'mm_api_allowed_ips';
 	const OPTION_UPLOAD_NOTIFY_EXTRA    = 'mm_upload_notify_extra_email';
 	const OPTION_AUTO_PROVENANCE        = 'mm_auto_provenance';
+	const OPTION_BATCH_SIZE             = 'mm_batch_size';
 
 	// -----------------------------------------------------------------------
 	// Boot
@@ -134,6 +135,31 @@ class MM_Settings {
 			[ __CLASS__, 'field_compress_level' ],
 			'metamanager-settings',
 			'mm_section_compression'
+		);
+
+		register_setting(
+			'mm_settings_group',
+			self::OPTION_BATCH_SIZE,
+			[
+				'type'              => 'integer',
+				'sanitize_callback' => fn( $v ) => max( 10, min( 500, (int) $v ) ),
+				'default'           => 50,
+			]
+		);
+
+		add_settings_section(
+			'mm_section_memory',
+			esc_html__( 'Memory & Batch Processing', 'metamanager' ),
+			fn() => esc_html_e( 'Controls how many files are processed per batch cycle. The plugin checks available memory before each cycle and automatically reduces the batch size if memory is limited. If memory is critically low, processing pauses and resumes automatically when memory becomes available.', 'metamanager' ),
+			'metamanager-settings'
+		);
+
+		add_settings_field(
+			'mm_batch_size',
+			esc_html__( 'Max batch size', 'metamanager' ),
+			[ __CLASS__, 'field_batch_size' ],
+			'metamanager-settings',
+			'mm_section_memory'
 		);
 
 		add_settings_section(
@@ -303,6 +329,16 @@ class MM_Settings {
 		echo '<p class="description">' . esc_html__( 'All compression is lossless — this controls optimisation effort for PNG (optipng) and WebP (cwebp). JPEG is always compressed at maximum lossless quality. Higher effort produces slightly smaller files but takes longer.', 'metamanager' ) . '</p>';
 	}
 
+	public static function field_batch_size(): void {
+		$value = self::get_batch_size();
+		printf(
+			'<input type="number" id="mm_batch_size" name="%s" value="%d" min="10" max="500" step="10" class="small-text">',
+			esc_attr( self::OPTION_BATCH_SIZE ),
+			absint( $value )
+		);
+		echo '<p class="description">' . esc_html__( 'Maximum number of files processed per batch cycle (upload scan, cron tick, or WP-CLI batch). The plugin checks available memory before each cycle and automatically reduces this number if memory is limited. If memory is critically low, processing pauses and resumes on the next cycle.', 'metamanager' ) . '</p>';
+	}
+
 	public static function field_notify_enabled(): void {
 		$checked = (bool) get_option( self::OPTION_NOTIFY_ENABLED, false );
 		printf(
@@ -416,6 +452,13 @@ class MM_Settings {
 	 */
 	public static function get_compress_level(): int {
 		return max( 1, min( 7, (int) get_option( self::OPTION_COMPRESS_LEVEL, 2 ) ) );
+	}
+
+	/**
+	 * Get the configured max batch size (10–500).
+	 */
+	public static function get_batch_size(): int {
+		return max( 10, min( 500, (int) get_option( self::OPTION_BATCH_SIZE, 50 ) ) );
 	}
 
 	/**

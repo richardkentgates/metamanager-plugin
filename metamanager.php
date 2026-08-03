@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.63
+ * Version:      2.3.66
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.63' );
+define( 'MM_VERSION',     '2.3.66' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -76,6 +76,7 @@ require_once MM_PLUGIN_DIR . 'includes/class-mm-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-daemon-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-cli.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-frontend.php';
+require_once MM_PLUGIN_DIR . 'includes/class-mm-memory-manager.php';
 
 // ---------------------------------------------------------------------------
 // Metadata subsystem — page-level head output, structured data, social tags,
@@ -281,6 +282,14 @@ function mm_import_completed_jobs(): void {
 	}
 	set_transient( $lock_key, 1, 30 ); // Lock for 30 seconds max.
 
+	// Memory gate: pause if memory is critically low, re-evaluate next cycle.
+	if ( MM_Memory_Manager::should_pause() ) {
+		MM_Memory_Manager::set_notice();
+		delete_transient( $lock_key );
+		return;
+	}
+	MM_Memory_Manager::clear_notice();
+
 	$result_dirs = [
 		MM_JOB_DONE   => 'completed',
 		MM_JOB_FAILED => 'failed',
@@ -459,6 +468,9 @@ if ( is_admin() ) {
 	MM_Settings::init();
 	MM_Updater::init();
 	MM_Daemon_Updater::init();
+
+	// Memory limit admin notice (dynamic — set/cleared by cron cycles).
+	add_action( 'admin_notices', [ 'MM_Memory_Manager', 'render_notice' ] );
 
 	// Persistent admin notice if daemon package is missing.
 	add_action( 'admin_init', function (): void {
