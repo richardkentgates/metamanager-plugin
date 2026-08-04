@@ -191,7 +191,7 @@ Full codebase audit covering orphans, parallel logic, security, missing logic, a
 |---|------|------|----------|--------|
 | O-1 | `calculate_batch_size()` — never called in production | `class-mm-memory-manager.php:139` | MEDIUM | FIXED (v2.3.71) — wired into AJAX scan |
 | O-2 | `estimate_job_cost()` — only caller is O-1 | `class-mm-memory-manager.php:92` | LOW | FIXED (v2.3.71) — dependency of O-1 |
-| O-3 | `field_map()` — defined but never called anywhere | `class-mm-metadata.php:209` | MEDIUM | OPEN — needs adapter layer |
+| O-3 | `field_map()` — defined but never called anywhere | `class-mm-metadata.php:209` | MEDIUM | FIXED (v2.3.72) — single source of truth for import/verify |
 | O-4 | `drop_table()` — only called by tests, uninstall.php inlines its own | `class-mm-db.php:34` | MEDIUM | KEEP — correct for tests; uninstall.php cannot load classes |
 | O-5 | `check_version()` — only called by tests | `class-mm-daemon-updater.php:197` | LOW | FIXED (v2.3.71) — made private |
 | O-6 | 5× `*_path()` methods — public, only called internally | `class-mm-status.php` | LOW | FIXED (v2.3.71) — made private |
@@ -208,7 +208,7 @@ Full codebase audit covering orphans, parallel logic, security, missing logic, a
 | P-4 | `$pick` closure defined twice in `MM_Metadata` | HIGH | FIXED (v2.3.67) |
 | P-5 | `deep_merge()` defined in two classes | MEDIUM | FIXED (v2.3.67) |
 | P-6 | PostalAddress built with/without sanitization across modules | MEDIUM | FIXED (v2.3.67) |
-| P-7 | `enqueue_all_sizes()` guard pattern repeated 16 times | MEDIUM | OPEN — different variations, not extractable |
+| P-7 | `enqueue_all_sizes()` guard pattern repeated 16 times | MEDIUM | CLOSED — 15 call sites are legitimately different, not extractable |
 
 ### Duplicate Code — Consolidation Needed
 
