@@ -27,20 +27,17 @@ jobs:
           git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/${{ github.repository }}.git"
 
       - name: Validate compatibility map
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           CURRENT=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
           NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
 
           if ! grep -q "\"${NEXT}\"" daemon-compatibility.json; then
-            DAEMON_VER=$(python3 -c "
-          import json
-          with open('daemon-compatibility.json') as f:
-              data = json.load(f)
-          print(next(iter(data.values()), '2.4.8'))
-          ")
+            DAEMON_VER=$(gh api repos/richardkentgates/metamanager/contents/VERSION -q '.content' | base64 -d | tr -d '[:space:]' || true)
             if [ -z "$DAEMON_VER" ]; then
-              DAEMON_VER="2.4.8"
+              DAEMON_VER="2.4.32"
             fi
 
             echo "Auto-adding daemon-compatibility.json entry: ${NEXT} -> ${DAEMON_VER}"
