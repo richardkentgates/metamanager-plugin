@@ -117,7 +117,7 @@ class MM_Page_Context {
 		return $ctx;
 	}
 
-	private function prop( string $key, $default = false ) {
+	private function prop( string $key, mixed $default = false ): mixed {
 		$ctx = $this->get();
 		return $ctx[ $key ] ?? $default;
 	}

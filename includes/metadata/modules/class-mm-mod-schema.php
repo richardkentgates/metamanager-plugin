@@ -12,6 +12,11 @@ defined( 'ABSPATH' ) || exit;
 class MM_Mod_Schema extends MM_Mod_Base {
 
 	public function populate( array &$data, MM_Page_Context $context, MM_Site_Settings $settings ): void {
+		// Media schema: scan content for actual media on singular pages.
+		if ( $context->is_singular() ) {
+			$this->add_media_schema( $data, $context );
+		}
+
 		// WebSite node (emitted on every page, referenced by other nodes).
 		$this->add_website_node( $data, $settings );
 
@@ -398,5 +403,351 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 		}
 		return $faqs;
+	}
+
+	// -------------------------------------------------------------------------
+	// Media schema — content-based detection
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Scan post content for actual media elements and emit schema nodes.
+	 *
+	 * Only media that is present in the rendered HTML gets schema output.
+	 * This prevents manipulation signals for media that doesn't exist on the page.
+	 */
+	private function add_media_schema( array &$data, MM_Page_Context $context ): void {
+		$post = $context->get_post();
+		if ( ! $post ) {
+			return;
+		}
+
+		// Attachment pages: the media IS the page content.
+		if ( 'attachment' === $post->post_type ) {
+			$this->add_attachment_page_schema( $data, $post );
+			return;
+		}
+
+		// Singular posts/pages: scan content for media elements.
+		$media = MM_Media_Detector::scan_content( $post->post_content );
+
+		foreach ( $media as $item ) {
+			switch ( $item['type'] ) {
+				case 'image':
+					$this->add_image_schema( $data, $item, $post );
+					break;
+				case 'video':
+					$this->add_video_schema( $data, $item, $post );
+					break;
+				case 'audio':
+					$this->add_audio_schema( $data, $item, $post );
+					break;
+				case 'document':
+					$this->add_document_schema( $data, $item );
+					break;
+			}
+		}
+	}
+
+	/**
+	 * Emit schema for an attachment page (the media IS the page).
+	 */
+	private function add_attachment_page_schema( array &$data, \WP_Post $post ): void {
+		$mime = (string) get_post_mime_type( $post->ID );
+		$url  = wp_get_attachment_url( $post->ID );
+		if ( ! $url ) {
+			return;
+		}
+
+		if ( MM_Metadata::is_video_mime( $mime ) ) {
+			$this->add_video_schema( $data, [
+				'type'          => 'video',
+				'url'           => $url,
+				'attachment_id' => $post->ID,
+				'duration'      => (int) get_post_meta( $post->ID, MM_Metadata::META_DURATION, true ),
+			], $post );
+		} elseif ( MM_Metadata::is_audio_mime( $mime ) ) {
+			$this->add_audio_schema( $data, [
+				'type'          => 'audio',
+				'url'           => $url,
+				'attachment_id' => $post->ID,
+				'duration'      => (int) get_post_meta( $post->ID, MM_Metadata::META_DURATION, true ),
+			], $post );
+		} elseif ( MM_Metadata::is_pdf_mime( $mime ) ) {
+			$this->add_document_schema( $data, [
+				'type'          => 'document',
+				'url'           => $url,
+				'attachment_id' => $post->ID,
+			] );
+		} elseif ( wp_attachment_is_image( $post->ID ) ) {
+			$src = wp_get_attachment_image_src( $post->ID, 'full' );
+			if ( $src ) {
+				$this->add_image_schema( $data, [
+					'type'          => 'image',
+					'url'           => $src[0],
+					'attachment_id' => $post->ID,
+					'width'         => $src[1],
+					'height'        => $src[2],
+					'alt'           => (string) get_post_meta( $post->ID, '_wp_attachment_image_alt', true ),
+					'caption'       => trim( $post->post_excerpt ),
+				], $post );
+			}
+		}
+	}
+
+	/**
+	 * Emit an ImageObject schema node for a detected image.
+	 */
+	private function add_image_schema( array &$data, array $item, \WP_Post $post ): void {
+		$meta = static fn( string $key ): string => (string) get_post_meta( $item['attachment_id'], $key, true );
+
+		$node = [
+			'@type'      => 'ImageObject',
+			'@id'        => $item['url'] . '#image',
+			'url'        => $item['url'],
+			'contentUrl' => $item['url'],
+		];
+
+		if ( $item['width'] ) {
+			$node['width'] = $item['width'];
+		}
+		if ( $item['height'] ) {
+			$node['height'] = $item['height'];
+		}
+
+		// Enrich from attachment metadata.
+		if ( $item['attachment_id'] ) {
+			$headline = $meta( MM_Metadata::META_HEADLINE );
+			$name     = '' !== $headline ? $headline : trim( $post->post_title );
+			if ( '' !== $name ) {
+				$node['name'] = $name;
+			}
+
+			if ( '' !== $item['alt'] ) {
+				$node['alternativeHeadline'] = $item['alt'];
+			}
+			if ( '' !== $item['caption'] ) {
+				$node['caption'] = $item['caption'];
+			}
+
+			// Attribution.
+			$creator = $meta( MM_Metadata::META_CREATOR );
+			if ( '' !== $creator ) {
+				$node['creator'] = [ '@type' => 'Person', 'name' => $creator ];
+			}
+			$copyright = $meta( MM_Metadata::META_COPYRIGHT );
+			if ( '' !== $copyright ) {
+				$node['copyrightNotice'] = $copyright;
+			}
+			$owner = $meta( MM_Metadata::META_OWNER );
+			if ( '' !== $owner ) {
+				$node['copyrightHolder'] = [ '@type' => 'Organization', 'name' => $owner ];
+			}
+
+			// Classification.
+			$keywords = $meta( MM_Metadata::META_KEYWORDS );
+			if ( '' !== $keywords ) {
+				$kw = array_values( array_filter( array_map( 'trim', explode( ';', $keywords ) ) ) );
+				if ( $kw ) {
+					$node['keywords'] = $kw;
+				}
+			}
+
+			// Date.
+			$date = $meta( MM_Metadata::META_DATE );
+			if ( '' !== $date ) {
+				$node['dateCreated'] = $date;
+			}
+
+			// Location.
+			$this->add_location_to_node( $node, $item['attachment_id'] );
+
+			// Thumbnail (medium size if different from full).
+			$thumb = wp_get_attachment_image_src( $item['attachment_id'], 'medium' );
+			if ( $thumb && $thumb[0] !== $item['url'] ) {
+				$node['thumbnail'] = [ '@type' => 'ImageObject', 'url' => $thumb[0] ];
+			}
+		} else {
+			// Minimal schema from HTML only.
+			$node['name'] = $item['alt'] ?: basename( wp_parse_url( $item['url'], PHP_URL_PATH ) );
+		}
+
+		$this->add_node( $data, $node );
+	}
+
+	/**
+	 * Emit a VideoObject schema node for a detected video.
+	 */
+	private function add_video_schema( array &$data, array $item, \WP_Post $post ): void {
+		$meta = static fn( string $key ): string => (string) get_post_meta( $item['attachment_id'], $key, true );
+
+		$node = [
+			'@type'       => 'VideoObject',
+			'@id'         => $item['url'] . '#video',
+			'url'         => $item['url'],
+			'contentUrl'  => $item['url'],
+			'uploadDate'  => gmdate( 'Y-m-d', strtotime( $post->post_date_gmt ) ),
+		];
+
+		if ( $item['attachment_id'] ) {
+			$headline = $meta( MM_Metadata::META_HEADLINE );
+			$name     = '' !== $headline ? $headline : trim( $post->post_title );
+			if ( '' !== $name ) {
+				$node['name'] = $name;
+			}
+
+			$description = trim( $post->post_excerpt );
+			if ( '' !== $description ) {
+				$node['description'] = $description;
+			}
+
+			// Duration (ISO 8601).
+			if ( $item['duration'] > 0 ) {
+				$node['duration'] = $this->seconds_to_iso_duration( $item['duration'] );
+			}
+
+			// Thumbnail.
+			$thumb_id  = (int) get_post_thumbnail_id( $item['attachment_id'] );
+			$thumb_src = $thumb_id ? wp_get_attachment_image_src( $thumb_id, 'medium' ) : false;
+			if ( $thumb_src ) {
+				$node['thumbnailUrl'] = $thumb_src[0];
+			}
+
+			// Keywords.
+			$keywords = $meta( MM_Metadata::META_KEYWORDS );
+			if ( '' !== $keywords ) {
+				$kw = array_values( array_filter( array_map( 'trim', explode( ';', $keywords ) ) ) );
+				if ( $kw ) {
+					$node['keywords'] = implode( ', ', array_slice( $kw, 0, 32 ) );
+				}
+			}
+		} else {
+			$node['name'] = basename( wp_parse_url( $item['url'], PHP_URL_PATH ) );
+		}
+
+		$this->add_node( $data, $node );
+	}
+
+	/**
+	 * Emit an AudioObject schema node for a detected audio file.
+	 */
+	private function add_audio_schema( array &$data, array $item, \WP_Post $post ): void {
+		$meta = static fn( string $key ): string => (string) get_post_meta( $item['attachment_id'], $key, true );
+
+		$mime = $item['attachment_id']
+			? (string) get_post_mime_type( $item['attachment_id'] )
+			: 'audio/mpeg';
+
+		$node = [
+			'@type'          => 'AudioObject',
+			'@id'            => $item['url'] . '#audio',
+			'url'            => $item['url'],
+			'contentUrl'     => $item['url'],
+			'encodingFormat' => $mime,
+		];
+
+		if ( $item['attachment_id'] ) {
+			$headline = $meta( MM_Metadata::META_HEADLINE );
+			$name     = '' !== $headline ? $headline : trim( $post->post_title );
+			if ( '' !== $name ) {
+				$node['name'] = $name;
+			}
+
+			$description = trim( $post->post_excerpt );
+			if ( '' !== $description ) {
+				$node['description'] = $description;
+			}
+
+			if ( $item['duration'] > 0 ) {
+				$node['duration'] = $this->seconds_to_iso_duration( $item['duration'] );
+			}
+
+			$copyright = $meta( MM_Metadata::META_COPYRIGHT );
+			if ( '' !== $copyright ) {
+				$node['copyrightNotice'] = $copyright;
+			}
+		} else {
+			$node['name'] = basename( wp_parse_url( $item['url'], PHP_URL_PATH ) );
+		}
+
+		$this->add_node( $data, $node );
+	}
+
+	/**
+	 * Emit a DigitalDocument schema node for a detected PDF.
+	 */
+	private function add_document_schema( array &$data, array $item ): void {
+		$node = [
+			'@type'          => 'DigitalDocument',
+			'@id'            => $item['url'] . '#document',
+			'url'            => $item['url'],
+			'contentUrl'     => $item['url'],
+			'encodingFormat' => 'application/pdf',
+		];
+
+		if ( $item['attachment_id'] ) {
+			$att = get_post( $item['attachment_id'] );
+			if ( $att ) {
+				$headline = (string) get_post_meta( $item['attachment_id'], MM_Metadata::META_HEADLINE, true );
+				$name     = '' !== $headline ? $headline : trim( $att->post_title );
+				if ( '' !== $name ) {
+					$node['name'] = $name;
+				}
+				$description = trim( $att->post_excerpt );
+				if ( '' !== $description ) {
+					$node['description'] = $description;
+				}
+			}
+		} else {
+			$node['name'] = basename( wp_parse_url( $item['url'], PHP_URL_PATH ) );
+		}
+
+		$this->add_node( $data, $node );
+	}
+
+	// -------------------------------------------------------------------------
+	// Media schema helpers
+	// -------------------------------------------------------------------------
+
+	private function add_location_to_node( array &$node, int $attachment_id ): void {
+		$lat   = (string) get_post_meta( $attachment_id, MM_Metadata::META_GPS_LAT, true );
+		$lon   = (string) get_post_meta( $attachment_id, MM_Metadata::META_GPS_LON, true );
+		$alt_m = (string) get_post_meta( $attachment_id, MM_Metadata::META_GPS_ALT, true );
+		$city  = (string) get_post_meta( $attachment_id, MM_Metadata::META_CITY, true );
+		$state = (string) get_post_meta( $attachment_id, MM_Metadata::META_STATE, true );
+		$country = (string) get_post_meta( $attachment_id, MM_Metadata::META_COUNTRY, true );
+
+		$loc_parts = array_filter( [ $city, $state, $country ] );
+
+		if ( '' !== $lat && '' !== $lon ) {
+			$geo = [
+				'@type'     => 'GeoCoordinates',
+				'latitude'  => (float) $lat,
+				'longitude' => (float) $lon,
+			];
+			if ( '' !== $alt_m ) {
+				$geo['elevation'] = (float) $alt_m;
+			}
+			$place = [ '@type' => 'Place', 'geo' => $geo ];
+			if ( $loc_parts ) {
+				$place['name'] = implode( ', ', $loc_parts );
+			}
+			$node['locationCreated'] = $place;
+			$node['contentLocation'] = $place;
+		} elseif ( $loc_parts ) {
+			$place = [ '@type' => 'Place', 'name' => implode( ', ', $loc_parts ) ];
+			$node['locationCreated'] = $place;
+			$node['contentLocation'] = $place;
+		}
+	}
+
+	private function seconds_to_iso_duration( int $seconds ): string {
+		$h = (int) floor( $seconds / 3600 );
+		$m = (int) floor( ( $seconds % 3600 ) / 60 );
+		$s = $seconds % 60;
+		$d = 'PT';
+		if ( $h ) { $d .= $h . 'H'; }
+		if ( $m ) { $d .= $m . 'M'; }
+		if ( $s || ( ! $h && ! $m ) ) { $d .= $s . 'S'; }
+		return $d;
 	}
 }

@@ -37,6 +37,9 @@ abstract class MM_Mod_Base {
 	 * @return array{id: int, name: string, items: array}|null
 	 */
 	public static function get_primary_menu(): ?array {
+		if ( ! function_exists( 'wp_get_nav_menu_locations' ) ) {
+			return null;
+		}
 		$locations = wp_get_nav_menu_locations();
 		if ( empty( $locations ) ) {
 			return null;
@@ -76,6 +79,26 @@ abstract class MM_Mod_Base {
 			'id'    => $menu_id,
 			'name'  => $menu_name,
 			'items' => $items,
+		];
+	}
+
+	/**
+	 * Build a sanitized PostalAddress schema node from raw address fields.
+	 *
+	 * @param array{street?: string, city?: string, state?: string, zip?: string, country?: string} $addr Raw address fields.
+	 * @return array{postalAddress} Indexed array with PostalAddress node, or empty array if no street.
+	 */
+	public static function postal_address_node( array $addr ): array {
+		if ( empty( $addr['street'] ) ) {
+			return [];
+		}
+		return [
+			'@type'           => 'PostalAddress',
+			'streetAddress'   => sanitize_text_field( $addr['street'] ?? '' ),
+			'addressLocality' => sanitize_text_field( $addr['city'] ?? '' ),
+			'addressRegion'   => sanitize_text_field( $addr['state'] ?? '' ),
+			'postalCode'      => sanitize_text_field( $addr['zip'] ?? '' ),
+			'addressCountry'  => sanitize_text_field( $addr['country'] ?? 'US' ),
 		];
 	}
 

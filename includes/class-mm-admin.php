@@ -63,8 +63,8 @@ class MM_Admin {
 		// AJAX: re-compress a single attachment from its edit screen.
 		add_action( 'wp_ajax_mm_recompress', [ __CLASS__, 'ajax_recompress' ] );
 
-// AJAX: apply shared metadata values to a batch of selected images.
-			add_action( 'wp_ajax_mm_apply_bulk_meta', [ __CLASS__, 'ajax_apply_bulk_meta' ] );
+		// AJAX: apply shared metadata values to a batch of selected images.
+		add_action( 'wp_ajax_mm_apply_bulk_meta', [ __CLASS__, 'ajax_apply_bulk_meta' ] );
 
 		// Bulk spinner (lightweight UX touch on the Media Library).
 		add_action( 'admin_footer-upload.php', [ __CLASS__, 'bulk_spinner_markup' ] );
@@ -1561,9 +1561,6 @@ class MM_Admin {
 		wp_send_json_success( [ 'notices' => self::format_notices_for_ajax( $notices ) ] );
 	}
 
-	/**
-	 * AJAX: Save a single row's metadata fields from the bulk edit page.
-	 */
 	/**
 	 * Apply a shared set of metadata fields to a batch of selected attachment IDs.
 	 *

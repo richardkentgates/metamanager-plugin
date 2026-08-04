@@ -34,6 +34,9 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 
 		// Robots meta — always emit so crawlers have explicit instruction.
 		$this->add_meta( $data, [ 'name' => 'robots', 'content' => $robots ] );
+
+		// License / copyright link on singular and attachment pages.
+		$this->add_license_link( $data, $context );
 	}
 
 	// -------------------------------------------------------------------------
@@ -347,5 +350,59 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 			$title .= ' ' . $sep . ' ' . __( 'Page', 'metamanager' ) . ' ' . $page;
 		}
 		return $title;
+	}
+
+	/**
+	 * Emit a <link rel="license"> or <meta name="copyright"> tag for the
+	 * current page's copyright metadata.
+	 *
+	 * On attachment pages, uses the attachment's own mm_copyright meta.
+	 * On singular posts/pages, scans content for media and uses the first
+	 * detected attachment's copyright (if consistent across all media).
+	 */
+	private function add_license_link( array &$data, MM_Page_Context $context ): void {
+		if ( ! $context->is_singular() ) {
+			return;
+		}
+
+		$post = $context->get_post();
+		if ( ! $post ) {
+			return;
+		}
+
+		// Attachment pages: use the attachment's own copyright.
+		if ( 'attachment' === $post->post_type ) {
+			$copyright = (string) get_post_meta( $post->ID, MM_Metadata::META_COPYRIGHT, true );
+			if ( '' !== $copyright ) {
+				$this->emit_license( $copyright, $data );
+			}
+			return;
+		}
+
+		// Singular posts/pages: scan content for media, use first attachment's copyright.
+		$media = MM_Media_Detector::scan_content( $post->post_content );
+		foreach ( $media as $item ) {
+			if ( $item['attachment_id'] ) {
+				$copyright = (string) get_post_meta( $item['attachment_id'], MM_Metadata::META_COPYRIGHT, true );
+				if ( '' !== $copyright ) {
+					$this->emit_license( $copyright, $data );
+					return;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Output a license or copyright meta tag.
+	 *
+	 * If the value is a valid URL, outputs <link rel="license">.
+	 * Otherwise, outputs <meta name="copyright">.
+	 */
+	private function emit_license( string $copyright, array &$data ): void {
+		if ( filter_var( $copyright, FILTER_VALIDATE_URL ) ) {
+			$this->add_link( $data, [ 'rel' => 'license', 'href' => esc_url( $copyright ) ] );
+		} else {
+			$this->add_meta( $data, [ 'name' => 'copyright', 'content' => esc_attr( $copyright ) ] );
+		}
 	}
 }

@@ -329,11 +329,7 @@ class MM_Metadata {
 	}
 
 	// -----------------------------------------------------------------------
-	// Import embedded metadata from file → WordPress (fires on upload)
-	// -----------------------------------------------------------------------
-
-
-
+	// Building the metadata payload for a job file
 	// -----------------------------------------------------------------------
 	// Building the metadata payload for a job file
 	// -----------------------------------------------------------------------
@@ -670,6 +666,27 @@ class MM_Metadata {
 	}
 
 	/**
+	 * Pick the first non-empty value from a priority-ordered list of ExifTool tags.
+	 *
+	 * @param array<string,mixed> $embedded   Flat "Group:Tag" => value map from ExifTool.
+	 * @param string[]            $candidates Ordered tag names to try.
+	 * @return string First non-empty value, or empty string.
+	 */
+	public static function pick_embedded_value( array $embedded, array $candidates ): string {
+		foreach ( $candidates as $tag ) {
+			$value = $embedded[ $tag ] ?? '';
+			if ( is_array( $value ) ) {
+				$value = implode( '; ', array_filter( array_map( 'trim', $value ) ) );
+			}
+			$value = trim( (string) $value );
+			if ( '' !== $value ) {
+				return $value;
+			}
+		}
+		return '';
+	}
+
+	/**
 	 * Apply an embedded-tag map returned by the daemon to WordPress post meta
 	 * and native fields.  Called from mm_import_completed_jobs() when a daemon
 	 * import job result arrives.
@@ -686,21 +703,6 @@ class MM_Metadata {
 		}
 
 		$file = get_attached_file( $attachment_id );
-
-		// Helper: first non-empty value from a priority-ordered list of ExifTool tags.
-		$pick = static function ( array $candidates ) use ( $embedded ): string {
-			foreach ( $candidates as $tag ) {
-				$value = $embedded[ $tag ] ?? '';
-				if ( is_array( $value ) ) {
-					$value = implode( '; ', array_filter( array_map( 'trim', $value ) ) );
-				}
-				$value = trim( (string) $value );
-				if ( '' !== $value ) {
-					return $value;
-				}
-			}
-			return '';
-		};
 
 		// Custom post meta: priority-ordered ExifTool tag candidates.
 		$meta_import = [
@@ -763,7 +765,7 @@ class MM_Metadata {
 				continue;
 			}
 
-			$value = $pick( $candidates );
+			$value = self::pick_embedded_value( $embedded, $candidates );
 
 			// Always write the row so get_post_meta() returns a known value even when
 			// the file carries no data for this field.
@@ -801,7 +803,7 @@ class MM_Metadata {
 
 		$native_updates = [];
 
-		$embedded_title = $pick( [ 'IPTC:ObjectName', 'XMP:Title', 'IFD0:Title' ] );
+		$embedded_title = self::pick_embedded_value( $embedded, [ 'IPTC:ObjectName', 'XMP:Title', 'IFD0:Title' ] );
 		if ( '' !== $embedded_title ) {
 			$auto_title = $file
 				? str_replace( [ '-', '_' ], ' ', preg_replace( '/\.[^.]+$/', '', basename( $file ) ) )
@@ -813,14 +815,14 @@ class MM_Metadata {
 		}
 
 		if ( '' === trim( $post->post_content ) ) {
-			$v = $pick( [ 'IPTC:Caption-Abstract', 'XMP:Description', 'IFD0:ImageDescription' ] );
+			$v = self::pick_embedded_value( $embedded, [ 'IPTC:Caption-Abstract', 'XMP:Description', 'IFD0:ImageDescription' ] );
 			if ( '' !== $v ) {
 				$native_updates['post_content'] = sanitize_textarea_field( $v );
 			}
 		}
 
 		if ( '' === trim( $post->post_excerpt ) ) {
-			$v = $pick( [ 'XMP:Caption' ] );
+			$v = self::pick_embedded_value( $embedded, [ 'XMP:Caption' ] );
 			if ( '' !== $v && $v !== ( $native_updates['post_content'] ?? '' ) ) {
 				$native_updates['post_excerpt'] = sanitize_text_field( $v );
 			}
@@ -832,7 +834,7 @@ class MM_Metadata {
 		}
 
 		if ( '' === (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ) {
-			$v = $pick( [ 'XMP:AltTextAccessibility' ] );
+			$v = self::pick_embedded_value( $embedded, [ 'XMP:AltTextAccessibility' ] );
 			if ( '' !== $v ) {
 				update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $v ) );
 			}
@@ -858,21 +860,6 @@ class MM_Metadata {
 	 *                             as apply_import_result's $embedded parameter).
 	 */
 	public static function apply_verify_result( int $attachment_id, array $embedded ): void {
-		// Helper: first non-empty value from a priority-ordered list of ExifTool tags.
-		$pick = static function ( array $candidates ) use ( $embedded ): string {
-			foreach ( $candidates as $tag ) {
-				$value = $embedded[ $tag ] ?? '';
-				if ( is_array( $value ) ) {
-					$value = implode( '; ', array_filter( array_map( 'trim', $value ) ) );
-				}
-				$value = trim( (string) $value );
-				if ( '' !== $value ) {
-					return $value;
-				}
-			}
-			return '';
-		};
-
 		// Fields to verify: WP meta-key → priority-ordered ExifTool tag candidates.
 		$checks = [
 			self::META_CREATOR   => [ 'IPTC:By-line', 'IFD0:Artist', 'XMP:Creator', 'EXIF:Artist' ],
@@ -894,7 +881,7 @@ class MM_Metadata {
 				// Nothing set in WP — nothing to verify.
 				continue;
 			}
-			$file_value = $pick( $candidates );
+			$file_value = self::pick_embedded_value( $embedded, $candidates );
 			if ( self::META_DATE === $meta_key && '' !== $file_value ) {
 				$file_value = self::normalise_date( $file_value );
 			}
