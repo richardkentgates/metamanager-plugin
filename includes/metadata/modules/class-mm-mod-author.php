@@ -65,7 +65,7 @@ class MM_Mod_Author extends MM_Mod_Base {
 		$same_as  = [];
 		$profiles = [
 			'twitter'   => 'https://twitter.com/',
-			'linkedin'  => '',
+			'linkedin'  => 'https://www.linkedin.com/in/',
 			'instagram' => 'https://www.instagram.com/',
 			'bluesky'   => 'https://bsky.app/profile/',
 			'website'   => '',

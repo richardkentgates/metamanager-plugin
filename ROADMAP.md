@@ -148,6 +148,37 @@ New class created: `MM_Media_Detector` — scans post_content for `<img>`, `<vid
 
 Key design change: Schema and OG tags are now only emitted for media that actually exists in the post content — no more featured-image manipulation signals.
 
+### Audit #3 — Code Quality Fixes (2026-08-04) — Complete
+
+| # | Item | Fix |
+|---|------|-----|
+| Q-1 | `strpos()` → `str_contains()`/`str_starts_with()` | 4 files updated |
+| Q-2 | Missing type hints on `$default` params | Added `mixed` type hints in 3 files |
+| Q-3 | Indentation in `MM_Settings::init()` | Fixed 3-tab over-indentation |
+| Q-4 | Indentation for `mm_apply_bulk_meta` hook | Fixed 0/3-tab → 2-tab |
+| Q-5 | Legacy test class name `Test_MM_Frontend` | Renamed to `Test_MM_Modules` |
+| DUP-1 | `deep_sanitize_section()` duplicated | Consolidated into `MM_Site_Settings::deep_sanitize_section()` (public static) |
+| DUP-2 | Test helpers duplicated | Updated call sites to shared helpers |
+| DUP-3 | `extract_json_ld()` duplicated | Updated call sites to shared helper |
+| O-7 | Orphaned doc block | Removed |
+| O-8 | Empty comment separator | Removed |
+
+### Audit #3 — Dead Code & Missing Logic Fixes (2026-08-04) — Complete
+
+| # | Item | Fix |
+|---|------|-----|
+| O-1 | `calculate_batch_size()` never called | Wired into AJAX scan library for memory-aware batch sizing |
+| O-2 | `estimate_job_cost()` only caller was O-1 | Kept as dependency of O-1 |
+| O-5 | `check_version()` only called by tests | Made private; test updated to use `diagnose()` |
+| O-6 | 5× `*_path()` public, only called internally | Changed from `public` to `private` |
+| G-1 | `get_term_link()` WP_Error not checked | Added `is_string()` guards in mod-social, mod-head-meta, mod-schema |
+| G-2 | LinkedIn prefix empty string | Added `https://www.linkedin.com/in/` prefix |
+| G-3 | FAQ extraction only `<details>/<summary>` | Added `<dl>/<dt>/<dd>` and heading+paragraph patterns |
+| G-5 | HTML sitemap hierarchical unlimited | Capped at 500 per level |
+| G-6 | DNS prefetch removal kills all hints | Selective filter removes only `dns-prefetch` relation type |
+| G-7 | Deactivation hook missing cron clear | Added `mm_meta_check_links` + `flush_rewrite_rules` |
+| G-8 | Download methods lack `exit` | Added `exit` to vcard/json/csv sub-methods |
+
 ---
 
 ## Audit #3 — 2026-08-04
@@ -158,14 +189,14 @@ Full codebase audit covering orphans, parallel logic, security, missing logic, a
 
 | # | Item | File | Severity | Status |
 |---|------|------|----------|--------|
-| O-1 | `calculate_batch_size()` — never called in production | `class-mm-memory-manager.php:139` | MEDIUM | OPEN |
-| O-2 | `estimate_job_cost()` — only caller is O-1 | `class-mm-memory-manager.php:92` | LOW | OPEN |
-| O-3 | `field_map()` — defined but never called anywhere | `class-mm-metadata.php:209` | MEDIUM | OPEN |
-| O-4 | `drop_table()` — only called by tests, uninstall.php inlines its own | `class-mm-db.php:34` | MEDIUM | OPEN |
-| O-5 | `check_version()` — only called by tests | `class-mm-daemon-updater.php:197` | LOW | OPEN |
-| O-6 | 5× `*_path()` methods — public, only called internally | `class-mm-status.php` | LOW | OPEN |
-| O-7 | Orphaned doc block ("AJAX: Save a single row's metadata fields") | `class-mm-admin.php:1564` | LOW | OPEN |
-| O-8 | Empty comment separator block | `class-mm-metadata.php:335` | LOW | OPEN |
+| O-1 | `calculate_batch_size()` — never called in production | `class-mm-memory-manager.php:139` | MEDIUM | FIXED (v2.3.71) — wired into AJAX scan |
+| O-2 | `estimate_job_cost()` — only caller is O-1 | `class-mm-memory-manager.php:92` | LOW | FIXED (v2.3.71) — dependency of O-1 |
+| O-3 | `field_map()` — defined but never called anywhere | `class-mm-metadata.php:209` | MEDIUM | OPEN — needs adapter layer |
+| O-4 | `drop_table()` — only called by tests, uninstall.php inlines its own | `class-mm-db.php:34` | MEDIUM | KEEP — correct for tests; uninstall.php cannot load classes |
+| O-5 | `check_version()` — only called by tests | `class-mm-daemon-updater.php:197` | LOW | FIXED (v2.3.71) — made private |
+| O-6 | 5× `*_path()` methods — public, only called internally | `class-mm-status.php` | LOW | FIXED (v2.3.71) — made private |
+| O-7 | Orphaned doc block ("AJAX: Save a single row's metadata fields") | `class-mm-admin.php:1564` | LOW | FIXED (v2.3.70) |
+| O-8 | Empty comment separator block | `class-mm-metadata.php:335` | LOW | FIXED (v2.3.70) |
 
 ### Parallel Logic — Fixed
 
@@ -183,9 +214,9 @@ Full codebase audit covering orphans, parallel logic, security, missing logic, a
 
 | # | Item | Files | Severity | Status |
 |---|------|-------|----------|--------|
-| DUP-1 | `deep_sanitize_section()` duplicated | `class-mm-site-settings.php:185` vs `class-mm-metadata-admin.php:~217` | MEDIUM | OPEN |
-| DUP-2 | Test helpers duplicated (`make_image_attachment` etc.) | `tests/Integration/Test_MM_Frontend.php` vs `tests/Helpers/helpers.php` | LOW | OPEN |
-| DUP-3 | `extract_json_ld()` duplicated | `tests/Integration/Test_MM_Frontend.php` vs `tests/Helpers/helpers.php` | LOW | OPEN |
+| DUP-1 | `deep_sanitize_section()` duplicated | `class-mm-site-settings.php:185` vs `class-mm-metadata-admin.php:~217` | MEDIUM | FIXED (v2.3.70) |
+| DUP-2 | Test helpers duplicated (`make_image_attachment` etc.) | `tests/Integration/Test_MM_Frontend.php` vs `tests/Helpers/helpers.php` | LOW | FIXED (v2.3.70) |
+| DUP-3 | `extract_json_ld()` duplicated | `tests/Integration/Test_MM_Frontend.php` vs `tests/Helpers/helpers.php` | LOW | FIXED (v2.3.70) |
 
 ### Security
 
@@ -195,24 +226,24 @@ No CRITICAL or HIGH findings. One LOW: `@exec()` suppression in daemon updater.
 
 | # | Finding | Severity | Status |
 |---|---------|----------|--------|
-| G-1 | `get_term_link()` return not type-checked — WP_Error flows into og:url | MEDIUM | OPEN |
-| G-2 | LinkedIn prefix empty string — produces bare handle, not URL | MEDIUM | OPEN |
-| G-3 | FAQ extraction only supports `<details>/<summary>` — no other patterns | MEDIUM | OPEN |
-| G-4 | HTML sitemap flat queries hardcap at 500 posts, no pagination | MEDIUM | OPEN |
-| G-5 | HTML sitemap hierarchical queries unlimited — OOM risk on large sites | MEDIUM | OPEN |
-| G-6 | `remove_wp_dns_prefetch` setting removes ALL resource hints, not just DNS prefetch | MEDIUM | OPEN |
-| G-7 | No deactivation hook — cron events and tables persist after deactivation | MEDIUM | OPEN |
-| G-8 | `exit` missing in business contact download sub-methods | LOW | OPEN |
+| G-1 | `get_term_link()` return not type-checked — WP_Error flows into og:url | MEDIUM | FIXED (v2.3.71) — added is_string() checks in 3 files |
+| G-2 | LinkedIn prefix empty string — produces bare handle, not URL | MEDIUM | FIXED (v2.3.71) — added https://www.linkedin.com/in/ prefix |
+| G-3 | FAQ extraction only supports `<details>/<summary>` — no other patterns | MEDIUM | FIXED (v2.3.71) — added dl/dt/dd and heading+paragraph patterns |
+| G-4 | HTML sitemap flat queries hardcap at 500 posts, no pagination | MEDIUM | OPEN — configurable limit needed |
+| G-5 | HTML sitemap hierarchical queries unlimited — OOM risk on large sites | MEDIUM | FIXED (v2.3.71) — capped at 500 per level |
+| G-6 | `remove_wp_dns_prefetch` setting removes ALL resource hints, not just DNS prefetch | MEDIUM | FIXED (v2.3.71) — selective filter removes only dns-prefetch |
+| G-7 | No deactivation hook — cron events and tables persist after deactivation | MEDIUM | FIXED (v2.3.71) — added mm_meta_check_links + flush_rewrite_rules |
+| G-8 | `exit` missing in business contact download sub-methods | LOW | FIXED (v2.3.71) — added exit to vcard/json/csv methods |
 
 ### Code Quality — PHP 8.0+ Modernization
 
 | # | Item | Files | Severity | Status |
 |---|------|-------|----------|--------|
-| Q-1 | `strpos()` should be `str_contains()` / `str_starts_with()` (PHP 8.0+) | `class-mm-site-settings.php:215,217`, `class-mm-metadata-admin.php:217,219`, `class-mm-mod-links.php:161,167`, `class-mm-metadata-cli.php:334` | MEDIUM | OPEN |
-| Q-2 | Missing type hints on `$default` parameters and filter callbacks | `class-mm-site-settings.php`, `class-mm-page-context.php`, `class-mm-updater.php` | MEDIUM | OPEN |
-| Q-3 | Indentation inconsistency in `init()` | `class-mm-settings.php:55-60` | LOW | OPEN |
-| Q-4 | Indentation inconsistency for `mm_apply_bulk_meta` hook | `class-mm-admin.php:66-67` | LOW | OPEN |
-| Q-5 | Legacy test class name `Test_MM_Frontend` (MM_Frontend no longer exists) | `tests/Integration/Test_MM_Frontend.php` | LOW | OPEN |
+| Q-1 | `strpos()` should be `str_contains()` / `str_starts_with()` (PHP 8.0+) | `class-mm-site-settings.php:215,217`, `class-mm-metadata-admin.php:217,219`, `class-mm-mod-links.php:161,167`, `class-mm-metadata-cli.php:334` | MEDIUM | FIXED (v2.3.70) |
+| Q-2 | Missing type hints on `$default` parameters and filter callbacks | `class-mm-site-settings.php`, `class-mm-page-context.php`, `class-mm-updater.php` | MEDIUM | FIXED (v2.3.70) |
+| Q-3 | Indentation inconsistency in `init()` | `class-mm-settings.php:55-60` | LOW | FIXED (v2.3.70) |
+| Q-4 | Indentation inconsistency for `mm_apply_bulk_meta` hook | `class-mm-admin.php:66-67` | LOW | FIXED (v2.3.70) |
+| Q-5 | Legacy test class name `Test_MM_Frontend` (MM_Frontend no longer exists) | `tests/Integration/Test_MM_Frontend.php` | LOW | FIXED (v2.3.70) |
 
 ### Test Coverage — Priority 2
 

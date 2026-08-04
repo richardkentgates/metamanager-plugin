@@ -1463,8 +1463,8 @@ class MM_Admin {
 		MM_Memory_Manager::clear_notice();
 
 		$offset     = max( 0, (int) wp_unslash( $_POST['offset']     ?? 0 ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- (int) cast is sanitization
-		$batch_size = max( 1, min( 200, (int) wp_unslash( $_POST['batch_size'] ?? 50 ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$batch_size = min( $batch_size, MM_Settings::get_batch_size() );
+		$max_batch  = max( 1, min( 200, (int) wp_unslash( $_POST['batch_size'] ?? 50 ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$max_batch  = min( $max_batch, MM_Settings::get_batch_size() );
 
 		// Include images plus all supported video and audio MIME types.
 		$all_mime_types = array_merge(
@@ -1489,7 +1489,27 @@ class MM_Admin {
 		$pending_ids = array_values( array_diff( array_map( 'intval', $all_ids ), $done_ids ) );
 
 		$total = count( $pending_ids );
-		$batch = array_slice( $pending_ids, $offset, $batch_size );
+
+		// Build candidate job data for memory-aware batch sizing.
+		$candidate_ids = array_slice( $pending_ids, $offset, $max_batch );
+		$candidate_jobs = [];
+		foreach ( $candidate_ids as $id ) {
+			$mime = (string) get_post_mime_type( $id );
+			$job  = [
+				'mime_type' => $mime,
+				'size'      => 'full',
+			];
+			if ( wp_attachment_is_image( $id ) ) {
+				$meta = wp_get_attachment_metadata( $id );
+				if ( $meta ) {
+					$job['width']  = (int) ( $meta['width'] ?? 0 );
+					$job['height'] = (int) ( $meta['height'] ?? 0 );
+				}
+			}
+			$candidate_jobs[] = $job;
+		}
+		$batch_size = MM_Memory_Manager::calculate_batch_size( $candidate_jobs, $max_batch );
+		$batch      = array_slice( $candidate_ids, 0, $batch_size );
 
 		$count = 0;
 		foreach ( $batch as $id ) {

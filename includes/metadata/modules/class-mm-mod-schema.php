@@ -209,7 +209,10 @@ class MM_Mod_Schema extends MM_Mod_Base {
 				if ( 'post' === $post->post_type ) {
 					$cats = get_the_category( $post->ID );
 					if ( $cats ) {
-						$items[] = $this->crumb( $pos++, $cats[0]->name, get_term_link( $cats[0] ) );
+						$cat_link = get_term_link( $cats[0] );
+						if ( is_string( $cat_link ) ) {
+							$items[] = $this->crumb( $pos++, $cats[0]->name, $cat_link );
+						}
 					}
 				}
 				// The post itself.
@@ -225,10 +228,16 @@ class MM_Mod_Schema extends MM_Mod_Base {
 				foreach ( array_reverse( $ancestors ) as $ancestor_id ) {
 					$ancestor = get_term( $ancestor_id, $term->taxonomy );
 					if ( $ancestor && ! is_wp_error( $ancestor ) ) {
-						$items[] = $this->crumb( $pos++, $ancestor->name, get_term_link( $ancestor ) );
+						$anc_link = get_term_link( $ancestor );
+						if ( is_string( $anc_link ) ) {
+							$items[] = $this->crumb( $pos++, $ancestor->name, $anc_link );
+						}
 					}
 				}
-				$items[] = $this->crumb( $pos++, $term->name, get_term_link( $term ) );
+				$term_link = get_term_link( $term );
+				if ( is_string( $term_link ) ) {
+					$items[] = $this->crumb( $pos++, $term->name, $term_link );
+				}
 			}
 		} elseif ( $context->is_author() ) {
 			$author  = $context->get_author();
@@ -390,6 +399,8 @@ class MM_Mod_Schema extends MM_Mod_Base {
 
 	private function extract_faq( string $content ): array {
 		$faqs = [];
+
+		// Pattern 1: <details><summary>Q</summary>A</details>
 		if ( preg_match_all( '/<details[^>]*>\s*<summary[^>]*>(.*?)<\/summary>(.*?)<\/details>/si', $content, $matches ) ) {
 			for ( $i = 0; $i < count( $matches[0] ); $i++ ) {
 				$faqs[] = [
@@ -402,6 +413,47 @@ class MM_Mod_Schema extends MM_Mod_Base {
 				];
 			}
 		}
+
+		// Pattern 2: <dl><dt>Q</dt><dd>A</dd></dl>
+		if ( preg_match_all( '/<dl[^>]*>(.*?)<\/dl>/si', $content, $dl_blocks ) ) {
+			foreach ( $dl_blocks[1] as $block ) {
+				if ( preg_match_all( '/<dt[^>]*>(.*?)<\/dt>\s*<dd[^>]*>(.*?)<\/dd>/si', $block, $pairs ) ) {
+					for ( $i = 0; $i < count( $pairs[0] ); $i++ ) {
+						$question = wp_strip_all_tags( $pairs[1][ $i ] );
+						$answer   = wp_strip_all_tags( $pairs[2][ $i ] );
+						if ( $question && $answer ) {
+							$faqs[] = [
+								'@type'          => 'Question',
+								'name'           => $question,
+								'acceptedAnswer' => [
+									'@type' => 'Answer',
+									'text'  => $answer,
+								],
+							];
+						}
+					}
+				}
+			}
+		}
+
+		// Pattern 3: Heading + paragraph pairs (h2/h3/h4 followed by p)
+		if ( preg_match_all( '/<h[2-4][^>]*>(.*?)<\/h[2-4]>\s*(?:<p[^>]*>(.*?)<\/p>)/si', $content, $hp_matches ) ) {
+			for ( $i = 0; $i < count( $hp_matches[0] ); $i++ ) {
+				$question = wp_strip_all_tags( $hp_matches[1][ $i ] );
+				$answer   = wp_strip_all_tags( $hp_matches[2][ $i ] );
+				if ( $question && $answer ) {
+					$faqs[] = [
+						'@type'          => 'Question',
+						'name'           => $question,
+						'acceptedAnswer' => [
+							'@type' => 'Answer',
+							'text'  => $answer,
+						],
+					];
+				}
+			}
+		}
+
 		return $faqs;
 	}
 

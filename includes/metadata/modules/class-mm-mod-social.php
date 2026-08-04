@@ -118,7 +118,8 @@ class MM_Mod_Social extends MM_Mod_Base {
 				$meta        = $settings->get_term_meta( $term->term_id );
 				$title       = ! empty( $meta['og_title'] ) ? $meta['og_title'] : $title;
 				$description = ! empty( $meta['og_description'] ) ? $meta['og_description'] : $description;
-				$url         = get_term_link( $term );
+				$link        = get_term_link( $term );
+				$url         = is_string( $link ) ? $link : '';
 				$image       = ! empty( $meta['og_image_id'] )
 					? $this->image_data( (int) $meta['og_image_id'] )
 					: $this->default_image( $settings );

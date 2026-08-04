@@ -63,7 +63,7 @@ class MM_Mod_Hygiene extends MM_Mod_Base {
 		}
 
 		if ( $h->get( 'hygiene.remove_wp_dns_prefetch', true ) ) {
-			remove_action( 'wp_head', 'wp_resource_hints', 2 );
+			add_filter( 'wp_resource_hints', [ $this, 'remove_dns_prefetch_only' ], 10, 2 );
 		}
 	}
 
@@ -75,5 +75,15 @@ class MM_Mod_Hygiene extends MM_Mod_Base {
 	public function remove_x_powered_by( array $headers ): array {
 		unset( $headers['X-Powered-By'] );
 		return $headers;
+	}
+
+	/**
+	 * Remove only DNS prefetch hints, preserving preconnect/preload/prefetch/prerender.
+	 */
+	public function remove_dns_prefetch_only( array $urls, string $relation_type ): array {
+		if ( 'dns-prefetch' === $relation_type ) {
+			return [];
+		}
+		return $urls;
 	}
 }

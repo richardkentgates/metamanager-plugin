@@ -106,7 +106,7 @@ class MM_Status {
 	/**
 	 * Return the first found ExifTool executable path, or empty string.
 	 */
-	public static function exiftool_path(): string {
+	private static function exiftool_path(): string {
 		foreach ( self::EXIFTOOL_PATHS as $path ) {
 			if ( file_exists( $path ) && is_executable( $path ) ) {
 				return $path;
@@ -125,7 +125,7 @@ class MM_Status {
 	/**
 	 * Return the first found jpegtran executable path.
 	 */
-	public static function jpegtran_path(): string {
+	private static function jpegtran_path(): string {
 		foreach ( self::JPEGTRAN_PATHS as $path ) {
 			if ( file_exists( $path ) && is_executable( $path ) ) {
 				return $path;
@@ -144,7 +144,7 @@ class MM_Status {
 	/**
 	 * Return the first found optipng executable path.
 	 */
-	public static function optipng_path(): string {
+	private static function optipng_path(): string {
 		foreach ( self::OPTIPNG_PATHS as $path ) {
 			if ( file_exists( $path ) && is_executable( $path ) ) {
 				return $path;
@@ -163,7 +163,7 @@ class MM_Status {
 	/**
 	 * Return the first found cwebp executable path.
 	 */
-	public static function cwebp_path(): string {
+	private static function cwebp_path(): string {
 		foreach ( self::CWEBP_PATHS as $path ) {
 			if ( file_exists( $path ) && is_executable( $path ) ) {
 				return $path;
@@ -182,7 +182,7 @@ class MM_Status {
 	/**
 	 * Return the first found ffmpeg executable path.
 	 */
-	public static function ffmpeg_path(): string {
+	private static function ffmpeg_path(): string {
 		foreach ( self::FFMPEG_PATHS as $path ) {
 			if ( file_exists( $path ) && is_executable( $path ) ) {
 				return $path;

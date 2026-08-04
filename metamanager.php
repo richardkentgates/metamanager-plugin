@@ -191,14 +191,22 @@ function mm_deactivate( bool $network_wide = false ): void {
 		$sites = get_sites( [ 'number' => 0 ] );
 		foreach ( $sites as $site ) {
 			switch_to_blog( (int) $site->blog_id );
-			wp_clear_scheduled_hook( 'mm_import_completed_jobs' );
-			wp_clear_scheduled_hook( 'mm_send_upload_receipt' );
+			mm_deactivate_site();
 			restore_current_blog();
 		}
 	} else {
-		wp_clear_scheduled_hook( 'mm_import_completed_jobs' );
-		wp_clear_scheduled_hook( 'mm_send_upload_receipt' );
+		mm_deactivate_site();
 	}
+}
+
+/**
+ * Clean up a single site on deactivation.
+ */
+function mm_deactivate_site(): void {
+	wp_clear_scheduled_hook( 'mm_import_completed_jobs' );
+	wp_clear_scheduled_hook( 'mm_send_upload_receipt' );
+	wp_clear_scheduled_hook( 'mm_meta_check_links' );
+	flush_rewrite_rules();
 }
 
 // ---------------------------------------------------------------------------

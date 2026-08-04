@@ -110,7 +110,7 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 			'post_type'      => $pt,
 			'post_status'    => 'publish',
 			'post_parent'    => $parent,
-			'posts_per_page' => -1,
+			'posts_per_page' => 500,
 			'no_found_rows'  => true,
 			'has_password'   => false,
 			'post__not_in'   => $exclude ?: [ 0 ],
