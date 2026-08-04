@@ -12,7 +12,6 @@ parameters:
     bootstrapFiles:
         - metamanager.php
         - vendor/php-stubs/wp-cli-stubs/wp-cli-stubs.php
-        - stubs/cli-progress-bar.php
     ignoreErrors:
         - '#isset\(\) always exists#'
         - '#Parameter \#1 \$args of function get_posts expects#'
