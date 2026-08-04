@@ -86,7 +86,7 @@ abstract class MM_Mod_Base {
 	 * Build a sanitized PostalAddress schema node from raw address fields.
 	 *
 	 * @param array{street?: string, city?: string, state?: string, zip?: string, country?: string} $addr Raw address fields.
-	 * @return array{postalAddress} Indexed array with PostalAddress node, or empty array if no street.
+	 * @return array<string, mixed> PostalAddress node as associative array, or empty array if no street.
 	 */
 	public static function postal_address_node( array $addr ): array {
 		if ( empty( $addr['street'] ) ) {
