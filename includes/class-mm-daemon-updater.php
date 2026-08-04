@@ -189,21 +189,6 @@ class MM_Daemon_Updater {
 		];
 	}
 
-	/**
-	 * Check if the installed daemon version matches what the plugin needs.
-	 *
-	 * @return array{match: bool, current: string|null, required: string|null}
-	 */
-	private static function check_version(): array {
-		$diagnosis = self::diagnose();
-
-		return [
-			'match'    => ( 'ok' === $diagnosis['status'] ),
-			'current'  => $diagnosis['current'],
-			'required' => $diagnosis['required'],
-		];
-	}
-
 	// -------------------------------------------------------------------------
 	// Update trigger
 	// -------------------------------------------------------------------------
