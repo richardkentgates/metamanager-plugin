@@ -255,8 +255,61 @@ No CRITICAL or HIGH findings. One LOW: `@exec()` suppression in daemon updater.
 
 ### Validation
 
-- [ ] Run WordPress Plugin Checker on production
-- [ ] Structured data validation endpoint (consider)
+- [x] Run WordPress Plugin Checker on production — admin page saves fixed (ModSecurity removed)
+- [x] SearchAction deprecated by Google Nov 2024 — default changed to `false` in schema.website_searchaction setting
+
+---
+
+## Schema.org / OG Compliance — 2026-08-04
+
+### Emitted Schema Types (all valid)
+
+| Type | Location | Status |
+|------|----------|--------|
+| WebSite | `MM_Mod_Schema::add_website_node()` | ✅ Valid |
+| SiteNavigationElement | `MM_Mod_Schema::add_navigation_node()` | ✅ Valid (not in Google gallery, harmless) |
+| Person | `MM_Mod_Author` | ✅ Valid |
+| LocalBusiness / Corporation | `MM_Mod_Schema::add_content_node()` | ✅ Valid |
+| AboutPage / CollectionPage / ProfilePage / WebPage | `MM_Mod_Schema::add_webpage_node()` | ✅ Valid |
+| BreadcrumbList | `MM_Mod_Schema::add_breadcrumb_node()` | ✅ Valid |
+| ImageObject | `MM_Mod_Schema::add_image_schema()` | ✅ Valid |
+| VideoObject | `MM_Mod_Schema::add_video_schema()` | ✅ Valid |
+| AudioObject | `MM_Mod_Schema::add_audio_schema()` | ✅ Valid |
+| DigitalDocument | `MM_Mod_Schema::add_document_schema()` | ✅ Valid |
+| GeoCoordinates / Place | `MM_Mod_Schema::add_location_to_node()` | ✅ Valid |
+| FAQPage | `MM_Mod_Schema::add_content_node()` | ⚠️ Deprecated by Google May 2026, still valid schema.org |
+
+### Emitted OG Tags (all valid)
+
+| Tag | Source | Status |
+|-----|--------|--------|
+| `og:title` | `MM_Mod_Head_Meta` | ✅ Required, HTTPS |
+| `og:type` | `MM_Mod_Head_Meta` | ✅ Required |
+| `og:url` | `MM_Mod_Head_Meta` | ✅ Required, HTTPS |
+| `og:image` | `MM_Mod_Head_Meta` | ✅ Required, content-based |
+| `og:description` | `MM_Mod_Head_Meta` | ✅ Recommended |
+| `og:site_name` | `MM_Mod_Head_Meta` | ✅ Recommended |
+| `og:locale` | `MM_Mod_Head_Meta` | ✅ Recommended |
+| `og:video` | `MM_Mod_Social` | ✅ Conditional (video present) |
+| `og:audio` | `MM_Mod_Social` | ✅ Conditional (audio present) |
+| `twitter:card` | `MM_Mod_Social` | ✅ Recommended |
+| `twitter:site` | `MM_Mod_Social` | ✅ Recommended |
+| `twitter:creator` | `MM_Mod_Social` | ✅ Recommended |
+
+### Deprecated by Google (NOT emitted)
+
+| Type | Deprecated | Status |
+|------|------------|--------|
+| HowTo | Sep 2023 | Not emitted ✅ |
+| Course Info | June 2025 | Not emitted ✅ |
+| ClaimReview | June 2025 | Not emitted ✅ |
+| EstimatedSalary | June 2025 | Not emitted ✅ |
+| LearningVideo | June 2025 | Not emitted ✅ |
+| SpecialAnnouncement | June 2025 | Not emitted ✅ |
+| VehicleListing | June 2025 | Not emitted ✅ |
+| Book Actions | June 2025 | Not emitted ✅ |
+| SearchAction (Sitelinks) | Nov 2024 | Default disabled ✅ |
+| FAQPage (rich results) | May 2026 | Kept — valid schema.org, useful for AI crawlers |
 
 ---
 
