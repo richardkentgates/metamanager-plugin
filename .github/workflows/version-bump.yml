@@ -33,7 +33,12 @@ jobs:
           NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
 
           if ! grep -q "\"${NEXT}\"" daemon-compatibility.json; then
-            DAEMON_VER=$(head -1 daemon-compatibility.json | grep -oP '"2\.\d+\.\d+"' | head -1 | tr -d '"')
+            DAEMON_VER=$(python3 -c "
+          import json
+          with open('daemon-compatibility.json') as f:
+              data = json.load(f)
+          print(next(iter(data.values()), '2.4.8'))
+          ")
             if [ -z "$DAEMON_VER" ]; then
               DAEMON_VER="2.4.8"
             fi
