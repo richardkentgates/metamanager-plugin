@@ -12,6 +12,7 @@
  *   columns     (1–3, default: 1)
  *   show_date   (yes|no, default: no)
  *   order_by    (menu_order|title|date, default: menu_order)
+ *   limit       (int, default: 500, max posts per flat query)
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -36,6 +37,8 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 
 		$cfg = $this->settings->get( 'sitemap.html_sitemap', [] );
 
+		$flat_limit = max( 1, min( 5000, (int) ( $cfg['flat_limit'] ?? 500 ) ) );
+
 		$atts = shortcode_atts( [
 			'post_types' => implode( ',', (array) ( $cfg['post_types'] ?? [ 'page', 'post' ] ) ),
 			'taxonomies' => implode( ',', (array) ( $cfg['taxonomies'] ?? [] ) ),
@@ -44,6 +47,7 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 			'columns'    => (int) ( $cfg['columns'] ?? 1 ),
 			'show_date'  => 'no',
 			'order_by'   => $cfg['order_by'] ?? 'menu_order',
+			'limit'      => $flat_limit,
 		], $atts, 'mm_sitemap' );
 
 		$post_types = array_filter( array_map( 'trim', explode( ',', $atts['post_types'] ) ) );
@@ -55,11 +59,12 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 		$show_date  = 'yes' === $atts['show_date'];
 		$depth      = (int) $atts['depth'];
 		$order_by   = in_array( $atts['order_by'], [ 'menu_order', 'title', 'date' ], true ) ? $atts['order_by'] : 'menu_order';
+		$limit      = max( 1, min( 5000, (int) $atts['limit'] ) );
 
 		$out = '<div class="gcm-html-sitemap gcm-html-sitemap--cols-' . $columns . '">';
 
 		foreach ( $post_types as $pt ) {
-			$out .= $this->render_post_type( $pt, $depth, $exclude, $show_date, $order_by );
+			$out .= $this->render_post_type( $pt, $depth, $exclude, $show_date, $order_by, $limit );
 		}
 
 		foreach ( $taxonomies as $taxonomy ) {
@@ -75,7 +80,7 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 	// Post-type section
 	// -------------------------------------------------------------------------
 
-	private function render_post_type( string $pt, int $depth, array $exclude, bool $show_date, string $order_by ): string {
+	private function render_post_type( string $pt, int $depth, array $exclude, bool $show_date, string $order_by, int $limit ): string {
 		$obj = get_post_type_object( $pt );
 		if ( ! $obj ) {
 			return '';
@@ -84,9 +89,9 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 		$is_hierarchical = $obj->hierarchical;
 
 		if ( $is_hierarchical ) {
-			$html = $this->render_hierarchical( $pt, 0, $depth, $exclude, $show_date, $order_by );
+			$html = $this->render_hierarchical( $pt, 0, $depth, $exclude, $show_date, $order_by, 0, $limit );
 		} else {
-			$html = $this->render_flat( $pt, $exclude, $show_date, $order_by );
+			$html = $this->render_flat( $pt, $exclude, $show_date, $order_by, $limit );
 		}
 
 		if ( ! $html ) {
@@ -101,7 +106,7 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 		return $out;
 	}
 
-	private function render_hierarchical( string $pt, int $parent, int $max_depth, array $exclude, bool $show_date, string $order_by, int $current_depth = 0 ): string {
+	private function render_hierarchical( string $pt, int $parent, int $max_depth, array $exclude, bool $show_date, string $order_by, int $current_depth = 0, int $limit = 500 ): string {
 		if ( $max_depth > 0 && $current_depth >= $max_depth ) {
 			return '';
 		}
@@ -110,7 +115,7 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 			'post_type'      => $pt,
 			'post_status'    => 'publish',
 			'post_parent'    => $parent,
-			'posts_per_page' => 500,
+			'posts_per_page' => $limit,
 			'no_found_rows'  => true,
 			'has_password'   => false,
 			'post__not_in'   => $exclude ?: [ 0 ],
@@ -132,7 +137,7 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 				$out .= ' <span class="gcm-sitemap-date">(' . esc_html( get_the_date( '', $post ) ) . ')</span>';
 			}
 			// Recurse into children.
-			$children = $this->render_hierarchical( $pt, $post->ID, $max_depth, $exclude, $show_date, $order_by, $current_depth + 1 );
+			$children = $this->render_hierarchical( $pt, $post->ID, $max_depth, $exclude, $show_date, $order_by, $current_depth + 1, $limit );
 			$out      .= $children;
 			$out      .= '</li>';
 		}
@@ -140,11 +145,11 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 		return $out;
 	}
 
-	private function render_flat( string $pt, array $exclude, bool $show_date, string $order_by ): string {
+	private function render_flat( string $pt, array $exclude, bool $show_date, string $order_by, int $limit = 500 ): string {
 		$query_args = [
 			'post_type'      => $pt,
 			'post_status'    => 'publish',
-			'posts_per_page' => 500,
+			'posts_per_page' => $limit,
 			'no_found_rows'  => true,
 			'has_password'   => false,
 			'post__not_in'   => $exclude ?: [ 0 ],
