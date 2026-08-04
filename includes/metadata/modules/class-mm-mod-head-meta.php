@@ -225,7 +225,11 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 
 		if ( $context->is_tax() || $context->is_category() || $context->is_tag() ) {
 			$term = $context->get_term();
-			return $term ? get_term_link( $term ) : '';
+			if ( ! $term ) {
+				return '';
+			}
+			$link = get_term_link( $term );
+			return is_string( $link ) ? $link : '';
 		}
 
 		if ( $context->is_author() ) {

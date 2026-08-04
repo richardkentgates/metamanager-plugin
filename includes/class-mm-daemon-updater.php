@@ -194,7 +194,7 @@ class MM_Daemon_Updater {
 	 *
 	 * @return array{match: bool, current: string|null, required: string|null}
 	 */
-	public static function check_version(): array {
+	private static function check_version(): array {
 		$diagnosis = self::diagnose();
 
 		return [

@@ -13,10 +13,10 @@ class Test_MM_Daemon_Updater_Unit extends WP_UnitTestCase {
 	// exec_available()
 	// ------------------------------------------------------------------
 
-	public function test_exec_available_returns_bool(): void {
-		$result = MM_Daemon_Updater::check_version();
+	public function test_diagnose_returns_match_status(): void {
+		$result = MM_Daemon_Updater::diagnose();
 		$this->assertIsArray( $result );
-		$this->assertArrayHasKey( 'match', $result );
+		$this->assertArrayHasKey( 'status', $result );
 		$this->assertArrayHasKey( 'current', $result );
 		$this->assertArrayHasKey( 'required', $result );
 	}

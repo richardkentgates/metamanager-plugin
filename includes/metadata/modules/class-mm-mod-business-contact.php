@@ -128,6 +128,7 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 		header( 'Content-Disposition: attachment; filename="' . $slug . '.vcf"' );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo implode( "\r\n", $lines ) . "\r\n";
+		exit;
 	}
 
 	private function serve_json( array $biz ): void {
@@ -158,6 +159,7 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 		header( 'Content-Disposition: attachment; filename="' . $slug . '.json"' );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		exit;
 	}
 
 	private function serve_csv( array $biz ): void {
@@ -191,6 +193,7 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 		fclose( $fp );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ob_get_clean();
+		exit;
 	}
 
 	// -------------------------------------------------------------------------
