@@ -60,17 +60,21 @@ class MM_Mod_Social extends MM_Mod_Base {
 				$description = ! empty( $meta['og_description'] ) ? $meta['og_description'] : $description;
 				$url         = get_permalink( $post );
 
-				// Image: custom meta → featured image → attachment source → site default.
+				// Image: custom meta → content image → attachment source → site default.
 				if ( ! empty( $meta['og_image_id'] ) ) {
 					$image = $this->image_data( (int) $meta['og_image_id'] );
 				} elseif ( ! empty( $meta['og_image_url'] ) ) {
 					$image = $this->image_data( 0, $meta['og_image_url'] );
-				} elseif ( has_post_thumbnail( $post ) ) {
-					$image = $this->image_data( get_post_thumbnail_id( $post ) );
 				} elseif ( 'attachment' === $post->post_type ) {
 					$image = $this->image_data( $post->ID );
 				} else {
-					$image = $this->default_image( $settings );
+					// Scan content for the first actual image on the page.
+					$content_img = MM_Media_Detector::first_image( $post->post_content );
+					if ( $content_img ) {
+						$image = $this->image_data( $content_img['attachment_id'], $content_img['url'] );
+					} else {
+						$image = $this->default_image( $settings );
+					}
 				}
 
 			// Article type for blog posts only — pages get 'website'.
@@ -157,6 +161,30 @@ class MM_Mod_Social extends MM_Mod_Base {
 				$this->add_meta( $data, [ 'property' => 'og:image:height', 'content' => (string) $r['image']['height'] ] );
 			}
 			$this->add_meta( $data, [ 'property' => 'og:image:type',   'content' => $this->mime_from_url( $r['image']['url'] ) ] );
+		}
+
+		// Video attachment → og:video.
+		if ( $context->is_singular() ) {
+			$post = $context->get_post();
+			if ( $post && 'attachment' === $post->post_type ) {
+				$mime = (string) get_post_mime_type( $post->ID );
+				$url  = wp_get_attachment_url( $post->ID );
+				if ( $url ) {
+					if ( MM_Metadata::is_video_mime( $mime ) ) {
+						$this->add_meta( $data, [ 'property' => 'og:video',        'content' => $url ] );
+						if ( str_starts_with( $url, 'https://' ) ) {
+							$this->add_meta( $data, [ 'property' => 'og:video:secure_url', 'content' => $url ] );
+						}
+						$this->add_meta( $data, [ 'property' => 'og:video:type',   'content' => $mime ] );
+					} elseif ( MM_Metadata::is_audio_mime( $mime ) ) {
+						$this->add_meta( $data, [ 'property' => 'og:audio',        'content' => $url ] );
+						if ( str_starts_with( $url, 'https://' ) ) {
+							$this->add_meta( $data, [ 'property' => 'og:audio:secure_url', 'content' => $url ] );
+						}
+						$this->add_meta( $data, [ 'property' => 'og:audio:type',   'content' => $mime ] );
+					}
+				}
+			}
 		}
 
 		// Article tags.

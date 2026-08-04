@@ -158,13 +158,13 @@ class MM_Mod_Links extends MM_Mod_Base {
 					continue;
 				}
 				// Make relative URLs absolute.
-				if ( strpos( $url, 'http' ) !== 0 ) {
+				if ( ! str_starts_with( $url, 'http' ) ) {
 					$url = trailingslashit( $home ) . ltrim( $url, '/' );
 				}
 				$links[] = [
 					'url'    => $url,
 					'anchor' => substr( $anchor, 0, 500 ),
-					'type'   => ( strpos( $url, $home ) === 0 ) ? 'internal' : 'external',
+					'type'   => ( str_starts_with( $url, $home ) ) ? 'internal' : 'external',
 				];
 			}
 		}
