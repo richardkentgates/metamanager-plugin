@@ -197,11 +197,16 @@ class MM_Metadata {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Logical field map: PHP key => ExifTool tag names to write.
+	 * Single source of truth for field ↔ ExifTool tag mapping.
 	 *
-	 * Single source of truth shared with the shell daemon, which declares an
-	 * identical mapping in bash. If you add or change a field here, you MUST
-	 * update the corresponding exif_args section in metamanager-meta-daemon.sh.
+	 * Each key is the logical field name used in job JSON and by
+	 * get_fields_for_job(). Each value is a priority-ordered list of
+	 * ExifTool tag candidates (group:tag format) for reading from files.
+	 *
+	 * Covers all supported formats: images (EXIF/IPTC/XMP),
+	 * video/audio (QuickTime/ID3/Vorbis/ASF), and PDF.
+	 * ExifTool returns all tags for the file; non-matching candidates
+	 * are harmlessly empty and skipped by pick_embedded_value().
 	 *
 	 * @see metamanager-meta-daemon.sh — "Format-aware tag building" section
 	 * @return array<string, string[]>
@@ -209,28 +214,105 @@ class MM_Metadata {
 	public static function field_map(): array {
 		return [
 			// WordPress native.
-			'Title'       => [ 'Title', 'IPTC:ObjectName', 'XMP:Title' ],
-			'Description' => [ 'EXIF:ImageDescription', 'IPTC:Caption-Abstract', 'XMP:Description' ],
+			'Title'       => [
+				'XMP:Title', 'IPTC:ObjectName', 'XMP-dc:Title',
+				'QuickTime:Title', 'ID3:Title', 'Vorbis:Title',
+				'ASF:Title', 'RIFF:Title', 'Matroska:Title',
+				'PDF:Title', 'EXIF:ImageDescription',
+			],
+			'Description' => [
+				'XMP:Description', 'IPTC:Caption-Abstract', 'EXIF:ImageDescription',
+				'XMP-dc:Description',
+			],
 			'Caption'     => [ 'IPTC:Caption-Abstract', 'XMP:Caption' ],
 			'AltText'     => [ 'XMP:AltTextAccessibility' ],
-			// Per-image attribution — never bulk.
-			'Creator'     => [ 'EXIF:Artist', 'IPTC:By-line', 'XMP:Creator' ],
-			'Copyright'   => [ 'EXIF:Copyright', 'IPTC:CopyrightNotice', 'XMP:Rights' ],
-			'Owner'       => [ 'XMP:Owner', 'EXIF:OwnerName' ],
-			// Site provenance — safe for bulk.
+
+			// Per-image attribution.
+			'Creator'     => [
+				'IPTC:By-line', 'XMP:Creator', 'EXIF:Artist', 'IFD0:Artist',
+				'QuickTime:Author', 'QuickTime:Artist',
+				'ID3:Artist', 'Vorbis:Artist', 'ASF:Author', 'RIFF:Artist',
+				'PDF:Author', 'XMP:Author', 'XMP-dc:Creator',
+			],
+			'Copyright'   => [
+				'IPTC:CopyrightNotice', 'XMP:Rights', 'EXIF:Copyright', 'IFD0:Copyright',
+				'QuickTime:Copyright', 'ID3:Copyright', 'Vorbis:Copyright', 'ASF:Copyright',
+				'XMP-dc:Rights',
+			],
+			'Owner'       => [ 'XMP:Owner', 'EXIF:OwnerName', 'IFD0:OwnerName' ],
+
+			// Site provenance.
 			'Publisher'   => [ 'IPTC:Source', 'XMP:Publisher' ],
 			'Website'     => [ 'XMP:WebStatement', 'IPTC:Source' ],
+
 			// Editorial.
-			'Headline'    => [ 'IPTC:Headline', 'XMP:Headline' ],
-			'Credit'      => [ 'IPTC:Credit', 'XMP:Credit' ],
+			'Headline'    => [
+				'IPTC:Headline', 'XMP:Headline',
+				'QuickTime:Title', 'ID3:Title', 'Vorbis:Title',
+				'ASF:Title', 'RIFF:Title', 'Matroska:Title',
+				'PDF:Title', 'XMP:Title', 'XMP-dc:Title',
+			],
+			'Credit'      => [
+				'IPTC:Credit', 'XMP:Credit',
+				'QuickTime:Producer', 'ID3:Band', 'Vorbis:Organization',
+			],
+
 			// Classification.
-			'Keywords'    => [ 'IPTC:Keywords', 'XMP:Subject' ],
-			'DateCreated' => [ 'EXIF:DateTimeOriginal', 'IPTC:DateCreated', 'XMP:DateCreated' ],
+			'Keywords'    => [
+				'IPTC:Keywords', 'XMP:Subject',
+				'QuickTime:Keywords', 'ID3:ContentType', 'Vorbis:Genre', 'ASF:Genre',
+				'PDF:Keywords', 'XMP-dc:Subject',
+			],
+			'DateCreated' => [
+				'EXIF:DateTimeOriginal', 'IPTC:DateCreated', 'XMP:DateCreated', 'IFD0:DateTime',
+				'QuickTime:CreateDate', 'QuickTime:MediaCreateDate',
+				'ID3:Year', 'Vorbis:Date', 'ASF:CreationDate', 'Matroska:DateTimeOriginal',
+				'PDF:CreateDate', 'XMP-xmp:CreateDate',
+			],
 			'Rating'      => [ 'XMP:Rating' ],
+
 			// Location (IPTC Photo Metadata Standard).
-			'City'        => [ 'IPTC:City', 'XMP:City' ],
+			'City'        => [
+				'IPTC:City', 'XMP:City',
+				'QuickTime:LocationName', 'Keys:LocationName',
+			],
 			'State'       => [ 'IPTC:Province-State', 'XMP:State' ],
-			'Country'     => [ 'IPTC:Country-PrimaryLocationName', 'XMP:Country' ],
+			'Country'     => [
+				'IPTC:Country-PrimaryLocationName', 'XMP:Country',
+				'QuickTime:LocationCountryCode', 'Keys:LocationCountryCode',
+			],
+
+			// GPS — images and AV.
+			'GPSLatitude'  => [ 'Composite:GPSLatitude', 'GPS:GPSLatitude', 'QuickTime:GPSCoordinates' ],
+			'GPSLongitude' => [ 'Composite:GPSLongitude', 'GPS:GPSLongitude' ],
+			'GPSAltitude'  => [ 'Composite:GPSAltitude', 'GPS:GPSAltitude', 'Keys:GPSAltitude' ],
+		];
+	}
+
+	/**
+	 * Map field_map() logical names to WordPress post meta keys.
+	 *
+	 * Used by apply_import_result() and apply_verify_result() to look up
+	 * and persist per-attachment metadata.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function field_to_meta_map(): array {
+		return [
+			'Creator'       => self::META_CREATOR,
+			'Copyright'     => self::META_COPYRIGHT,
+			'Owner'         => self::META_OWNER,
+			'Headline'      => self::META_HEADLINE,
+			'Credit'        => self::META_CREDIT,
+			'Keywords'      => self::META_KEYWORDS,
+			'DateCreated'   => self::META_DATE,
+			'City'          => self::META_CITY,
+			'State'         => self::META_STATE,
+			'Country'       => self::META_COUNTRY,
+			'Rating'        => self::META_RATING,
+			'GPSLatitude'   => self::META_GPS_LAT,
+			'GPSLongitude'  => self::META_GPS_LON,
+			'GPSAltitude'   => self::META_GPS_ALT,
 		];
 	}
 
@@ -702,64 +784,18 @@ class MM_Metadata {
 			return;
 		}
 
-		$file = get_attached_file( $attachment_id );
+		$file         = get_attached_file( $attachment_id );
+		$field_map    = self::field_map();
+		$meta_map     = self::field_to_meta_map();
+		$gps_keys     = [ self::META_GPS_LAT, self::META_GPS_LON, self::META_GPS_ALT ];
 
-		// Custom post meta: priority-ordered ExifTool tag candidates.
-		$meta_import = [
-			self::META_CREATOR   => [ 'IPTC:By-line', 'IFD0:Artist', 'XMP:Creator', 'EXIF:Artist' ],
-			self::META_COPYRIGHT => [ 'IPTC:CopyrightNotice', 'IFD0:Copyright', 'XMP:Rights', 'EXIF:Copyright' ],
-			self::META_OWNER     => [ 'EXIF:OwnerName', 'IFD0:OwnerName', 'XMP:Owner' ],
-			self::META_HEADLINE  => [ 'IPTC:Headline', 'XMP:Headline' ],
-			self::META_CREDIT    => [ 'IPTC:Credit', 'XMP:Credit' ],
-			self::META_KEYWORDS  => [ 'IPTC:Keywords', 'XMP:Subject' ],
-			self::META_DATE      => [ 'EXIF:DateTimeOriginal', 'IPTC:DateCreated', 'XMP:DateCreated', 'IFD0:DateTime' ],
-			self::META_CITY      => [ 'IPTC:City', 'XMP:City' ],
-			self::META_STATE     => [ 'IPTC:Province-State', 'XMP:State' ],
-			self::META_COUNTRY   => [ 'IPTC:Country-PrimaryLocationName', 'XMP:Country' ],
-			self::META_RATING    => [ 'XMP:Rating' ],
-			self::META_GPS_LAT   => [ 'Composite:GPSLatitude', 'GPS:GPSLatitude' ],
-			self::META_GPS_LON   => [ 'Composite:GPSLongitude', 'GPS:GPSLongitude' ],
-			self::META_GPS_ALT   => [ 'Composite:GPSAltitude', 'GPS:GPSAltitude' ],
-		];
-
-		$mime = (string) get_post_mime_type( $attachment_id );
-		if ( self::is_av_mime( $mime ) ) {
-			$av_candidates = [
-				self::META_CREATOR   => [ 'QuickTime:Author', 'QuickTime:Artist', 'ID3:Artist', 'Vorbis:Artist', 'ASF:Author', 'RIFF:Artist' ],
-				self::META_COPYRIGHT => [ 'QuickTime:Copyright', 'ID3:Copyright', 'Vorbis:Copyright', 'ASF:Copyright' ],
-				self::META_HEADLINE  => [ 'QuickTime:Title', 'ID3:Title', 'Vorbis:Title', 'ASF:Title', 'RIFF:Title', 'Matroska:Title' ],
-				self::META_CREDIT    => [ 'QuickTime:Producer', 'ID3:Band', 'Vorbis:Organization' ],
-				self::META_KEYWORDS  => [ 'QuickTime:Keywords', 'ID3:ContentType', 'Vorbis:Genre', 'ASF:Genre' ],
-				self::META_DATE      => [ 'QuickTime:CreateDate', 'QuickTime:MediaCreateDate', 'ID3:Year', 'Vorbis:Date', 'ASF:CreationDate', 'Matroska:DateTimeOriginal' ],
-				self::META_CITY      => [ 'QuickTime:LocationName', 'Keys:LocationName' ],
-				self::META_COUNTRY   => [ 'QuickTime:LocationCountryCode', 'Keys:LocationCountryCode' ],
-				self::META_GPS_LAT   => [ 'Composite:GPSLatitude', 'QuickTime:GPSCoordinates' ],
-				self::META_GPS_LON   => [ 'Composite:GPSLongitude' ],
-				self::META_GPS_ALT   => [ 'Composite:GPSAltitude', 'Keys:GPSAltitude' ],
-			];
-			foreach ( $av_candidates as $key => $prepend ) {
-				if ( isset( $meta_import[ $key ] ) ) {
-					$meta_import[ $key ] = array_merge( $prepend, $meta_import[ $key ] );
-				}
+		// Import custom post meta fields from field_map().
+		foreach ( $meta_map as $field => $meta_key ) {
+			$candidates = $field_map[ $field ] ?? [];
+			if ( empty( $candidates ) ) {
+				continue;
 			}
-		}
 
-		if ( self::is_pdf_mime( $mime ) ) {
-			$pdf_candidates = [
-				self::META_HEADLINE  => [ 'PDF:Title', 'XMP:Title', 'XMP-dc:Title' ],
-				self::META_CREATOR   => [ 'PDF:Author', 'XMP:Author', 'XMP-dc:Creator', 'XMP:Creator' ],
-				self::META_COPYRIGHT => [ 'XMP:Rights', 'XMP-dc:Rights' ],
-				self::META_KEYWORDS  => [ 'PDF:Keywords', 'XMP:Subject', 'XMP-dc:Subject' ],
-				self::META_DATE      => [ 'PDF:CreateDate', 'XMP:CreateDate', 'XMP-xmp:CreateDate' ],
-			];
-			foreach ( $pdf_candidates as $key => $prepend ) {
-				if ( isset( $meta_import[ $key ] ) ) {
-					$meta_import[ $key ] = array_merge( $prepend, $meta_import[ $key ] );
-				}
-			}
-		}
-
-		foreach ( $meta_import as $meta_key => $candidates ) {
 			$existing = get_post_meta( $attachment_id, $meta_key, true );
 			if ( '' !== (string) $existing ) {
 				continue;
@@ -778,7 +814,7 @@ class MM_Metadata {
 				update_post_meta( $attachment_id, $meta_key, min( 5, max( 0, (int) $value ) ) );
 			} elseif ( self::META_DATE === $meta_key ) {
 				update_post_meta( $attachment_id, $meta_key, self::normalise_date( $value ) );
-			} elseif ( in_array( $meta_key, [ self::META_GPS_LAT, self::META_GPS_LON, self::META_GPS_ALT ], true ) ) {
+			} elseif ( in_array( $meta_key, $gps_keys, true ) ) {
 				if ( preg_match( '/^(-?\d+(?:\.\d+)?)/', $value, $coord_m ) ) {
 					$coord = (float) $coord_m[1];
 					$valid = match ( $meta_key ) {
@@ -795,7 +831,7 @@ class MM_Metadata {
 			}
 		}
 
-		// WordPress native fields.
+		// WordPress native fields (post_title, post_content, post_excerpt).
 		$post = get_post( $attachment_id );
 		if ( ! $post ) {
 			return;
@@ -803,7 +839,7 @@ class MM_Metadata {
 
 		$native_updates = [];
 
-		$embedded_title = self::pick_embedded_value( $embedded, [ 'IPTC:ObjectName', 'XMP:Title', 'IFD0:Title' ] );
+		$embedded_title = self::pick_embedded_value( $embedded, $field_map['Title'] ?? [] );
 		if ( '' !== $embedded_title ) {
 			$auto_title = $file
 				? str_replace( [ '-', '_' ], ' ', preg_replace( '/\.[^.]+$/', '', basename( $file ) ) )
@@ -815,14 +851,14 @@ class MM_Metadata {
 		}
 
 		if ( '' === trim( $post->post_content ) ) {
-			$v = self::pick_embedded_value( $embedded, [ 'IPTC:Caption-Abstract', 'XMP:Description', 'IFD0:ImageDescription' ] );
+			$v = self::pick_embedded_value( $embedded, $field_map['Description'] ?? [] );
 			if ( '' !== $v ) {
 				$native_updates['post_content'] = sanitize_textarea_field( $v );
 			}
 		}
 
 		if ( '' === trim( $post->post_excerpt ) ) {
-			$v = self::pick_embedded_value( $embedded, [ 'XMP:Caption' ] );
+			$v = self::pick_embedded_value( $embedded, $field_map['Caption'] ?? [] );
 			if ( '' !== $v && $v !== ( $native_updates['post_content'] ?? '' ) ) {
 				$native_updates['post_excerpt'] = sanitize_text_field( $v );
 			}
@@ -851,27 +887,37 @@ class MM_Metadata {
 	 * carries a different value) into mm_verify_discrepancies. Updates
 	 * mm_verified_at with the current time.
 	 *
-	 * Only the nine primary IPTC/XMP fields are checked — GPS, rating, duration
-	 * and keywords are intentionally excluded because their round-trip formats
-	 * vary and they are not always writable by every ExifTool flavour.
+	 * Candidate lists are sourced from field_map() via field_to_meta_map().
+	 * GPS, rating, duration and keywords are intentionally excluded because
+	 * their round-trip formats vary and they are not always writable by every
+	 * ExifTool flavour.
 	 *
 	 * @param int   $attachment_id WP attachment ID.
 	 * @param array $embedded      Flat key→value map from ExifTool (same format
 	 *                             as apply_import_result's $embedded parameter).
 	 */
 	public static function apply_verify_result( int $attachment_id, array $embedded ): void {
-		// Fields to verify: WP meta-key → priority-ordered ExifTool tag candidates.
-		$checks = [
-			self::META_CREATOR   => [ 'IPTC:By-line', 'IFD0:Artist', 'XMP:Creator', 'EXIF:Artist' ],
-			self::META_COPYRIGHT => [ 'IPTC:CopyrightNotice', 'IFD0:Copyright', 'XMP:Rights', 'EXIF:Copyright' ],
-			self::META_OWNER     => [ 'EXIF:OwnerName', 'IFD0:OwnerName', 'XMP:Owner' ],
-			self::META_HEADLINE  => [ 'IPTC:Headline', 'XMP:Headline' ],
-			self::META_CREDIT    => [ 'IPTC:Credit', 'XMP:Credit' ],
-			self::META_DATE      => [ 'EXIF:DateTimeOriginal', 'IPTC:DateCreated', 'XMP:DateCreated', 'IFD0:DateTime' ],
-			self::META_CITY      => [ 'IPTC:City', 'XMP:City' ],
-			self::META_STATE     => [ 'IPTC:Province-State', 'XMP:State' ],
-			self::META_COUNTRY   => [ 'IPTC:Country-PrimaryLocationName', 'XMP:Country' ],
+		$field_map = self::field_map();
+		$meta_map  = self::field_to_meta_map();
+
+		// GPS, rating, duration and keywords are excluded from verification
+		// because their round-trip formats vary and are not always writable
+		// by every ExifTool flavour.
+		$excluded = [
+			self::META_RATING,
+			self::META_GPS_LAT,
+			self::META_GPS_LON,
+			self::META_GPS_ALT,
+			self::META_KEYWORDS,
 		];
+
+		$checks = [];
+		foreach ( $meta_map as $field => $meta_key ) {
+			if ( in_array( $meta_key, $excluded, true ) ) {
+				continue;
+			}
+			$checks[ $meta_key ] = $field_map[ $field ] ?? [];
+		}
 
 		$discrepancies = [];
 
