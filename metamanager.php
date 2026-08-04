@@ -69,13 +69,12 @@ require_once MM_PLUGIN_DIR . 'includes/class-mm-job-queue.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-metadata.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-status.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-settings.php';
-require_once MM_PLUGIN_DIR . 'includes/class-mm-sitemap.php';
+require_once MM_PLUGIN_DIR . 'includes/class-mm-media-detector.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-upload-notify.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-admin.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-daemon-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-cli.php';
-require_once MM_PLUGIN_DIR . 'includes/class-mm-frontend.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-memory-manager.php';
 
 // ---------------------------------------------------------------------------
@@ -116,15 +115,7 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-loader.php';
 // the correct order.
 add_action( 'plugins_loaded', function (): void {
 	( new MM_Metadata_Loader() )->run();
-
-	// Media-specific structured data output (ImageObject/VideoObject/AudioObject,
-	// Open Graph for media, license links). Fires on wp_head for attachment pages
-	// and singular pages with a featured image.
-	MM_Frontend::init();
 } );
-
-// Media sitemaps: rewrite rules and template_redirect for /sitemap-media.xml etc.
-MM_Sitemap::init();
 
 // Auto-clean job history when an attachment is deleted from the Media Library.
 // Fires in both admin and REST API contexts, so it belongs here unconditionally.
@@ -165,7 +156,6 @@ function mm_activate_single_site(): void {
 		}
 	}
 
-	MM_Sitemap::add_rewrite_rules();
 	flush_rewrite_rules();
 }
 

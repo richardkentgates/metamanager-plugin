@@ -331,7 +331,7 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 		}
 
 		// Validate URL belongs to this site.
-		if ( strpos( $url, home_url() ) !== 0 ) {
+		if ( ! str_starts_with( $url, home_url() ) ) {
 			WP_CLI::error( 'URL must start with ' . home_url() );
 		}
 
@@ -372,17 +372,10 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 	/**
 	 * Recursively merge $override into $base. Arrays are merged by key;
 	 * scalar values in $override replace $base values.
+	 * Numeric lists are merged by key (not replaced).
 	 */
 	private function deep_merge( array $base, array $override ): array {
-		$result = $base;
-		foreach ( $override as $key => $value ) {
-			if ( is_array( $value ) && isset( $result[ $key ] ) && is_array( $result[ $key ] ) ) {
-				$result[ $key ] = $this->deep_merge( $result[ $key ], $value );
-			} else {
-				$result[ $key ] = $value;
-			}
-		}
-		return $result;
+		return MM_Site_Settings::deep_merge( $base, $override, true );
 	}
 
 	/**

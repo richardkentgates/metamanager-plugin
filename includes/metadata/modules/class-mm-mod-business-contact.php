@@ -413,16 +413,9 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 			$schema['email'] = sanitize_email( $biz['email'] );
 		}
 
-		$addr = $biz['address'] ?? [];
-		if ( ! empty( $addr['street'] ) ) {
-			$schema['address'] = array_filter( [
-				'@type'           => 'PostalAddress',
-				'streetAddress'   => sanitize_text_field( $addr['street']  ?? '' ),
-				'addressLocality' => sanitize_text_field( $addr['city']    ?? '' ),
-				'addressRegion'   => sanitize_text_field( $addr['state']   ?? '' ),
-				'postalCode'      => sanitize_text_field( $addr['zip']     ?? '' ),
-				'addressCountry'  => sanitize_text_field( $addr['country'] ?? 'US' ),
-			] );
+		$addr = MM_Mod_Base::postal_address_node( $biz['address'] ?? [] );
+		if ( $addr ) {
+			$schema['address'] = $addr;
 		}
 
 		$geo_lat = isset( $biz['lat'] ) && is_numeric( $biz['lat'] ) ? (float) $biz['lat'] : null;

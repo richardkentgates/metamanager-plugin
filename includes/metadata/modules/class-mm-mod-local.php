@@ -68,16 +68,9 @@ class MM_Mod_Local extends MM_Mod_Base {
 		}
 
 		// Address.
-		$addr = $biz['address'] ?? [];
-		if ( ! empty( $addr['street'] ) ) {
-			$node['address'] = array_filter( [
-				'@type'           => 'PostalAddress',
-				'streetAddress'   => $addr['street'] ?? '',
-				'addressLocality' => $addr['city']    ?? '',
-				'addressRegion'   => $addr['state']   ?? '',
-				'postalCode'      => $addr['zip']     ?? '',
-				'addressCountry'  => $addr['country'] ?? 'US',
-			] );
+		$addr = MM_Mod_Base::postal_address_node( $biz['address'] ?? [] );
+		if ( $addr ) {
+			$node['address'] = $addr;
 		}
 
 		// Geo coordinates.
@@ -185,16 +178,9 @@ class MM_Mod_Local extends MM_Mod_Base {
 			'url'    => $parent['url'],
 			'parentOrganization' => [ '@id' => $parent['@id'] ],
 		];
-		$addr = $loc['address'] ?? [];
-		if ( ! empty( $addr['street'] ) ) {
-			$node['address'] = array_filter( [
-				'@type'           => 'PostalAddress',
-				'streetAddress'   => $addr['street']  ?? '',
-				'addressLocality' => $addr['city']     ?? '',
-				'addressRegion'   => $addr['state']    ?? '',
-				'postalCode'      => $addr['zip']      ?? '',
-				'addressCountry'  => $addr['country']  ?? 'US',
-			] );
+		$addr = MM_Mod_Base::postal_address_node( $loc['address'] ?? [] );
+		if ( $addr ) {
+			$node['address'] = $addr;
 		}
 		if ( ! empty( $loc['phone'] ) ) {
 			$node['telephone'] = sanitize_text_field( $loc['phone'] );

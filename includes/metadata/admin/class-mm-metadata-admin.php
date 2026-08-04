@@ -144,86 +144,14 @@ public function sanitize_contact_style( $raw ): array {
 if ( ! is_array( $raw ) ) {
 return MM_Mod_Business_Contact::style_defaults();
 }
-return $this->deep_sanitize( $raw, MM_Mod_Business_Contact::style_defaults() );
+return MM_Site_Settings::deep_sanitize_section( $raw, MM_Mod_Business_Contact::style_defaults() );
 }
 
 public function sanitize_business( $raw ): array {
 if ( ! is_array( $raw ) ) {
 return MM_Site_Settings::business_defaults();
 }
-return $this->deep_sanitize( $raw, MM_Site_Settings::business_defaults() );
-}
-
-/**
- * Partial-section save.
- *
- * The form only submits one section's inputs, e.g.:
- *   $raw = [ 'titles' => [ 'separator' => '|', ... ] ]
- *
- * Load the current full option, sanitize just the submitted section,
- * merge it back in, and return the complete merged array.
- */
-public function sanitize_section( $raw, string $section ): array {
-$defaults = MM_Site_Settings::settings_defaults();
-$current  = get_option( MM_META_OPT_SETTINGS, [] );
-if ( ! is_array( $current ) ) {
-$current = $defaults;
-}
-
-$submitted        = ( is_array( $raw ) && array_key_exists( $section, $raw ) ) ? $raw[ $section ] : ( is_array( $raw ) ? $raw : [] );
-$section_defaults = $defaults[ $section ] ?? [];
-$sanitized        = $this->deep_sanitize( $submitted, $section_defaults );
-
-$current[ $section ] = $sanitized;
-
-return $current;
-}
-
-/**
- * Recursively sanitize $input against $defaults.
- * Unknown keys stripped; missing keys filled from defaults.
- * Missing bool keys (unchecked checkboxes) default to false.
- */
-private function deep_sanitize( array $input, array $defaults ): array {
-$out = [];
-foreach ( $defaults as $key => $default_val ) {
-if ( ! array_key_exists( $key, $input ) ) {
-$out[ $key ] = is_bool( $default_val ) ? false : $default_val;
-continue;
-}
-
-$val = $input[ $key ];
-
-if ( is_array( $default_val ) && is_array( $val ) ) {
-$is_list = empty( $default_val ) || ( array_keys( $default_val ) === range( 0, count( $default_val ) - 1 ) );
-if ( $is_list ) {
-$out[ $key ] = array_values( array_map(
-function ( $item ) {
-return is_array( $item )
-? array_map( 'sanitize_text_field', $item )
-: sanitize_text_field( (string) $item );
-},
-$val
-) );
-} else {
-$out[ $key ] = $this->deep_sanitize( $val, $default_val );
-}
-} elseif ( is_bool( $default_val ) ) {
-$out[ $key ] = (bool) $val;
-} elseif ( is_int( $default_val ) ) {
-$out[ $key ] = (int) $val;
-} else {
-$str = (string) $val;
-if ( strpos( $key, 'custom' ) !== false || strpos( $key, 'json' ) !== false ) {
-$out[ $key ] = sanitize_textarea_field( $str );
-} elseif ( strpos( $key, 'url' ) !== false || strpos( $key, '_image' ) !== false ) {
-$out[ $key ] = esc_url_raw( $str );
-} else {
-$out[ $key ] = sanitize_text_field( $str );
-}
-}
-}
-return $out;
+return MM_Site_Settings::deep_sanitize_section( $raw, MM_Site_Settings::business_defaults() );
 }
 
 // -------------------------------------------------------------------------

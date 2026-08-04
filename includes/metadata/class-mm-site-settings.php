@@ -43,7 +43,7 @@ class MM_Site_Settings {
 	 * @param mixed  $default Returned when the key does not exist.
 	 * @return mixed
 	 */
-	public function get( string $key, $default = null ) {
+	public function get( string $key, mixed $default = null ) {
 		$this->load();
 		return self::dot_get( $this->settings_data, $key, $default );
 	}
@@ -51,7 +51,7 @@ class MM_Site_Settings {
 	/**
 	 * Get a business profile value using dot-notation.
 	 */
-	public function get_business( string $key = '', $default = null ) {
+	public function get_business( string $key = '', mixed $default = null ) {
 		$this->load();
 		if ( '' === $key ) {
 			return $this->business_data;
@@ -180,9 +180,10 @@ class MM_Site_Settings {
 
 	/**
 	 * Recursively sanitize $input against $defaults.
-	 * Static version of MM_Metadata_Admin::deep_sanitize() for use in the save filter.
+	 * Unknown keys stripped; missing keys filled from defaults.
+	 * Missing bool keys (unchecked checkboxes) default to false.
 	 */
-	private static function deep_sanitize_section( array $input, array $defaults ): array {
+	public static function deep_sanitize_section( array $input, array $defaults ): array {
 		$out = [];
 		foreach ( $defaults as $key => $default_val ) {
 			if ( ! array_key_exists( $key, $input ) ) {
@@ -212,9 +213,9 @@ class MM_Site_Settings {
 				$out[ $key ] = (int) $val;
 			} else {
 				$str = (string) $val;
-				if ( strpos( $key, 'custom' ) !== false || strpos( $key, 'json' ) !== false ) {
+				if ( str_contains( $key, 'custom' ) || str_contains( $key, 'json' ) ) {
 					$out[ $key ] = sanitize_textarea_field( $str );
-				} elseif ( strpos( $key, 'url' ) !== false || strpos( $key, '_image' ) !== false ) {
+				} elseif ( str_contains( $key, 'url' ) || str_contains( $key, '_image' ) ) {
 					$out[ $key ] = esc_url_raw( $str );
 				} else {
 					$out[ $key ] = sanitize_text_field( $str );
@@ -498,12 +499,13 @@ class MM_Site_Settings {
 		}
 	}
 
-	private static function deep_merge( array $base, array $override ): array {
+	public static function deep_merge( array $base, array $override, bool $merge_lists = false ): array {
 		foreach ( $override as $key => $value ) {
 			if ( isset( $base[ $key ] ) && is_array( $base[ $key ] ) && is_array( $value ) ) {
-				// Numeric lists (robots.disallow, etc.) are replaced, not merged.
 				$is_list = array_is_list( $base[ $key ] ) && array_is_list( $value );
-				$base[ $key ] = $is_list ? $value : self::deep_merge( $base[ $key ], $value );
+				$base[ $key ] = ( $is_list && ! $merge_lists )
+					? $value
+					: self::deep_merge( $base[ $key ], $value, $merge_lists );
 			} else {
 				$base[ $key ] = $value;
 			}
@@ -511,7 +513,7 @@ class MM_Site_Settings {
 		return $base;
 	}
 
-	private static function dot_get( array $data, string $key, $default ) {
+	private static function dot_get( array $data, string $key, mixed $default ): mixed {
 		$keys    = explode( '.', $key );
 		$current = $data;
 		foreach ( $keys as $segment ) {
@@ -523,7 +525,7 @@ class MM_Site_Settings {
 		return $current;
 	}
 
-	private function decode_meta( $raw ): array {
+	private function decode_meta( mixed $raw ): array {
 		if ( ! $raw ) {
 			return [];
 		}

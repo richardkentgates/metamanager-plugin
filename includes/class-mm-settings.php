@@ -53,10 +53,10 @@ class MM_Settings {
 	// -----------------------------------------------------------------------
 
 	public static function init(): void {
-			// Priority 50 ensures this submenu is registered after all other
-			// Metamanager submenus (which use default priority 10), so
-			// Preferences appears at the bottom of the sub-nav stack.
-			add_action( 'admin_menu', [ __CLASS__, 'add_menu' ], 50 );
+		// Priority 50 ensures this submenu is registered after all other
+		// Metamanager submenus (which use default priority 10), so
+		// Preferences appears at the bottom of the sub-nav stack.
+		add_action( 'admin_menu', [ __CLASS__, 'add_menu' ], 50 );
 		add_action( 'admin_init',  [ __CLASS__, 'register_settings' ] );
 	}
 
