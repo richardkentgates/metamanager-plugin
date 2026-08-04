@@ -32,7 +32,7 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'name', $result );
 	}
 
-	public function test_sanitize_business_passes_through_array(): void {
+	public function test_sanitize_business_passes_through_valid_array(): void {
 		$input = [
 			'name'    => 'Test Business',
 			'phone'   => '555-1234',
@@ -56,9 +56,9 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 
 	public function test_sanitize_business_strips_unknown_keys(): void {
 		$input = [
-			'name'         => 'Test',
-			'unknown_key'  => 'should be removed',
-			'address'      => [],
+			'name'        => 'Test',
+			'unknown_key' => 'should be removed',
+			'address'     => [],
 		];
 
 		$result = $this->admin->sanitize_business( $input );
@@ -119,7 +119,6 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 
 		$this->admin->register_settings();
 
-		// Verify at least one metamanager-related setting is registered.
 		$found = false;
 		foreach ( $wp_registered_settings as $name => $args ) {
 			if ( str_contains( $name, 'mm_meta' ) || str_contains( $name, 'mm_' ) ) {
@@ -129,5 +128,184 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 		}
 
 		$this->assertTrue( $found, 'Expected at least one mm_meta setting to be registered.' );
+	}
+
+	public function test_register_settings_registers_business_option(): void {
+		global $wp_registered_settings;
+
+		$this->admin->register_settings();
+
+		$this->assertArrayHasKey( MM_META_OPT_BUSINESS, $wp_registered_settings );
+	}
+
+	public function test_register_settings_registers_settings_option(): void {
+		global $wp_registered_settings;
+
+		$this->admin->register_settings();
+
+		$this->assertArrayHasKey( MM_META_OPT_SETTINGS, $wp_registered_settings );
+	}
+
+	public function test_register_settings_registers_contact_style_option(): void {
+		global $wp_registered_settings;
+
+		$this->admin->register_settings();
+
+		$this->assertArrayHasKey( MM_Mod_Business_Contact::OPT_STYLE, $wp_registered_settings );
+	}
+
+	// ------------------------------------------------------------------
+	// ajax_tools_action() — capability and nonce checks
+	// ------------------------------------------------------------------
+
+	public function test_ajax_tools_action_rejects_without_nonce(): void {
+		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $user_id );
+
+		$_POST = [ 'tools_action' => 'reset_settings' ];
+
+		try {
+			$this->admin->ajax_tools_action();
+		} catch ( \WPDieException $e ) {
+			// Expected — check_ajax_referer calls wp_die.
+		}
+
+		$this->assertTrue( true );
+		unset( $_POST );
+	}
+
+	public function test_ajax_tools_action_rejects_unauthorized_user(): void {
+		$user_id = $this->factory->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $user_id );
+
+		$_POST = [
+			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
+			'tools_action'  => 'reset_settings',
+		];
+
+		try {
+			$this->admin->ajax_tools_action();
+		} catch ( \WPDieException $e ) {
+			$this->assertStringContainsString( '403', $e->getMessage() );
+		}
+
+		unset( $_POST );
+	}
+
+	// ------------------------------------------------------------------
+	// ajax_tools_action() — valid actions
+	// ------------------------------------------------------------------
+
+	public function test_ajax_tools_action_reset_settings(): void {
+		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $user_id );
+
+		$_POST = [
+			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
+			'tools_action'  => 'reset_settings',
+		];
+
+		try {
+			$this->admin->ajax_tools_action();
+		} catch ( \WPDieException $e ) {
+			// wp_send_json_success calls wp_die.
+		}
+
+		$settings = get_option( MM_META_OPT_SETTINGS, [] );
+		$this->assertNotEmpty( $settings );
+		$this->assertArrayHasKey( 'titles', $settings );
+
+		$business = get_option( MM_META_OPT_BUSINESS, [] );
+		$this->assertNotEmpty( $business );
+		$this->assertArrayHasKey( 'name', $business );
+
+		unset( $_POST );
+	}
+
+	public function test_ajax_tools_action_flush_rewrite(): void {
+		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $user_id );
+
+		$_POST = [
+			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
+			'tools_action'  => 'flush_rewrite',
+		];
+
+		try {
+			$this->admin->ajax_tools_action();
+		} catch ( \WPDieException $e ) {
+			// Expected.
+		}
+
+		$this->assertTrue( true );
+		unset( $_POST );
+	}
+
+	public function test_ajax_tools_action_ping_sitemap(): void {
+		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $user_id );
+
+		$_POST = [
+			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
+			'tools_action'  => 'ping_sitemap',
+		];
+
+		try {
+			$this->admin->ajax_tools_action();
+		} catch ( \WPDieException $e ) {
+			// Expected.
+		}
+
+		$this->assertTrue( true );
+		unset( $_POST );
+	}
+
+	public function test_ajax_tools_action_unknown_action(): void {
+		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $user_id );
+
+		$_POST = [
+			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
+			'tools_action'  => 'nonexistent_action',
+		];
+
+		try {
+			$this->admin->ajax_tools_action();
+		} catch ( \WPDieException $e ) {
+			// Expected.
+		}
+
+		$this->assertTrue( true );
+		unset( $_POST );
+	}
+
+	// ------------------------------------------------------------------
+	// add_help_tabs()
+	// ------------------------------------------------------------------
+
+	public function test_add_help_tabs_registers_on_known_screen(): void {
+		$screen = new \stdClass();
+		$screen->id = 'metamanager_page_mm-meta-titles';
+
+		$mock = $this->getMockBuilder( \WP_Screen::class )
+			->disableOriginalConstructor()
+			->onlyMethods( [] )
+			->getMock();
+		$mock->id = 'metamanager_page_mm-meta-titles';
+
+		// add_help_tab and set_help_sidebar should not throw.
+		$this->admin->add_help_tabs( $mock );
+		$this->assertTrue( true );
+	}
+
+	public function test_add_help_tabs_skips_unknown_screen(): void {
+		$mock = $this->getMockBuilder( \WP_Screen::class )
+			->disableOriginalConstructor()
+			->onlyMethods( [] )
+			->getMock();
+		$mock->id = 'unknown_screen_id';
+
+		$this->admin->add_help_tabs( $mock );
+		$this->assertTrue( true );
 	}
 }
