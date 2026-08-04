@@ -13,12 +13,29 @@
 **You MUST follow this exact process for ALL changes:**
 
 1. **ALL work happens on `dev`**: `git checkout dev`, make changes, commit, push to dev
-2. **Promote via PRs only**: `gh pr create --head dev --base test`, then `gh pr merge --admin`
-3. **Then promote test→main**: `gh pr create --head test --base main`, then `gh pr merge --admin`
-4. **If a PR has conflicts**: CLOSE IT (`gh pr close`), do NOT try to resolve them by checking out test/main
+2. **Promote via workflow_dispatch only**: Trigger `promote-to-test.yml` — merges dev→test, builds, deploys to apt
+3. **Then promote test→main**: Trigger `promote-to-main.yml` — merges test→main, tags, releases, deploys to apt
+4. **If a merge has conflicts**: CLOSE the workflow, do NOT try to resolve them by checking out test/main
 5. **If you need to update test with main's changes**: Create a new empty commit on dev that triggers CI, or ask the user to resolve
 
 **The ONLY branch you are allowed to checkout, edit, commit, or push is `dev`.**
+
+## CI Flow
+
+```
+dev  ──  all development, direct push; CI runs checks + auto-version bump
+    │  workflow_dispatch: promote-to-test.yml
+    ▼
+test  ──  build zip + deploy to apt server (metadata.json)
+    │  workflow_dispatch: promote-to-main.yml
+    ▼
+main  ──  tag + GitHub release + deploy to apt server (metadata.json)
+```
+
+- On every dev push: CI runs PHP lint, PHPStan, ShellCheck, integration tests, builds artifact, then auto-bumps `MM_VERSION`
+- The actor check (`github.actor != 'github-actions[bot]'`) prevents infinite loops — version bump commits don't re-trigger CI
+- Promotion workflows merge directly via git (no PRs), build, and deploy to apt server
+- WordPress detects the update via `MM_Updater` polling `metadata.json`
 
 ## Deployment Rules
 
@@ -65,23 +82,12 @@ The `diagnose()` method returns a specific status for each failure mode:
 **Format**:
 ```json
 {
-  "2.3.51": "2.4.8",
-  "2.3.50": "2.4.8",
-  "2.3.49": "2.4.8",
-  "2.3.48": "2.4.8",
-  "2.3.47": "2.4.8",
-  "2.3.46": "2.4.8",
-  "2.3.45": "2.4.8",
-  "2.3.44": "2.4.8",
-  "2.3.43": "2.4.8",
-  "2.3.42": "2.4.8",
-  "2.3.41": "2.4.8",
-  "2.3.40": "2.4.8",
-  "2.3.39": "2.4.8",
-  "2.3.38": "2.4.8",
-  "2.3.37": "2.4.8",
-  "2.3.36": "2.4.8",
-  "2.3.35": "2.4.8"
+  "2.3.82": "2.4.32",
+  "2.3.81": "2.4.32",
+  "2.3.80": "2.4.32",
+  "2.3.79": "2.4.32",
+  "2.3.78": "2.4.32",
+  "2.3.77": "2.4.32"
 }
 ```
 
@@ -122,7 +128,7 @@ Before pushing a new plugin version to dev:
 ## Conventions
 
 - Branch protection on `test` and `main`: PRs required, no direct pushes
-- Promotion = open PR from `dev` → `test` or `test` → `main`, CI runs, merge
+- Promotion = workflow_dispatch triggers direct git merge (no PRs)
 - Shell scripts/daemons update via apt; plugin updates via WordPress native update
 - Daemon updates are triggered automatically by plugin updates (no manual apt needed)
 - PHP 8.2 for WP-CLI (`php8.2 /usr/local/bin/wp --path=/srv/www/wordpress`)
