@@ -105,7 +105,7 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 | `MM_Mod_Social` | 247 | 15 | Done |
 | `MM_Memory_Manager` | 231 | 37 | Done |
 
-**Total: 449 tests, 1089 assertions — all passing.**
+**Total: 488 tests, 1173 assertions — all passing.**
 
 ### Infrastructure
 
@@ -245,13 +245,13 @@ No CRITICAL or HIGH findings. One LOW: `@exec()` suppression in daemon updater.
 | Q-4 | Indentation inconsistency for `mm_apply_bulk_meta` hook | `class-mm-admin.php:66-67` | LOW | FIXED (v2.3.70) |
 | Q-5 | Legacy test class name `Test_MM_Frontend` (MM_Frontend no longer exists) | `tests/Integration/Test_MM_Frontend.php` | LOW | FIXED (v2.3.70) |
 
-### Test Coverage — Priority 2
+### Test Coverage — Priority 2 — Complete
 
-| Class | Lines | Why |
-|-------|-------|-----|
-| `MM_Post_Meta_Panel` | 198 | Per-post SEO save logic |
-| `MM_Metadata_Admin` | 366 | Settings, sanitization, AJAX |
-| `MM_Mod_Sitemap_Web` | 337 | XML sitemap engine |
+| Class | Lines | Tests | Status |
+|-------|-------|-------|--------|
+| `MM_Post_Meta_Panel` | 198 | 19 | Done |
+| `MM_Metadata_Admin` | 366 | 15 | Done |
+| `MM_Mod_Sitemap_Web` | 337 | 34 | Done |
 
 ### Validation
 
