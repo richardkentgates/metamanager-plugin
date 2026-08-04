@@ -61,8 +61,9 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			$node['description'] = get_bloginfo( 'description' );
 		}
 
-		// SearchAction (Sitelinks search box).
-		if ( $settings->get( 'schema.website_searchaction', true ) ) {
+		// SearchAction (Sitelinks search box) — disabled by default.
+		// Deprecated by Google Nov 2024; still valid schema.org but ignored.
+		if ( $settings->get( 'schema.website_searchaction', false ) ) {
 			$node['potentialAction'] = [
 				'@type'       => 'SearchAction',
 				'target'      => [
