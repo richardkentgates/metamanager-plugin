@@ -229,7 +229,7 @@ No CRITICAL or HIGH findings. One LOW: `@exec()` suppression in daemon updater.
 | G-1 | `get_term_link()` return not type-checked — WP_Error flows into og:url | MEDIUM | FIXED (v2.3.71) — added is_string() checks in 3 files |
 | G-2 | LinkedIn prefix empty string — produces bare handle, not URL | MEDIUM | FIXED (v2.3.71) — added https://www.linkedin.com/in/ prefix |
 | G-3 | FAQ extraction only supports `<details>/<summary>` — no other patterns | MEDIUM | FIXED (v2.3.71) — added dl/dt/dd and heading+paragraph patterns |
-| G-4 | HTML sitemap flat queries hardcap at 500 posts, no pagination | MEDIUM | OPEN — configurable limit needed |
+| G-4 | HTML sitemap flat queries hardcap at 500 posts, no pagination | MEDIUM | FIXED (v2.3.72) — configurable flat_limit (default 500, max 5000) |
 | G-5 | HTML sitemap hierarchical queries unlimited — OOM risk on large sites | MEDIUM | FIXED (v2.3.71) — capped at 500 per level |
 | G-6 | `remove_wp_dns_prefetch` setting removes ALL resource hints, not just DNS prefetch | MEDIUM | FIXED (v2.3.71) — selective filter removes only dns-prefetch |
 | G-7 | No deactivation hook — cron events and tables persist after deactivation | MEDIUM | FIXED (v2.3.71) — added mm_meta_check_links + flush_rewrite_rules |
