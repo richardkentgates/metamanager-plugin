@@ -2,8 +2,9 @@
 /**
  * Metamanager Memory Manager
  *
- * Calculates available memory, sizes batches accordingly, and manages
- * the admin notice when memory is exhausted.
+ * Fluid memory management that scales to available resources.
+ * Monitors both PHP and system-level memory, sizes batches dynamically,
+ * and only pauses when the system is genuinely under memory pressure.
  *
  * Called on every batch processing cycle (WP-Cron tick, admin AJAX scan,
  * WP-CLI batch). The notice is dynamic — it appears only when a cycle
@@ -20,10 +21,17 @@ defined( 'ABSPATH' ) || exit;
 class MM_Memory_Manager {
 
 	/**
-	 * Minimum free memory (bytes) to reserve for PHP operational overhead.
-	 * If free memory drops below this, batch processing pauses.
+	 * Minimum floor for available memory (bytes).
+	 * Even on unlimited PHP, always reserve this much headroom.
 	 */
-	const OPERATIONAL_BUFFER = 128 * 1024 * 1024; // 128 MB.
+	const MIN_FLOOR = 8 * 1024 * 1024; // 8 MB.
+
+	/**
+	 * System memory pressure threshold.
+	 * If free system memory drops below this fraction of total, pause.
+	 * 0.10 = pause when less than 10% of system RAM is free.
+	 */
+	const SYSTEM_PRESSURE_RATIO = 0.10;
 
 	/**
 	 * Base memory cost per job (bytes).
@@ -51,13 +59,82 @@ class MM_Memory_Manager {
 	/**
 	 * Get available memory for batch processing.
 	 *
-	 * @return int Free bytes after operational buffer.
+	 * Returns the lesser of PHP available memory and system available memory,
+	 * minus a small floor. On systems with unlimited PHP, this is governed
+	 * entirely by system RAM. On systems with a PHP memory_limit, it's the
+	 * lesser of the two.
+	 *
+	 * @return int Available bytes for batch processing.
 	 */
 	public static function get_available_memory(): int {
+		$php_free    = self::get_php_available();
+		$system_free = self::get_system_available();
+
+		// If either source returns 0 (unavailable), use the other.
+		if ( 0 === $php_free ) {
+			return max( 0, $system_free - self::MIN_FLOOR );
+		}
+		if ( 0 === $system_free ) {
+			return max( 0, $php_free - self::MIN_FLOOR );
+		}
+
+		// Use whichever is more constrained.
+		$available = min( $php_free, $system_free );
+		return max( 0, $available - self::MIN_FLOOR );
+	}
+
+	/**
+	 * Get available PHP memory.
+	 *
+	 * @return int Free bytes within PHP memory_limit, or 0 if unlimited.
+	 */
+	private static function get_php_available(): int {
 		$limit = self::get_memory_limit();
-		$used  = memory_get_usage( true );
-		$free  = $limit - $used - self::OPERATIONAL_BUFFER;
-		return max( 0, $free );
+		if ( PHP_INT_MAX === $limit ) {
+			return 0; // Unlimited — don't constrain by PHP.
+		}
+		$used = memory_get_usage( true );
+		return max( 0, $limit - $used );
+	}
+
+	/**
+	 * Get available system memory from /proc/meminfo.
+	 *
+	 * @return int Free bytes, or 0 if unable to determine.
+	 */
+	private static function get_system_available(): int {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$content = @file_get_contents( '/proc/meminfo' );
+		if ( false === $content ) {
+			return 0;
+		}
+
+		$mem_free      = self::parse_meminfo( $content, 'MemFree' );
+		$mem_available = self::parse_meminfo( $content, 'MemAvailable' );
+		$swap_free     = self::parse_meminfo( $content, 'SwapFree' );
+
+		// Prefer MemAvailable (includes reclaimable buffers/cache), fall back to MemFree.
+		$free = $mem_available > 0 ? $mem_available : $mem_free;
+
+		// Add available swap as a safety cushion — don't count it fully,
+		// but use it as headroom before we consider the system pressured.
+		$free += (int) ( $swap_free * 0.25 );
+
+		return $free;
+	}
+
+	/**
+	 * Parse a value from /proc/meminfo.
+	 *
+	 * @param string $content File contents.
+	 * @param string $key     Field name (e.g., "MemFree").
+	 * @return int Value in bytes, or 0 if not found.
+	 */
+	private static function parse_meminfo( string $content, string $key ): int {
+		if ( preg_match( '/^' . preg_quote( $key, '/' ) . ':\s+(\d+)\s+kB$/m', $content, $m ) ) {
+			return (int) $m[1] * 1024; // kB to bytes.
+		}
+		return 0;
 	}
 
 	/**
@@ -70,7 +147,7 @@ class MM_Memory_Manager {
 		if ( '-1' === $limit ) {
 			return PHP_INT_MAX;
 		}
-		$value = (int) $limit;
+		$value  = (int) $limit;
 		$suffix = strtolower( substr( trim( $limit ), -1 ) );
 		return match ( $suffix ) {
 			'g' => $value * 1024 * 1024 * 1024,
@@ -78,6 +155,60 @@ class MM_Memory_Manager {
 			'k' => $value * 1024,
 			default => $value,
 		};
+	}
+
+	/**
+	 * Get total system memory from /proc/meminfo.
+	 *
+	 * @return int Total RAM in bytes, or 0 if unknown.
+	 */
+	public static function get_system_total(): int {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$content = @file_get_contents( '/proc/meminfo' );
+		if ( false === $content ) {
+			return 0;
+		}
+		return self::parse_meminfo( $content, 'MemTotal' );
+	}
+
+	/**
+	 * Check if the system is under memory pressure.
+	 *
+	 * Uses system-level memory (not just PHP) to determine pressure.
+	 * Returns true only when the system is genuinely low on memory.
+	 *
+	 * @return bool True if memory pressure is detected.
+	 */
+	public static function should_pause(): bool {
+		$system_total = self::get_system_total();
+		$system_free  = self::get_system_available();
+
+		// If we can't read system memory, fall back to PHP-only check.
+		if ( 0 === $system_total ) {
+			$php_limit = self::get_memory_limit();
+			if ( PHP_INT_MAX === $php_limit ) {
+				return false; // Unlimited PHP, no system data — don't pause.
+			}
+			$php_free = self::get_php_available();
+			return $php_free < self::MIN_FLOOR;
+		}
+
+		// System under pressure: free memory below threshold.
+		$pressure_threshold = (int) ( $system_total * self::SYSTEM_PRESSURE_RATIO );
+		if ( $system_free < $pressure_threshold ) {
+			return true;
+		}
+
+		// PHP hitting its limit (and it's not unlimited).
+		$php_limit = self::get_memory_limit();
+		if ( PHP_INT_MAX !== $php_limit ) {
+			$php_free = self::get_php_available();
+			if ( $php_free < self::MIN_FLOOR ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -139,8 +270,8 @@ class MM_Memory_Manager {
 	public static function calculate_batch_size( array $jobs, int $max_configured ): int {
 		$available = self::get_available_memory();
 
-		// Memory is critically low — pause processing.
-		if ( $available < self::OPERATIONAL_BUFFER ) {
+		// Below the floor — pause.
+		if ( $available < self::MIN_FLOOR ) {
 			return 0;
 		}
 
@@ -155,8 +286,8 @@ class MM_Memory_Manager {
 
 			$cost = self::estimate_job_cost( $job );
 
-			// Leave at least OPERATIONAL_BUFFER for remaining PHP execution.
-			if ( $remaining - $cost < self::OPERATIONAL_BUFFER ) {
+			// Leave the floor for remaining PHP execution.
+			if ( $remaining - $cost < self::MIN_FLOOR ) {
 				break;
 			}
 
@@ -165,15 +296,6 @@ class MM_Memory_Manager {
 		}
 
 		return $count;
-	}
-
-	/**
-	 * Check if batch processing should pause due to memory limits.
-	 *
-	 * @return bool True if memory is too low to process any jobs.
-	 */
-	public static function should_pause(): bool {
-		return self::get_available_memory() < self::OPERATIONAL_BUFFER;
 	}
 
 	/**
@@ -215,17 +337,35 @@ class MM_Memory_Manager {
 		if ( ! self::has_notice() ) {
 			return;
 		}
-		$limit = size_format( self::get_memory_limit() );
-		$used  = size_format( memory_get_usage( true ) );
+
+		$system_total = self::get_system_total();
+		$system_free  = self::get_system_available();
+		$php_limit    = self::get_memory_limit();
+		$php_used     = memory_get_usage( true );
+
+		$parts = [];
+		if ( $system_total > 0 ) {
+			$parts[] = sprintf(
+				/* translators: 1: used system memory, 2: total system memory */
+				esc_html__( 'System: %1$s / %2$s', 'metamanager' ),
+				esc_html( size_format( $system_total - $system_free ) ),
+				esc_html( size_format( $system_total ) )
+			);
+		}
+		if ( PHP_INT_MAX !== $php_limit ) {
+			$parts[] = sprintf(
+				/* translators: 1: used PHP memory, 2: PHP memory limit */
+				esc_html__( 'PHP: %1$s / %2$s', 'metamanager' ),
+				esc_html( size_format( $php_used ) ),
+				esc_html( size_format( $php_limit ) )
+			);
+		}
+
 		printf(
-			'<div class="notice notice-warning is-dismissible"><p><strong>%s</strong> %s</p></div>',
+			'<div class="notice notice-warning is-dismissible"><p><strong>%s</strong> %s %s</p></div>',
 			esc_html__( 'Metamanager:', 'metamanager' ),
-			sprintf(
-				/* translators: 1: used memory, 2: memory limit */
-				esc_html__( 'Batch processing paused — memory limit reached (%1$s / %2$s). The queue will resume automatically when memory is available.', 'metamanager' ),
-				esc_html( $used ),
-				esc_html( $limit )
-			)
+			esc_html__( 'Batch processing paused — system under memory pressure.', 'metamanager' ),
+			implode( ' | ', $parts )
 		);
 	}
 }
