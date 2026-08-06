@@ -434,6 +434,11 @@ function mm_import_completed_jobs(): void {
 // Register custom attachment post meta — type safety, sanitisation, REST API.
 add_action( 'init', [ 'MM_Metadata', 'register_meta' ] );
 
+// Enable excerpt field for pages (WordPress only supports excerpts for posts by default).
+add_action( 'init', function (): void {
+	add_post_type_support( 'page', 'excerpt' );
+} );
+
 // After WordPress generates image sizes on upload, enqueue both job types.
 add_filter( 'wp_generate_attachment_metadata', [ 'MM_Job_Queue', 'on_upload' ], 20, 2 );
 
