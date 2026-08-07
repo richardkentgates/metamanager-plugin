@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.84
+ * Version:      2.3.88
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.84' );
+define( 'MM_VERSION',     '2.3.88' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -433,6 +433,11 @@ function mm_import_completed_jobs(): void {
 
 // Register custom attachment post meta — type safety, sanitisation, REST API.
 add_action( 'init', [ 'MM_Metadata', 'register_meta' ] );
+
+// Enable excerpt field for pages (WordPress only supports excerpts for posts by default).
+add_action( 'init', function (): void {
+	add_post_type_support( 'page', 'excerpt' );
+} );
 
 // After WordPress generates image sizes on upload, enqueue both job types.
 add_filter( 'wp_generate_attachment_metadata', [ 'MM_Job_Queue', 'on_upload' ], 20, 2 );
