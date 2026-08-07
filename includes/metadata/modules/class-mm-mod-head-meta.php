@@ -338,12 +338,12 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	private function auto_description( \WP_Post $post, string $source ): string {
 		if ( 'excerpt' === $source || '' === $source ) {
 			if ( $post->post_excerpt ) {
-				return wp_trim_words( wp_strip_all_tags( $post->post_excerpt ), 30, '' );
+				return wp_trim_words( wp_strip_all_tags( $post->post_excerpt ), 25, '' );
 			}
 			// Fall through to content trim.
 		}
 		if ( 'content' === $source || ( 'excerpt' === $source && ! $post->post_excerpt ) ) {
-			return wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 30, '' );
+			return wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 25, '' );
 		}
 		return '';
 	}

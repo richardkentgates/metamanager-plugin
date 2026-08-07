@@ -59,7 +59,7 @@ class Test_MM_Post_Meta_Panel extends WP_UnitTestCase {
 		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $user_id );
 
-		$_POST = [ 'mm_meta_title' => 'No Nonce' ];
+		$_POST = [ 'mm_meta_canonical' => 'https://example.com' ];
 
 		$this->panel->save_meta( $this->post_id, get_post( $this->post_id ) );
 		$this->assertEmpty( get_post_meta( $this->post_id, MM_META_KEY, true ) );
@@ -73,7 +73,7 @@ class Test_MM_Post_Meta_Panel extends WP_UnitTestCase {
 
 		$_POST = [
 			'mm_meta_post_nonce' => 'invalid_nonce_value',
-			'mm_meta_title'      => 'Bad Nonce',
+			'mm_meta_canonical'  => 'https://example.com',
 		];
 
 		$this->panel->save_meta( $this->post_id, get_post( $this->post_id ) );
@@ -88,7 +88,7 @@ class Test_MM_Post_Meta_Panel extends WP_UnitTestCase {
 
 		$_POST = [
 			'mm_meta_post_nonce' => wp_create_nonce( 'mm_meta_post_meta_save' ),
-			'mm_meta_title'      => 'No Cap',
+			'mm_meta_canonical'  => 'https://example.com',
 		];
 
 		$this->panel->save_meta( $this->post_id, get_post( $this->post_id ) );
@@ -100,22 +100,6 @@ class Test_MM_Post_Meta_Panel extends WP_UnitTestCase {
 	// ------------------------------------------------------------------
 	// save_meta() — field sanitization
 	// ------------------------------------------------------------------
-
-	public function test_save_meta_sanitizes_title_field(): void {
-		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
-		wp_set_current_user( $user_id );
-
-		$_POST = $this->base_post( [ 'mm_meta_title' => '  Clean Title  ' ] );
-
-		$this->panel->save_meta( $this->post_id, get_post( $this->post_id ) );
-		$raw  = get_post_meta( $this->post_id, MM_META_KEY, true );
-		$meta = json_decode( $raw, true );
-
-		$this->assertIsArray( $meta );
-		$this->assertSame( 'Clean Title', $meta['title'] );
-
-		unset( $_POST );
-	}
 
 	public function test_save_meta_escapes_url_fields(): void {
 		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
@@ -274,29 +258,6 @@ class Test_MM_Post_Meta_Panel extends WP_UnitTestCase {
 	}
 
 	// ------------------------------------------------------------------
-	// save_meta() — OG fields
-	// ------------------------------------------------------------------
-
-	public function test_save_meta_stores_og_fields(): void {
-		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
-		wp_set_current_user( $user_id );
-
-		$_POST = $this->base_post( [
-			'mm_meta_og_title'       => 'OG Title',
-			'mm_meta_og_description' => 'OG Description',
-			'mm_meta_og_image_id'    => 42,
-		] );
-		$this->panel->save_meta( $this->post_id, get_post( $this->post_id ) );
-		$meta = json_decode( get_post_meta( $this->post_id, MM_META_KEY, true ), true );
-
-		$this->assertSame( 'OG Title', $meta['og_title'] );
-		$this->assertSame( 'OG Description', $meta['og_description'] );
-		$this->assertSame( 42, $meta['og_image_id'] );
-
-		unset( $_POST );
-	}
-
-	// ------------------------------------------------------------------
 	// save_meta() — schema_type and breadcrumb_label
 	// ------------------------------------------------------------------
 
@@ -360,12 +321,7 @@ class Test_MM_Post_Meta_Panel extends WP_UnitTestCase {
 	private function base_post( array $overrides = [] ): array {
 		return array_merge( [
 			'mm_meta_post_nonce'       => wp_create_nonce( 'mm_meta_post_meta_save' ),
-			'mm_meta_title'            => '',
-			'mm_meta_description'      => '',
 			'mm_meta_canonical'        => '',
-			'mm_meta_og_title'         => '',
-			'mm_meta_og_description'   => '',
-			'mm_meta_og_image_id'      => 0,
 			'mm_meta_schema_type'      => '',
 			'mm_meta_breadcrumb_label' => '',
 			'mm_meta_exclude_sitemap'  => 0,

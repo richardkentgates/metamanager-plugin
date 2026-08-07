@@ -60,7 +60,7 @@ class MM_Mod_Social extends MM_Mod_Base {
 				$description = ! empty( $meta['og_description'] ) ? $meta['og_description'] : $description;
 				$url         = get_permalink( $post );
 
-				// Image: custom meta → content image → attachment source → site default.
+				// Image: custom meta → featured image → content image → attachment source → site default.
 				if ( ! empty( $meta['og_image_id'] ) ) {
 					$image = $this->image_data( (int) $meta['og_image_id'] );
 				} elseif ( ! empty( $meta['og_image_url'] ) ) {
@@ -68,12 +68,18 @@ class MM_Mod_Social extends MM_Mod_Base {
 				} elseif ( 'attachment' === $post->post_type ) {
 					$image = $this->image_data( $post->ID );
 				} else {
-					// Scan content for the first actual image on the page.
-					$content_img = MM_Media_Detector::first_image( $post->post_content );
-					if ( $content_img ) {
-						$image = $this->image_data( $content_img['attachment_id'], $content_img['url'] );
+					// Use featured image if set.
+					$thumbnail_id = get_post_thumbnail_id( $post->ID );
+					if ( $thumbnail_id ) {
+						$image = $this->image_data( (int) $thumbnail_id );
 					} else {
-						$image = $this->default_image( $settings );
+						// Scan content for the first actual image on the page.
+						$content_img = MM_Media_Detector::first_image( $post->post_content );
+						if ( $content_img ) {
+							$image = $this->image_data( $content_img['attachment_id'], $content_img['url'] );
+						} else {
+							$image = $this->default_image( $settings );
+						}
 					}
 				}
 
