@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: test
           fetch-depth: 0
@@ -55,17 +55,17 @@ jobs:
 
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${APT_USER}@${APT_HOST}" \
-            "sudo mkdir -p /var/www/html/metamanager && sudo chown -R ${APT_USER}:${APT_USER} /var/www/html/metamanager"
+            "sudo mkdir -p /var/www/html/metamanager-test && sudo chown -R ${APT_USER}:${APT_USER} /var/www/html/metamanager-test"
 
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             metamanager-${{ steps.version.outputs.version }}.zip \
-            "${APT_USER}@${APT_HOST}:/var/www/html/metamanager/metamanager-latest.zip"
+            "${APT_USER}@${APT_HOST}:/var/www/html/metamanager-test/metamanager-latest.zip"
 
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${APT_USER}@${APT_HOST}" \
-            "printf '%s\n' '{\"version\":\"${{ steps.version.outputs.version }}\",\"requires\":{\"php\":\"8.0\",\"wordpress\":\"6.2\"},\"download_url\":\"https://apt.richardkentgates.com/metamanager/metamanager-latest.zip\"}' > /var/www/html/metamanager/metadata.json"
+            "printf '%s\n' '{\"version\":\"${{ steps.version.outputs.version }}\",\"requires\":{\"php\":\"8.0\",\"wordpress\":\"6.2\"},\"download_url\":\"https://apt.richardkentgates.com/metamanager-test/metamanager-latest.zip\"}' > /var/www/html/metamanager-test/metadata.json"
 
-          echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server"
+          echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server (test channel)"
 
       - name: Summary
         run: |
@@ -75,5 +75,5 @@ jobs:
           echo "═══════════════════════════════════════════════════════════════"
           echo ""
           echo "  ✓ Merged dev → test"
-          echo "  ✓ Plugin zip deployed to apt server (test)"
+          echo "  ✓ Plugin zip deployed to apt server (test channel)"
           echo ""
