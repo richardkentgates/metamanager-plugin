@@ -26,15 +26,17 @@
 dev  ──  all development, direct push; CI runs checks + auto-version bump
     │  workflow_dispatch: promote-to-test.yml
     ▼
-test  ──  build zip + deploy to apt server (metadata.json)
+test  ──  build zip + deploy to apt server TEST channel (/metamanager-test/)
     │  workflow_dispatch: promote-to-main.yml
     ▼
-main  ──  tag + GitHub release + deploy to apt server (metadata.json)
+main  ──  tag + GitHub release + deploy to apt server PRODUCTION channel (/metamanager/)
 ```
 
 - On every dev push: CI runs PHP lint, PHPStan, ShellCheck, integration tests, builds artifact, then auto-bumps `MM_VERSION`
 - The actor check (`github.actor != 'github-actions[bot]'`) prevents infinite loops — version bump commits don't re-trigger CI
 - Promotion workflows merge directly via git (no PRs), build, and deploy to apt server
+- **Test channel**: `/var/www/html/metamanager-test/` — safe for testing, does not affect production WordPress updates
+- **Production channel**: `/var/www/html/metamanager/` — WordPress polls this for updates via `MM_Updater`
 - WordPress detects the update via `MM_Updater` polling `metadata.json`
 
 ## Deployment Rules
@@ -43,7 +45,10 @@ main  ──  tag + GitHub release + deploy to apt server (metadata.json)
 
 All software must move to production through native update systems:
 
-- **Plugin + Daemon updates**: Push to `main` → CI/CD builds zip → deploys to apt server `metadata.json` → WordPress detects update via `MM_Updater` → user clicks "Update Now" → plugin updates → plugin automatically triggers daemon update via `MM_Daemon_Updater` (reads `daemon-compatibility.json`, checks `/usr/local/lib/metamanager/VERSION`, runs `apt upgrade metamanager` + `systemctl restart`)
+- **Plugin test channel**: Push to `dev` → trigger `promote-to-test.yml` → merges dev→test, builds zip → deploys to `metamanager-test/` on apt server → WordPress detects update via `MM_Updater`
+- **Plugin production channel**: Push to `dev` → trigger `promote-to-main.yml` → merges test→main, tags, releases → deploys to `metamanager/` on apt server → WordPress detects update via `MM_Updater`
+- **Daemon test channel**: Push to `dev` → trigger `promote-to-test.yml` → merges dev→test, builds `.deb` → deploys to `dists/bookworm-test` on apt server → install on test site via `apt-get install -t bookworm-test`
+- **Daemon production channel**: Push to `dev` → trigger `promote-to-main.yml` → merges test→main, tags, releases → deploys to `dists/bookworm` on apt server → install on production site via `apt-get upgrade` or `apt-get install -t bookworm`
 
 The only exception is temporary testing during active development sessions, where files may be SCP'd for immediate verification. After testing, the fix must go through the proper pipeline before being considered deployed.
 
@@ -123,7 +128,14 @@ Before pushing a new plugin version to dev:
 - Plugin repo: `richardkentgates/metamanager-plugin`
 - Server repo: `richardkentgates/metamanager`
 - Apt server: `34.136.87.92` (DNS: `apt.richardkentgates.com`)
-- Production: `104.197.172.183` (Ubuntu 20.04, WordPress at `/srv/www/wordpress/`)
+- Production: `34.10.253.160` (Debian 13 trixie, WordPress at `/srv/www/wordpress/`)
+
+## Apt Server Channels
+
+- **Test channel (plugin)**: `metamanager-test/` — WordPress detects update via `MM_Updater`
+- **Production channel (plugin)**: `metamanager/` — WordPress detects update via `MM_Updater`
+- **Test channel (daemons)**: `dists/bookworm-test` — install via `apt-get install -t bookworm-test`
+- **Production channel (daemons)**: `dists/bookworm` — install via `apt-get install -t bookworm` or `apt-get upgrade`
 
 ## Conventions
 
@@ -131,5 +143,7 @@ Before pushing a new plugin version to dev:
 - Promotion = workflow_dispatch triggers direct git merge (no PRs)
 - Shell scripts/daemons update via apt; plugin updates via WordPress native update
 - Daemon updates are triggered automatically by plugin updates (no manual apt needed)
-- PHP 8.2 for WP-CLI (`php8.2 /usr/local/bin/wp --path=/srv/www/wordpress`)
+- PHP 8.4 for WP-CLI (`php8.4 /usr/local/bin/wp --path=/srv/www/wordpress`)
 - CI auto-bumps `MM_VERSION` on every dev push — do not manually edit version numbers
+- **Test channel**: Used for development verification before production deployment
+- **Production channel**: Used by production site, requires explicit workflow_dispatch promotion
