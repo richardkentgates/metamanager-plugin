@@ -37,20 +37,12 @@ class Test_MM_Memory_Manager_Integration extends WP_UnitTestCase {
 	// Constants
 	// ------------------------------------------------------------------
 
-	public function test_operational_buffer_is_128mb(): void {
-		$this->assertSame( 128 * 1024 * 1024, MM_Memory_Manager::OPERATIONAL_BUFFER );
+	public function test_min_floor_is_8mb(): void {
+		$this->assertSame( 8 * 1024 * 1024, MM_Memory_Manager::MIN_FLOOR );
 	}
 
-	public function test_base_cost_per_job_is_2mb(): void {
-		$this->assertSame( 2 * 1024 * 1024, MM_Memory_Manager::BASE_COST_PER_JOB );
-	}
-
-	public function test_cost_per_megapixel_is_1mb(): void {
-		$this->assertSame( 1 * 1024 * 1024, MM_Memory_Manager::COST_PER_MEGAPIXEL );
-	}
-
-	public function test_cost_per_minute_video_is_5mb(): void {
-		$this->assertSame( 5 * 1024 * 1024, MM_Memory_Manager::COST_PER_MINUTE_VIDEO );
+	public function test_system_pressure_ratio_is_10_percent(): void {
+		$this->assertSame( 0.10, MM_Memory_Manager::SYSTEM_PRESSURE_RATIO );
 	}
 
 	public function test_notice_option_constant(): void {
