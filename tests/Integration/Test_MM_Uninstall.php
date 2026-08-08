@@ -71,10 +71,8 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 
 		// Verify table no longer exists.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->suppress_errors( true );
-		$result = $wpdb->query( "SELECT 1 FROM {$table} LIMIT 0" );
-		$wpdb->suppress_errors( false );
-		$this->assertFalse( $result, "Table {$table} should not exist after DROP TABLE." );
+		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		$this->assertNull( $exists, "Table {$table} should not exist after DROP TABLE." );
 	}
 
 	// ------------------------------------------------------------------
