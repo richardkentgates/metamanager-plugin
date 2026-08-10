@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Last updated 2026-08-04.
+Last updated 2026-08-09.
 
 ---
 
@@ -47,8 +47,8 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 | Plugin version | Auto-bumped by CI on every dev push |
 | Daemon version | Auto-bumped by CI on server repo dev push |
 | WordPress version | 6.9 |
-| Production URL | https://thepeosolution.com |
-| Production IP | 104.197.172.183 |
+| Production URL | https://hyercleaning.com |
+| Production IP | 34.10.253.160 |
 | Apt server IP | 34.136.87.92 (apt.richardkentgates.com) |
 
 ---
@@ -329,6 +329,17 @@ main ──push──> release.yml (tag + GitHub release + apt server deploy)
 
 ---
 
+## What's Left
+
+### HIGH — Settings Save Reliability
+
+- Investigate reports that the admin settings page shows "Settings saved" while not all fields actually persist.
+- Add server-side validation and explicit success/failure feedback per field group.
+- Audit option names, nonce verification, and capability checks on save.
+- Add unit/integration tests that assert every settings field round-trips correctly.
+
+---
+
 ## Conventions
 
 - All work on `dev` only. Never checkout/edit/push `test` or `main`.
@@ -336,6 +347,6 @@ main ──push──> release.yml (tag + GitHub release + apt server deploy)
 - CI auto-bumps `MM_VERSION` on every dev push — never edit manually.
 - Compression is lossless ONLY.
 - All software moves to production through native update systems (apt, WordPress auto-update).
-- PHP 8.2 for WP-CLI (`php8.2 /usr/local/bin/wp --path=/srv/www/wordpress`).
+- PHP 8.4 for WP-CLI (`php8.4 /usr/local/bin/wp --path=/srv/www/wordpress`).
 - SSH user: `richardkentgates` (not root); default SSH key.
 - Plugin triggers daemon updates automatically — no manual intervention on success.
