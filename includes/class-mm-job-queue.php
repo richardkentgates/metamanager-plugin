@@ -117,20 +117,23 @@ class MM_Job_Queue {
 
 		// Check for unclaimed pending jobs for this attachment+size.
 		$pending = new \GlobIterator( $dir . $attachment_id . '-' . $size . '-*.json' );
+		$had_pending = $pending->count() > 0;
 
-		if ( $pending->count() > 0 ) {
-			// Skip duplicate jobs for both compression and metadata.
-			// For metadata: the pending job already has the latest WP fields
-			// since get_fields_for_job() reads current values at queue time.
-			self::push_queue_notice( 'skipped', $type, $attachment_id, $size );
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional operational log, not debug output
-			error_log( sprintf(
-				'[Metamanager] %s job skipped — already pending: attachment %d, size %s.',
-				ucfirst( $type ),
-				$attachment_id,
-				$size
-			) );
-			return 'skipped';
+		if ( $had_pending ) {
+			// Compression: skip duplicate. Metadata: write anyway (runs in sequence).
+			if ( 'compression' === $type ) {
+				self::push_queue_notice( 'skipped', $type, $attachment_id, $size );
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional operational log, not debug output
+				error_log( sprintf(
+					'[Metamanager] %s job skipped — already pending: attachment %d, size %s.',
+					ucfirst( $type ),
+					$attachment_id,
+					$size
+				) );
+				return 'skipped';
+			}
+			// Metadata jobs run in sequence — write the new job and notify.
+			self::push_queue_notice( 'queued', $type, $attachment_id, $size );
 		}
 
 		// Dimensions from file — only valid for images; skip for video/audio.
@@ -315,7 +318,7 @@ class MM_Job_Queue {
 			return $metadata;
 		}
 
-		$is_regeneration = MM_DB::has_any_completed_job( $attachment_id );
+		$is_regeneration = '1' === (string) get_post_meta( $attachment_id, MM_Metadata::META_SYNCED, true );
 
 		if ( $is_image ) {
 			// ---- Images: regen-aware logic ----

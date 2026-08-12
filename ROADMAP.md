@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Last updated 2026-08-04.
+Last updated 2026-08-09.
 
 ---
 
@@ -47,8 +47,8 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 | Plugin version | Auto-bumped by CI on every dev push |
 | Daemon version | Auto-bumped by CI on server repo dev push |
 | WordPress version | 6.9 |
-| Production URL | https://thepeosolution.com |
-| Production IP | 104.197.172.183 |
+| Production URL | https://hyercleaning.com |
+| Production IP | 34.10.253.160 |
 | Apt server IP | 34.136.87.92 (apt.richardkentgates.com) |
 
 ---
@@ -329,6 +329,97 @@ main ──push──> release.yml (tag + GitHub release + apt server deploy)
 
 ---
 
+## What's Left
+
+### HIGH — Media Processing Page (Bulk Metadata)
+
+The page exists at **Media → Media Processing** (`metamanager-bulk-meta`). Current problems:
+
+1. **Only queries images** — `post_mime_type => 'image'` at line 1948 of `class-mm-admin.php`. Video, audio, and PDF are excluded entirely.
+2. **Same form for all media** — presents Creator/Copyright/Owner/Headline/Credit/Keywords/Date/City/State/Country regardless of what the file format supports for write-back.
+3. **No write-capability awareness** — MKV/WebM/OGG are `read_only`, AVI/WMV are `xmp_only`, OGG audio is `vorbis_only`. The form doesn't know this.
+4. **Compression checkbox shown for all formats** — irrelevant for audio, PDF, and read-only video.
+5. **GPS not shown anywhere** — not in the form, not as read-only info in the grid.
+6. **`ajax_apply_bulk_meta()` allowed_fields** is a static list — no conditional logic based on MIME type.
+
+### HIGH — `META_SYNCED` Constant
+
+Removed as "dead postmeta" in FIX-10 (2026-07-25) but was actually used for:
+- Thumbnail regeneration detection: distinguishes fresh upload (no flag) from regen (flag set). On regen, only compression is re-queued; import is skipped to protect user edits.
+- Scan Library skip: avoids re-processing already-synced files.
+- Current code uses `MM_DB::has_any_completed_job()` instead — less precise (returns true for compression-only jobs too).
+
+### HIGH — Queue Notice `queued` Status
+
+Infrastructure exists (renderer + transient push) but `write_job()` only called `push_queue_notice('skipped')`. Metadata jobs that land behind pending jobs now get a `'queued'` notice — needs verification on production.
+
+### HIGH — Settings Save Reliability
+
+- Investigate reports that the admin settings page shows "Settings saved" while not all fields actually persist.
+- Add server-side validation and explicit success/failure feedback per field group.
+
+### MEDIUM — `phpunit.xml.dist`
+
+Exists in `gcm/` but not in plugin or daemon repos.
+
+---
+
+## Media Type Capabilities Reference
+
+The bulk metadata form must respect these write capabilities per `MM_Metadata::WRITE_CAPABILITY`:
+
+| Format | Write capability | Writable fields |
+|--------|-----------------|-----------------|
+| JPEG/PNG/WebP/AVIF/GIF/TIFF | `full` | All fields (EXIF+IPTC+XMP) |
+| MP4/MOV/3GP | `full` | All fields (QuickTime+XMP) |
+| AVI/WMV | `xmp_only` | XMP-only fields (Headline, Credit, Keywords, Date, Rating, City, State, Country, GPS) |
+| MKV/WebM/OGG video | `read_only` | None — display only |
+| MP3/M4A/FLAC/AIFF | `full` | All fields (ID3/QuickTime/Vorbis+XMP) |
+| OGG audio | `vorbis_only` | Vorbis comment fields only |
+| WAV/WMA audio | `xmp_only` | XMP-only fields |
+| PDF | `xmp_only` | XMP-only fields |
+
+Compression support:
+| Format | Compressible |
+|--------|-------------|
+| JPEG | Yes (jpegtran) |
+| PNG | Yes (optipng) |
+| WebP | Yes (cwebp) |
+| AVIF/GIF/TIFF | No |
+| Video (MP4/MOV/AVI/WMV/MKV/WebM/OGV) | Yes (ffmpeg remux) |
+| Audio | No |
+| PDF | No |
+
+---
+
+## Restoration & Expansion Plan (2026-08-11)
+
+### Restoration — Missing Functionality
+
+| # | Item | Priority | Status |
+|---|------|----------|--------|
+| R-1 | `META_SYNCED` constant + registration | HIGH | Done — constant defined, registered, set after import, used by `on_upload()` and Scan Library |
+| R-2 | Queue notice `queued` for metadata jobs | HIGH | Done — `write_job()` now pushes `'queued'` notice for metadata jobs behind pending |
+| R-3 | Media Processing page: media-type-aware form | HIGH | TODO — form must detect selected media types and show only writable fields |
+| R-4 | Media Processing page: compression checkbox per format | HIGH | TODO — hide for audio, PDF, read-only video |
+| R-5 | Media Processing page: GPS read-only display | MEDIUM | TODO — show GPS lat/lon/alt as read-only in the grid for images that have it |
+| R-6 | `phpunit.xml.dist` | MEDIUM | TODO |
+| R-7 | GPS map preview on attachment edit | LOW | TODO |
+
+### Expansion — Platform Improvements
+
+| # | Item | Priority | Description |
+|---|------|----------|-------------|
+| E-1 | Bulk metadata: video/audio/PDF support | HIGH | Extend page beyond images to all supported media types |
+| E-2 | Bulk metadata: per-MIME field filtering | HIGH | Show only fields writable for the selected format |
+| E-3 | Bulk metadata: dynamic compression checkbox | MEDIUM | Hide for non-compressible formats |
+| E-4 | Attachment GPS map preview | LOW | Leaflet/OSM map when GPS coordinates exist |
+| E-5 | `phpunit.xml.dist` | MEDIUM | PHPUnit config for local testing |
+| E-6 | Metadata versioning | LOW | Track metadata changes over time |
+| E-7 | Metadata diff view | LOW | Before/after comparison |
+
+---
+
 ## Conventions
 
 - All work on `dev` only. Never checkout/edit/push `test` or `main`.
@@ -336,6 +427,6 @@ main ──push──> release.yml (tag + GitHub release + apt server deploy)
 - CI auto-bumps `MM_VERSION` on every dev push — never edit manually.
 - Compression is lossless ONLY.
 - All software moves to production through native update systems (apt, WordPress auto-update).
-- PHP 8.2 for WP-CLI (`php8.2 /usr/local/bin/wp --path=/srv/www/wordpress`).
+- PHP 8.4 for WP-CLI (`php8.4 /usr/local/bin/wp --path=/srv/www/wordpress`).
 - SSH user: `richardkentgates` (not root); default SSH key.
 - Plugin triggers daemon updates automatically — no manual intervention on success.
