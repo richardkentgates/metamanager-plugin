@@ -180,7 +180,9 @@ class MM_Site_Settings {
 
 	/**
 	 * Recursively sanitize $input against $defaults.
-	 * Unknown keys stripped; missing keys filled from defaults.
+	 * Known keys: type-cast and fill missing from defaults.
+	 * Unknown keys in nested associative arrays: preserved and recursively
+	 * sanitized using the first default value as a structural template.
 	 * Missing bool keys (unchecked checkboxes) default to false.
 	 */
 	public static function deep_sanitize_section( array $input, array $defaults ): array {
@@ -196,11 +198,13 @@ class MM_Site_Settings {
 			if ( is_array( $default_val ) && is_array( $val ) ) {
 				$is_list = empty( $default_val ) || ( array_keys( $default_val ) === range( 0, count( $default_val ) - 1 ) );
 				if ( $is_list ) {
+					$first_default = reset( $default_val );
 					$out[ $key ] = array_values( array_map(
-						function ( $item ) {
-							return is_array( $item )
-								? array_map( 'sanitize_text_field', $item )
-								: sanitize_text_field( (string) $item );
+						function ( $item ) use ( $first_default ) {
+							if ( is_array( $item ) && is_array( $first_default ) ) {
+								return self::deep_sanitize_section( $item, $first_default );
+							}
+							return sanitize_text_field( (string) $item );
 						},
 						$val
 					) );
@@ -222,7 +226,44 @@ class MM_Site_Settings {
 				}
 			}
 		}
+
+		// Preserve unknown keys in nested associative arrays.
+		// This handles dynamically-generated fields (custom post types,
+		// custom taxonomies, repeater rows) that are in the form but
+		// not in the static defaults.
+		$extra_keys = array_diff_key( $input, $defaults );
+		foreach ( $extra_keys as $key => $val ) {
+			if ( is_array( $val ) ) {
+				// Find a template from defaults to determine structure.
+				$template = self::find_array_template( $defaults );
+				if ( $template ) {
+					$out[ $key ] = self::deep_sanitize_section( $val, $template );
+				} else {
+					// No template — recursively sanitize with empty defaults.
+					$out[ $key ] = self::deep_sanitize_section( $val, [] );
+				}
+			} else {
+				$str = (string) $val;
+				$out[ $key ] = sanitize_text_field( $str );
+			}
+		}
+
 		return $out;
+	}
+
+	/**
+	 * Find an array-typed value in $defaults to use as a sanitization template.
+	 *
+	 * @param array $defaults Defaults to search.
+	 * @return array|null First array-typed value found, or null.
+	 */
+	private static function find_array_template( array $defaults ): ?array {
+		foreach ( $defaults as $val ) {
+			if ( is_array( $val ) && ! empty( $val ) ) {
+				return $val;
+			}
+		}
+		return null;
 	}
 
 	// -------------------------------------------------------------------------

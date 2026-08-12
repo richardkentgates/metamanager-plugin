@@ -184,6 +184,7 @@ wp_enqueue_media();
 wp_enqueue_script( 'mm-meta-admin-repeater', MM_META_URL . 'assets/js/admin-repeater.js', [ 'jquery', 'jquery-ui-sortable' ], MM_META_VERSION, true );
 wp_enqueue_script( 'mm-meta-admin-media',    MM_META_URL . 'assets/js/admin-media.js',    [ 'jquery' ],                        MM_META_VERSION, true );
 wp_enqueue_script( 'mm-meta-admin-tabs',     MM_META_URL . 'assets/js/admin-tabs.js',     [],                                  MM_META_VERSION, true );
+wp_enqueue_script( 'mm-meta-checkbox-guard', MM_META_URL . 'assets/js/admin-checkbox-guard.js', [],                           MM_META_VERSION, true );
 
 if ( 'metamanager_page_mm-meta-links' === $hook ) {
 wp_enqueue_script( 'mm-meta-admin-links', MM_META_URL . 'assets/js/admin-links.js', [ 'jquery' ], MM_META_VERSION, true );
