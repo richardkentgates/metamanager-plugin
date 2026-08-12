@@ -82,6 +82,16 @@ class MM_Metadata {
 	/** MySQL datetime of the most recent write-back verification run. */
 	public const META_VERIFIED_AT = 'mm_verified_at';
 
+	/**
+	 * Flag set to '1' once ExifTool has successfully imported metadata from the
+	 * file into WordPress. Used for:
+	 * - Thumbnail regeneration detection: distinguishes fresh upload (no flag)
+	 *   from regen (flag set). On regen, only compression is re-queued; import
+	 *   is skipped to protect user edits.
+	 * - Scan Library skip: avoids re-processing already-synced files.
+	 */
+	public const META_SYNCED = 'mm_meta_synced';
+
 	// -----------------------------------------------------------------------
 	// MIME type capability maps
 	// -----------------------------------------------------------------------
@@ -408,6 +418,15 @@ class MM_Metadata {
 			'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
 			'show_in_rest'      => false,
 		] ) );
+
+		// META_SYNCED — flag set to '1' after first successful import.
+		register_post_meta( 'attachment', self::META_SYNCED, array_merge( $base, [
+			'description'       => __( 'Whether metadata has been imported from the file (1 = yes).', 'metamanager' ),
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
+			'show_in_rest'      => false,
+		] ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -604,6 +623,29 @@ class MM_Metadata {
 			'value' => (string) get_post_meta( $id, self::META_COUNTRY, true ),
 			'helps' => esc_html__( '→ IPTC:Country-PrimaryLocationName, XMP:Country', 'metamanager' ),
 		];
+
+		// --- GPS (read-only) ---
+		$gps_lat = (string) get_post_meta( $id, self::META_GPS_LAT, true );
+		$gps_lon = (string) get_post_meta( $id, self::META_GPS_LON, true );
+		$gps_alt = (string) get_post_meta( $id, self::META_GPS_ALT, true );
+		if ( '' !== $gps_lat && '' !== $gps_lon ) {
+			$form_fields['mm_section_gps'] = [ 'label' => '', 'input' => 'html', 'html' =>
+				$h4( __( 'GPS Coordinates', 'metamanager' ), __( '(read-only — from file)', 'metamanager' ) ) ];
+
+			$coord_str = esc_html( $gps_lat ) . ', ' . esc_html( $gps_lon );
+			if ( '' !== $gps_alt ) {
+				$coord_str .= ' — alt ' . esc_html( $gps_alt ) . 'm';
+			}
+			$form_fields[ self::META_GPS_LAT ] = [
+				'label' => esc_html__( 'Coordinates', 'metamanager' ),
+				'input' => 'html',
+				'html'  => '<div id="mm-gps-map" style="margin-bottom:8px;"></div>'
+					. '<p style="margin:4px 0 0;font-size:12px;color:#50575e;">' . $coord_str . '</p>'
+					. '<input type="hidden" name="attachments[' . absint( $id ) . '][mm_gps_lat]" value="' . esc_attr( $gps_lat ) . '">'
+					. '<input type="hidden" name="attachments[' . absint( $id ) . '][mm_gps_lon]" value="' . esc_attr( $gps_lon ) . '">',
+				'helps' => esc_html__( 'Extracted from EXIF:GPSLatitude + GPSLongitude.', 'metamanager' ),
+			];
+		}
 
 		return $form_fields;
 	}
@@ -875,6 +917,10 @@ class MM_Metadata {
 				update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $v ) );
 			}
 		}
+
+		// Set the synced flag so thumbnail regen detection and Scan Library
+		// can distinguish fresh uploads from regenerations.
+		update_post_meta( $attachment_id, self::META_SYNCED, '1' );
 	}
 
 	// -----------------------------------------------------------------------
