@@ -916,24 +916,52 @@ class MM_Admin {
 	 * @param string $hook Current admin page hook.
 	 */
 	public static function enqueue_assets( string $hook ): void {
-		if ( 'upload.php' !== $hook ) {
+		if ( 'upload.php' === $hook ) {
+			wp_enqueue_script(
+				'mm-status',
+				MM_PLUGIN_URL . 'assets/js/mm-status.js',
+				[ 'jquery' ],
+				MM_VERSION,
+				true
+			);
+			wp_localize_script(
+				'mm-status',
+				'MMStatus',
+				[
+					'restUrl' => rest_url( 'metamanager/v1/compression-status' ),
+					'nonce'   => wp_create_nonce( 'wp_rest' ),
+				]
+			);
 			return;
 		}
-		wp_enqueue_script(
-			'mm-status',
-			MM_PLUGIN_URL . 'assets/js/mm-status.js',
-			[ 'jquery' ],
-			MM_VERSION,
-			true
-		);
-		wp_localize_script(
-			'mm-status',
-			'MMStatus',
-			[
-				'restUrl' => rest_url( 'metamanager/v1/compression-status' ),
-				'nonce'   => wp_create_nonce( 'wp_rest' ),
-			]
-		);
+
+		// Attachment edit screen — enqueue Leaflet for GPS map preview.
+		if ( 'post.php' === $hook && ! empty( $_GET['post'] ) ) {
+			$post_id = absint( wp_unslash( $_GET['post'] ) );
+			if ( $post_id && 'attachment' === get_post_type( $post_id ) ) {
+				$lat = (string) get_post_meta( $post_id, MM_Metadata::META_GPS_LAT, true );
+				$lon = (string) get_post_meta( $post_id, MM_Metadata::META_GPS_LON, true );
+				if ( '' !== $lat && '' !== $lon ) {
+					wp_enqueue_style( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4' );
+					wp_enqueue_script( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true );
+					add_action( 'admin_footer', function () use ( $lat, $lon ) {
+						?>
+						<script>
+						jQuery(function($){
+							if (typeof L === 'undefined') return;
+							var map = L.map('mm-gps-map',{scrollWheelZoom:false}).setView([<?php echo esc_js( $lat ); ?>, <?php echo esc_js( $lon ); ?>], 14);
+							L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+								attribution:'&copy; OpenStreetMap'
+							}).addTo(map);
+							L.marker([<?php echo esc_js( $lat ); ?>, <?php echo esc_js( $lon ); ?>]).addTo(map);
+							setTimeout(function(){ map.invalidateSize(); }, 200);
+						});
+						</script>
+						<?php
+					} );
+				}
+			}
+		}
 	}
 
 	// -----------------------------------------------------------------------
@@ -1935,12 +1963,20 @@ class MM_Admin {
 		// phpcs:disable WordPress.Security.NonceVerification
 		$paged  = max( 1, absint( wp_unslash( $_GET['paged'] ?? '1' ) ) );
 		$search = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
+		$filter = sanitize_text_field( wp_unslash( $_GET['media_type'] ?? '' ) );
 		// phpcs:enable
 		$per_page = 24;
 
+		$all_mime_types = array_merge(
+			[ 'image' ],
+			MM_Metadata::VIDEO_MIME_TYPES,
+			MM_Metadata::AUDIO_MIME_TYPES,
+			MM_Metadata::PDF_MIME_TYPES
+		);
+
 		$query_args = [
 			'post_type'      => 'attachment',
-			'post_mime_type' => 'image',
+			'post_mime_type' => $all_mime_types,
 			'post_status'    => 'inherit',
 			'numberposts'    => $per_page,
 			'offset'         => ( $paged - 1 ) * $per_page,
@@ -1948,6 +1984,14 @@ class MM_Admin {
 		];
 		if ( $search ) {
 			$query_args['s'] = $search;
+		}
+		if ( $filter && in_array( $filter, [ 'image', 'video', 'audio', 'pdf' ], true ) ) {
+			$query_args['post_mime_type'] = match ( $filter ) {
+				'image' => [ 'image' ],
+				'video' => MM_Metadata::VIDEO_MIME_TYPES,
+				'audio' => MM_Metadata::AUDIO_MIME_TYPES,
+				'pdf'   => MM_Metadata::PDF_MIME_TYPES,
+			};
 		}
 		$ids = get_posts( $query_args );
 
@@ -1960,7 +2004,13 @@ class MM_Admin {
 
 		$nonce = wp_create_nonce( 'mm_bulk_meta_apply' );
 
-		// All user-editable fields with their UI config.
+		// Compressible MIME types.
+		$compressible = array_merge(
+			[ 'image/jpeg', 'image/png', 'image/webp' ],
+			MM_Metadata::VIDEO_MIME_TYPES
+		);
+
+		// All metadata fields with their UI config.
 		$all_fields = [
 			MM_Metadata::META_CREATOR   => [ 'label' => __( 'Creator', 'metamanager' ),        'placeholder' => '' ],
 			MM_Metadata::META_COPYRIGHT => [ 'label' => __( 'Copyright', 'metamanager' ),      'placeholder' => '' ],
@@ -1972,6 +2022,18 @@ class MM_Admin {
 			MM_Metadata::META_CITY      => [ 'label' => __( 'City', 'metamanager' ),           'placeholder' => '' ],
 			MM_Metadata::META_STATE     => [ 'label' => __( 'State / Province', 'metamanager' ), 'placeholder' => '' ],
 			MM_Metadata::META_COUNTRY   => [ 'label' => __( 'Country', 'metamanager' ),        'placeholder' => '' ],
+		];
+
+		// XMP-only subset for formats that only support XMP tags.
+		$xmp_only_fields = [
+			MM_Metadata::META_HEADLINE,
+			MM_Metadata::META_CREDIT,
+			MM_Metadata::META_KEYWORDS,
+			MM_Metadata::META_DATE,
+			MM_Metadata::META_RATING,
+			MM_Metadata::META_CITY,
+			MM_Metadata::META_STATE,
+			MM_Metadata::META_COUNTRY,
 		];
 		?>
 		<div class="wrap">
@@ -1988,17 +2050,20 @@ class MM_Admin {
 					<h3 style="margin:0 0 4px;font-size:14px;"><?php esc_html_e( 'Values to Apply', 'metamanager' ); ?></h3>
 					<p style="margin:0 0 12px;font-size:12px;color:#50575e;"><?php esc_html_e( 'Fill in the fields you want to overwrite. Leave a field blank to leave it unchanged on the selected images.', 'metamanager' ); ?></p>
 
-					<?php foreach ( $all_fields as $key => $cfg ) : ?>
-					<div style="margin-bottom:8px;">
-						<label style="display:block;font-size:12px;font-weight:600;margin-bottom:2px;"><?php echo esc_html( $cfg['label'] ); ?></label>
-						<input type="text"
-							   class="mm-apply-field"
-							   data-key="<?php echo esc_attr( $key ); ?>"
-							   placeholder="<?php echo esc_attr( $cfg['placeholder'] ?: $cfg['label'] ); ?>"
-							   value=""
-							   style="width:100%;box-sizing:border-box;">
-					</div>
-					<?php endforeach; ?>
+				<?php foreach ( $all_fields as $key => $cfg ) :
+					$is_xmp_only = in_array( $key, $xmp_only_fields, true );
+				?>
+				<div class="mm-field-group" data-field="<?php echo esc_attr( $key ); ?>" style="margin-bottom:8px;<?php echo $is_xmp_only ? 'display:none;' : ''; ?>">
+					<label style="display:block;font-size:12px;font-weight:600;margin-bottom:2px;"><?php echo esc_html( $cfg['label'] ); ?><?php if ( $is_xmp_only ) : ?> <span style="font-weight:400;color:#996800;">(XMP)</span><?php endif; ?></label>
+					<input type="text"
+						   class="mm-apply-field"
+						   data-key="<?php echo esc_attr( $key ); ?>"
+						   data-write-group="<?php echo $is_xmp_only ? 'xmp_only' : 'full'; ?>"
+						   placeholder="<?php echo esc_attr( $cfg['placeholder'] ?: $cfg['label'] ); ?>"
+						   value=""
+						   style="width:100%;box-sizing:border-box;">
+				</div>
+				<?php endforeach; ?>
 
 					<div style="margin-bottom:8px;">
 						<label style="display:block;font-size:12px;font-weight:600;margin-bottom:2px;"><?php esc_html_e( 'Rating', 'metamanager' ); ?></label>
@@ -2013,63 +2078,87 @@ class MM_Admin {
 						</select>
 					</div>
 
-					<hr style="margin:12px 0;border:none;border-top:1px solid #e0e0e0;">
+				<hr style="margin:12px 0;border:none;border-top:1px solid #e0e0e0;">
 
-					<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:12px;cursor:pointer;">
-						<input type="checkbox" id="mm-apply-compress">
-						<?php esc_html_e( 'Also queue lossless compression', 'metamanager' ); ?>
-					</label>
+				<label id="mm-compress-wrap" style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:12px;cursor:pointer;">
+					<input type="checkbox" id="mm-apply-compress">
+					<?php esc_html_e( 'Also queue lossless compression', 'metamanager' ); ?>
+				</label>
 
-					<button id="mm-apply-btn" class="button button-primary" style="width:100%;" disabled>
-						<?php esc_html_e( 'Apply to Selected', 'metamanager' ); ?>
-					</button>
+				<div id="mm-apply-hint" style="margin-bottom:8px;font-size:12px;color:#50575e;"></div>
 
-					<div id="mm-apply-status" style="margin-top:8px;font-size:12px;min-height:18px;"></div>
-					<div id="mm-selection-count" style="margin-top:4px;font-size:11px;color:#50575e;"></div>
+				<button id="mm-apply-btn" class="button button-primary" style="width:100%;" disabled>
+					<?php esc_html_e( 'Apply to Selected', 'metamanager' ); ?>
+				</button>
+
+				<div id="mm-apply-status" style="margin-top:8px;font-size:12px;min-height:18px;"></div>
+				<div id="mm-selection-count" style="margin-top:4px;font-size:11px;color:#50575e;"></div>
 				</div>
 
 				<!-- ===== Right: Image Grid ===== -->
 				<div style="flex:1;min-width:0;">
 
 					<!-- Controls row -->
-					<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-						<form method="get" action="<?php echo esc_url( admin_url( 'upload.php' ) ); ?>" style="display:contents;">
-							<input type="hidden" name="page" value="metamanager-bulk-meta">
-							<input type="search" name="s" value="<?php echo esc_attr( $search ); ?>"
-								   placeholder="<?php echo esc_attr__( 'Search by title…', 'metamanager' ); ?>"
-								   style="width:180px;">
-							<button class="button"><?php esc_html_e( 'Search', 'metamanager' ); ?></button>
-							<?php if ( $search ) : ?>
-								<a href="<?php echo esc_url( admin_url( 'admin.php?page=metamanager-bulk-meta' ) ); ?>" class="button"><?php esc_html_e( 'Clear', 'metamanager' ); ?></a>
-							<?php endif; ?>
-						</form>
-						<button id="mm-select-all" class="button button-small"><?php esc_html_e( 'Select All', 'metamanager' ); ?></button>
-						<button id="mm-select-none" class="button button-small"><?php esc_html_e( 'Deselect All', 'metamanager' ); ?></button>
-						<span style="font-size:12px;color:#50575e;margin-left:4px;">
-							<?php
-							/* translators: %d: total image count */
-						printf( esc_html__( '%d images', 'metamanager' ), absint( $total ) );
+				<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+					<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" style="display:contents;">
+						<input type="hidden" name="page" value="metamanager-bulk-meta">
+						<select name="media_type" style="font-size:12px;">
+							<option value=""><?php esc_html_e( 'All media', 'metamanager' ); ?></option>
+							<option value="image" <?php selected( $filter, 'image' ); ?>><?php esc_html_e( 'Images', 'metamanager' ); ?></option>
+							<option value="video" <?php selected( $filter, 'video' ); ?>><?php esc_html_e( 'Video', 'metamanager' ); ?></option>
+							<option value="audio" <?php selected( $filter, 'audio' ); ?>><?php esc_html_e( 'Audio', 'metamanager' ); ?></option>
+							<option value="pdf" <?php selected( $filter, 'pdf' ); ?>><?php esc_html_e( 'PDF', 'metamanager' ); ?></option>
+						</select>
+						<input type="search" name="s" value="<?php echo esc_attr( $search ); ?>"
+							   placeholder="<?php echo esc_attr__( 'Search by title…', 'metamanager' ); ?>"
+							   style="width:160px;">
+						<button class="button"><?php esc_html_e( 'Search', 'metamanager' ); ?></button>
+						<?php if ( $search || $filter ) : ?>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=metamanager-bulk-meta' ) ); ?>" class="button"><?php esc_html_e( 'Clear', 'metamanager' ); ?></a>
+						<?php endif; ?>
+					</form>
+					<button id="mm-select-all" class="button button-small"><?php esc_html_e( 'Select All', 'metamanager' ); ?></button>
+					<button id="mm-select-none" class="button button-small"><?php esc_html_e( 'Deselect All', 'metamanager' ); ?></button>
+					<span style="font-size:12px;color:#50575e;margin-left:4px;">
+						<?php
+						printf(
+							/* translators: %d: media count */
+							esc_html__( '%d files', 'metamanager' ),
+							absint( $total )
+						);
 						?>
 					</span>
 				</div>
 
 				<?php if ( empty( $ids ) ) : ?>
-					<p><?php esc_html_e( 'No images found.', 'metamanager' ); ?></p>
+					<p><?php esc_html_e( 'No media found.', 'metamanager' ); ?></p>
 				<?php else : ?>
 						<div id="mm-image-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;">
 							<?php foreach ( $ids as $id ) :
 								$id       = (int) $id;
-								$src      = wp_get_attachment_image_url( $id, 'thumbnail' ) ?: '';
+								$mime     = (string) get_post_mime_type( $id );
+								$is_image = wp_attachment_is_image( $id );
+								$is_video = str_starts_with( $mime, 'video/' );
+								$is_audio = str_starts_with( $mime, 'audio/' );
+								$is_pdf   = 'application/pdf' === $mime;
+								$src      = $is_image ? ( wp_get_attachment_image_url( $id, 'thumbnail' ) ?: '' ) : '';
 								$title    = get_the_title( $id );
 								$edit_url = get_edit_post_link( $id );
 								$creator  = (string) get_post_meta( $id, MM_Metadata::META_CREATOR, true );
 								$city     = (string) get_post_meta( $id, MM_Metadata::META_CITY, true );
 								$country  = (string) get_post_meta( $id, MM_Metadata::META_COUNTRY, true );
-								$rating   = (int) get_post_meta( $id, MM_Metadata::META_RATING, true );
-								$loc      = implode( ', ', array_filter( [ $city, $country ] ) );
+							$rating   = (int) get_post_meta( $id, MM_Metadata::META_RATING, true );
+							$gps_lat  = (string) get_post_meta( $id, MM_Metadata::META_GPS_LAT, true );
+							$gps_lon  = (string) get_post_meta( $id, MM_Metadata::META_GPS_LON, true );
+							$gps_alt  = (string) get_post_meta( $id, MM_Metadata::META_GPS_ALT, true );
+							$loc      = implode( ', ', array_filter( [ $city, $country ] ) );
+								$write_cap = MM_Metadata::WRITE_CAPABILITY[ $mime ] ?? 'read_only';
 								?>
 								<div class="mm-grid-item"
 									 data-id="<?php echo esc_attr( (string) $id ); ?>"
+									 data-mime="<?php echo esc_attr( $mime ); ?>"
+									 data-write-cap="<?php echo esc_attr( $write_cap ); ?>"
+									 data-compressible="<?php echo in_array( $mime, $compressible, true ) ? '1' : '0'; ?>"
 									 style="background:#fff;border:2px solid #c3c4c7;border-radius:4px;padding:8px;cursor:pointer;position:relative;">
 									<input type="checkbox"
 										   class="mm-cb"
@@ -2079,7 +2168,11 @@ class MM_Admin {
 										<img src="<?php echo esc_url( $src ); ?>"
 											 style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:2px;display:block;margin-bottom:6px;">
 									<?php else : ?>
-										<div style="width:100%;aspect-ratio:1/1;background:#f0f0f1;border-radius:2px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;font-size:28px;color:#c3c4c7;">&#128444;</div>
+										<div style="width:100%;aspect-ratio:1/1;background:#f0f0f1;border-radius:2px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;">
+											<span style="font-size:24px;color:#c3c4c7;">
+												<?php if ( $is_video ) : ?>&#127909;<?php elseif ( $is_audio ) : ?>&#127925;<?php elseif ( $is_pdf ) : ?>&#128196;<?php else : ?>&#128444;<?php endif; ?>
+											</span>
+										</div>
 									<?php endif; ?>
 									<div style="font-size:11px;font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;" title="<?php echo esc_attr( $title ); ?>">
 										<?php if ( $edit_url ) : ?>
@@ -2094,11 +2187,15 @@ class MM_Admin {
 									<?php if ( $loc ) : ?>
 										<div style="font-size:10px;color:#50575e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo esc_html( $loc ); ?></div>
 									<?php endif; ?>
+									<?php if ( $gps_lat ) : ?>
+										<div style="font-size:10px;color:#0073aa;" title="<?php echo esc_attr( $gps_lat . ', ' . $gps_lon . ($gps_alt ? ' alt ' . $gps_alt . 'm' : '') ); ?>">&#128205; <?php echo esc_html( $gps_lat ); ?>, <?php echo esc_html( $gps_lon ); ?></div>
+									<?php endif; ?>
 									<?php if ( $rating > 0 ) : ?>
 										<div style="font-size:10px;color:#dba617;letter-spacing:1px;">
 											<?php echo esc_html( str_repeat( '★', $rating ) . str_repeat( '☆', 5 - $rating ) ); ?>
 										</div>
 									<?php endif; ?>
+									<div style="font-size:9px;color:#a7aaad;margin-top:2px;"><?php echo esc_html( strtoupper( pathinfo( $mime, PATHINFO_EXTENSION ) ) ); ?></div>
 									<div class="mm-card-status" style="font-size:10px;min-height:13px;margin-top:3px;"></div>
 								</div>
 							<?php endforeach; ?>
@@ -2110,11 +2207,14 @@ class MM_Admin {
 							<div class="tablenav-pages">
 								<span class="displaying-num">
 									<?php
-									/* translators: %d: total image count */
-									printf( esc_html__( '%d images', 'metamanager' ), absint( $total ) );
+									printf(
+										/* translators: %d: media count */
+										esc_html__( '%d files', 'metamanager' ),
+										absint( $total )
+									);
 									?>
 								</span>
-								<?php self::render_pagination( $paged, $total_pages, 'url', [ 's' => $search, 'page' => 'metamanager-bulk-meta' ] ); ?>
+								<?php self::render_pagination( $paged, $total_pages, 'url', [ 's' => $search, 'page' => 'metamanager-bulk-meta', 'media_type' => $filter ] ); ?>
 							</div>
 						</div>
 						<?php endif; ?>
@@ -2133,13 +2233,70 @@ class MM_Admin {
 		jQuery(function($){
 			var nonce = '<?php echo esc_js( $nonce ); ?>';
 
+			function getSelectedWriteGroups() {
+				var groups = {};
+				$('.mm-cb:checked').each(function(){
+					var cap = $(this).closest('.mm-grid-item').data('write-cap');
+					if (cap === 'full') groups['full'] = true;
+					else if (cap === 'xmp_only') groups['xmp_only'] = true;
+					else if (cap === 'vorbis_only') groups['vorbis_only'] = true;
+					else groups['none'] = true;
+				});
+				return Object.keys(groups);
+			}
+
+			function anySelectedCompressible() {
+				var found = false;
+				$('.mm-cb:checked').each(function(){
+					if ($(this).closest('.mm-grid-item').data('compressible')) { found = true; return false; }
+				});
+				return found;
+			}
+
+			function updateFormForSelection() {
+				var groups = getSelectedWriteGroups();
+				var hasFull = groups.indexOf('full') !== -1;
+				var hasXmpOnly = groups.indexOf('xmp_only') !== -1;
+				var hasVorbisOnly = groups.indexOf('vorbis_only') !== -1;
+				var hasNone = groups.indexOf('none') !== -1;
+
+				// Show 'full' fields only when no lower-capability format is selected.
+				// Show 'xmp_only' fields when any lower-capability format is selected.
+				$('.mm-field-group').each(function(){
+					var $g = $(this);
+					var wg = $g.find('.mm-apply-field').data('write-group');
+					if (wg === 'full') {
+						$g.toggle(!hasXmpOnly && !hasVorbisOnly && !hasNone && groups.length > 0);
+					} else if (wg === 'xmp_only') {
+						$g.toggle(hasXmpOnly || hasVorbisOnly || hasNone);
+					}
+				});
+
+				// Clear hidden fields
+				$('.mm-field-group:hidden .mm-apply-field').val('');
+
+				// Compression checkbox — only for compressible formats
+				$('#mm-compress-wrap').toggle(anySelectedCompressible() && groups.length > 0);
+
+				// Hint text
+				if (groups.length === 0) {
+					$('#mm-apply-hint').text('<?php echo esc_js( __( 'Select files to see which fields are available. Leave a field blank to leave it unchanged.', 'metamanager' ) ); ?>');
+				} else if (hasNone && !hasFull && !hasXmpOnly && !hasVorbisOnly) {
+					$('#mm-apply-hint').html('<span style="color:#d63638;">' + '<?php echo esc_js( __( 'Selected format is read-only — no metadata fields can be written.', 'metamanager' ) ); ?>' + '</span>');
+				} else {
+					var count = $('.mm-cb:checked').length;
+					$('#mm-apply-hint').text(count + ' <?php echo esc_js( __( 'file(s) selected', 'metamanager' ) ); ?>');
+				}
+			}
+
 			function syncState() {
 				var n = $('.mm-cb:checked').length;
-				$('#mm-selection-count').text( n > 0 ? n + ' <?php echo esc_js( __( 'image(s) selected', 'metamanager' ) ); ?>' : '' );
+				$('#mm-selection-count').text( n > 0 ? n + ' <?php echo esc_js( __( 'file(s) selected', 'metamanager' ) ); ?>' : '' );
 				$('#mm-apply-btn').prop( 'disabled', n === 0 );
 				$('.mm-grid-item').each(function(){
 					$(this).toggleClass( 'mm-selected', $(this).find('.mm-cb').is(':checked') );
 				});
+				updateFormForSelection();
 			}
 
 			// Click card body = toggle selection (but let edit links through).
@@ -2167,12 +2324,13 @@ class MM_Admin {
 				if ( ! ids.length ) { return; }
 
 				var fields = {};
-				$('.mm-apply-field').each(function(){
+				$('.mm-field-group:visible .mm-apply-field').each(function(){
 					var v = $.trim( $(this).val() );
 					if ( v !== '' ) { fields[ $(this).data('key') ] = v; }
 				});
 
-				var alsoCompress = $('#mm-apply-compress').is(':checked');
+				var compressVisible = $('#mm-compress-wrap').is(':visible');
+				var alsoCompress = compressVisible && $('#mm-apply-compress').is(':checked');
 
 				if ( ! Object.keys(fields).length && ! alsoCompress ) {
 					$('#mm-apply-status').css('color','#d63638').text('<?php echo esc_js( __( 'Fill in at least one field, or check the compression option.', 'metamanager' ) ); ?>');
@@ -2192,7 +2350,7 @@ class MM_Admin {
 					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Apply to Selected', 'metamanager' ) ); ?>');
 					if ( resp.success ) {
 						var count = resp.data.count || 0;
-						var msg   = count + ' <?php echo esc_js( __( 'image(s) updated', 'metamanager' ) ); ?>';
+						var msg   = count + ' <?php echo esc_js( __( 'file(s) updated', 'metamanager' ) ); ?>';
 						$('#mm-apply-status').css('color','#00a32a').text('✔ ' + msg );
 						ids.forEach(function(id){
 							var $card = $('.mm-grid-item[data-id="' + id + '"]');
