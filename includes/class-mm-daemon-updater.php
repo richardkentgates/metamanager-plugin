@@ -25,6 +25,9 @@ class MM_Daemon_Updater {
 	/** Option key for storing the last update result. */
 	private const OPTION_RESULT = 'mm_daemon_update_result';
 
+	/** Log file path for daemon update operations. */
+	private const UPDATE_LOG_FILE = '/var/log/metamanager-update.log';
+
 	/**
 	 * Boot the updater.
 	 */
@@ -239,10 +242,10 @@ class MM_Daemon_Updater {
 		}
 
 		$commands = [
-			'update'           => 'sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq',
-			'install'          => 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq metamanager',
-			'restart-compress' => 'sudo systemctl restart metamanager-compress-daemon',
-			'restart-meta'     => 'sudo systemctl restart metamanager-meta-daemon',
+			'update'           => 'sudo -n DEBIAN_FRONTEND=noninteractive apt-get update -qq',
+			'install'          => 'sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y -qq metamanager',
+			'restart-compress' => 'sudo -n systemctl restart metamanager-compress-daemon',
+			'restart-meta'     => 'sudo -n systemctl restart metamanager-meta-daemon',
 		];
 
 		$output = '';
@@ -250,19 +253,32 @@ class MM_Daemon_Updater {
 		foreach ( $commands as $step => $cmd ) {
 			$step_out = '';
 			$exit     = 0;
+			$retries  = ( 'update' === $step ) ? 3 : 1;
 
-			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_obfuscation
-			@exec( $cmd . ' 2>&1', $step_out, $exit );
-			$step_out = implode( "\n", (array) $step_out );
-			$output  .= "[{$step}] exit={$exit}\n{$step_out}\n\n";
+			for ( $attempt = 1; $attempt <= $retries; $attempt++ ) {
+				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_obfuscation
+				@exec( $cmd . ' 2>&1', $step_out, $exit );
+				$step_out = implode( "\n", (array) $step_out );
+				$output  .= "[{$step}] attempt={$attempt}/{$retries} exit={$exit}\n{$step_out}\n\n";
 
-			self::log_os( "daemon-update/{$step}: exit={$exit} " . trim( $step_out ) );
+				self::log_os( "daemon-update/{$step}: attempt={$attempt} exit={$exit} " . trim( $step_out ) );
+
+				if ( 0 === $exit || $attempt === $retries ) {
+					break;
+				}
+
+				// Wait 5 seconds before retrying (transient network issues).
+				sleep( 5 );
+				$step_out = '';
+			}
 
 			if ( $exit !== 0 ) {
 				$message = sprintf(
-					'Daemon update failed at step "%s" (exit code %d). Check /var/log/metamanager-update.log for details.',
+					'Daemon update failed at step "%s" after %d attempt(s) (exit code %d). Check %s or WP debug log for details.',
 					$step,
-					$exit
+					$retries,
+					$exit,
+					self::UPDATE_LOG_FILE
 				);
 				self::log_wordpress( $message, 'error' );
 				self::store_result( false, $message, $output );
@@ -416,16 +432,24 @@ class MM_Daemon_Updater {
 	 * @param string $message Log message.
 	 */
 	private static function log_os( string $message ): void {
-		$log_file = '/var/log/metamanager-update.log';
-		$line     = sprintf( "[%s] %s\n", gmdate( 'Y-m-d H:i:s' ), $message );
+		$line = sprintf( "[%s] %s\n", gmdate( 'Y-m-d H:i:s' ), $message );
 
+		// Try the primary log file first.
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_error_log
-		if ( ! @error_log( $line, 3, $log_file ) ) {
-			if ( function_exists( 'openlog' ) ) {
-				openlog( 'metamanager', LOG_PID, LOG_USER );
-				syslog( LOG_INFO, $message );
-				closelog();
-			}
+		$wrote = @error_log( $line, 3, self::UPDATE_LOG_FILE );
+
+		// Fallback: try WP_CONTENT_DIR if /var/log isn't writable.
+		if ( ! $wrote && defined( 'WP_CONTENT_DIR' ) ) {
+			$fallback = WP_CONTENT_DIR . '/metamanager-update.log';
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_error_log
+			$wrote = @error_log( $line, 3, $fallback );
+		}
+
+		// Final fallback: syslog.
+		if ( ! $wrote && function_exists( 'openlog' ) ) {
+			openlog( 'metamanager', LOG_PID, LOG_USER );
+			syslog( LOG_INFO, $message );
+			closelog();
 		}
 	}
 
@@ -486,7 +510,11 @@ class MM_Daemon_Updater {
 			delete_option( self::OPTION_RESULT );
 		} else {
 			$log_hint = ! empty( $result['output'] )
-				? esc_html__( 'Check /var/log/metamanager-update.log for details.', 'metamanager' )
+				? sprintf(
+					/* translators: 1: log file path */
+					esc_html__( 'Check %1$s or WP debug log for details.', 'metamanager' ),
+					self::UPDATE_LOG_FILE
+				)
 				: esc_html__( 'No update was attempted — fix the issue above and re-save to retry.', 'metamanager' );
 
 			printf(
