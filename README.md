@@ -593,6 +593,107 @@ Batch compression status query used by the Media Library column. Read-only; avai
 
 ---
 
+## Troubleshooting
+
+### Plugin shows "Daemon VERSION file not found"
+
+**Cause:** The daemon package is not installed or the VERSION file is missing.
+
+**Fix:**
+```bash
+# Check if daemons are installed
+ls -la /usr/local/lib/metamanager/VERSION
+
+# If missing, install the daemon package
+sudo apt update && sudo apt install metamanager
+```
+
+### Plugin shows "Daemon version mismatch"
+
+**Cause:** Plugin version requires a different daemon version.
+
+**Fix:** The plugin should auto-update the daemon. If it doesn't:
+```bash
+# Manual daemon update
+sudo apt update && sudo apt upgrade metamanager
+
+# Restart daemons
+sudo systemctl restart metamanager-compress-daemon metamanager-meta-daemon
+```
+
+### Daemons not running
+
+**Cause:** systemd service failed or was disabled.
+
+**Fix:**
+```bash
+# Check status
+systemctl status metamanager-compress-daemon
+systemctl status metamanager-meta-daemon
+
+# Check logs for errors
+journalctl -u metamanager-compress-daemon --since "1 hour ago"
+journalctl -u metamanager-meta-daemon --since "1 hour ago"
+
+# Restart
+sudo systemctl restart metamanager-compress-daemon metamanager-meta-daemon
+
+# If failed, check if job directory exists
+ls -la /srv/www/wordpress/wp-content/metamanager-jobs/
+```
+
+### Jobs stuck in "processing" state
+
+**Cause:** Daemon crashed or lost its lock on the file.
+
+**Fix:**
+```bash
+# Find stuck files
+find /srv/www/wordpress/wp-content/metamanager-jobs -name "*.processing"
+
+# Remove the .processing extension to re-queue
+sudo mv /path/to/stuck-file.json.processing /path/to/stuck-file.json
+
+# Restart daemon
+sudo systemctl restart metamanager-compress-daemon
+```
+
+### Media metadata not showing in WordPress
+
+**Cause:** Import jobs not processed or metadata not applied.
+
+**Fix:**
+1. Check if daemons are running: `systemctl status metamanager-meta-daemon`
+2. Check job queue: `ls /srv/www/wordpress/wp-content/metamanager-jobs/meta/`
+3. Check completed jobs: `ls /srv/www/wordpress/wp-content/metamanager-jobs/completed/`
+4. Check for failed jobs: `ls /srv/www/wordpress/wp-content/metamanager-jobs/failed/`
+
+### Compression not reducing file sizes
+
+**Cause:** Already optimized images or unsupported format.
+
+**Note:** Metamanager uses lossless compression — it preserves quality. Some images are already optimal and won't shrink. This is expected behavior.
+
+### "Permission denied" errors in daemon logs
+
+**Cause:** Incorrect ownership on job queue directory.
+
+**Fix:**
+```bash
+sudo chown -R www-data:www-data /srv/www/wordpress/wp-content/metamanager-jobs/
+```
+
+### WordPress updates not triggering daemon updates
+
+**Cause:** `MM_Updater` not detecting plugin update or compatibility map missing.
+
+**Fix:**
+1. Check the compatibility map: `cat /path/to/metamanager-plugin/daemon-compatibility.json`
+2. Verify your plugin version has an entry
+3. If missing, update the map and release a new plugin version
+
+---
+
 ## Daemon Management
 
 ```bash
