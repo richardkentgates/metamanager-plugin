@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.96
+ * Version:      2.3.97
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.96' );
+define( 'MM_VERSION',     '2.3.97' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -466,10 +466,15 @@ add_action( 'rest_api_init', [ 'MM_Admin', 'register_rest_routes' ] );
 // Boot admin
 // ---------------------------------------------------------------------------
 
+// MM_Updater must register its pre_set_site_transient_update_plugins filter
+// unconditionally — not just in is_admin() — because wp_update_plugins() runs
+// via cron (is_admin()=false). Without this, the filter never fires and
+// WordPress never learns about apt-server-hosted updates.
+MM_Updater::init();
+
 if ( is_admin() ) {
 	MM_Admin::init();
 	MM_Settings::init();
-	MM_Updater::init();
 	MM_Daemon_Updater::init();
 
 	// Memory limit admin notice (dynamic — set/cleared by cron cycles).
