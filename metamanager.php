@@ -466,10 +466,15 @@ add_action( 'rest_api_init', [ 'MM_Admin', 'register_rest_routes' ] );
 // Boot admin
 // ---------------------------------------------------------------------------
 
+// MM_Updater must register its pre_set_site_transient_update_plugins filter
+// unconditionally — not just in is_admin() — because wp_update_plugins() runs
+// via cron (is_admin()=false). Without this, the filter never fires and
+// WordPress never learns about apt-server-hosted updates.
+MM_Updater::init();
+
 if ( is_admin() ) {
 	MM_Admin::init();
 	MM_Settings::init();
-	MM_Updater::init();
 	MM_Daemon_Updater::init();
 
 	// Memory limit admin notice (dynamic — set/cleared by cron cycles).
