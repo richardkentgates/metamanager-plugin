@@ -45,6 +45,9 @@ class MM_Updater {
 	 * Boot the updater.
 	 */
 	public static function init(): void {
+		if ( ! defined( 'ABSPATH' ) || ! function_exists( 'plugin_basename' ) ) {
+			return;
+		}
 		$instance = new self();
 		$instance->hooks();
 	}
@@ -53,7 +56,7 @@ class MM_Updater {
 	 * Constructor.
 	 */
 	private function __construct() {
-		$this->plugin_basename = plugin_basename( MM_PLUGIN_FILE );
+		$this->plugin_basename = plugin_basename( MM_PLUGIN_FILE ) ?? '';
 	}
 
 	/**
