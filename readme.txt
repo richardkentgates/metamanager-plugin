@@ -4,7 +4,7 @@ Tags: seo, metadata, sitemap, schema, open-graph
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 2.3.97
+Stable tag: 2.3.98
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
