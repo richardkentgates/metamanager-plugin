@@ -32,12 +32,6 @@ class MM_Updater {
 	/** URL of the apt server metadata.json. */
 	private const METADATA_URL = 'https://apt.richardkentgates.com/metamanager/metadata.json';
 
-	/** WordPress option / transient key used to cache the remote metadata. */
-	private const TRANSIENT = 'mm_remote_metadata';
-
-	/** How long to cache the remote response (seconds). Mirrors WP's 12-hour cycle. */
-	private const CACHE_TTL = 43200;
-
 	/** Basename of this plugin file, e.g. "metamanager/metamanager.php". */
 	private string $plugin_basename;
 
@@ -87,34 +81,23 @@ class MM_Updater {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Fetch the latest metadata from the apt server, with caching.
+	 * Fetch the latest metadata from the apt server.
 	 *
-	 * @param bool $force_refresh Bypass the transient cache when true.
 	 * @return object|null  Decoded metadata object, or null on failure.
 	 */
-	private function get_metadata( bool $force_refresh = false ): ?object {
-		if ( ! $force_refresh ) {
-			$cached = get_transient( self::TRANSIENT );
-			if ( false !== $cached ) {
-				return $cached ?: null;
-			}
-		}
-
+	private function get_metadata(): ?object {
 		$response = wp_remote_get( self::METADATA_URL, [
 			'timeout'    => 10,
 			'user-agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; Metamanager/' . MM_VERSION,
 		] );
 
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
-			// Cache an empty marker so we don't hammer the server on every page load.
-			set_transient( self::TRANSIENT, '', self::CACHE_TTL );
 			return null;
 		}
 
 		$metadata = json_decode( wp_remote_retrieve_body( $response ) );
 
 		if ( empty( $metadata->version ) || empty( $metadata->download_url ) ) {
-			set_transient( self::TRANSIENT, '', self::CACHE_TTL );
 			return null;
 		}
 
@@ -132,7 +115,6 @@ class MM_Updater {
 			$metadata->requires->wordpress = '6.2';
 		}
 
-		set_transient( self::TRANSIENT, $metadata, self::CACHE_TTL );
 		return $metadata;
 	}
 
@@ -319,11 +301,10 @@ class MM_Updater {
 
 		check_admin_referer( 'mm_check_update' );
 
-		delete_transient( self::TRANSIENT );
-		// Also clear WP's own plugin update transient so it re-evaluates immediately.
+		// Clear WP's own plugin update transient so it re-evaluates immediately.
 		delete_site_transient( 'update_plugins' );
 
-		$metadata = $this->get_metadata( true );
+		$metadata = $this->get_metadata();
 
 		if ( $metadata ) {
 			$remote_version = $metadata->version;
@@ -379,8 +360,7 @@ class MM_Updater {
 			return;
 		}
 
-		// Clear stale metadata cache so the next check fetches fresh data.
-		delete_transient( self::TRANSIENT );
+		// Clear WP's plugin update transient so it re-evaluates on next page load.
 		delete_site_transient( 'update_plugins' );
 
 		// Trigger automatic daemon update.
