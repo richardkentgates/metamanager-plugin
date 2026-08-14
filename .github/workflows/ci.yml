@@ -128,10 +128,65 @@ jobs:
           path: coverage.xml
           retention-days: 30
 
+  daemon-compat:
+    name: Daemon Compatibility
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate daemon-compatibility.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+
+          # 1. JSON syntax
+          python3 -c "import json; json.load(open('daemon-compatibility.json'))"
+          echo "JSON syntax OK"
+
+          # 2. Current plugin version has an entry
+          CURRENT=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
+          echo "Plugin version: $CURRENT"
+          if ! grep -q "\"${CURRENT}\"" daemon-compatibility.json; then
+            echo "::error::daemon-compatibility.json has no entry for current version ${CURRENT}"
+            exit 1
+          fi
+          DAEMON_VER=$(python3 -c "import json; print(json.load(open('daemon-compatibility.json'))['${CURRENT}'])")
+          echo "Required daemon version: $DAEMON_VER"
+
+          # 3. Verify the daemon version exists as a tag in the daemon repo
+          if ! gh api repos/richardkentgates/metamanager/tags --paginate -q '.[].name' | grep -q "^v${DAEMON_VER}$"; then
+            echo "::error::Daemon tag v${DAEMON_VER} not found in richardkentgates/metamanager"
+            echo "Available tags:"
+            gh api repos/richardkentgates/metamanager/tags --paginate -q '.[].name' | grep "^v2\.4\." | sort -V | tail -10
+            exit 1
+          fi
+          echo "Daemon tag v${DAEMON_VER} verified"
+
+          # 4. Verify all unique daemon versions referenced in the map exist
+          UNIQUE_DAEMONS=$(python3 -c "import json; print('\n'.join(sorted(set(json.load(open('daemon-compatibility.json')).values()))))")
+          echo "All unique daemon versions in map:"
+          echo "$UNIQUE_DAEMONS"
+          MISSING=0
+          while IFS= read -r ver; do
+            [ -z "$ver" ] && continue
+            if ! gh api repos/richardkentgates/metamanager/tags --paginate -q '.[].name' | grep -q "^v${ver}$"; then
+              echo "::warning::Daemon tag v${ver} not found in richardkentgates/metamanager (referenced in map)"
+              MISSING=1
+            fi
+          done <<< "$UNIQUE_DAEMONS"
+          if [ "$MISSING" -eq 1 ]; then
+            echo "::warning::Some daemon versions in the compatibility map have no matching tag"
+          else
+            echo "All daemon versions verified"
+          fi
+
   build:
     name: Build Artifact
     runs-on: ubuntu-latest
-    needs: [php-lint, phpstan, shellcheck, integration]
+    needs: [php-lint, phpstan, shellcheck, integration, daemon-compat]
     permissions:
       contents: read
     steps:
@@ -156,7 +211,7 @@ jobs:
   version-bump:
     name: Bump patch version
     runs-on: ubuntu-latest
-    needs: [php-lint, phpstan, shellcheck, integration, build]
+    needs: [php-lint, phpstan, shellcheck, integration, build, daemon-compat]
     if: github.actor != 'github-actions[bot]'
     permissions:
       contents: write
