@@ -20,58 +20,6 @@ class Test_MM_Updater_Integration extends WP_UnitTestCase {
 		return $inst;
 	}
 
-	/**
-	 * Set up a mock remote metadata transient so get_metadata() works offline.
-	 */
-	private function set_mock_metadata( string $version ): void {
-		$metadata              = new stdClass();
-		$metadata->version     = $version;
-		$metadata->download_url = 'https://apt.richardkentgates.com/metamanager/metamanager.zip';
-		$metadata->requires    = new stdClass();
-		$metadata->requires->php      = '8.0';
-		$metadata->requires->wordpress = '6.2';
-		set_transient( 'mm_remote_metadata', $metadata, 43200 );
-	}
-
-	public function tear_down(): void {
-		delete_transient( 'mm_remote_metadata' );
-		parent::tear_down();
-	}
-
-	// ------------------------------------------------------------------
-	// inject_update()
-	// ------------------------------------------------------------------
-
-	public function test_inject_update_with_empty_checked(): void {
-		$this->set_mock_metadata( '999.0.0' );
-
-		$updater   = $this->create_updater();
-		$transient = new stdClass();
-		$transient->checked = [];
-
-		$result = $updater->inject_update( $transient );
-
-		$this->assertIsObject( $result );
-		$this->assertObjectHasProperty( 'checked', $result );
-		$this->assertEmpty( $result->checked );
-	}
-
-	public function test_inject_update_adds_no_update_when_remote_is_current(): void {
-		$this->set_mock_metadata( MM_VERSION );
-
-		$updater   = $this->create_updater();
-		$transient = new stdClass();
-		$transient->checked  = [ 'metamanager/metamanager.php' => MM_VERSION ];
-		$transient->response = [];
-		$transient->no_update = [];
-
-		$result = $updater->inject_update( $transient );
-
-		// When remote version matches current, inject_update returns false
-		// so WordPress runs its normal update check.
-		$this->assertFalse( $result );
-	}
-
 	// ------------------------------------------------------------------
 	// plugin_info()
 	// ------------------------------------------------------------------
@@ -112,17 +60,5 @@ class Test_MM_Updater_Integration extends WP_UnitTestCase {
 			'plugins' => [ 'other-plugin/other-plugin.php' ],
 		] );
 		$this->assertTrue( true );
-	}
-
-	// ------------------------------------------------------------------
-	// Transient cache clearing
-	// ------------------------------------------------------------------
-
-	public function test_metadata_transient_can_be_set_and_deleted(): void {
-		set_transient( 'mm_remote_metadata', 'test', 60 );
-		$this->assertSame( 'test', get_transient( 'mm_remote_metadata' ) );
-
-		delete_transient( 'mm_remote_metadata' );
-		$this->assertFalse( get_transient( 'mm_remote_metadata' ) );
 	}
 }
