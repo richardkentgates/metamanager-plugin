@@ -32,12 +32,12 @@ test  ──  build zip + deploy to apt server TEST channel (/metamanager-test/)
 main  ──  tag + GitHub release + deploy to apt server PRODUCTION channel (/metamanager/)
 ```
 
-- On every dev push: CI runs PHP lint, PHPStan, ShellCheck, integration tests, builds artifact, then auto-bumps `MM_VERSION`
+- On every dev push: CI first auto-bumps `MM_VERSION`, then runs PHP lint, PHPStan, ShellCheck, integration tests, and builds artifact
 - The actor check (`github.actor != 'github-actions[bot]'`) prevents infinite loops — version bump commits don't re-trigger CI
 - Promotion workflows merge directly via git (no PRs), build, and deploy to apt server
 - **Test channel**: `/var/www/html/metamanager-test/` — safe for testing, does not affect production WordPress updates
 - **Production channel**: `/var/www/html/metamanager/` — WordPress polls this for updates via `MM_Updater`
-- WordPress detects the update via `MM_Updater` polling `metadata.json`
+- WordPress detects the update via `MM_Updater` making direct HTTP requests to `metadata.json` (no caching)
 
 ## Deployment Rules
 
