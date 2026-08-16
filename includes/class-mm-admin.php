@@ -128,14 +128,25 @@ class MM_Admin {
 					'<li><strong>metamanager-compress-daemon</strong> — ' . esc_html__( 'lossless JPEG compression via jpegtran; lossless PNG compression via optipng; lossless WebP recompression via cwebp; video container remux via ffmpeg. Files are only replaced if the result is smaller.', 'metamanager' ) . '</li>' .
 					'<li><strong>metamanager-meta-daemon</strong> — ' . esc_html__( 'writes metadata via ExifTool in a single pass, using each file\'s native tag system: EXIF/IPTC/XMP for images; ID3 for MP3; QuickTime atoms for MP4/MOV/M4A; Vorbis comments for OGG/FLAC; XMP-only for AVI/WAV/WMV/WMA/PDF; read-only for MKV/WebM/OGV.', 'metamanager' ) . '</li>' .
 					'</ul>' .
-					'<p>' . esc_html__( 'Daemon status is shown in the banner at the top of this page and the Media Library. Status is read from a PID file in the wp-content/metamanager-jobs/ directory — no systemctl privileges are needed.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'The banner at the top of the page shows tool availability and daemon health. A green icon means the tool is installed and reachable. A red icon means it is missing or the daemon is not running. Daemon status is read from a PID file — no elevated privileges are needed.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'The System Status section shows tool availability, the installed daemon version, the version required by the current plugin, and whether they match.', 'metamanager' ) . '</p>' .
 					'<p>' . esc_html__( 'To restart a daemon from the server:', 'metamanager' ) . '</p>' .
 					'<code>sudo systemctl restart metamanager-compress-daemon</code><br>' .
 					'<code>sudo systemctl restart metamanager-meta-daemon</code>',
 			] );
 
 			$screen->add_help_tab( [
-				'id'      => 'mm_help_metadata',
+				'id'      => 'mm_help_bulk_actions',
+				'title'   => __( 'Bulk Actions', 'metamanager' ),
+				'content' =>
+					'<h2>' . esc_html__( 'Bulk Actions (Media Library)', 'metamanager' ) . '</h2>' .
+					'<ul>' .
+					'<li><strong>' . esc_html__( 'Compress Lossless', 'metamanager' ) . '</strong> — ' . esc_html__( 'Queues lossless compression for all uncompressed files in the selection. Images: JPEG via jpegtran, PNG via optipng, WebP via cwebp. Video: container remux via ffmpeg. Files are only replaced if the result is smaller.', 'metamanager' ) . '</li>' .
+					'<li><strong>' . esc_html__( 'Inject Site Info into Metadata', 'metamanager' ) . '</strong> — ' . esc_html__( 'Writes Publisher (your site name) and Website (your site URL) into IPTC and XMP. This is neutral provenance — it never sets Creator, Copyright, or Owner.', 'metamanager' ) . '</li>' .
+					'</ul>',
+			] );
+
+			$screen->add_help_tab( [
 				'title'   => __( 'Metadata Fields', 'metamanager' ),
 				'content' =>
 					'<h2>' . esc_html__( 'Metadata Fields', 'metamanager' ) . '</h2>' .
@@ -335,6 +346,17 @@ class MM_Admin {
 			return;
 		}
 
+		echo '<div class="notice notice-info mm-banner" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:10px 16px;">';
+		echo '<strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ':</strong> &nbsp;';
+		self::render_tool_health();
+		echo '</div>';
+	}
+
+	/**
+	 * Render tool health icons (green/red status for each binary and daemon).
+	 * Called by status_banner() and the System Status dashboard widget.
+	 */
+	public static function render_tool_health(): void {
 		$status = MM_Status::system_status();
 
 		$icon = fn( bool $ok, string $ok_title, string $fail_title ) =>
@@ -342,8 +364,6 @@ class MM_Admin {
 				? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;vertical-align:middle;" title="' . esc_attr( $ok_title ) . '"></span>'
 				: '<span class="dashicons dashicons-dismiss" style="color:#d63638;vertical-align:middle;" title="' . esc_attr( $fail_title ) . '"></span>';
 
-		echo '<div class="notice notice-info mm-banner" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:10px 16px;">';
-		echo '<strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ':</strong> &nbsp;';
 		echo 'ExifTool '  . $icon( $status['exiftool'],        'ExifTool found',   'ExifTool missing — metadata embedding disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $icon closure returns esc_attr-escaped HTML
 		echo ' &nbsp;jpegtran ' . $icon( $status['jpegtran'],  'jpegtran found',   'jpegtran missing — JPEG lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ' &nbsp;optipng '  . $icon( $status['optipng'],   'optipng found',    'optipng missing — PNG lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -351,7 +371,6 @@ class MM_Admin {
 		echo ' &nbsp;ffmpeg '   . $icon( $status['ffmpeg'],    'ffmpeg found',     'ffmpeg missing — video remux disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ' &nbsp;Compress daemon ' . $icon( $status['compress_daemon'], 'Compression daemon running', 'Compression daemon not running' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ' &nbsp;Metadata daemon ' . $icon( $status['meta_daemon'],     'Metadata daemon running',    'Metadata daemon not running' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '</div>';
 	}
 
 	// -----------------------------------------------------------------------
@@ -1271,27 +1290,6 @@ class MM_Admin {
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Metamanager — Job Dashboard', 'metamanager' ); ?></h1>
 			<hr class="wp-header-end">
 
-			<div class="notice notice-info inline mm-help-box" style="padding:12px 16px;margin:1em 0 1.5em;">
-				<details>
-					<summary style="cursor:pointer;font-weight:600;"><?php esc_html_e( 'About this page (click to expand)', 'metamanager' ); ?></summary>
-					<div style="margin-top:.8em;line-height:1.7;">
-						<p><?php esc_html_e( 'This dashboard shows all Metamanager activity in real time. It refreshes every 5 seconds automatically — no page reload needed.', 'metamanager' ); ?></p>
-						<h4><?php esc_html_e( 'Pending Jobs', 'metamanager' ); ?></h4>
-						<p><?php esc_html_e( 'Jobs appear here when a media file is uploaded, metadata fields are saved, or a bulk or batch action is triggered. Each job is a small JSON file the OS daemon picks up via inotifywait. Jobs vanish as soon as the daemon processes them.', 'metamanager' ); ?></p>
-						<h4><?php esc_html_e( 'Job Results', 'metamanager' ); ?></h4>
-						<p><?php esc_html_e( 'Once a daemon finishes a job it writes a result file to completed/ or failed/. WP-Cron reads those files every 60 seconds and records them here. Each row shows the type, trigger (e.g. upload, edit, scan, batch apply, CLI), and result. Click the image name to open the edit screen. Use Re-queue on any failed job to resubmit it without manual steps.', 'metamanager' ); ?></p>
-						<h4><?php esc_html_e( 'Bulk Actions (Media Library)', 'metamanager' ); ?></h4>
-						<ul style="margin:.3em 0 0 1.5em;">
-							<li><strong><?php esc_html_e( 'Compress Lossless', 'metamanager' ); ?></strong> — <?php esc_html_e( 'queues lossless compression for all uncompressed files in the selection. Images: JPEG via jpegtran, PNG via optipng, WebP via cwebp. Video: container remux via ffmpeg. Files are only replaced if the result is smaller.', 'metamanager' ); ?></li>
-							<li><strong><?php esc_html_e( 'Inject Site Info into Metadata', 'metamanager' ); ?></strong> — <?php esc_html_e( 'writes Publisher (your site name) and Website (your site URL) into IPTC and XMP. This is neutral provenance — it never sets Creator, Copyright, or Owner.', 'metamanager' ); ?></li>
-						</ul>
-						<h4><?php esc_html_e( 'Status Banner', 'metamanager' ); ?></h4>
-						<p><?php esc_html_e( 'The banner at the top shows tool availability and daemon health. A green icon means the tool is installed and reachable. A red icon means it is missing or the daemon is not running. Daemon status is read from a PID file — no elevated privileges are needed.', 'metamanager' ); ?></p>
-						<p><?php esc_html_e( 'Full documentation is available in the Help tab (top right) and at', 'metamanager' ); ?> <a href="https://metamanager.richardkentgates.com" target="_blank" rel="noopener">metamanager.richardkentgates.com</a>.</p>
-					</div>
-				</details>
-			</div>
-
 			<!-- Library Sync tool -->
 			<div class="postbox mm-section" id="mm-sync-box">
 				<div class="postbox-header"><h2 class="hndle"><?php esc_html_e( 'Library Sync', 'metamanager' ); ?></h2></div>
@@ -1311,10 +1309,14 @@ class MM_Admin {
 				</div>
 			</div>
 
-		<!-- Daemon Status -->
+		<!-- System Status: tool health + daemon version -->
 		<div class="postbox mm-section" id="mm-daemon-status-box">
-			<div class="postbox-header"><h2 class="hndle"><?php esc_html_e( 'Daemon Status', 'metamanager' ); ?></h2></div>
+			<div class="postbox-header"><h2 class="hndle"><?php esc_html_e( 'System Status', 'metamanager' ); ?></h2></div>
 			<div class="inside">
+				<div style="padding:0 0 10px;">
+					<strong><?php esc_html_e( 'Tools:', 'metamanager' ); ?></strong> &nbsp;
+					<?php self::render_tool_health(); ?>
+				</div>
 				<?php
 				$installed_ver = MM_Daemon_Updater::get_daemon_version();
 				$info          = MM_Daemon_Updater::get_required_daemon_version();
