@@ -29,6 +29,9 @@ class MM_Admin {
 		// Menu.
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu' ] );
 
+		// Dashboard widget.
+		add_action( 'wp_dashboard_setup', [ __CLASS__, 'register_dashboard_widget' ] );
+
 		// Status banner on Media Library and our own pages.
 		add_action( 'admin_notices', [ __CLASS__, 'status_banner' ] );
 
@@ -371,6 +374,82 @@ class MM_Admin {
 		echo ' &nbsp;ffmpeg '   . $icon( $status['ffmpeg'],    'ffmpeg found',     'ffmpeg missing — video remux disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ' &nbsp;Compress daemon ' . $icon( $status['compress_daemon'], 'Compression daemon running', 'Compression daemon not running' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ' &nbsp;Metadata daemon ' . $icon( $status['meta_daemon'],     'Metadata daemon running',    'Metadata daemon not running' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	// -----------------------------------------------------------------------
+	// WordPress Dashboard widget
+	// -----------------------------------------------------------------------
+
+	public static function register_dashboard_widget(): void {
+		if ( ! current_user_can( 'upload_files' ) ) {
+			return;
+		}
+		wp_add_dashboard_widget(
+			'mm_system_status',
+			__( 'Metamanager System Status', 'metamanager' ),
+			[ __CLASS__, 'render_dashboard_widget' ]
+		);
+	}
+
+	public static function render_dashboard_widget(): void {
+		?>
+		<div style="padding:0 0 10px;">
+			<strong><?php esc_html_e( 'Tools:', 'metamanager' ); ?></strong> &nbsp;
+			<?php self::render_tool_health(); ?>
+		</div>
+		<?php
+		$installed_ver = MM_Daemon_Updater::get_daemon_version();
+		$info          = MM_Daemon_Updater::get_required_daemon_version();
+		$required_ver  = $info['required'] ?? null;
+		$plugin_ver    = defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown';
+
+		if ( null === $installed_ver ) {
+			$daemon_ok = false;
+		} elseif ( null === $required_ver ) {
+			$daemon_ok = false;
+		} else {
+			$daemon_ok = ( $installed_ver === $required_ver );
+		}
+
+		$icon = $daemon_ok
+			? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span>'
+			: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span>';
+		?>
+		<table class="widefat striped">
+			<tbody>
+				<tr>
+					<td><strong><?php esc_html_e( 'Plugin version', 'metamanager' ); ?></strong></td>
+					<td><?php echo esc_html( $plugin_ver ); ?></td>
+				</tr>
+				<tr>
+					<td><strong><?php esc_html_e( 'Required daemon version', 'metamanager' ); ?></strong></td>
+					<td><?php echo $required_ver ? esc_html( 'v' . $required_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not mapped', 'metamanager' ) . '</span>'; ?></td>
+				</tr>
+				<tr>
+					<td><strong><?php esc_html_e( 'Installed daemon version', 'metamanager' ); ?></strong></td>
+					<td><?php echo $installed_ver ? esc_html( 'v' . $installed_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not installed', 'metamanager' ) . '</span>'; ?></td>
+				</tr>
+				<tr>
+					<td><strong><?php esc_html_e( 'Status', 'metamanager' ); ?></strong></td>
+					<td><?php
+						echo $icon . ' &nbsp;';
+						if ( $daemon_ok ) {
+							echo '<span style="color:#00a32a;font-weight:600;">' . esc_html__( 'Daemon is up to date', 'metamanager' ) . '</span>';
+						} elseif ( null === $installed_ver ) {
+							echo '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'Daemon not installed', 'metamanager' ) . '</span>';
+						} elseif ( null === $required_ver ) {
+							echo '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'No compatibility mapping for this plugin version', 'metamanager' ) . '</span>';
+						} else {
+							printf(
+								'<span style="color:#dba617;font-weight:600;">%s</span>',
+								esc_html( sprintf( 'Daemon v%s installed, v%s required', $installed_ver, $required_ver ) )
+							);
+						}
+					?></td>
+				</tr>
+			</tbody>
+		</table>
+		<?php
 	}
 
 	// -----------------------------------------------------------------------
@@ -1308,70 +1387,6 @@ class MM_Admin {
 					</div>
 				</div>
 			</div>
-
-		<!-- System Status: tool health + daemon version -->
-		<div class="postbox mm-section" id="mm-daemon-status-box">
-			<div class="postbox-header"><h2 class="hndle"><?php esc_html_e( 'System Status', 'metamanager' ); ?></h2></div>
-			<div class="inside">
-				<div style="padding:0 0 10px;">
-					<strong><?php esc_html_e( 'Tools:', 'metamanager' ); ?></strong> &nbsp;
-					<?php self::render_tool_health(); ?>
-				</div>
-				<?php
-				$installed_ver = MM_Daemon_Updater::get_daemon_version();
-				$info          = MM_Daemon_Updater::get_required_daemon_version();
-				$required_ver  = $info['required'] ?? null;
-				$map_exists    = $info['map_exists'] ?? false;
-				$plugin_ver    = defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown';
-
-				if ( null === $installed_ver ) {
-					$daemon_ok = false;
-				} elseif ( null === $required_ver ) {
-					$daemon_ok = false;
-				} else {
-					$daemon_ok = ( $installed_ver === $required_ver );
-				}
-
-				$icon = $daemon_ok
-					? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span>'
-					: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span>';
-				?>
-				<table class="widefat striped" style="max-width:600px;">
-					<tbody>
-						<tr>
-							<td><strong><?php esc_html_e( 'Plugin version', 'metamanager' ); ?></strong></td>
-							<td><?php echo esc_html( $plugin_ver ); ?></td>
-						</tr>
-						<tr>
-							<td><strong><?php esc_html_e( 'Required daemon version', 'metamanager' ); ?></strong></td>
-							<td><?php echo $required_ver ? esc_html( 'v' . $required_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not mapped', 'metamanager' ) . '</span>'; ?></td>
-						</tr>
-						<tr>
-							<td><strong><?php esc_html_e( 'Installed daemon version', 'metamanager' ); ?></strong></td>
-							<td><?php echo $installed_ver ? esc_html( 'v' . $installed_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not installed', 'metamanager' ) . '</span>'; ?></td>
-						</tr>
-						<tr>
-							<td><strong><?php esc_html_e( 'Status', 'metamanager' ); ?></strong></td>
-							<td><?php
-								echo $icon . ' &nbsp;';
-								if ( $daemon_ok ) {
-									echo '<span style="color:#00a32a;font-weight:600;">' . esc_html__( 'Daemon is up to date', 'metamanager' ) . '</span>';
-								} elseif ( null === $installed_ver ) {
-									echo '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'Daemon not installed', 'metamanager' ) . '</span>';
-								} elseif ( null === $required_ver ) {
-									echo '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'No compatibility mapping for this plugin version', 'metamanager' ) . '</span>';
-								} else {
-									printf(
-										'<span style="color:#dba617;font-weight:600;">%s</span>',
-										esc_html( sprintf( 'Daemon v%s installed, v%s required', $installed_ver, $required_ver ) )
-									);
-								}
-							?></td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</div>
 
 		<div id="mm-jobs-dashboard">
 			<?php self::render_jobs_content(); ?>
