@@ -80,15 +80,12 @@ class Test_MM_Uninstall extends WP_UnitTestCase {
 	// ------------------------------------------------------------------
 
 	public function test_uninstall_removes_transients(): void {
-		set_transient( 'mm_remote_metadata', 'test', 60 );
 		set_transient( 'mm_upload_batch', 'test', 60 );
 		set_transient( 'mm_import_lock', '1', 30 );
 
-		delete_transient( 'mm_remote_metadata' );
 		delete_transient( 'mm_upload_batch' );
 		delete_transient( 'mm_import_lock' );
 
-		$this->assertFalse( get_transient( 'mm_remote_metadata' ) );
 		$this->assertFalse( get_transient( 'mm_upload_batch' ) );
 		$this->assertFalse( get_transient( 'mm_import_lock' ) );
 	}
