@@ -350,6 +350,11 @@ class MM_Daemon_Updater {
 	 * @return array{update_needed: bool, result: array|null}
 	 */
 	public static function handle_plugin_update(): array {
+		// Clear any previous result so each plugin update starts fresh.
+		// If the update succeeds, no result is stored. If it fails, a new
+		// result replaces whatever was left from a prior attempt.
+		delete_option( self::OPTION_RESULT );
+
 		$diagnosis = self::diagnose();
 
 		// Versions match — clear any stale error and exit.
