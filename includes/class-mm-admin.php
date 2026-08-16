@@ -129,7 +129,7 @@ class MM_Admin {
 					'<li><strong>metamanager-meta-daemon</strong> — ' . esc_html__( 'writes metadata via ExifTool in a single pass, using each file\'s native tag system: EXIF/IPTC/XMP for images; ID3 for MP3; QuickTime atoms for MP4/MOV/M4A; Vorbis comments for OGG/FLAC; XMP-only for AVI/WAV/WMV/WMA/PDF; read-only for MKV/WebM/OGV.', 'metamanager' ) . '</li>' .
 					'</ul>' .
 					'<p>' . esc_html__( 'The banner at the top of the page shows tool availability and daemon health. A green icon means the tool is installed and reachable. A red icon means it is missing or the daemon is not running. Daemon status is read from a PID file — no elevated privileges are needed.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'The Daemon Status section shows the installed daemon version, the version required by the current plugin, and whether they match.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'The System Status section shows tool availability, the installed daemon version, the version required by the current plugin, and whether they match.', 'metamanager' ) . '</p>' .
 					'<p>' . esc_html__( 'To restart a daemon from the server:', 'metamanager' ) . '</p>' .
 					'<code>sudo systemctl restart metamanager-compress-daemon</code><br>' .
 					'<code>sudo systemctl restart metamanager-meta-daemon</code>',
@@ -346,6 +346,17 @@ class MM_Admin {
 			return;
 		}
 
+		echo '<div class="notice notice-info mm-banner" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:10px 16px;">';
+		echo '<strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ':</strong> &nbsp;';
+		self::render_tool_health();
+		echo '</div>';
+	}
+
+	/**
+	 * Render tool health icons (green/red status for each binary and daemon).
+	 * Called by status_banner() and the System Status dashboard widget.
+	 */
+	public static function render_tool_health(): void {
 		$status = MM_Status::system_status();
 
 		$icon = fn( bool $ok, string $ok_title, string $fail_title ) =>
@@ -353,8 +364,6 @@ class MM_Admin {
 				? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;vertical-align:middle;" title="' . esc_attr( $ok_title ) . '"></span>'
 				: '<span class="dashicons dashicons-dismiss" style="color:#d63638;vertical-align:middle;" title="' . esc_attr( $fail_title ) . '"></span>';
 
-		echo '<div class="notice notice-info mm-banner" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:10px 16px;">';
-		echo '<strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ':</strong> &nbsp;';
 		echo 'ExifTool '  . $icon( $status['exiftool'],        'ExifTool found',   'ExifTool missing — metadata embedding disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $icon closure returns esc_attr-escaped HTML
 		echo ' &nbsp;jpegtran ' . $icon( $status['jpegtran'],  'jpegtran found',   'jpegtran missing — JPEG lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ' &nbsp;optipng '  . $icon( $status['optipng'],   'optipng found',    'optipng missing — PNG lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -362,7 +371,6 @@ class MM_Admin {
 		echo ' &nbsp;ffmpeg '   . $icon( $status['ffmpeg'],    'ffmpeg found',     'ffmpeg missing — video remux disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ' &nbsp;Compress daemon ' . $icon( $status['compress_daemon'], 'Compression daemon running', 'Compression daemon not running' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ' &nbsp;Metadata daemon ' . $icon( $status['meta_daemon'],     'Metadata daemon running',    'Metadata daemon not running' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '</div>';
 	}
 
 	// -----------------------------------------------------------------------
@@ -1301,10 +1309,14 @@ class MM_Admin {
 				</div>
 			</div>
 
-		<!-- Daemon Status -->
+		<!-- System Status: tool health + daemon version -->
 		<div class="postbox mm-section" id="mm-daemon-status-box">
-			<div class="postbox-header"><h2 class="hndle"><?php esc_html_e( 'Daemon Status', 'metamanager' ); ?></h2></div>
+			<div class="postbox-header"><h2 class="hndle"><?php esc_html_e( 'System Status', 'metamanager' ); ?></h2></div>
 			<div class="inside">
+				<div style="padding:0 0 10px;">
+					<strong><?php esc_html_e( 'Tools:', 'metamanager' ); ?></strong> &nbsp;
+					<?php self::render_tool_health(); ?>
+				</div>
 				<?php
 				$installed_ver = MM_Daemon_Updater::get_daemon_version();
 				$info          = MM_Daemon_Updater::get_required_daemon_version();
