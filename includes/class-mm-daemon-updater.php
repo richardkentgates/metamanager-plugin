@@ -242,8 +242,8 @@ class MM_Daemon_Updater {
 		}
 
 		$commands = [
-			'update'           => 'sudo -n DEBIAN_FRONTEND=noninteractive apt-get update -qq',
-			'install'          => 'sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y -qq metamanager',
+			'update'           => 'sudo -n apt-get update -qq',
+			'install'          => 'sudo -n apt-get install -y -qq metamanager',
 			'restart-compress' => 'sudo -n systemctl restart metamanager-compress-daemon',
 			'restart-meta'     => 'sudo -n systemctl restart metamanager-meta-daemon',
 		];
