@@ -339,7 +339,7 @@ class MM_Admin {
 
 	public static function status_banner(): void {
 		global $pagenow;
-		$is_mm_page   = isset( $_GET['page'] ) && in_array( sanitize_key( $_GET['page'] ), [ 'metamanager', 'metamanager-bulk-meta', 'metamanager-settings' ], true ); // phpcs:ignore WordPress.Security.NonceVerification
+		$is_mm_page   = isset( $_GET['page'] ) && in_array( sanitize_key( $_GET['page'] ), [ 'metamanager-bulk-meta', 'metamanager-settings' ], true ); // phpcs:ignore WordPress.Security.NonceVerification
 		$is_media_lib = ( 'upload.php' === $pagenow );
 
 		if ( ! $is_mm_page && ! $is_media_lib ) {
