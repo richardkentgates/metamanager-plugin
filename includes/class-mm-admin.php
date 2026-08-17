@@ -392,12 +392,24 @@ class MM_Admin {
 	}
 
 	public static function render_dashboard_widget(): void {
-		?>
-		<div style="padding:0 0 10px;">
-			<strong><?php esc_html_e( 'Tools:', 'metamanager' ); ?></strong> &nbsp;
-			<?php self::render_tool_health(); ?>
-		</div>
-		<?php
+		$status = MM_Status::system_status();
+
+		$tool_icon = function ( bool $ok, string $ok_title, string $fail_title ) {
+			return $ok
+				? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;" title="' . esc_attr( $ok_title ) . '"></span>'
+				: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;" title="' . esc_attr( $fail_title ) . '"></span>';
+		};
+
+		$tools = array(
+			array( 'ExifTool',          $status['exiftool'],        'ExifTool found',                'ExifTool missing' ),
+			array( 'jpegtran',          $status['jpegtran'],        'jpegtran found',                'jpegtran missing' ),
+			array( 'optipng',           $status['optipng'],         'optipng found',                 'optipng missing' ),
+			array( 'cwebp',             $status['cwebp'],           'cwebp found',                   'cwebp missing' ),
+			array( 'ffmpeg',            $status['ffmpeg'],          'ffmpeg found',                  'ffmpeg missing' ),
+			array( 'Compress daemon',   $status['compress_daemon'], 'Compression daemon running',    'Compression daemon stopped' ),
+			array( 'Metadata daemon',   $status['meta_daemon'],     'Metadata daemon running',       'Metadata daemon stopped' ),
+		);
+
 		$installed_ver = MM_Daemon_Updater::get_daemon_version();
 		$info          = MM_Daemon_Updater::get_required_daemon_version();
 		$required_ver  = $info['required'] ?? null;
@@ -411,41 +423,53 @@ class MM_Admin {
 			$daemon_ok = ( $installed_ver === $required_ver );
 		}
 
-		$icon = $daemon_ok
+		$daemon_icon = $daemon_ok
 			? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span>'
 			: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span>';
+
+		if ( $daemon_ok ) {
+			$daemon_status = '<span style="color:#00a32a;font-weight:600;">' . esc_html__( 'Daemon is up to date', 'metamanager' ) . '</span>';
+		} elseif ( null === $installed_ver ) {
+			$daemon_status = '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'Daemon not installed', 'metamanager' ) . '</span>';
+		} elseif ( null === $required_ver ) {
+			$daemon_status = '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'No compatibility mapping for this plugin version', 'metamanager' ) . '</span>';
+		} else {
+			$daemon_status = sprintf(
+				'<span style="color:#dba617;font-weight:600;">%s</span>',
+				esc_html( sprintf( 'Daemon v%s installed, v%s required', $installed_ver, $required_ver ) )
+			);
+		}
 		?>
-		<table class="widefat striped">
+		<table class="widefat striped" style="margin-bottom:0">
+			<thead><tr><th><?php esc_html_e( 'Tool', 'metamanager' ); ?></th><th><?php esc_html_e( 'Status', 'metamanager' ); ?></th></tr></thead>
+			<tbody>
+				<?php foreach ( $tools as $t ) : ?>
+				<tr>
+					<td><?php echo esc_html( $t[0] ); ?></td>
+					<td><?php echo $tool_icon( $t[1], $t[2], $t[3] ); ?> <?php echo esc_html( $t[1] ? $t[2] : $t[3] ); ?></td>
+				</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<br />
+		<table class="widefat striped" style="margin-bottom:0">
+			<thead><tr><th><?php esc_html_e( 'Component', 'metamanager' ); ?></th><th><?php esc_html_e( 'Version', 'metamanager' ); ?></th></tr></thead>
 			<tbody>
 				<tr>
-					<td><strong><?php esc_html_e( 'Plugin version', 'metamanager' ); ?></strong></td>
+					<td><?php esc_html_e( 'Plugin', 'metamanager' ); ?></td>
 					<td><?php echo esc_html( $plugin_ver ); ?></td>
 				</tr>
 				<tr>
-					<td><strong><?php esc_html_e( 'Required daemon version', 'metamanager' ); ?></strong></td>
+					<td><?php esc_html_e( 'Required daemon', 'metamanager' ); ?></td>
 					<td><?php echo $required_ver ? esc_html( 'v' . $required_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not mapped', 'metamanager' ) . '</span>'; ?></td>
 				</tr>
 				<tr>
-					<td><strong><?php esc_html_e( 'Installed daemon version', 'metamanager' ); ?></strong></td>
+					<td><?php esc_html_e( 'Installed daemon', 'metamanager' ); ?></td>
 					<td><?php echo $installed_ver ? esc_html( 'v' . $installed_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not installed', 'metamanager' ) . '</span>'; ?></td>
 				</tr>
 				<tr>
-					<td><strong><?php esc_html_e( 'Status', 'metamanager' ); ?></strong></td>
-					<td><?php
-						echo $icon . ' &nbsp;';
-						if ( $daemon_ok ) {
-							echo '<span style="color:#00a32a;font-weight:600;">' . esc_html__( 'Daemon is up to date', 'metamanager' ) . '</span>';
-						} elseif ( null === $installed_ver ) {
-							echo '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'Daemon not installed', 'metamanager' ) . '</span>';
-						} elseif ( null === $required_ver ) {
-							echo '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'No compatibility mapping for this plugin version', 'metamanager' ) . '</span>';
-						} else {
-							printf(
-								'<span style="color:#dba617;font-weight:600;">%s</span>',
-								esc_html( sprintf( 'Daemon v%s installed, v%s required', $installed_ver, $required_ver ) )
-							);
-						}
-					?></td>
+					<td><?php esc_html_e( 'Status', 'metamanager' ); ?></td>
+					<td><?php echo $daemon_icon . ' ' . $daemon_status; ?></td>
 				</tr>
 			</tbody>
 		</table>
