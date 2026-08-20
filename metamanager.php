@@ -65,6 +65,7 @@ define( 'MM_PID_META',     MM_JOB_ROOT . '/meta-daemon.pid' );
 // ---------------------------------------------------------------------------
 
 require_once MM_PLUGIN_DIR . 'includes/class-mm-db.php';
+require_once MM_PLUGIN_DIR . 'includes/class-mm-metadata-history.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-job-queue.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-metadata.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-status.php';
@@ -121,6 +122,9 @@ add_action( 'plugins_loaded', function (): void {
 // Fires in both admin and REST API contexts, so it belongs here unconditionally.
 add_action( 'delete_attachment', [ 'MM_DB', 'delete_jobs_for_attachment' ] );
 
+// Metadata version history — tracks changes to the 14 MM-managed attachment fields.
+MM_Metadata_History::register_hooks();
+
 // ---------------------------------------------------------------------------
 // Activation / deactivation
 // ---------------------------------------------------------------------------
@@ -134,6 +138,7 @@ register_deactivation_hook( MM_PLUGIN_FILE, 'mm_deactivate' );
  */
 function mm_activate_single_site(): void {
 	MM_DB::create_or_update_table();
+	MM_Metadata_History::create_or_update_table();
 	MM_Job_Queue::ensure_dirs();
 
 	if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {

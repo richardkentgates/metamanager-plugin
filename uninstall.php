@@ -76,10 +76,14 @@ function _mm_uninstall_site(): void {
 		delete_post_meta_by_key( $key );
 	}
 
-	// Drop the plugin DB table.
+	// Drop the plugin DB tables.
 	$table = $wpdb->prefix . 'metamanager_jobs';
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter
 	$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
+
+	$history_table = $wpdb->prefix . 'mm_meta_history';
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter
+	$wpdb->query( "DROP TABLE IF EXISTS `{$history_table}`" );
 }
 
 // ---------------------------------------------------------------------------
