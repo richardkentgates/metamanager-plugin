@@ -331,28 +331,6 @@ main ──push──> release.yml (tag + GitHub release + apt server deploy)
 
 ## What's Left
 
-### HIGH — Media Processing Page (Bulk Metadata)
-
-The page exists at **Media → Media Processing** (`metamanager-bulk-meta`). Current problems:
-
-1. **Only queries images** — `post_mime_type => 'image'` at line 1948 of `class-mm-admin.php`. Video, audio, and PDF are excluded entirely.
-2. **Same form for all media** — presents Creator/Copyright/Owner/Headline/Credit/Keywords/Date/City/State/Country regardless of what the file format supports for write-back.
-3. **No write-capability awareness** — MKV/WebM/OGG are `read_only`, AVI/WMV are `xmp_only`, OGG audio is `vorbis_only`. The form doesn't know this.
-4. **Compression checkbox shown for all formats** — irrelevant for audio, PDF, and read-only video.
-5. **GPS not shown anywhere** — not in the form, not as read-only info in the grid.
-6. **`ajax_apply_bulk_meta()` allowed_fields** is a static list — no conditional logic based on MIME type.
-
-### HIGH — `META_SYNCED` Constant
-
-Removed as "dead postmeta" in FIX-10 (2026-07-25) but was actually used for:
-- Thumbnail regeneration detection: distinguishes fresh upload (no flag) from regen (flag set). On regen, only compression is re-queued; import is skipped to protect user edits.
-- Scan Library skip: avoids re-processing already-synced files.
-- Current code uses `MM_DB::has_any_completed_job()` instead — less precise (returns true for compression-only jobs too).
-
-### HIGH — Queue Notice `queued` Status
-
-Infrastructure exists (renderer + transient push) but `write_job()` only called `push_queue_notice('skipped')`. Metadata jobs that land behind pending jobs now get a `'queued'` notice — needs verification on production.
-
 ### HIGH — Settings Save Reliability
 
 - Investigate reports that the admin settings page shows "Settings saved" while not all fields actually persist.
@@ -360,7 +338,7 @@ Infrastructure exists (renderer + transient push) but `write_job()` only called 
 
 ### MEDIUM — `phpunit.xml.dist`
 
-Exists in `gcm/` but not in plugin or daemon repos.
+Exists in `gcm/` but not in plugin or daemon repos. The plugin's `tests/bootstrap.php` and `phpunit.xml` exist but require a WordPress test suite at `/tmp/wordpress-tests-lib`.
 
 ---
 
@@ -400,23 +378,23 @@ Compression support:
 |---|------|----------|--------|
 | R-1 | `META_SYNCED` constant + registration | HIGH | Done — constant defined, registered, set after import, used by `on_upload()` and Scan Library |
 | R-2 | Queue notice `queued` for metadata jobs | HIGH | Done — `write_job()` now pushes `'queued'` notice for metadata jobs behind pending |
-| R-3 | Media Processing page: media-type-aware form | HIGH | TODO — form must detect selected media types and show only writable fields |
-| R-4 | Media Processing page: compression checkbox per format | HIGH | TODO — hide for audio, PDF, read-only video |
-| R-5 | Media Processing page: GPS read-only display | MEDIUM | TODO — show GPS lat/lon/alt as read-only in the grid for images that have it |
-| R-6 | `phpunit.xml.dist` | MEDIUM | TODO |
-| R-7 | GPS map preview on attachment edit | LOW | TODO |
+| R-3 | Media Processing page: media-type-aware form | HIGH | Done — query includes all MIME types, filter dropdown, data-write-cap attributes, JS field filtering |
+| R-4 | Media Processing page: compression checkbox per format | HIGH | Done — data-compressible attribute, JS hide/show, format-specific labels |
+| R-5 | Media Processing page: GPS read-only display | MEDIUM | Done — GPS lat/lon/alt shown in grid with pin icon |
+| R-6 | `phpunit.xml.dist` | MEDIUM | Exists at `tests/phpunit.xml` but requires WordPress test suite at `/tmp/wordpress-tests-lib` |
+| R-7 | GPS map preview on attachment edit | LOW | Done — Leaflet/OpenStreetMap enqueued on attachment edit screen |
 
 ### Expansion — Platform Improvements
 
-| # | Item | Priority | Description |
-|---|------|----------|-------------|
-| E-1 | Bulk metadata: video/audio/PDF support | HIGH | Extend page beyond images to all supported media types |
-| E-2 | Bulk metadata: per-MIME field filtering | HIGH | Show only fields writable for the selected format |
-| E-3 | Bulk metadata: dynamic compression checkbox | MEDIUM | Hide for non-compressible formats |
-| E-4 | Attachment GPS map preview | LOW | Leaflet/OSM map when GPS coordinates exist |
-| E-5 | `phpunit.xml.dist` | MEDIUM | PHPUnit config for local testing |
-| E-6 | Metadata versioning | LOW | Track metadata changes over time |
-| E-7 | Metadata diff view | LOW | Before/after comparison |
+| # | Item | Priority | Status |
+|---|------|----------|--------|
+| E-1 | Bulk metadata: video/audio/PDF support | HIGH | Done — query includes all MIME types, grid shows icons per type |
+| E-2 | Bulk metadata: per-MIME field filtering | HIGH | Done — client-side JS + server-side MIME validation in AJAX handler |
+| E-3 | Bulk metadata: dynamic compression checkbox | MEDIUM | Done — JS toggles visibility per format with format-specific labels |
+| E-4 | Attachment GPS map preview | LOW | Done — Leaflet/OSM map with marker |
+| E-5 | `phpunit.xml.dist` | MEDIUM | Exists at `tests/phpunit.xml` |
+| E-6 | Metadata versioning | LOW | TODO |
+| E-7 | Metadata diff view | LOW | TODO |
 
 ---
 
