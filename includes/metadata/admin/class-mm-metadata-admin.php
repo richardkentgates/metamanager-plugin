@@ -277,7 +277,7 @@ public function add_help_tabs( \WP_Screen $screen ): void {
 	// Sidebar with links — shared across all pages.
 	$screen->set_help_sidebar(
 		'<p><strong>' . esc_html__( 'More resources:', 'metamanager' ) . '</strong></p>' .
-		'<p><a href="https://github.com/richardkentgates/metamanager/" target="_blank">' . esc_html__( 'Metamanager', 'metamanager' ) . '</a></p>' .
+		'<p><a href="https://github.com/richardkentgates/metamanager-plugin/" target="_blank">' . esc_html__( 'Metamanager', 'metamanager' ) . '</a></p>' .
 		'<p><a href="https://schema.org/docs/schemas.html" target="_blank">' . esc_html__( 'Schema.org reference', 'metamanager' ) . '</a></p>' .
 		'<p><a href="https://search.google.com/test/rich-results" target="_blank">' . esc_html__( 'Google Rich Results Test', 'metamanager' ) . '</a></p>' .
 		'<p><a href="https://developers.facebook.com/tools/debug/" target="_blank">' . esc_html__( 'Facebook Sharing Debugger', 'metamanager' ) . '</a></p>' .

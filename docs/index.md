@@ -152,15 +152,14 @@ The WordPress plugin auto-updates independently via `MM_Updater` (checks GitHub 
 
 ### Plugin auto-updater
 
-The plugin checks `https://api.github.com/repos/richardkentgates/metamanager-plugin/releases/latest` every 12 hours. When a new release is found:
+The plugin checks `https://apt.richardkentgates.com/metamanager/metadata.json` every 12 hours. When a new release is found:
 
 1. WordPress downloads and installs the plugin zip
-2. Plugin fires `MM_Updater::on_plugin_updated()`
-3. Reads `daemon-compatibility.json` to determine the required daemon version
-4. Compares against `/usr/local/lib/metamanager/VERSION`
-5. If mismatched, runs `sudo apt-get update && apt-get install -y metamanager` + `systemctl restart`
+2. WordPress activates the updated plugin
 
-No manual SSH required — the plugin handles daemon updates automatically.
+### Daemon self-updater
+
+Daemon updates are handled by a shell script (`/usr/local/bin/metamanager-self-updater.sh`) that runs every 60 seconds via systemd timer. It reads `daemon-compatibility.json` from the plugin directory, extracts the installed plugin version, looks up the required daemon version, and runs `apt-get upgrade` if needed. No manual SSH required.
 
 ## Documentation
 

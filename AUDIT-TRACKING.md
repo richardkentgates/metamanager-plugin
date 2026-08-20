@@ -12,8 +12,8 @@ Last updated: 2026-07-27 (v2.3.10 — Round 6 fixes deployed)
 |-----------|---------|--------|
 | Plugin | 2.3.10 | main |
 | Server daemon | 2.4.7 | main |
-| Production site | 104.197.172.183 | Ubuntu 20.04 |
-| Apt server | 34.136.87.92 | Debian 13 |
+| Production site | (private) | Ubuntu 20.04 |
+| Apt server | (private) | Debian 13 |
 
 ---
 
