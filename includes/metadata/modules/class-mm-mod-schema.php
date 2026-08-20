@@ -258,7 +258,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	}
 
 	// -------------------------------------------------------------------------
-	// Content nodes (BlogPosting, Article, HowTo, FAQPage, Product, Course, etc.)
+	// Content nodes (BlogPosting, Article, HowTo, Product, Event, Service, etc.)
 	// -------------------------------------------------------------------------
 
 	private function add_content_node( array &$data, MM_Page_Context $context, MM_Site_Settings $settings ): void {
@@ -312,8 +312,24 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		// Merge per-post schema field overrides (Event dates, prices, addresses, etc.).
+		// For Product type with WooCommerce active: WC data populates first, then manual overrides.
 		$schema_fields = $meta['schema_fields'] ?? [];
-		if ( ! empty( $schema_fields ) ) {
+		if ( 'Product' === $type && $this->is_woocommerce_active() ) {
+			$wc_data = $this->get_woocommerce_product_data( $post->ID );
+			if ( ! empty( $wc_data ) ) {
+				$additions = MM_Schema_Types::build_node_additions( $schema_fields, $type );
+				// WC data is base, manual overrides merge on top.
+				$node = array_merge( $node, $wc_data, $additions );
+			} else {
+				// WC product not found — fall back to manual fields only.
+				if ( ! empty( $schema_fields ) ) {
+					$additions = MM_Schema_Types::build_node_additions( $schema_fields, $type );
+					if ( ! empty( $additions ) ) {
+						$node = array_merge( $node, $additions );
+					}
+				}
+			}
+		} elseif ( ! empty( $schema_fields ) ) {
 			$additions = MM_Schema_Types::build_node_additions( $schema_fields, $type );
 			if ( ! empty( $additions ) ) {
 				$node = array_merge( $node, $additions );
@@ -388,6 +404,85 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 		}
 		return null;
+	}
+
+	// -------------------------------------------------------------------------
+	// WooCommerce integration
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if WooCommerce is active.
+	 */
+	private function is_woocommerce_active(): bool {
+		return class_exists( 'WooCommerce' ) || function_exists( 'WC' );
+	}
+
+	/**
+	 * Pull normalized Product schema data from WooCommerce product meta.
+	 *
+	 * Returns an array suitable for merging into a JSON-LD Product node.
+	 * Only includes fields that have actual values in WooCommerce.
+	 *
+	 * @param int $post_id Product post ID.
+	 * @return array<string, mixed>
+	 */
+	private function get_woocommerce_product_data( int $post_id ): array {
+		if ( ! $this->is_woocommerce_active() ) {
+			return [];
+		}
+
+		$product = wc_get_product( $post_id );
+		if ( ! $product ) {
+			return [];
+		}
+
+		$out = [];
+
+		// Price.
+		$regular = $product->get_regular_price();
+		$sale    = $product->get_sale_price();
+		$price   = ( '' !== $sale && false !== $sale ) ? $sale : $regular;
+		if ( '' !== $price && false !== $price ) {
+			$out['offers'] = [
+				'@type'         => 'Offer',
+				'price'         => $price,
+				'priceCurrency' => get_woocommerce_currency(),
+			];
+
+			// Availability.
+			$stock = $product->get_stock_status();
+			$map   = [
+				'instock'     => 'InStock',
+				'outofstock'  => 'OutOfStock',
+				'onbackorder' => 'PreOrder',
+			];
+			if ( isset( $map[ $stock ] ) ) {
+				$out['offers']['availability'] = 'https://schema.org/' . $map[ $stock ];
+			}
+
+			// SKU.
+			$sku = $product->get_sku();
+			if ( $sku ) {
+				$out['offers']['sku'] = $sku;
+			}
+		}
+
+		// Brand — from _brand meta or pa_brand attribute.
+		$brand = $product->get_meta( '_brand' );
+		if ( ! $brand ) {
+			$attrs = $product->get_attributes();
+			if ( isset( $attrs['pa_brand'] ) ) {
+				$terms = $attrs['pa_brand']->get_terms();
+				if ( $terms && ! is_wp_error( $terms ) ) {
+					$brand = $terms[0]->name;
+				}
+			}
+		}
+		if ( $brand ) {
+			$out['brand'] = [ '@type' => 'Brand', 'name' => $brand ];
+		}
+
+		return $out;
 	}
 
 	// -------------------------------------------------------------------------

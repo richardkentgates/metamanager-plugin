@@ -26,7 +26,8 @@ $default_noindex  = (bool) $settings->get( "titles.post_types.{$pt_slug}.noindex
 $schema_types = MM_Schema_Types::get_schema_types( true );
 
 // Field definitions for expandable panels (types that need extra structured data).
-$schema_field_defs  = MM_Schema_Types::get_fields_by_type();
+$wc_active = class_exists( 'WooCommerce' ) || function_exists( 'WC' );
+$schema_field_defs  = MM_Schema_Types::get_fields_by_type( $wc_active );
 $stored_schema_fields = $meta['schema_fields'] ?? [];
 ?>
 <div class="gcm-metabox" id="mm-meta-metabox">

@@ -66,9 +66,10 @@ class MM_Schema_Types {
 	 *   description string   help text shown beneath input
 	 *   options     array    key=>label pairs, for 'select' type only
 	 *
+	 * @param bool $wc_active Whether WooCommerce is active (adds auto_label hints to Product fields).
 	 * @return array<string, array>
 	 */
-	public static function get_fields_by_type(): array {
+	public static function get_fields_by_type( bool $wc_active = false ): array {
 		return [
 			// ── Event ─────────────────────────────────────────────────────────
 			'Event' => [
@@ -175,7 +176,7 @@ class MM_Schema_Types {
 					'label'       => 'Brand',
 					'type'        => 'text',
 					'required'    => false,
-					'auto_label'  => null,
+					'auto_label'  => $wc_active ? 'from WooCommerce product data' : null,
 					'placeholder' => '',
 					'description' => '',
 				],
@@ -184,7 +185,7 @@ class MM_Schema_Types {
 					'label'       => 'Price',
 					'type'        => 'text',
 					'required'    => false,
-					'auto_label'  => null,
+					'auto_label'  => $wc_active ? 'from WooCommerce product data' : null,
 					'placeholder' => 'e.g. 49.99',
 					'description' => 'Numeric price.',
 				],
@@ -193,7 +194,7 @@ class MM_Schema_Types {
 					'label'       => 'Currency',
 					'type'        => 'text',
 					'required'    => false,
-					'auto_label'  => null,
+					'auto_label'  => $wc_active ? 'from WooCommerce settings' : null,
 					'placeholder' => 'USD',
 					'description' => 'ISO 4217 currency code.',
 				],
@@ -202,7 +203,7 @@ class MM_Schema_Types {
 					'label'       => 'Availability',
 					'type'        => 'select',
 					'required'    => false,
-					'auto_label'  => null,
+					'auto_label'  => $wc_active ? 'from WooCommerce stock status' : null,
 					'placeholder' => '',
 					'description' => '',
 					'options'     => [

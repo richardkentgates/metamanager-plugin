@@ -432,7 +432,7 @@ Compression support:
 | E-6 | Metadata versioning | LOW | Done — mm_meta_history table, snapshots on save, version history pane on attachment edit |
 | E-7 | Metadata diff view | LOW | Done — compare any two versions or current values, AJAX diff with color-coded before/after table |
 | S-1 | Schema type thinning | HIGH | Done — removed 7 types (LocalBusiness, Organization, Person, FAQPage, TouristAttraction, TouristTrip, RealEstateListing), locked BlogPosting for posts, removed dead FAQ extraction code |
-| S-2 | WooCommerce Product schema | HIGH | TODO — auto-populate Product schema from WooCommerce meta (price, availability, brand, sku, image) |
+| S-2 | WooCommerce Product schema | HIGH | Done — auto-populates Product schema from WooCommerce meta (price, availability, brand, sku), manual fields as overrides |
 | S-3 | Facebook Page ID field | MEDIUM | Done — fb:admins field added under fb:app_id on Social settings, meta tag emitted in head |
 
 ---
