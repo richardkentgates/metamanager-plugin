@@ -363,6 +363,9 @@ class MM_Updater {
 		// Clear WP's plugin update transient so it re-evaluates on next page load.
 		delete_site_transient( 'update_plugins' );
 
+		// Write required version file for daemon-side self-updater.
+		MM_Daemon_Updater::write_required_version();
+
 		// Trigger automatic daemon update.
 		$daemon_result = MM_Daemon_Updater::handle_plugin_update();
 
