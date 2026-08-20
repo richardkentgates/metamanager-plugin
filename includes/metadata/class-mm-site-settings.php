@@ -149,6 +149,13 @@ class MM_Site_Settings {
 			return $value;
 		}
 
+		// Unwrap: options.php passes wp_unslash($_POST[$option]) which has
+		// the option name as the top-level key (e.g. ['mm_meta_settings' => ['titles' => [...]]]).
+		// WordPress core does NOT strip this before the pre_update_option filter.
+		if ( isset( $value[ $option ] ) && is_array( $value[ $option ] ) ) {
+			$value = $value[ $option ];
+		}
+
 		$defaults       = self::settings_defaults();
 		$known_sections = array_keys( $defaults );
 		$value_keys     = array_keys( $value );
