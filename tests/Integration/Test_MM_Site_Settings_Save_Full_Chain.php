@@ -79,8 +79,10 @@ class Test_MM_Site_Settings_Save_Full_Chain extends WP_UnitTestCase {
 
 		$_POST['option_page'] = $group;
 
-		// WordPress options.php does: $value = wp_unslash($_POST[$option]);
-		// The test data represents $_POST, so extract the option value.
+		// WordPress options.php does: $value = wp_unslash($_POST[$option]).
+		// PHP already parsed form fields like mm_meta_settings[titles][separator]
+		// into $_POST['mm_meta_settings'] = ['titles' => ['separator' => '...']].
+		// So wp_unslash($_POST[$option]) = ['titles' => [...]] (no option-name wrapper).
 		$value = $raw_post_value[ MM_META_OPT_SETTINGS ] ?? $raw_post_value;
 		update_option( MM_META_OPT_SETTINGS, $value );
 
