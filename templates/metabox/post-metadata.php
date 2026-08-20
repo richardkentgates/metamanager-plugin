@@ -121,7 +121,7 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 		</table>
 	</div>
 
-	<?php /* ── Schema + breadcrumb ──────────────────────────────────── */ ?>
+		<?php /* ── Schema + breadcrumb ──────────────────────────────────── */ ?>
 	<div class="gcm-field-group">
 		<button type="button" class="gcm-toggle-section" data-target="gcm-schema-section">
 			▶ Schema &amp; Breadcrumb
@@ -129,11 +129,17 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 		<div class="gcm-collapsible" id="gcm-schema-section" style="display:none">
 			<div class="gcm-metabox-row">
 				<label class="gcm-field-label" for="mm_meta_schema_type">Schema Type</label>
-				<select id="mm_meta_schema_type" name="mm_meta_schema_type">
-					<?php foreach ( $schema_types as $st_val => $st_label ) : ?>
-						<option value="<?php echo esc_attr($st_val); ?>" <?php selected($schema_type,$st_val); ?>><?php echo esc_html($st_label); ?></option>
-					<?php endforeach; ?>
-				</select>
+				<?php if ( 'post' === $pt_slug ) : ?>
+					<input type="hidden" name="mm_meta_schema_type" value="">
+					<span class="gcm-schema-auto-note">BlogPosting (locked for posts)</span>
+				<?php else : ?>
+					<select id="mm_meta_schema_type" name="mm_meta_schema_type">
+						<?php foreach ( $schema_types as $st_val => $st_label ) : ?>
+							<?php if ( 'BlogPosting' === $st_val ) continue; ?>
+							<option value="<?php echo esc_attr($st_val); ?>" <?php selected($schema_type,$st_val); ?>><?php echo esc_html($st_label); ?></option>
+						<?php endforeach; ?>
+					</select>
+				<?php endif; ?>
 			</div>
 
 			<?php /* ── Per-type field panels ──────────────────────────────────── */ ?>

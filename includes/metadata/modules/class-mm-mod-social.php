@@ -219,6 +219,12 @@ class MM_Mod_Social extends MM_Mod_Base {
 		if ( $fb_app_id ) {
 			$this->add_meta( $data, [ 'property' => 'fb:app_id', 'content' => $fb_app_id ] );
 		}
+
+		// Facebook page ID (fb:admins).
+		$fb_page_id = $settings->get( 'social.fb_page_id', '' );
+		if ( $fb_page_id ) {
+			$this->add_meta( $data, [ 'property' => 'fb:admins', 'content' => $fb_page_id ] );
+		}
 	}
 
 	// -------------------------------------------------------------------------

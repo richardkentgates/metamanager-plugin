@@ -131,7 +131,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 				$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
 				$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
 				// Map content types to their WebPage counterpart.
-				if ( in_array( $type, [ 'BlogPosting', 'Article', 'NewsArticle', 'HowTo', 'FAQPage', 'Product', 'Course' ], true ) ) {
+				if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
 					$type = 'WebPage'; // WebPage is the containing page; content type is separate.
 				}
 			}
@@ -303,19 +303,11 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		// Author — link to Person node (added by Author module or built inline).
-		if ( in_array( $type, [ 'BlogPosting', 'Article', 'NewsArticle' ], true ) ) {
+		if ( in_array( $type, [ 'BlogPosting', 'Article' ], true ) ) {
 			$author = get_userdata( (int) $post->post_author );
 			if ( $author && $settings->get( 'authors.person_schema', true ) ) {
 				$node['author']    = [ '@id' => get_author_posts_url( $author->ID ) . '#person' ];
 				$node['publisher'] = [ '@id' => $this->site_id( 'organization' ) ];
-			}
-		}
-
-		// FAQPage — extract FAQ blocks from post content using <details>/<summary> elements.
-		if ( 'FAQPage' === $type ) {
-			$faqs = $this->extract_faq( $post->post_content );
-			if ( $faqs ) {
-				$node['mainEntity'] = $faqs;
 			}
 		}
 
@@ -396,66 +388,6 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 		}
 		return null;
-	}
-
-	private function extract_faq( string $content ): array {
-		$faqs = [];
-
-		// Pattern 1: <details><summary>Q</summary>A</details>
-		if ( preg_match_all( '/<details[^>]*>\s*<summary[^>]*>(.*?)<\/summary>(.*?)<\/details>/si', $content, $matches ) ) {
-			for ( $i = 0; $i < count( $matches[0] ); $i++ ) {
-				$faqs[] = [
-					'@type'          => 'Question',
-					'name'           => wp_strip_all_tags( $matches[1][ $i ] ),
-					'acceptedAnswer' => [
-						'@type' => 'Answer',
-						'text'  => wp_strip_all_tags( $matches[2][ $i ] ),
-					],
-				];
-			}
-		}
-
-		// Pattern 2: <dl><dt>Q</dt><dd>A</dd></dl>
-		if ( preg_match_all( '/<dl[^>]*>(.*?)<\/dl>/si', $content, $dl_blocks ) ) {
-			foreach ( $dl_blocks[1] as $block ) {
-				if ( preg_match_all( '/<dt[^>]*>(.*?)<\/dt>\s*<dd[^>]*>(.*?)<\/dd>/si', $block, $pairs ) ) {
-					for ( $i = 0; $i < count( $pairs[0] ); $i++ ) {
-						$question = wp_strip_all_tags( $pairs[1][ $i ] );
-						$answer   = wp_strip_all_tags( $pairs[2][ $i ] );
-						if ( $question && $answer ) {
-							$faqs[] = [
-								'@type'          => 'Question',
-								'name'           => $question,
-								'acceptedAnswer' => [
-									'@type' => 'Answer',
-									'text'  => $answer,
-								],
-							];
-						}
-					}
-				}
-			}
-		}
-
-		// Pattern 3: Heading + paragraph pairs (h2/h3/h4 followed by p)
-		if ( preg_match_all( '/<h[2-4][^>]*>(.*?)<\/h[2-4]>\s*(?:<p[^>]*>(.*?)<\/p>)/si', $content, $hp_matches ) ) {
-			for ( $i = 0; $i < count( $hp_matches[0] ); $i++ ) {
-				$question = wp_strip_all_tags( $hp_matches[1][ $i ] );
-				$answer   = wp_strip_all_tags( $hp_matches[2][ $i ] );
-				if ( $question && $answer ) {
-					$faqs[] = [
-						'@type'          => 'Question',
-						'name'           => $question,
-						'acceptedAnswer' => [
-							'@type' => 'Answer',
-							'text'  => $answer,
-						],
-					];
-				}
-			}
-		}
-
-		return $faqs;
 	}
 
 	// -------------------------------------------------------------------------
