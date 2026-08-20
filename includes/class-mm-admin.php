@@ -572,8 +572,7 @@ class MM_Admin {
 						);
 						$action = $updater_status['status'] ?? 'none';
 						$color  = in_array( $action, array( 'ok', 'updated', 'ahead' ), true ) ? '#00a32a'
-							: in_array( $action, array( 'failed', 'error' ), true ) ? '#d63638'
-							: '#dba617';
+							: ( in_array( $action, array( 'failed', 'error' ), true ) ? '#d63638' : '#dba617' );
 						echo '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
 							. ( $action_labels[ $action ] ?? esc_html( $action ) )
 							. '</span>';
