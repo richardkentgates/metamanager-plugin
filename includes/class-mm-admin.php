@@ -22,6 +22,24 @@ defined( 'ABSPATH' ) || exit;
 class MM_Admin {
 
 	/**
+	 * Fields writable by XMP-only and vorbis-only formats.
+	 *
+	 * Full-capability formats (JPEG, PNG, WebP, AVIF, MP4, MOV, etc.) can
+	 * write all allowed fields. XMP-only (AVI, WMV, WAV, WMA, PDF) and
+	 * vorbis-only (OGG audio) formats are restricted to this subset.
+	 */
+	private const XMP_ONLY_FIELDS = [
+		MM_Metadata::META_HEADLINE,
+		MM_Metadata::META_CREDIT,
+		MM_Metadata::META_KEYWORDS,
+		MM_Metadata::META_DATE,
+		MM_Metadata::META_RATING,
+		MM_Metadata::META_CITY,
+		MM_Metadata::META_STATE,
+		MM_Metadata::META_COUNTRY,
+	];
+
+	/**
 	 * Register all admin hooks.
 	 * Called from metamanager.php only if is_admin() is true.
 	 */
@@ -1763,13 +1781,32 @@ class MM_Admin {
 				continue;
 			}
 
-			foreach ( $fields as $key => $val ) {
+			// Server-side MIME-type validation — skip fields not writable for this format.
+			$mime     = (string) get_post_mime_type( $id );
+			$write_cap = MM_Metadata::write_capability( $mime );
+
+			if ( 'read_only' === $write_cap ) {
+				// Read-only formats: no metadata fields can be written.
+				if ( $also_compress ) {
+					MM_Job_Queue::enqueue_all_sizes( $id, [], 'compression', [ 'trigger' => 'batch_apply' ] );
+				}
+				++$count;
+				continue;
+			}
+
+			$permitted = $fields;
+			if ( 'xmp_only' === $write_cap || 'vorbis_only' === $write_cap ) {
+				// XMP-only or vorbis-only: strip full-only fields.
+				$permitted = array_intersect_key( $permitted, array_flip( self::XMP_ONLY_FIELDS ) );
+			}
+
+			foreach ( $permitted as $key => $val ) {
 				update_post_meta( $id, $key, $val );
 			}
 
-			if ( ! empty( $fields ) && $also_compress ) {
+			if ( ! empty( $permitted ) && $also_compress ) {
 				MM_Job_Queue::enqueue_all_sizes( $id, [], 'both', [ 'trigger' => 'batch_apply' ] );
-			} elseif ( ! empty( $fields ) ) {
+			} elseif ( ! empty( $permitted ) ) {
 				MM_Job_Queue::enqueue_all_sizes( $id, [], 'metadata', [ 'trigger' => 'batch_apply' ] );
 			} elseif ( $also_compress ) {
 				MM_Job_Queue::enqueue_all_sizes( $id, [], 'compression', [ 'trigger' => 'batch_apply' ] );
@@ -2105,9 +2142,9 @@ class MM_Admin {
 
 		$nonce = wp_create_nonce( 'mm_bulk_meta_apply' );
 
-		// Compressible MIME types.
+		// Compressible MIME types (must match CLI compressible_mimes).
 		$compressible = array_merge(
-			[ 'image/jpeg', 'image/png', 'image/webp' ],
+			[ 'image/jpeg', 'image/png', 'image/webp', 'image/avif' ],
 			MM_Metadata::VIDEO_MIME_TYPES
 		);
 
@@ -2126,16 +2163,7 @@ class MM_Admin {
 		];
 
 		// XMP-only subset for formats that only support XMP tags.
-		$xmp_only_fields = [
-			MM_Metadata::META_HEADLINE,
-			MM_Metadata::META_CREDIT,
-			MM_Metadata::META_KEYWORDS,
-			MM_Metadata::META_DATE,
-			MM_Metadata::META_RATING,
-			MM_Metadata::META_CITY,
-			MM_Metadata::META_STATE,
-			MM_Metadata::META_COUNTRY,
-		];
+		$xmp_only_fields = self::XMP_ONLY_FIELDS;
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Batch Metadata', 'metamanager' ); ?></h1>
@@ -2183,7 +2211,7 @@ class MM_Admin {
 
 				<label id="mm-compress-wrap" style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:12px;cursor:pointer;">
 					<input type="checkbox" id="mm-apply-compress">
-					<?php esc_html_e( 'Also queue lossless compression', 'metamanager' ); ?>
+					<span id="mm-compress-label"><?php esc_html_e( 'Queue lossless compression', 'metamanager' ); ?></span>
 				</label>
 
 				<div id="mm-apply-hint" style="margin-bottom:8px;font-size:12px;color:#50575e;"></div>
@@ -2346,12 +2374,16 @@ class MM_Admin {
 				return Object.keys(groups);
 			}
 
-			function anySelectedCompressible() {
-				var found = false;
+			function getSelectedCompressibleTypes() {
+				var types = {};
 				$('.mm-cb:checked').each(function(){
-					if ($(this).closest('.mm-grid-item').data('compressible')) { found = true; return false; }
+					var $item = $(this).closest('.mm-grid-item');
+					if (!$item.data('compressible')) return;
+					var mime = $item.data('mime');
+					if (mime && mime.indexOf('image/') === 0) types['image'] = true;
+					else if (mime && mime.indexOf('video/') === 0) types['video'] = true;
 				});
-				return found;
+				return Object.keys(types);
 			}
 
 			function updateFormForSelection() {
@@ -2376,8 +2408,24 @@ class MM_Admin {
 				// Clear hidden fields
 				$('.mm-field-group:hidden .mm-apply-field').val('');
 
-				// Compression checkbox — only for compressible formats
-				$('#mm-compress-wrap').toggle(anySelectedCompressible() && groups.length > 0);
+				// Compression checkbox — show with format-specific label when compressible types are selected.
+				var compressTypes = getSelectedCompressibleTypes();
+				var hasImage = compressTypes.indexOf('image') !== -1;
+				var hasVideo = compressTypes.indexOf('video') !== -1;
+				var showCompress = (hasImage || hasVideo) && groups.length > 0;
+
+				if (showCompress) {
+					var label;
+					if (hasImage && hasVideo) {
+						label = '<?php echo esc_js( __( 'Queue lossless compression (images + video remux)', 'metamanager' ) ); ?>';
+					} else if (hasVideo) {
+						label = '<?php echo esc_js( __( 'Queue video container remux', 'metamanager' ) ); ?>';
+					} else {
+						label = '<?php echo esc_js( __( 'Queue lossless image compression', 'metamanager' ) ); ?>';
+					}
+					$('#mm-compress-label').text(label);
+				}
+				$('#mm-compress-wrap').toggle(showCompress);
 
 				// Hint text
 				if (groups.length === 0) {
