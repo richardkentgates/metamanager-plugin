@@ -71,9 +71,6 @@ class MM_Updater {
 
 		// Handle the manual check-for-updates request.
 		add_action( 'admin_init', [ $this, 'handle_manual_check' ] );
-
-		// After any plugin is updated, prompt admins to restart the OS daemons.
-		add_action( 'upgrader_process_complete', [ $this, 'on_plugin_updated' ], 10, 2 );
 	}
 
 	// -------------------------------------------------------------------------
@@ -158,7 +155,7 @@ class MM_Updater {
 				'slug'          => 'metamanager',
 				'plugin'        => $this->plugin_basename,
 				'new_version'   => $remote_version,
-				'url'           => 'https://github.com/richardkentgates/metamanager',
+				'url'           => 'https://github.com/richardkentgates/metamanager-plugin',
 				'package'       => $metadata->download_url,
 				'icons'         => [],
 				'banners'       => [],
@@ -334,44 +331,6 @@ class MM_Updater {
 			admin_url( 'plugins.php' )
 		) );
 		exit;
-	}
-
-	// -------------------------------------------------------------------------
-	// Helpers
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Fires after the upgrader process completes. Triggers an automatic
-	 * daemon package update when the plugin version changes, and sets a
-	 * transient so the next admin page load shows a result notice.
-	 *
-	 * @param \WP_Upgrader $upgrader Upgrader instance (unused).
-	 * @param array        $options  Upgrader context: type, action, plugins list.
-	 */
-	public function on_plugin_updated( $upgrader, array $options ): void {
-		if ( 'update' !== ( $options['action'] ?? '' ) ) {
-			return;
-		}
-		if ( 'plugin' !== ( $options['type'] ?? '' ) ) {
-			return;
-		}
-		$updated_plugins = $options['plugins'] ?? [];
-		if ( ! in_array( $this->plugin_basename, (array) $updated_plugins, true ) ) {
-			return;
-		}
-
-		// Clear WP's plugin update transient so it re-evaluates on next page load.
-		delete_site_transient( 'update_plugins' );
-
-		// Write required version file for daemon-side self-updater.
-		MM_Daemon_Updater::write_required_version();
-
-		// Trigger automatic daemon update.
-		$daemon_result = MM_Daemon_Updater::handle_plugin_update();
-
-		if ( $daemon_result['update_needed'] && ! $daemon_result['result']['success'] ) {
-			set_transient( 'mm_daemon_restart_notice', '1', 7 * DAY_IN_SECONDS );
-		}
 	}
 
 	/**

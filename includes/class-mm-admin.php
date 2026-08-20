@@ -95,9 +95,6 @@ class MM_Admin {
 
 		// Job queue status notices (duplicate compression suppressed, metadata queued in sequence).
 		add_action( 'admin_notices', [ __CLASS__, 'queue_notices' ] );
-
-		// Daemon restart reminder after plugin update.
-		add_action( 'admin_notices', [ __CLASS__, 'daemon_restart_notice' ] );
 	}
 
 	// -----------------------------------------------------------------------
@@ -308,8 +305,8 @@ class MM_Admin {
 			$screen->set_help_sidebar(
 				'<p><strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ' ' . MM_VERSION . '</strong></p>' .
 				'<p><a href="https://metamanager.richardkentgates.com" target="_blank" rel="noopener">' . esc_html__( 'Documentation Website', 'metamanager' ) . ' ↗</a></p>' .
-				'<p><a href="https://github.com/richardkentgates/metamanager" target="_blank" rel="noopener">' . esc_html__( 'GitHub Repository', 'metamanager' ) . ' ↗</a></p>' .
-				'<p><a href="https://github.com/richardkentgates/metamanager/issues" target="_blank" rel="noopener">' . esc_html__( 'Report an Issue', 'metamanager' ) . ' ↗</a></p>'
+				'<p><a href="https://github.com/richardkentgates/metamanager-plugin" target="_blank" rel="noopener">' . esc_html__( 'GitHub Repository', 'metamanager' ) . ' ↗</a></p>' .
+				'<p><a href="https://github.com/richardkentgates/metamanager-plugin/issues" target="_blank" rel="noopener">' . esc_html__( 'Report an Issue', 'metamanager' ) . ' ↗</a></p>'
 			);
 		}
 	}
@@ -2714,43 +2711,4 @@ class MM_Admin {
 		<?php
 	}
 
-	/**
-	 * Show an admin notice after a Metamanager plugin update reminding the
-	 * server admin to restart the OS daemons.
-	 *
-	 * The notice is set by MM_Updater::on_plugin_updated() and persists for
-	 * 7 days. It is dismissed once the admin clicks the dismiss link.
-	 */
-	public static function daemon_restart_notice(): void {
-		if ( ! current_user_can( 'update_plugins' ) ) {
-			return;
-		}
-
-		// Handle dismiss action.
-		if ( ! empty( $_GET['mm_dismiss_daemon_notice'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			if ( check_admin_referer( 'mm_dismiss_daemon_notice' ) ) {
-				delete_transient( 'mm_daemon_restart_notice' );
-				return;
-			}
-		}
-
-		if ( ! get_transient( 'mm_daemon_restart_notice' ) ) {
-			return;
-		}
-
-		$dismiss_url = wp_nonce_url(
-			add_query_arg( 'mm_dismiss_daemon_notice', '1' ),
-			'mm_dismiss_daemon_notice'
-		);
-		?>
-		<div class="notice notice-warning">
-			<p>
-				<strong><?php esc_html_e( 'Metamanager daemon auto-update failed.', 'metamanager' ); ?></strong><br>
-				<?php esc_html_e( 'Please SSH into the server and restart the daemons manually:', 'metamanager' ); ?>
-				<code>sudo systemctl restart metamanager-compress-daemon metamanager-meta-daemon</code>
-			</p>
-			<p><a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'metamanager' ); ?></a></p>
-		</div>
-		<?php
-	}
 }

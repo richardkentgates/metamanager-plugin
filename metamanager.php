@@ -141,9 +141,6 @@ function mm_activate_single_site(): void {
 	MM_Metadata_History::create_or_update_table();
 	MM_Job_Queue::ensure_dirs();
 
-	// Write required version file for daemon-side self-updater.
-	MM_Daemon_Updater::write_required_version();
-
 	if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {
 		wp_schedule_event( time(), 'mm_every_minute', 'mm_import_completed_jobs' );
 	}

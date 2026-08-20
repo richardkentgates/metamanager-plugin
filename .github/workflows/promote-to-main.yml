@@ -49,6 +49,9 @@ jobs:
           rsync -a --exclude='.git' --exclude='docs' --exclude='.github' \
             --exclude='tests' --exclude='stubs' --exclude='mm-*.zip' \
             --exclude='.editorconfig' --exclude='phpunit.xml.dist' \
+            --exclude='AGENTS.md' --exclude='AUDIT-TRACKING.md' \
+            --exclude='CONTRIBUTING.md' --exclude='ROADMAP.md' \
+            --exclude='phpunit.xml' \
             ./ build/metamanager/
           cd build && zip -r ../metamanager-${{ steps.version.outputs.version }}.zip metamanager
           echo "Built zip: $(ls -lh ../metamanager-${{ steps.version.outputs.version }}.zip)"
