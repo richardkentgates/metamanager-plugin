@@ -52,33 +52,29 @@ All software must move to production through native update systems:
 
 The only exception is temporary testing during active development sessions, where files may be SCP'd for immediate verification. After testing, the fix must go through the proper pipeline before being considered deployed.
 
-## Daemon Auto-Updater
+## Daemon Version Detection
 
-When the plugin is updated (manually or via WP auto-update), it automatically updates the OS daemon package to match. The mechanism:
+The plugin provides version detection for display purposes only. Daemon updates are handled by the shell-based self-updater (see `metamanager/AGENTS.md`).
 
-1. `MM_Updater::on_plugin_updated()` fires after WordPress finishes updating plugin files
-2. Calls `MM_Daemon_Updater::handle_plugin_update()`
-3. Calls `diagnose()` to determine the version state (see diagnosis cases below)
-4. If versions match → clears any stale error, returns
-5. If infrastructure error (missing file, missing map entry) → stores specific error, does NOT run apt
-6. If actual version mismatch → runs `sudo apt-get update && apt-get install -y metamanager` + `systemctl restart` both daemons
-7. Logs result to `/var/log/metamanager-update.log` and WordPress error log (WP_DEBUG)
-8. Shows success/error admin notice
+### Architecture
+
+- **Shell self-updater** (`/usr/local/bin/metamanager-self-updater.sh`): Reads `daemon-compatibility.json` from the plugin directory, extracts the installed plugin version from the plugin header, looks up the required daemon version, and runs `apt-get upgrade` if needed. Runs every 60 seconds via systemd timer.
+- **Plugin PHP** (`MM_Daemon_Updater`): Reads `daemon-compatibility.json` and the `VERSION` file to display version status in the dashboard widget. No apt/exec logic — display only.
+
+The plugin does NOT trigger daemon updates. The shell self-updater is the single authority for daemon version management.
 
 ### Diagnosis Cases
 
-The `diagnose()` method returns a specific status for each failure mode:
+The `diagnose()` method returns a specific status for display:
 
-| Status | Condition | Message | Action |
-|--------|-----------|---------|--------|
-| `ok` | VERSION matches map | "Daemon v{X} is up to date." | Clear stale errors |
-| `error` | VERSION file missing | "Daemon VERSION file not found at {path}. The daemon package may not be installed." | Store error, skip apt |
-| `error` | VERSION file empty/unreadable | "Daemon VERSION file exists at {path} but is empty or unreadable." | Store error, skip apt |
-| `error` | Compatibility map missing | "Compatibility map not found at {path}. Cannot determine required daemon version for plugin v{X}." | Store error, skip apt |
-| `error` | Plugin version not in map | "Plugin v{X} is not listed in daemon-compatibility.json. Add an entry mapping "{X}" to the correct daemon version." | Store error, skip apt |
-| `mismatch` | Installed ≠ required | "Daemon version mismatch: installed v{X}, required v{Y}." | Run apt upgrade |
-
-**Critical**: Infrastructure errors do NOT trigger `apt upgrade` because the problem is not a daemon version mismatch — it's a configuration or packaging issue. Running apt would not fix a missing map entry or missing VERSION file.
+| Status | Condition | Message |
+|--------|-----------|---------|
+| `ok` | VERSION matches map | "Daemon v{X} is up to date." |
+| `error` | VERSION file missing | "Daemon VERSION file not found at {path}." |
+| `error` | VERSION file empty/unreadable | "Daemon VERSION file exists at {path} but is empty or unreadable." |
+| `error` | Compatibility map missing | "Compatibility map not found at {path}." |
+| `error` | Plugin version not in map | "Plugin v{X} is not listed in daemon-compatibility.json." |
+| `mismatch` | Installed ≠ required | "Daemon version mismatch: installed v{X}, required v{Y}." |
 
 ### Compatibility Map
 
@@ -89,10 +85,7 @@ The `diagnose()` method returns a specific status for each failure mode:
 {
   "2.3.82": "2.4.32",
   "2.3.81": "2.4.32",
-  "2.3.80": "2.4.32",
-  "2.3.79": "2.4.32",
-  "2.3.78": "2.4.32",
-  "2.3.77": "2.4.32"
+  "2.3.80": "2.4.32"
 }
 ```
 
@@ -117,11 +110,7 @@ Before pushing a new plugin version to dev:
 2. **Verify the entry exists**: Open `daemon-compatibility.json` and confirm your new plugin version has a mapping.
 3. **CI will auto-bump** `MM_VERSION` in `metamanager.php` — do NOT manually set the version number.
 
-**If you forget step 2**, the auto-updater will show a persistent error: "Plugin v{X} is not listed in daemon-compatibility.json." This error will NOT go away until you add the missing entry and release a new version.
-
-### Sudoers
-
-`/etc/sudoers.d/sudoers-metamanager` grants www-data passwordless sudo for specific apt/systemctl commands only.
+**If you forget step 2**, the shell self-updater will show status "Cannot determine required version (plugin missing or no compat map)" in the dashboard widget and status JSON.
 
 ## Repos
 
@@ -142,7 +131,7 @@ Before pushing a new plugin version to dev:
 - Branch protection on `test` and `main`: PRs required, no direct pushes
 - Promotion = workflow_dispatch triggers direct git merge (no PRs)
 - Shell scripts/daemons update via apt; plugin updates via WordPress native update
-- Daemon updates are triggered automatically by plugin updates (no manual apt needed)
+- Daemon updates are handled by the shell self-updater, not by the plugin PHP
 - PHP 8.4 for WP-CLI (`php8.4 /usr/local/bin/wp --path=/srv/www/wordpress`)
 - CI auto-bumps `MM_VERSION` on every dev push — do not manually edit version numbers
 - **Test channel**: Used for development verification before production deployment

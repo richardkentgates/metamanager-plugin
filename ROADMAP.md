@@ -48,8 +48,7 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 | Daemon version | Auto-bumped by CI on server repo dev push |
 | WordPress version | 6.9 |
 | Production URL | https://hyercleaning.com |
-| Production IP | 34.10.253.160 |
-| Apt server IP | 34.136.87.92 (apt.richardkentgates.com) |
+| Apt server | apt.richardkentgates.com |
 
 ---
 
