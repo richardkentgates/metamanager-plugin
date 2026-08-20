@@ -104,6 +104,56 @@ class MM_Daemon_Updater {
 	}
 
 	/**
+	 * Write the required daemon version to a file for the daemon-side self-updater.
+	 *
+	 * The daemon polls this file every 60 seconds. If the required version
+	 * differs from the installed VERSION, the daemon runs apt upgrade.
+	 *
+	 * Called on plugin activation and after plugin updates.
+	 *
+	 * @return bool True if the file was written successfully.
+	 */
+	public static function write_required_version(): bool {
+		$info     = self::get_required_daemon_version();
+		$required = $info['required'] ?? null;
+
+		if ( null === $required ) {
+			return false;
+		}
+
+		$data = [
+			'required_version'  => $required,
+			'plugin_version'    => MM_VERSION,
+			'compatibility_map' => $info['raw_map'],
+			'timestamp'         => gmdate( 'Y-m-d\TH:i:s\Z' ),
+		];
+
+		$json = wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+		if ( false === $json ) {
+			return false;
+		}
+
+		$dir = '/usr/local/lib/metamanager';
+		if ( ! is_dir( $dir ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir
+			mkdir( $dir, 0755, true );
+		}
+
+		$file = $dir . '/required-version.json';
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		$bytes = file_put_contents( $file, $json );
+		if ( false === $bytes ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
+		chmod( $file, 0644 );
+
+		return true;
+	}
+
+	/**
 	 * Diagnose the current version state.
 	 *
 	 * Returns a structured array describing exactly what is wrong (if anything),
