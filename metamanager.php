@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.110
+ * Version:      2.3.114
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.110' );
+define( 'MM_VERSION',     '2.3.114' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -65,6 +65,7 @@ define( 'MM_PID_META',     MM_JOB_ROOT . '/meta-daemon.pid' );
 // ---------------------------------------------------------------------------
 
 require_once MM_PLUGIN_DIR . 'includes/class-mm-db.php';
+require_once MM_PLUGIN_DIR . 'includes/class-mm-metadata-history.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-job-queue.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-metadata.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-status.php';
@@ -121,6 +122,9 @@ add_action( 'plugins_loaded', function (): void {
 // Fires in both admin and REST API contexts, so it belongs here unconditionally.
 add_action( 'delete_attachment', [ 'MM_DB', 'delete_jobs_for_attachment' ] );
 
+// Metadata version history — tracks changes to the 14 MM-managed attachment fields.
+MM_Metadata_History::register_hooks();
+
 // ---------------------------------------------------------------------------
 // Activation / deactivation
 // ---------------------------------------------------------------------------
@@ -134,7 +138,11 @@ register_deactivation_hook( MM_PLUGIN_FILE, 'mm_deactivate' );
  */
 function mm_activate_single_site(): void {
 	MM_DB::create_or_update_table();
+	MM_Metadata_History::create_or_update_table();
 	MM_Job_Queue::ensure_dirs();
+
+	// Write required version file for daemon-side self-updater.
+	MM_Daemon_Updater::write_required_version();
 
 	if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {
 		wp_schedule_event( time(), 'mm_every_minute', 'mm_import_completed_jobs' );

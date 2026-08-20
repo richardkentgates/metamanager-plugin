@@ -131,7 +131,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 				$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
 				$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
 				// Map content types to their WebPage counterpart.
-				if ( in_array( $type, [ 'BlogPosting', 'Article', 'NewsArticle', 'HowTo', 'FAQPage', 'Product', 'Course' ], true ) ) {
+				if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
 					$type = 'WebPage'; // WebPage is the containing page; content type is separate.
 				}
 			}
@@ -258,7 +258,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	}
 
 	// -------------------------------------------------------------------------
-	// Content nodes (BlogPosting, Article, HowTo, FAQPage, Product, Course, etc.)
+	// Content nodes (BlogPosting, Article, HowTo, Product, Event, Service, etc.)
 	// -------------------------------------------------------------------------
 
 	private function add_content_node( array &$data, MM_Page_Context $context, MM_Site_Settings $settings ): void {
@@ -303,7 +303,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		// Author — link to Person node (added by Author module or built inline).
-		if ( in_array( $type, [ 'BlogPosting', 'Article', 'NewsArticle' ], true ) ) {
+		if ( in_array( $type, [ 'BlogPosting', 'Article' ], true ) ) {
 			$author = get_userdata( (int) $post->post_author );
 			if ( $author && $settings->get( 'authors.person_schema', true ) ) {
 				$node['author']    = [ '@id' => get_author_posts_url( $author->ID ) . '#person' ];
@@ -311,17 +311,25 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 		}
 
-		// FAQPage — extract FAQ blocks from post content using <details>/<summary> elements.
-		if ( 'FAQPage' === $type ) {
-			$faqs = $this->extract_faq( $post->post_content );
-			if ( $faqs ) {
-				$node['mainEntity'] = $faqs;
-			}
-		}
-
 		// Merge per-post schema field overrides (Event dates, prices, addresses, etc.).
+		// For Product type with WooCommerce active: WC data populates first, then manual overrides.
 		$schema_fields = $meta['schema_fields'] ?? [];
-		if ( ! empty( $schema_fields ) ) {
+		if ( 'Product' === $type && $this->is_woocommerce_active() ) {
+			$wc_data = $this->get_woocommerce_product_data( $post->ID );
+			if ( ! empty( $wc_data ) ) {
+				$additions = MM_Schema_Types::build_node_additions( $schema_fields, $type );
+				// WC data is base, manual overrides merge on top.
+				$node = array_merge( $node, $wc_data, $additions );
+			} else {
+				// WC product not found — fall back to manual fields only.
+				if ( ! empty( $schema_fields ) ) {
+					$additions = MM_Schema_Types::build_node_additions( $schema_fields, $type );
+					if ( ! empty( $additions ) ) {
+						$node = array_merge( $node, $additions );
+					}
+				}
+			}
+		} elseif ( ! empty( $schema_fields ) ) {
 			$additions = MM_Schema_Types::build_node_additions( $schema_fields, $type );
 			if ( ! empty( $additions ) ) {
 				$node = array_merge( $node, $additions );
@@ -398,64 +406,83 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		return null;
 	}
 
-	private function extract_faq( string $content ): array {
-		$faqs = [];
+	// -------------------------------------------------------------------------
+	// WooCommerce integration
+	// -------------------------------------------------------------------------
 
-		// Pattern 1: <details><summary>Q</summary>A</details>
-		if ( preg_match_all( '/<details[^>]*>\s*<summary[^>]*>(.*?)<\/summary>(.*?)<\/details>/si', $content, $matches ) ) {
-			for ( $i = 0; $i < count( $matches[0] ); $i++ ) {
-				$faqs[] = [
-					'@type'          => 'Question',
-					'name'           => wp_strip_all_tags( $matches[1][ $i ] ),
-					'acceptedAnswer' => [
-						'@type' => 'Answer',
-						'text'  => wp_strip_all_tags( $matches[2][ $i ] ),
-					],
-				];
+	/**
+	 * Check if WooCommerce is active.
+	 */
+	private function is_woocommerce_active(): bool {
+		return class_exists( 'WooCommerce' ) || function_exists( 'WC' );
+	}
+
+	/**
+	 * Pull normalized Product schema data from WooCommerce product meta.
+	 *
+	 * Returns an array suitable for merging into a JSON-LD Product node.
+	 * Only includes fields that have actual values in WooCommerce.
+	 *
+	 * @param int $post_id Product post ID.
+	 * @return array<string, mixed>
+	 */
+	private function get_woocommerce_product_data( int $post_id ): array {
+		if ( ! $this->is_woocommerce_active() ) {
+			return [];
+		}
+
+		$product = wc_get_product( $post_id );
+		if ( ! $product ) {
+			return [];
+		}
+
+		$out = [];
+
+		// Price.
+		$regular = $product->get_regular_price();
+		$sale    = $product->get_sale_price();
+		$price   = ( '' !== $sale && false !== $sale ) ? $sale : $regular;
+		if ( '' !== $price && false !== $price ) {
+			$out['offers'] = [
+				'@type'         => 'Offer',
+				'price'         => $price,
+				'priceCurrency' => get_woocommerce_currency(),
+			];
+
+			// Availability.
+			$stock = $product->get_stock_status();
+			$map   = [
+				'instock'     => 'InStock',
+				'outofstock'  => 'OutOfStock',
+				'onbackorder' => 'PreOrder',
+			];
+			if ( isset( $map[ $stock ] ) ) {
+				$out['offers']['availability'] = 'https://schema.org/' . $map[ $stock ];
+			}
+
+			// SKU.
+			$sku = $product->get_sku();
+			if ( $sku ) {
+				$out['offers']['sku'] = $sku;
 			}
 		}
 
-		// Pattern 2: <dl><dt>Q</dt><dd>A</dd></dl>
-		if ( preg_match_all( '/<dl[^>]*>(.*?)<\/dl>/si', $content, $dl_blocks ) ) {
-			foreach ( $dl_blocks[1] as $block ) {
-				if ( preg_match_all( '/<dt[^>]*>(.*?)<\/dt>\s*<dd[^>]*>(.*?)<\/dd>/si', $block, $pairs ) ) {
-					for ( $i = 0; $i < count( $pairs[0] ); $i++ ) {
-						$question = wp_strip_all_tags( $pairs[1][ $i ] );
-						$answer   = wp_strip_all_tags( $pairs[2][ $i ] );
-						if ( $question && $answer ) {
-							$faqs[] = [
-								'@type'          => 'Question',
-								'name'           => $question,
-								'acceptedAnswer' => [
-									'@type' => 'Answer',
-									'text'  => $answer,
-								],
-							];
-						}
-					}
+		// Brand — from _brand meta or pa_brand attribute.
+		$brand = $product->get_meta( '_brand' );
+		if ( ! $brand ) {
+			$attrs = $product->get_attributes();
+			if ( isset( $attrs['pa_brand'] ) ) {
+				$terms = $attrs['pa_brand']->get_terms();
+				if ( $terms && ! is_wp_error( $terms ) ) {
+					$brand = $terms[0]->name;
 				}
 			}
 		}
-
-		// Pattern 3: Heading + paragraph pairs (h2/h3/h4 followed by p)
-		if ( preg_match_all( '/<h[2-4][^>]*>(.*?)<\/h[2-4]>\s*(?:<p[^>]*>(.*?)<\/p>)/si', $content, $hp_matches ) ) {
-			for ( $i = 0; $i < count( $hp_matches[0] ); $i++ ) {
-				$question = wp_strip_all_tags( $hp_matches[1][ $i ] );
-				$answer   = wp_strip_all_tags( $hp_matches[2][ $i ] );
-				if ( $question && $answer ) {
-					$faqs[] = [
-						'@type'          => 'Question',
-						'name'           => $question,
-						'acceptedAnswer' => [
-							'@type' => 'Answer',
-							'text'  => $answer,
-						],
-					];
-				}
-			}
+		if ( $brand ) {
+			$out['brand'] = [ '@type' => 'Brand', 'name' => $brand ];
 		}
 
-		return $faqs;
+		return $out;
 	}
 
 	// -------------------------------------------------------------------------

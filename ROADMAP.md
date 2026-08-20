@@ -257,6 +257,15 @@ No CRITICAL or HIGH findings. One LOW: `@exec()` suppression in daemon updater.
 - [x] Run WordPress Plugin Checker on production — admin page saves fixed (ModSecurity removed)
 - [x] SearchAction deprecated by Google Nov 2024 — default changed to `false` in schema.website_searchaction setting
 
+### Schema Type Thinning — Complete
+
+- Removed 7 types from per-post selector: LocalBusiness, Organization, Person, FAQPage, TouristAttraction, TouristTrip, RealEstateListing
+- BlogPosting locked for native posts (hidden from metabox dropdown)
+- Dead `extract_faq()` method removed
+- WebPage node mapping updated to reflect remaining types
+- Facebook Page ID field added under fb:app_id on Social settings
+- fb:admins meta tag emitted in head when set
+
 ---
 
 ## Schema.org / OG Compliance — 2026-08-04
@@ -276,7 +285,7 @@ No CRITICAL or HIGH findings. One LOW: `@exec()` suppression in daemon updater.
 | AudioObject | `MM_Mod_Schema::add_audio_schema()` | ✅ Valid |
 | DigitalDocument | `MM_Mod_Schema::add_document_schema()` | ✅ Valid |
 | GeoCoordinates / Place | `MM_Mod_Schema::add_location_to_node()` | ✅ Valid |
-| FAQPage | `MM_Mod_Schema::add_content_node()` | ⚠️ Deprecated by Google May 2026, still valid schema.org |
+| FAQPage | Removed | ❌ Removed — Google dropped rich results May 2026 |
 
 ### Emitted OG Tags (all valid)
 
@@ -291,6 +300,8 @@ No CRITICAL or HIGH findings. One LOW: `@exec()` suppression in daemon updater.
 | `og:locale` | `MM_Mod_Head_Meta` | ✅ Recommended |
 | `og:video` | `MM_Mod_Social` | ✅ Conditional (video present) |
 | `og:audio` | `MM_Mod_Social` | ✅ Conditional (audio present) |
+| `fb:app_id` | `MM_Mod_Social` | ✅ Optional (Facebook App ID) |
+| `fb:admins` | `MM_Mod_Social` | ✅ Optional (Facebook Page ID) |
 | `twitter:card` | `MM_Mod_Social` | ✅ Recommended |
 | `twitter:site` | `MM_Mod_Social` | ✅ Recommended |
 | `twitter:creator` | `MM_Mod_Social` | ✅ Recommended |
@@ -331,14 +342,38 @@ main ──push──> release.yml (tag + GitHub release + apt server deploy)
 
 ## What's Left
 
-### HIGH — Settings Save Reliability
+### HIGH — WooCommerce Product Schema Integration (S-2)
 
-- Investigate reports that the admin settings page shows "Settings saved" while not all fields actually persist.
-- Add server-side validation and explicit success/failure feedback per field group.
+Product schema must auto-populate from WooCommerce product data when WooCommerce is active. Manual fields become fallback only.
 
-### MEDIUM — `phpunit.xml.dist`
+**Detection:** Check `class_exists('WooCommerce')` or `WC()` at runtime.
 
-Exists in `gcm/` but not in plugin or daemon repos. The plugin's `tests/bootstrap.php` and `phpunit.xml` exist but require a WordPress test suite at `/tmp/wordpress-tests-lib`.
+**Auto-populate from WooCommerce meta (when active):**
+| Schema Field | WooCommerce Source | Fallback (no WooCommerce) |
+|-------------|-------------------|--------------------------|
+| `offers.price` | `_price` (or `_sale_price` if set) | Manual `product_price` field |
+| `offers.priceCurrency` | WooCommerce currency (`get_woocommerce_currency()`) | Manual `product_currency` field |
+| `offers.availability` | `_stock_status` → schema mapping (`instock`→`InStock`, `outofstock`→`OutOfStock`, `onbackorder`→`PreOrder`) | Manual `product_availability` select |
+| `brand` | `_brand` meta or `pa_brand` attribute | Manual `product_brand` field |
+| `sku` | `_sku` | N/A |
+| `image` | Product gallery featured image | OG image fallback |
+| `name` | Product post title | Post title |
+| `description` | Product short description (`_short_description`) or post excerpt | Post excerpt |
+
+**Files to change:**
+- `includes/metadata/class-mm-schema-types.php` — modify `get_fields_by_type()['Product']` to add `auto_label` hints when WooCommerce is active
+- `includes/metadata/modules/class-mm-mod-schema.php` — modify `add_content_node()` Product branch to pull from WC data when available
+- New helper: `MM_Mod_Schema::get_woocommerce_product_data(int $post_id): array` — returns normalized price/availability/brand/sku from WC meta
+
+**Conditional field visibility:** When WooCommerce is active, Product fields in the metabox show "Auto: from WooCommerce" labels. Manual inputs remain as overrides (user can override WC data per-post if needed).
+
+**WooCommerce hooks:** Hook into `woocommerce_update_product` and `woocommerce_update_attribute` to trigger schema re-validation (optional — the existing `save_post` hook already fires for WC product saves).
+
+---
+
+## Integration Tests on PEO
+
+Integration tests require WordPress test suite at `/tmp/wordpress-tests-lib`. PEO has MySQL test database (`metamanager_test`) ready. Install test suite and run PHPUnit.
 
 ---
 
@@ -363,7 +398,8 @@ Compression support:
 | JPEG | Yes (jpegtran) |
 | PNG | Yes (optipng) |
 | WebP | Yes (cwebp) |
-| AVIF/GIF/TIFF | No |
+| AVIF | Yes (avifenc) |
+| GIF/TIFF | No |
 | Video (MP4/MOV/AVI/WMV/MKV/WebM/OGV) | Yes (ffmpeg remux) |
 | Audio | No |
 | PDF | No |
@@ -393,8 +429,11 @@ Compression support:
 | E-3 | Bulk metadata: dynamic compression checkbox | MEDIUM | Done — JS toggles visibility per format with format-specific labels |
 | E-4 | Attachment GPS map preview | LOW | Done — Leaflet/OSM map with marker |
 | E-5 | `phpunit.xml.dist` | MEDIUM | Exists at `tests/phpunit.xml` |
-| E-6 | Metadata versioning | LOW | TODO |
-| E-7 | Metadata diff view | LOW | TODO |
+| E-6 | Metadata versioning | LOW | Done — mm_meta_history table, snapshots on save, version history pane on attachment edit |
+| E-7 | Metadata diff view | LOW | Done — compare any two versions or current values, AJAX diff with color-coded before/after table |
+| S-1 | Schema type thinning | HIGH | Done — removed 7 types (LocalBusiness, Organization, Person, FAQPage, TouristAttraction, TouristTrip, RealEstateListing), locked BlogPosting for posts, removed dead FAQ extraction code |
+| S-2 | WooCommerce Product schema | HIGH | Done — auto-populates Product schema from WooCommerce meta (price, availability, brand, sku), manual fields as overrides |
+| S-3 | Facebook Page ID field | MEDIUM | Done — fb:admins field added under fb:app_id on Social settings, meta tag emitted in head |
 
 ---
 

@@ -485,13 +485,144 @@ class MM_Admin {
 					<td><?php esc_html_e( 'Installed daemon', 'metamanager' ); ?></td>
 					<td><?php echo $installed_ver ? esc_html( 'v' . $installed_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not installed', 'metamanager' ) . '</span>'; ?></td>
 				</tr>
+		<tr>
+			<td><?php esc_html_e( 'Status', 'metamanager' ); ?></td>
+			<td><?php echo $daemon_icon . ' ' . $daemon_status; ?></td>
+		</tr>
+		</tbody>
+	</table>
+	<?php
+		// Self-updater status.
+		$updater_status = self::get_updater_status();
+		if ( $updater_status ) :
+		?>
+		<br />
+		<table class="widefat striped" style="margin-bottom:0">
+			<thead><tr><th><?php esc_html_e( 'Daemon Status', 'metamanager' ); ?></th><th><?php esc_html_e( 'Status', 'metamanager' ); ?></th></tr></thead>
+			<tbody>
+				<tr>
+					<td><?php esc_html_e( 'Polling', 'metamanager' ); ?></td>
+					<td><span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span> <?php esc_html_e( 'Active (every 60s)', 'metamanager' ); ?></td>
+				</tr>
+				<tr>
+					<td><?php esc_html_e( 'Required version', 'metamanager' ); ?></td>
+					<td><?php echo ! empty( $updater_status['required_version'] ) && 'unknown' !== $updater_status['required_version']
+						? esc_html( 'v' . $updater_status['required_version'] )
+						: '<span style="color:#999;">' . esc_html__( 'Not set by plugin', 'metamanager' ) . '</span>';
+					?></td>
+				</tr>
+				<tr>
+					<td><?php esc_html_e( 'Compress daemon', 'metamanager' ); ?></td>
+					<td><?php echo ! empty( $updater_status['daemon_pid_compress'] )
+						? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span> ' . esc_html__( 'Running (PID ', 'metamanager' ) . esc_html( $updater_status['daemon_pid_compress'] ) . ')'
+						: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span> ' . esc_html__( 'Stopped', 'metamanager' );
+					?></td>
+				</tr>
+				<tr>
+					<td><?php esc_html_e( 'Meta daemon', 'metamanager' ); ?></td>
+					<td><?php echo ! empty( $updater_status['daemon_pid_meta'] )
+						? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span> ' . esc_html__( 'Running (PID ', 'metamanager' ) . esc_html( $updater_status['daemon_pid_meta'] ) . ')'
+						: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span> ' . esc_html__( 'Stopped', 'metamanager' );
+					?></td>
+				</tr>
+				<?php if ( ! empty( $updater_status['queues'] ) ) : ?>
+				<tr>
+					<td><?php esc_html_e( 'Queues', 'metamanager' ); ?></td>
+					<td><?php
+						$q = $updater_status['queues'];
+						printf(
+							'<span style="color:#00a32a;">%d</span> compress, <span style="color:#00a32a;">%d</span> meta, <span style="color:#00a32a;">%d</span> completed, <span style="color:%s;">%d</span> failed',
+							(int) ( $q['compress'] ?? 0 ),
+							(int) ( $q['meta'] ?? 0 ),
+							(int) ( $q['completed'] ?? 0 ),
+							( $q['failed'] ?? 0 ) > 0 ? '#d63638' : '#00a32a',
+							(int) ( $q['failed'] ?? 0 )
+						);
+						?></td>
+				</tr>
+				<?php endif; ?>
+				<?php if ( ! empty( $updater_status['tools'] ) ) : ?>
+				<tr>
+					<td><?php esc_html_e( 'Tools', 'metamanager' ); ?></td>
+					<td><?php
+						$tools = $updater_status['tools'];
+						$tool_names = array( 'exiftool', 'jpegtran', 'optipng', 'cwebp', 'ffmpeg', 'avifenc' );
+						$tool_parts = array();
+						foreach ( $tool_names as $t ) {
+							if ( ! empty( $tools[ $t ] ) ) {
+								$tool_parts[] = '<span style="color:#00a32a;">' . esc_html( strtoupper( $t ) ) . '</span>';
+							}
+						}
+						echo ! empty( $tool_parts ) ? implode( ', ', $tool_parts ) : '<span style="color:#d63638;">' . esc_html__( 'None found', 'metamanager' ) . '</span>';
+						?></td>
+				</tr>
+				<?php endif; ?>
 				<tr>
 					<td><?php esc_html_e( 'Status', 'metamanager' ); ?></td>
-					<td><?php echo $daemon_icon . ' ' . $daemon_status; ?></td>
+					<td><?php
+						$action_labels = array(
+							'ok'        => esc_html__( 'Up to date', 'metamanager' ),
+							'updated'   => esc_html__( 'Updated successfully', 'metamanager' ),
+							'updating'  => esc_html__( 'Updating...', 'metamanager' ),
+							'failed'    => esc_html__( 'Update failed', 'metamanager' ),
+							'error'     => esc_html__( 'Error', 'metamanager' ),
+							'ahead'     => esc_html__( 'Ahead of required', 'metamanager' ),
+							'waiting'   => esc_html__( 'Waiting for plugin', 'metamanager' ),
+							'none'      => esc_html__( 'None', 'metamanager' ),
+						);
+						$action = $updater_status['status'] ?? 'none';
+						$color  = in_array( $action, array( 'ok', 'updated', 'ahead' ), true ) ? '#00a32a'
+							: in_array( $action, array( 'failed', 'error' ), true ) ? '#d63638'
+							: '#dba617';
+						echo '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
+							. ( $action_labels[ $action ] ?? esc_html( $action ) )
+							. '</span>';
+						?></td>
 				</tr>
+				<?php if ( ! empty( $updater_status['message'] ) ) : ?>
+				<tr>
+					<td><?php esc_html_e( 'Details', 'metamanager' ); ?></td>
+					<td><span style="font-size:12px;color:#666;"><?php echo esc_html( $updater_status['message'] ); ?></span></td>
+				</tr>
+				<?php endif; ?>
 			</tbody>
 		</table>
-		<?php
+		<?php endif; ?>
+	<?php
+	}
+
+	/**
+	 * Read the daemon status file.
+	 *
+	 * @return array|null Status data or null if unavailable.
+	 */
+	private static function get_updater_status(): ?array {
+		$file = '/var/run/metamanager-status.json';
+		if ( ! is_readable( $file ) ) {
+			return null;
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$json = @file_get_contents( $file );
+		if ( false === $json ) {
+			return null;
+		}
+		$data = json_decode( $json, true );
+		if ( ! is_array( $data ) ) {
+			return null;
+		}
+		// Flatten for the dashboard widget.
+		return [
+			'installed_version' => $data['updater']['installed_version'] ?? 'unknown',
+			'required_version'  => $data['updater']['required_version'] ?? 'unknown',
+			'last_check'        => $data['updater']['last_check'] ?? '',
+			'last_update'       => $data['updater']['last_update'] ?? '',
+			'status'            => $data['updater']['status'] ?? 'unknown',
+			'message'           => $data['updater']['message'] ?? '',
+			'daemon_pid_compress' => $data['daemons']['compress']['pid'] ?? '',
+			'daemon_pid_meta'     => $data['daemons']['meta']['pid'] ?? '',
+			'queues'             => $data['queues'] ?? [],
+			'tools'              => $data['tools'] ?? [],
+		];
 	}
 
 	// -----------------------------------------------------------------------
@@ -1239,6 +1370,33 @@ class MM_Admin {
 				'permission_callback' => $auth_editor,
 			]
 		);
+
+		// --- System status (daemon status, queues, tools) ---
+		register_rest_route(
+			'metamanager/v1',
+			'/status',
+			[
+				'methods'             => 'GET',
+				'callback'            => [ __CLASS__, 'rest_get_status' ],
+				'permission_callback' => function () {
+					if ( is_user_logged_in() ) {
+						return current_user_can( 'manage_options' );
+					}
+					if ( MM_Settings::get_api_disabled() ) {
+						return false;
+					}
+					$allowed = MM_Settings::get_api_allowed_ips();
+					if ( ! empty( $allowed ) ) {
+						$remote = MM_Settings::get_current_ip();
+						if ( ! in_array( $remote, $allowed, true ) ) {
+							return false;
+						}
+					}
+					// External callers must authenticate.
+					return false;
+				},
+			]
+		);
 	}
 
 	/**
@@ -1345,6 +1503,44 @@ class MM_Admin {
 	 */
 	public static function rest_get_stats( \WP_REST_Request $request ) {
 		return rest_ensure_response( MM_DB::get_stats() );
+	}
+
+	/**
+	 * REST: system status (daemon status, queues, tools).
+	 *
+	 * Reads the status JSON written by the daemon-side self-updater.
+	 * Requires manage_options for authenticated requests, or IP allowlist for external.
+	 */
+	public static function rest_get_status( \WP_REST_Request $request ) {
+		$file = '/var/run/metamanager-status.json';
+		if ( ! is_readable( $file ) ) {
+			return new \WP_Error(
+				'status_unavailable',
+				__( 'Status file not available. The daemon self-updater may not have run yet.', 'metamanager' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$json = @file_get_contents( $file );
+		if ( false === $json ) {
+			return new \WP_Error(
+				'status_read_failed',
+				__( 'Failed to read status file.', 'metamanager' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		$data = json_decode( $json, true );
+		if ( ! is_array( $data ) ) {
+			return new \WP_Error(
+				'status_parse_failed',
+				__( 'Status file contains invalid JSON.', 'metamanager' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		return rest_ensure_response( $data );
 	}
 
 	/**

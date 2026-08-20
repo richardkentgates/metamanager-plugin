@@ -59,6 +59,16 @@ $s   = $settings;
 					class="regular-text">
 			</td>
 		</tr>
+		<tr>
+			<th><label for="gcm_fb_page_id">Facebook Page ID</label></th>
+			<td>
+				<input type="text" id="gcm_fb_page_id"
+					name="<?php echo esc_attr($opt); ?>[social][fb_page_id]"
+					value="<?php echo esc_attr( $s->get('social.fb_page_id','') ); ?>"
+					class="regular-text">
+				<p class="description">Your Facebook Page ID for <code>fb:admins</code> verification. Found in your Page's About section.</p>
+			</td>
+		</tr>
 	</table>
 
 	<h2>Twitter / X Cards</h2>
