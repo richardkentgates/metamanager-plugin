@@ -407,7 +407,9 @@ class MM_Admin {
 	}
 
 	public static function render_dashboard_widget(): void {
-		$status = MM_Status::system_status();
+		$status      = MM_Status::system_status();
+		$updater     = self::get_updater_status();
+		$queues      = $updater['queues'] ?? [];
 
 		$tool_icon = function ( bool $ok, string $ok_title, string $fail_title ) {
 			return $ok
@@ -454,6 +456,40 @@ class MM_Admin {
 				esc_html( sprintf( 'Daemon v%s installed, v%s required', $installed_ver, $required_ver ) )
 			);
 		}
+
+		// Updater status row (from status JSON).
+		$action_labels = array(
+			'ok'       => esc_html__( 'Up to date', 'metamanager' ),
+			'updated'  => esc_html__( 'Updated successfully', 'metamanager' ),
+			'updating' => esc_html__( 'Updating...', 'metamanager' ),
+			'failed'   => esc_html__( 'Update failed', 'metamanager' ),
+			'error'    => esc_html__( 'Error', 'metamanager' ),
+			'ahead'    => esc_html__( 'Ahead of required', 'metamanager' ),
+			'waiting'  => esc_html__( 'Waiting for plugin', 'metamanager' ),
+			'none'     => esc_html__( 'None', 'metamanager' ),
+		);
+		$action = $updater['status'] ?? 'none';
+		$color  = in_array( $action, array( 'ok', 'updated', 'ahead' ), true ) ? '#00a32a'
+			: ( in_array( $action, array( 'failed', 'error' ), true ) ? '#d63638' : '#dba617' );
+		$updater_row = '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
+			. ( $action_labels[ $action ] ?? esc_html( $action ) )
+			. '</span>';
+		if ( ! empty( $updater['message'] ) ) {
+			$updater_row .= '<br><span style="font-size:12px;color:#666;">' . esc_html( $updater['message'] ) . '</span>';
+		}
+
+		// Queue summary row (from status JSON).
+		$queue_row = '';
+		if ( ! empty( $queues ) ) {
+			$queue_row = sprintf(
+				'<span style="color:#00a32a;">%d</span> compress, <span style="color:#00a32a;">%d</span> meta, <span style="color:#00a32a;">%d</span> completed, <span style="color:%s;">%d</span> failed',
+				(int) ( $queues['compress'] ?? 0 ),
+				(int) ( $queues['meta'] ?? 0 ),
+				(int) ( $queues['completed'] ?? 0 ),
+				( $queues['failed'] ?? 0 ) > 0 ? '#d63638' : '#00a32a',
+				(int) ( $queues['failed'] ?? 0 )
+			);
+		}
 		?>
 		<table class="widefat striped" style="margin-bottom:0">
 			<thead><tr><th><?php esc_html_e( 'Tool', 'metamanager' ); ?></th><th><?php esc_html_e( 'Status', 'metamanager' ); ?></th></tr></thead>
@@ -464,6 +500,12 @@ class MM_Admin {
 					<td><?php echo $tool_icon( $t[1], $t[2], $t[3] ); ?> <?php echo esc_html( $t[1] ? $t[2] : $t[3] ); ?></td>
 				</tr>
 				<?php endforeach; ?>
+				<?php if ( $queue_row ) : ?>
+				<tr>
+					<td><?php esc_html_e( 'Queues', 'metamanager' ); ?></td>
+					<td><?php echo $queue_row; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
+				</tr>
+				<?php endif; ?>
 			</tbody>
 		</table>
 		<br />
@@ -482,108 +524,18 @@ class MM_Admin {
 					<td><?php esc_html_e( 'Installed daemon', 'metamanager' ); ?></td>
 					<td><?php echo $installed_ver ? esc_html( 'v' . $installed_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not installed', 'metamanager' ) . '</span>'; ?></td>
 				</tr>
-		<tr>
-			<td><?php esc_html_e( 'Status', 'metamanager' ); ?></td>
-			<td><?php echo $daemon_icon . ' ' . $daemon_status; ?></td>
-		</tr>
-		</tbody>
-	</table>
-	<?php
-		// Self-updater status.
-		$updater_status = self::get_updater_status();
-		if ( $updater_status ) :
-		?>
-		<br />
-		<table class="widefat striped" style="margin-bottom:0">
-			<thead><tr><th><?php esc_html_e( 'Daemon Status', 'metamanager' ); ?></th><th><?php esc_html_e( 'Status', 'metamanager' ); ?></th></tr></thead>
-			<tbody>
-				<tr>
-					<td><?php esc_html_e( 'Polling', 'metamanager' ); ?></td>
-					<td><span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span> <?php esc_html_e( 'Active (every 60s)', 'metamanager' ); ?></td>
-				</tr>
-				<tr>
-					<td><?php esc_html_e( 'Required version', 'metamanager' ); ?></td>
-					<td><?php echo ! empty( $updater_status['required_version'] ) && 'unknown' !== $updater_status['required_version']
-						? esc_html( 'v' . $updater_status['required_version'] )
-						: '<span style="color:#999;">' . esc_html__( 'Not set by plugin', 'metamanager' ) . '</span>';
-					?></td>
-				</tr>
-				<tr>
-					<td><?php esc_html_e( 'Compress daemon', 'metamanager' ); ?></td>
-					<td><?php echo ! empty( $updater_status['daemon_pid_compress'] )
-						? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span> ' . esc_html__( 'Running (PID ', 'metamanager' ) . esc_html( $updater_status['daemon_pid_compress'] ) . ')'
-						: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span> ' . esc_html__( 'Stopped', 'metamanager' );
-					?></td>
-				</tr>
-				<tr>
-					<td><?php esc_html_e( 'Meta daemon', 'metamanager' ); ?></td>
-					<td><?php echo ! empty( $updater_status['daemon_pid_meta'] )
-						? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span> ' . esc_html__( 'Running (PID ', 'metamanager' ) . esc_html( $updater_status['daemon_pid_meta'] ) . ')'
-						: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span> ' . esc_html__( 'Stopped', 'metamanager' );
-					?></td>
-				</tr>
-				<?php if ( ! empty( $updater_status['queues'] ) ) : ?>
-				<tr>
-					<td><?php esc_html_e( 'Queues', 'metamanager' ); ?></td>
-					<td><?php
-						$q = $updater_status['queues'];
-						printf(
-							'<span style="color:#00a32a;">%d</span> compress, <span style="color:#00a32a;">%d</span> meta, <span style="color:#00a32a;">%d</span> completed, <span style="color:%s;">%d</span> failed',
-							(int) ( $q['compress'] ?? 0 ),
-							(int) ( $q['meta'] ?? 0 ),
-							(int) ( $q['completed'] ?? 0 ),
-							( $q['failed'] ?? 0 ) > 0 ? '#d63638' : '#00a32a',
-							(int) ( $q['failed'] ?? 0 )
-						);
-						?></td>
-				</tr>
-				<?php endif; ?>
-				<?php if ( ! empty( $updater_status['tools'] ) ) : ?>
-				<tr>
-					<td><?php esc_html_e( 'Tools', 'metamanager' ); ?></td>
-					<td><?php
-						$tools = $updater_status['tools'];
-						$tool_names = array( 'exiftool', 'jpegtran', 'optipng', 'cwebp', 'ffmpeg', 'avifenc' );
-						$tool_parts = array();
-						foreach ( $tool_names as $t ) {
-							if ( ! empty( $tools[ $t ] ) ) {
-								$tool_parts[] = '<span style="color:#00a32a;">' . esc_html( strtoupper( $t ) ) . '</span>';
-							}
-						}
-						echo ! empty( $tool_parts ) ? implode( ', ', $tool_parts ) : '<span style="color:#d63638;">' . esc_html__( 'None found', 'metamanager' ) . '</span>';
-						?></td>
-				</tr>
-				<?php endif; ?>
 				<tr>
 					<td><?php esc_html_e( 'Status', 'metamanager' ); ?></td>
-					<td><?php
-						$action_labels = array(
-							'ok'        => esc_html__( 'Up to date', 'metamanager' ),
-							'updated'   => esc_html__( 'Updated successfully', 'metamanager' ),
-							'updating'  => esc_html__( 'Updating...', 'metamanager' ),
-							'failed'    => esc_html__( 'Update failed', 'metamanager' ),
-							'error'     => esc_html__( 'Error', 'metamanager' ),
-							'ahead'     => esc_html__( 'Ahead of required', 'metamanager' ),
-							'waiting'   => esc_html__( 'Waiting for plugin', 'metamanager' ),
-							'none'      => esc_html__( 'None', 'metamanager' ),
-						);
-						$action = $updater_status['status'] ?? 'none';
-						$color  = in_array( $action, array( 'ok', 'updated', 'ahead' ), true ) ? '#00a32a'
-							: ( in_array( $action, array( 'failed', 'error' ), true ) ? '#d63638' : '#dba617' );
-						echo '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
-							. ( $action_labels[ $action ] ?? esc_html( $action ) )
-							. '</span>';
-						?></td>
+					<td><?php echo $daemon_icon . ' ' . $daemon_status; ?></td>
 				</tr>
-				<?php if ( ! empty( $updater_status['message'] ) ) : ?>
+				<?php if ( $updater ) : ?>
 				<tr>
-					<td><?php esc_html_e( 'Details', 'metamanager' ); ?></td>
-					<td><span style="font-size:12px;color:#666;"><?php echo esc_html( $updater_status['message'] ); ?></span></td>
+					<td><?php esc_html_e( 'Auto-update', 'metamanager' ); ?></td>
+					<td><?php echo $updater_row; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
 				</tr>
 				<?php endif; ?>
 			</tbody>
 		</table>
-		<?php endif; ?>
 	<?php
 	}
 
