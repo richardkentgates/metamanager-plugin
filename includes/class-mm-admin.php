@@ -28,15 +28,30 @@ class MM_Admin {
 	 * write all allowed fields. XMP-only (AVI, WMV, WAV, WMA, PDF) and
 	 * vorbis-only (OGG audio) formats are restricted to this subset.
 	 */
-	private const XMP_ONLY_FIELDS = [
-		MM_Metadata::META_HEADLINE,
-		MM_Metadata::META_CREDIT,
-		MM_Metadata::META_KEYWORDS,
-		MM_Metadata::META_DATE,
-		MM_Metadata::META_RATING,
-		MM_Metadata::META_CITY,
-		MM_Metadata::META_STATE,
-		MM_Metadata::META_COUNTRY,
+	/**
+	 * Field visibility by write-capability level.
+	 *
+	 * Each key is a write_capability value from MM_Metadata::WRITE_CAPABILITY.
+	 * The arrays list which of the $all_fields keys are writable for that level.
+	 * The JS uses data-write-cap on each grid item to show/hide fields dynamically.
+	 */
+	private const FIELD_COMPAT = [
+		'full' => [
+			MM_Metadata::META_CREATOR, MM_Metadata::META_COPYRIGHT, MM_Metadata::META_OWNER,
+			MM_Metadata::META_HEADLINE, MM_Metadata::META_CREDIT, MM_Metadata::META_KEYWORDS,
+			MM_Metadata::META_DATE, MM_Metadata::META_CITY, MM_Metadata::META_STATE,
+			MM_Metadata::META_COUNTRY, MM_Metadata::META_RATING,
+		],
+		'xmp_only' => [
+			MM_Metadata::META_CREATOR, MM_Metadata::META_COPYRIGHT,
+			MM_Metadata::META_HEADLINE, MM_Metadata::META_CREDIT, MM_Metadata::META_KEYWORDS,
+			MM_Metadata::META_DATE, MM_Metadata::META_CITY, MM_Metadata::META_STATE,
+			MM_Metadata::META_COUNTRY, MM_Metadata::META_RATING,
+		],
+		'vorbis_only' => [
+			MM_Metadata::META_CREATOR, MM_Metadata::META_COPYRIGHT,
+			MM_Metadata::META_HEADLINE, MM_Metadata::META_KEYWORDS, MM_Metadata::META_DATE,
+		],
 	];
 
 	/**
@@ -1939,9 +1954,9 @@ class MM_Admin {
 			}
 
 			$permitted = $fields;
-			if ( 'xmp_only' === $write_cap || 'vorbis_only' === $write_cap ) {
-				// XMP-only or vorbis-only: strip full-only fields.
-				$permitted = array_intersect_key( $permitted, array_flip( self::XMP_ONLY_FIELDS ) );
+			if ( isset( self::FIELD_COMPAT[ $write_cap ] ) ) {
+				// Restrict to fields writable for this capability level.
+				$permitted = array_intersect_key( $permitted, array_flip( self::FIELD_COMPAT[ $write_cap ] ) );
 			}
 
 			foreach ( $permitted as $key => $val ) {
@@ -2305,9 +2320,6 @@ class MM_Admin {
 			MM_Metadata::META_STATE     => [ 'label' => __( 'State / Province', 'metamanager' ), 'placeholder' => '' ],
 			MM_Metadata::META_COUNTRY   => [ 'label' => __( 'Country', 'metamanager' ),        'placeholder' => '' ],
 		];
-
-		// XMP-only subset for formats that only support XMP tags.
-		$xmp_only_fields = self::XMP_ONLY_FIELDS;
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Batch Metadata', 'metamanager' ); ?></h1>
@@ -2324,21 +2336,27 @@ class MM_Admin {
 					<p style="margin:0 0 12px;font-size:12px;color:#50575e;"><?php esc_html_e( 'Fill in the fields you want to overwrite. Leave a field blank to leave it unchanged on the selected images.', 'metamanager' ); ?></p>
 
 				<?php foreach ( $all_fields as $key => $cfg ) :
-					$is_xmp_only = in_array( $key, $xmp_only_fields, true );
+					// Build comma-separated list of write-cap levels that support this field.
+					$caps = [];
+					foreach ( self::FIELD_COMPAT as $level => $fields ) {
+						if ( in_array( $key, $fields, true ) ) {
+							$caps[] = $level;
+						}
+					}
+					$cap_str = implode( ',', $caps );
 				?>
-				<div class="mm-field-group" data-field="<?php echo esc_attr( $key ); ?>" style="margin-bottom:8px;<?php echo $is_xmp_only ? 'display:none;' : ''; ?>">
-					<label style="display:block;font-size:12px;font-weight:600;margin-bottom:2px;"><?php echo esc_html( $cfg['label'] ); ?><?php if ( $is_xmp_only ) : ?> <span style="font-weight:400;color:#996800;">(XMP)</span><?php endif; ?></label>
+				<div class="mm-field-group" data-field="<?php echo esc_attr( $key ); ?>" data-caps="<?php echo esc_attr( $cap_str ); ?>" style="margin-bottom:8px;">
+					<label style="display:block;font-size:12px;font-weight:600;margin-bottom:2px;"><?php echo esc_html( $cfg['label'] ); ?></label>
 					<input type="text"
 						   class="mm-apply-field"
 						   data-key="<?php echo esc_attr( $key ); ?>"
-						   data-write-group="<?php echo $is_xmp_only ? 'xmp_only' : 'full'; ?>"
 						   placeholder="<?php echo esc_attr( $cfg['placeholder'] ?: $cfg['label'] ); ?>"
 						   value=""
 						   style="width:100%;box-sizing:border-box;">
 				</div>
 				<?php endforeach; ?>
 
-					<div style="margin-bottom:8px;">
+					<div class="mm-field-group" data-field="<?php echo esc_attr( MM_Metadata::META_RATING ); ?>" data-caps="full,xmp_only" style="margin-bottom:8px;">
 						<label style="display:block;font-size:12px;font-weight:600;margin-bottom:2px;"><?php esc_html_e( 'Rating', 'metamanager' ); ?></label>
 						<select class="mm-apply-field" data-key="<?php echo esc_attr( MM_Metadata::META_RATING ); ?>" style="width:100%;">
 							<option value=""><?php esc_html_e( '— leave unchanged —', 'metamanager' ); ?></option>
@@ -2531,22 +2549,19 @@ class MM_Admin {
 			}
 
 			function updateFormForSelection() {
-				var groups = getSelectedWriteGroups();
-				var hasFull = groups.indexOf('full') !== -1;
-				var hasXmpOnly = groups.indexOf('xmp_only') !== -1;
-				var hasVorbisOnly = groups.indexOf('vorbis_only') !== -1;
-				var hasNone = groups.indexOf('none') !== -1;
+				var caps = getSelectedWriteGroups();
+				var hasNone = caps.indexOf('none') !== -1;
+				var hasAny = caps.length > 0;
 
-				// Show 'full' fields only when no lower-capability format is selected.
-				// Show 'xmp_only' fields when any lower-capability format is selected.
+				// Show a field if ANY selected file's write-cap is in the field's data-caps list.
 				$('.mm-field-group').each(function(){
 					var $g = $(this);
-					var wg = $g.find('.mm-apply-field').data('write-group');
-					if (wg === 'full') {
-						$g.toggle(!hasXmpOnly && !hasVorbisOnly && !hasNone && groups.length > 0);
-					} else if (wg === 'xmp_only') {
-						$g.toggle(hasXmpOnly || hasVorbisOnly || hasNone);
+					var fieldCaps = ($g.data('caps') || '').split(',');
+					var visible = false;
+					for (var i = 0; i < caps.length; i++) {
+						if (fieldCaps.indexOf(caps[i]) !== -1) { visible = true; break; }
 					}
+					$g.toggle(visible);
 				});
 
 				// Clear hidden fields
@@ -2572,9 +2587,9 @@ class MM_Admin {
 				$('#mm-compress-wrap').toggle(showCompress);
 
 				// Hint text
-				if (groups.length === 0) {
+				if (!hasAny) {
 					$('#mm-apply-hint').text('<?php echo esc_js( __( 'Select files to see which fields are available. Leave a field blank to leave it unchanged.', 'metamanager' ) ); ?>');
-				} else if (hasNone && !hasFull && !hasXmpOnly && !hasVorbisOnly) {
+				} else if (hasNone && caps.length === 1) {
 					$('#mm-apply-hint').html('<span style="color:#d63638;">' + '<?php echo esc_js( __( 'Selected format is read-only — no metadata fields can be written.', 'metamanager' ) ); ?>' + '</span>');
 				} else {
 					var count = $('.mm-cb:checked').length;
