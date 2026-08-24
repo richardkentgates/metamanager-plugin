@@ -413,6 +413,54 @@ Simple WooCommerce integration for Event posts — make events purchasable as pr
 
 ---
 
+### HIGH — Service as WooCommerce Product (S-9)
+
+Simple WooCommerce integration for Service posts — make services purchasable as products with booking/scheduling.
+
+**Scope:** Utilize WooCommerce, don't replace it. Let WC handle payment processing, analytics, coupons, etc.
+
+**What we add:**
+| Feature | Implementation |
+|---------|----------------|
+| Service ↔ Product link | Custom field `_mm_wc_product_id` on Service, `_mm_service_id` on Product |
+| Service purchase | WC Product type "Service Booking" with service linking |
+| Booking confirmation | Unique booking hash: `md5($order_id . $item_id . $salt)` |
+| Booking details | Custom order meta: service name, date/time, location, notes |
+| Service page | Auto-generated service details from business profile + service meta |
+
+**Files to change:**
+- New: `includes/class-mm-service-product.php` — WC product type registration, service linking UI
+- Modified: `includes/metadata/class-mm-schema-types.php` — add `service_booking_url` field
+- Modified: `includes/metadata/modules/class-mm-mod-schema.php` — Service schema includes offers from WC when available
+
+**WooCommerce integration points:**
+- Register custom product type "Service Booking" in WC admin
+- Product data tab shows service selector dropdown
+- On order complete → generate booking hash, save to order meta
+- WC email template filter → include booking confirmation details
+- Service schema auto-populates price/availability from WC product data
+
+**Service-specific fields:**
+| Field | Purpose |
+|-------|---------|
+| `service_type` | Type of service (e.g., "Pressure Washing") |
+| `service_area` | Area served (e.g., "Destin, FL") |
+| `service_price` | Base price (fallback when no WC product) |
+| `service_currency` | Currency code |
+| `service_booking_url` | Link to book/purchase the service |
+| `service_duration` | Estimated duration (for scheduling) |
+| `service_includes` | What's included in the service |
+
+**NOT in scope:** (WooCommerce handles these)
+- Payment processing
+- Analytics and reporting
+- Coupon/discount codes
+- Refund processing
+- Appointment scheduling beyond basic booking hash
+- Calendar integration (use Bookly, Amelia, etc. if needed)
+
+---
+
 ### MEDIUM — Schema Type Cleanup (S-5)
 
 Remove redundant schema types that map to WordPress built-ins:

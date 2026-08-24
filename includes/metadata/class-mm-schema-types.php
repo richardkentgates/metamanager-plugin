@@ -236,6 +236,33 @@ class MM_Schema_Types {
 					'placeholder' => 'USD',
 					'description' => 'ISO 4217. Used only when Price is a number.',
 				],
+				[
+					'key'         => 'service_booking_url',
+					'label'       => 'Booking URL',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Link to book/purchase this service.',
+				],
+				[
+					'key'         => 'service_duration',
+					'label'       => 'Duration',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 2 hours, Half day',
+					'description' => 'Estimated service duration.',
+				],
+				[
+					'key'         => 'service_includes',
+					'label'       => 'What\'s Included',
+					'type'        => 'textarea',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'List what the service includes.',
+				],
 			],
 
 			// ── Product ───────────────────────────────────────────────────────
