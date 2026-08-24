@@ -508,6 +508,7 @@ Sell digital media files (photos, videos, documents) as WooCommerce products wit
 - Product selector (link to WooCommerce product)
 - Watermarked preview preview
 - Protected file status indicator
+- **Public file warning**: When linking to product, warn if file is publicly accessible and offer to move to protected storage
 
 **WooCommerce integration points:**
 - On order complete → move file to protected storage, generate watermarked preview, create license
