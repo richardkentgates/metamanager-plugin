@@ -397,9 +397,9 @@ class MM_Schema_Types {
 			$offer = $make_offer( 'product_price', 'product_currency' );
 			if ( $offer ) {
 				$avail = $str( 'product_availability' );
-				if ( in_array( $avail, [ 'InStock', 'OutOfStock', 'PreOrder' ], true ) ) {
-					$offer['availability'] = 'https://schema.org/' . $avail;
-				}
+			if ( in_array( $avail, [ 'InStock', 'OutOfStock', 'PreOrder' ], true ) ) {
+				$offer['availability'] = 'https://schema.org/' . $avail;
+			}
 				$out['offers'] = $offer;
 			}
 		}
