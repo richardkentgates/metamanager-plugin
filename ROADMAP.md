@@ -461,6 +461,78 @@ Simple WooCommerce integration for Service posts — make services purchasable a
 
 ---
 
+### HIGH — Digital Media as WooCommerce Product (S-10)
+
+Sell digital media files (photos, videos, documents) as WooCommerce products with file protection, watermarked previews, and per-customer licensing.
+
+**Scope:** Utilize WooCommerce for payment, order management, and customer accounts. MetaManager handles file protection, watermarking, and license generation.
+
+**File Protection Strategy:**
+- Store original files **outside web root** (e.g., `/srv/media/`)
+- Serve via PHP streaming endpoint with purchase validation
+- Watermarked previews in public uploads folder
+- Files never directly accessible via URL
+
+**Watermarking (Imagick):**
+| Element | Behavior |
+|---------|----------|
+| Site title | Translucent text overlay on all preview images |
+| Site logo | Desaturated + translucent overlay (if logo is set) |
+| Applied to | Preview/thumbnail images only, not original downloads |
+| Auto-generate | On upload, before files are moved to protected storage |
+
+**License System:**
+- One license document **per customer** (not per purchase)
+- Generated from business license text (configurable in settings)
+- Attached to WooCommerce order confirmation email
+- Accessible in WooCommerce "My Account" → Downloads
+- Applies to **all** purchases by that customer
+- License includes: usage rights, restrictions, attribution requirements
+
+**CPT Structure:**
+```
+mm_media → Digital Media
+  - media_type: photo | video | document | audio
+  - media_file: original file path (outside web root)
+  - media_preview: watermarked/low-res preview path
+  - media_dimensions: "1920x1080" (for images/video)
+  - media_file_size: "2.4 MB"
+  - media_license_type: personal | commercial | editorial | custom
+  - media_download_limit: 0 (unlimited) or number
+  - media_expiry_days: 0 (never) or number
+```
+
+**Files to change:**
+- New: `includes/class-mm-media-product.php` — WC product type registration, file protection, watermarking, license generation
+- New: `includes/rest-api/class-mm-rest-media-download.php` — PHP streaming endpoint with purchase validation
+- New: `includes/class-mm-watermark.php` — Imagick watermark generation (text + optional logo)
+- New: `includes/class-mm-license.php` — License document generation and attachment
+- Modified: `includes/metadata/class-mm-schema-post-types.php` — register mm_media CPT
+- Modified: `includes/metadata/class-mm-schema-types.php` — MediaObject/CreativeWork schema fields
+
+**WooCommerce integration points:**
+- Register custom product type "Digital Download" in WC admin
+- Product data tab shows media selector + upload fields
+- On order complete → move file to protected storage, generate watermarked preview, create license
+- WC email template filter → attach license document
+- My Account page → license document accessible in Downloads section
+- Download counter/limit enforcement via streaming endpoint
+
+**Schema output:**
+- MediaObject with contentUrl (protected), thumbnailUrl (watermarked preview)
+- license attribute linking to license document
+- width/height/fileSize/encodingFormat from metadata
+
+**NOT in scope:** (WooCommerce handles these)
+- Payment processing
+- Order management
+- Customer account management
+- Download tracking/limits (we enforce, WC stores)
+- Coupon/discount codes
+- Refund processing
+
+---
+
 ### MEDIUM — Schema Type Cleanup (S-5)
 
 Remove redundant schema types that map to WordPress built-ins:
@@ -476,7 +548,8 @@ Remove redundant schema types that map to WordPress built-ins:
 | CPT | Type | Status |
 |-----|------|--------|
 | `mm_event` | Event | Editable, .ical, WC product integration |
-| `mm_service` | Service | Editable |
+| `mm_service` | Service | Editable, WC product integration |
+| `mm_media` | Digital Media | Editable, WC product, file protection, watermarking |
 | `mm_how_to` | HowTo | Editable |
 | `mm_about_page` | AboutPage | Read-only, auto-generated |
 | `mm_contact_page` | ContactPage | Read-only, auto-generated |
