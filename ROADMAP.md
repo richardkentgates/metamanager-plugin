@@ -508,7 +508,28 @@ Sell digital media files (photos, videos, documents) as WooCommerce products wit
 - Product selector (link to WooCommerce product)
 - Watermarked preview preview
 - Protected file status indicator
-- **Public file warning**: When linking to product, warn if file is publicly accessible and offer to move to protected storage
+- **Public file warning**: When linking to product, warn if file is publicly accessible
+
+**Protection Flow (on product link confirmation):**
+1. System scans for all public references to the image (posts, pages, widgets, etc.)
+2. If references found: Prompt user with list of locations using this image
+3. User selects replacement image (watermarked version, different image, or "remove from content")
+4. System replaces ALL references with selected replacement
+5. Move original file from `wp-content/uploads/` to `/srv/media/` (protected)
+6. Update `_wp_attached_file` to point to new protected location
+7. Link attachment to WooCommerce product
+
+**Reference Detection:**
+- Search `post_content` for original image URL/ID
+- Search `postmeta` for image references
+- Search widget options for image URLs
+- Search gallery/block references
+- Return list of locations for user to review
+
+**Replacement Options:**
+- Select existing image from media library (must be different image)
+- Upload new image to use as replacement
+- System blocks protection if no replacement selected
 
 **WooCommerce integration points:**
 - On order complete → move file to protected storage, generate watermarked preview, create license
