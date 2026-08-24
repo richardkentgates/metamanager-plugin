@@ -500,8 +500,18 @@ Sell digital media files (photos, videos, documents) as WooCommerce products wit
 **Files to change:**
 - New: `includes/class-mm-media-protection.php` — File protection, watermarking, license generation
 - New: `includes/rest-api/class-mm-rest-media-download.php` — PHP streaming endpoint with purchase validation
+- New: `includes/metadata/modules/class-mm-mod-media-display.php` — Featured image citation HTML output
 - Modified: `includes/class-mm-admin.php` — Add protection toggle and product linking to attachment edit screen
+- Modified: `includes/metadata/class-mm-site-settings.php` — Add media.featured_image_citation setting
 - Modified: `includes/metadata/class-mm-schema-types.php` — MediaObject schema from existing attachment metadata
+- Modified: `includes/metadata/modules/class-mm-mod-schema.php` — Archive media schema, protected media schema references
+
+**Media Library Integration:**
+- Single unified library (no separate directory for protected files)
+- Protected files show "Protected" badge/column
+- Filter by status: All | Public | Protected
+- Protected files display watermarked preview in library
+- Clicking protected file shows protection status + product link
 
 **Attachment edit screen additions:**
 - Protection toggle (on/off)
@@ -553,6 +563,33 @@ Sell digital media files (photos, videos, documents) as WooCommerce products wit
 - Download tracking/limits (we enforce, WC stores)
 - Coupon/discount codes
 - Refund processing
+
+---
+
+### MEDIUM — Featured Image Citation (S-11)
+
+Display attribution HTML under featured images when shown on pages.
+
+**Settings:**
+- `media.featured_image_citation` — Enable/disable citation under featured images
+
+**Citation content (from attachment metadata):**
+- Creator (if set)
+- Copyright notice (if set) or Owner (if set)
+- Date (if set)
+
+**Output format:**
+```html
+<figure>
+  <img src="..." alt="...">
+  <figcaption class="mm-image-citation">Creator Name | © Owner | 2024</figcaption>
+</figure>
+```
+
+**Files changed:**
+- New: `includes/metadata/modules/class-mm-mod-media-display.php` — Citation HTML output
+- Modified: `includes/metadata/class-mm-site-settings.php` — Add media.featured_image_citation setting
+- Modified: `includes/metadata/class-mm-metadata-loader.php` — Register new module
 
 ---
 

@@ -118,6 +118,11 @@ class MM_Schema_Post_Types {
 			$saved = [];
 		}
 
+		// WooCommerce product linking section for Event and Service.
+		if ( $wc_active && in_array( $slug, [ 'mm_event', 'mm_service' ], true ) ) {
+			self::render_wc_product_linking_section( $post, $slug );
+		}
+
 		if ( empty( $type_fields ) ) {
 			echo '<p>This schema type has no additional fields — all data is auto-populated from the post content.</p>';
 			return;
@@ -397,6 +402,78 @@ class MM_Schema_Post_Types {
 			],
 		] );
 		return $query->posts;
+	}
+
+	/**
+	 * Render WooCommerce product linking section for Event/Service.
+	 */
+	private static function render_wc_product_linking_section( \WP_Post $post, string $slug ): void {
+		$linked_product_id = (int) get_post_meta( $post->ID, '_mm_wc_product_id', true );
+		$product_title     = $linked_product_id ? get_the_title( $linked_product_id ) : '';
+
+		$nonce = wp_create_nonce( 'mm_wc_product_link' );
+		?>
+		<div class="mm-wc-product-linking" style="background:#f0f0f1;padding:15px;margin-bottom:20px;border-radius:4px;">
+			<h3 style="margin-top:0;">WooCommerce Product</h3>
+			<p class="description">Link this <?php echo esc_html( strtolower( $slug === 'mm_event' ? 'Event' : 'Service' ) ); ?> to a WooCommerce product for purchasing.</p>
+			<table class="form-table">
+				<tbody>
+					<tr>
+						<th><label for="mm_wc_product">Linked Product</label></th>
+						<td>
+							<input type="hidden" id="mm_wc_product_id" name="mm_wc_product_id" value="<?php echo esc_attr( $linked_product_id ); ?>">
+							<input type="text" id="mm_wc_product" value="<?php echo esc_attr( $product_title ); ?>" class="regular-text" placeholder="Search for a product...">
+							<button type="button" id="mm_wc_product_search" class="button">Search</button>
+							<?php if ( $linked_product_id ) : ?>
+								<button type="button" id="mm_wc_product_clear" class="button">Remove</button>
+								<p class="description">Linked to: <a href="<?php echo esc_url( get_edit_post_link( $linked_product_id ) ); ?>"><?php echo esc_html( $product_title ); ?></a></p>
+							<?php endif; ?>
+							<p class="description">Product data (price, availability) will be used in schema output.</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<script>
+			jQuery(function($) {
+				$('#mm_wc_product_search').on('click', function() {
+					var search = $('#mm_wc_product').val();
+					if (!search) return;
+					$.ajax({
+						url: ajaxurl,
+						data: {
+							action: 'mm_search_wc_products',
+							search: search,
+							nonce: '<?php echo esc_js( $nonce ); ?>'
+						},
+						success: function(response) {
+							if (response.data && response.data.length) {
+								var options = response.data.map(function(p) {
+									return '<option value="' + p.id + '">' + p.title + '</option>';
+								}).join('');
+								// Show results in a simple prompt for now.
+								var selected = prompt('Select a product:\n' + response.data.map(function(p, i) {
+									return (i+1) + '. ' + p.title;
+								}).join('\n'));
+								if (selected) {
+									var idx = parseInt(selected) - 1;
+									if (response.data[idx]) {
+										$('#mm_wc_product_id').val(response.data[idx].id);
+										$('#mm_wc_product').val(response.data[idx].title);
+									}
+								}
+							}
+						}
+					});
+				});
+				$('#mm_wc_product_clear').on('click', function() {
+					$('#mm_wc_product_id').val('');
+					$('#mm_wc_product').val('');
+					$(this).hide();
+				});
+			});
+			</script>
+		</div>
+		<?php
 	}
 
 	/**

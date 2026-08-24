@@ -102,6 +102,9 @@ class MM_Admin {
 		// AJAX: apply shared metadata values to a batch of selected images.
 		add_action( 'wp_ajax_mm_apply_bulk_meta', [ __CLASS__, 'ajax_apply_bulk_meta' ] );
 
+		// AJAX: search WooCommerce products for linking.
+		add_action( 'wp_ajax_mm_search_wc_products', [ __CLASS__, 'ajax_search_wc_products' ] );
+
 		// Bulk spinner (lightweight UX touch on the Media Library).
 		add_action( 'admin_footer-upload.php', [ __CLASS__, 'bulk_spinner_markup' ] );
 
@@ -1975,6 +1978,45 @@ class MM_Admin {
 		}
 
 		wp_send_json_success( [ 'count' => $count ] );
+	}
+
+	/**
+	 * AJAX: Search WooCommerce products for linking to Event/Service.
+	 */
+	public static function ajax_search_wc_products(): void {
+		check_ajax_referer( 'mm_wc_product_link', 'nonce' );
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Permission denied.' );
+		}
+
+		if ( ! class_exists( 'WooCommerce' ) ) {
+			wp_send_json_error( 'WooCommerce not active.' );
+		}
+
+		$search = sanitize_text_field( wp_unslash( $_GET['search'] ?? '' ) );
+		if ( ! $search ) {
+			wp_send_json_success( [] );
+		}
+
+		$products = wc_get_products( [
+			's'      => $search,
+			'limit'  => 20,
+			'orderby' => 'title',
+			'order'  => 'ASC',
+			'return' => 'objects',
+		] );
+
+		$results = [];
+		foreach ( $products as $product ) {
+			$results[] = [
+				'id'    => $product->get_id(),
+				'title' => $product->get_name(),
+				'price' => $product->get_price_html(),
+			];
+		}
+
+		wp_send_json_success( $results );
 	}
 
 	// -----------------------------------------------------------------------
