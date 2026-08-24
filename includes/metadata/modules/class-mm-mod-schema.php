@@ -127,12 +127,23 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		if ( $context->is_singular() ) {
 			$post = $context->get_post();
 			if ( $post ) {
-				$meta = $settings->get_post_meta( $post->ID );
-				$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
-				$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
-				// Map content types to their WebPage counterpart.
-				if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
-					$type = 'WebPage'; // WebPage is the containing page; content type is separate.
+				// CPT posts use their schema type directly.
+				if ( MM_Schema_Post_Types::is_schema_cpt( $post->post_type ) ) {
+					$schema_type = MM_Schema_Post_Types::slug_to_type( $post->post_type );
+					// Content types get WebPage as the container; the content node is separate.
+					if ( in_array( $schema_type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
+						$type = 'WebPage';
+					} else {
+						$type = $schema_type;
+					}
+				} else {
+					$meta = $settings->get_post_meta( $post->ID );
+					$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
+					$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
+					// Map content types to their WebPage counterpart.
+					if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
+						$type = 'WebPage';
+					}
 				}
 			}
 		} elseif ( $context->is_front_page() ) {
@@ -150,6 +161,107 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			'name'        => $title,
 			'isPartOf'    => [ '@id' => $this->site_id( 'website' ) ],
 		];
+
+		// ContactPage: add business info data from settings.
+		if ( 'ContactPage' === $type && $context->is_singular() ) {
+			$biz  = $settings->all_business();
+			if ( ! empty( $biz['name'] ) ) {
+				$node['name'] = sanitize_text_field( $biz['name'] );
+			}
+			if ( ! empty( $biz['phone'] ) ) {
+				$node['telephone'] = sanitize_text_field( $biz['phone'] );
+			}
+			if ( ! empty( $biz['email'] ) ) {
+				$node['email'] = sanitize_email( $biz['email'] );
+			}
+			$addr = MM_Mod_Base::postal_address_node( $biz['address'] ?? [] );
+			if ( $addr ) {
+				$node['address'] = $addr;
+			}
+			$geo_lat = isset( $biz['lat'] ) && is_numeric( $biz['lat'] ) ? (float) $biz['lat'] : null;
+			$geo_lng = isset( $biz['lng'] ) && is_numeric( $biz['lng'] ) ? (float) $biz['lng'] : null;
+			if ( null !== $geo_lat && null !== $geo_lng ) {
+				$node['geo'] = [
+					'@type'     => 'GeoCoordinates',
+					'latitude'  => $geo_lat,
+					'longitude' => $geo_lng,
+				];
+			}
+			// ContactPoint nodes.
+			$contact_points = [];
+			if ( ! empty( $biz['phone'] ) ) {
+				$contact_points[] = [
+					'@type'       => 'ContactPoint',
+					'telephone'   => sanitize_text_field( $biz['phone'] ),
+					'contactType' => 'customer service',
+				];
+			}
+			if ( ! empty( $biz['email'] ) ) {
+				$contact_points[] = [
+					'@type'       => 'ContactPoint',
+					'email'       => sanitize_email( $biz['email'] ),
+					'contactType' => 'customer service',
+				];
+			}
+			if ( $contact_points ) {
+				$node['contactPoint'] = ( 1 === count( $contact_points ) ) ? $contact_points[0] : $contact_points;
+			}
+		}
+
+		// AboutPage: add business info data from settings.
+		if ( 'AboutPage' === $type && $context->is_singular() ) {
+			$biz  = $settings->all_business();
+			if ( ! empty( $biz['name'] ) ) {
+				$node['name'] = sanitize_text_field( $biz['name'] );
+			}
+			if ( ! empty( $biz['description'] ) ) {
+				$node['description'] = sanitize_text_field( $biz['description'] );
+			}
+			if ( ! empty( $biz['founding_date'] ) ) {
+				$node['foundingDate'] = sanitize_text_field( $biz['founding_date'] );
+			}
+			if ( ! empty( $biz['number_of_employees'] ) ) {
+				$node['numberOfEmployees'] = sanitize_text_field( $biz['number_of_employees'] );
+			}
+			$addr = MM_Mod_Base::postal_address_node( $biz['address'] ?? [] );
+			if ( $addr ) {
+				$node['address'] = $addr;
+			}
+			$geo_lat = isset( $biz['lat'] ) && is_numeric( $biz['lat'] ) ? (float) $biz['lat'] : null;
+			$geo_lng = isset( $biz['lng'] ) && is_numeric( $biz['lng'] ) ? (float) $biz['lng'] : null;
+			if ( null !== $geo_lat && null !== $geo_lng ) {
+				$node['geo'] = [
+					'@type'     => 'GeoCoordinates',
+					'latitude'  => $geo_lat,
+					'longitude' => $geo_lng,
+				];
+			}
+			if ( ! empty( $biz['phone'] ) ) {
+				$node['telephone'] = sanitize_text_field( $biz['phone'] );
+			}
+			if ( ! empty( $biz['email'] ) ) {
+				$node['email'] = sanitize_email( $biz['email'] );
+			}
+			// ContactPoint nodes.
+			$contact_points = [];
+			if ( ! empty( $biz['phone'] ) ) {
+				$contact_points[] = [
+					'@type'       => 'ContactPoint',
+					'telephone'   => sanitize_text_field( $biz['phone'] ),
+					'contactType' => 'customer service',
+				];
+			}
+			if ( ! empty( $biz['email'] ) ) {
+				$contact_points[] = [
+					'@type'       => 'ContactPoint',
+					'email'       => sanitize_email( $biz['email'] ),
+					'contactType' => 'customer service',
+				];
+			}
+			if ( $contact_points ) {
+				$node['contactPoint'] = ( 1 === count( $contact_points ) ) ? $contact_points[0] : $contact_points;
+			}
+		}
 
 		// Description from meta.
 		foreach ( $data['meta'] as $mt ) {
@@ -217,8 +329,12 @@ class MM_Mod_Schema extends MM_Mod_Base {
 					}
 				}
 				// The post itself.
-				$meta  = $settings->get_post_meta( $post->ID );
+			$meta  = $settings->get_post_meta( $post->ID );
+			// Read breadcrumb label from CPT meta first, then legacy _mm_meta.
+			$label = get_post_meta( $post->ID, 'mm_breadcrumb_label', true );
+			if ( ! $label ) {
 				$label = ! empty( $meta['breadcrumb_label'] ) ? $meta['breadcrumb_label'] : get_the_title( $post );
+			}
 				$items[] = $this->crumb( $pos++, $label, get_permalink( $post ) );
 			}
 		} elseif ( $context->is_tax() || $context->is_category() || $context->is_tag() ) {
@@ -267,9 +383,16 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			return;
 		}
 
-		$meta         = $settings->get_post_meta( $post->ID );
-		$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
-		$type         = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
+		// Determine schema type: CPT slug → schema type, or legacy _mm_meta schema_type.
+		$type = null;
+		if ( MM_Schema_Post_Types::is_schema_cpt( $post->post_type ) ) {
+			$type = MM_Schema_Post_Types::slug_to_type( $post->post_type );
+		}
+		if ( ! $type ) {
+			$meta         = $settings->get_post_meta( $post->ID );
+			$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
+			$type         = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
+		}
 
 		// WebPage itself is already added above; skip if type resolves to WebPage.
 		if ( in_array( $type, [ 'WebPage', 'WebSite' ], true ) ) {
@@ -312,8 +435,17 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		// Merge per-post schema field overrides (Event dates, prices, addresses, etc.).
-		// For Product type with WooCommerce active: WC data populates first, then manual overrides.
-		$schema_fields = $meta['schema_fields'] ?? [];
+		// Read from CPT meta first, then legacy _mm_meta schema_fields.
+		$schema_fields = [];
+		if ( MM_Schema_Post_Types::is_schema_cpt( $post->post_type ) ) {
+			$cpt_fields = get_post_meta( $post->ID, 'mm_schema_fields', true );
+			if ( is_array( $cpt_fields ) ) {
+				$schema_fields = $cpt_fields;
+			}
+		}
+		if ( empty( $schema_fields ) ) {
+			$schema_fields = $meta['schema_fields'] ?? [];
+		}
 		if ( 'Product' === $type && $this->is_woocommerce_active() ) {
 			$wc_data = $this->get_woocommerce_product_data( $post->ID );
 			if ( ! empty( $wc_data ) ) {

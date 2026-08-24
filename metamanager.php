@@ -87,6 +87,7 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-site-settings.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-page-context.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-head-emitter.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-schema-types.php';
+require_once MM_META_DIR . 'includes/metadata/class-mm-schema-post-types.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-biz-card-css.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-cli.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-abilities.php';
@@ -117,6 +118,24 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-loader.php';
 add_action( 'plugins_loaded', function (): void {
 	( new MM_Metadata_Loader() )->run();
 } );
+
+// Register schema custom post types (Event, Product, Service, etc.).
+MM_Schema_Post_Types::init();
+
+// Apply max revisions setting from Metamanager preferences.
+add_filter( 'wp_revisions_to_store', function( $num, $post ) {
+	$max = MM_Settings::get_max_revisions();
+	if ( $max === 0 ) {
+		return $num; // Unlimited.
+	}
+	$post_type = get_post_type( $post );
+	// Apply to pages, posts, and schema CPTs.
+	if ( in_array( $post_type, [ 'page', 'post' ], true ) || MM_Schema_Post_Types::is_schema_cpt( $post_type ) ) {
+		$count = wp_count_revisions( $post->ID );
+		return $count >= $max ? 0 : 1;
+	}
+	return $num;
+}, 10, 2 );
 
 // Auto-clean job history when an attachment is deleted from the Media Library.
 // Fires in both admin and REST API contexts, so it belongs here unconditionally.

@@ -15,10 +15,10 @@ $opt = MM_Mod_Business_Contact::OPT_STYLE;
 
 <div class="mm-meta-panel" id="page-contact">
 
-	<h2><?php esc_html_e( 'Contact Card', 'metamanager' ); ?></h2>
+	<h2><?php esc_html_e( 'Contact Page', 'metamanager' ); ?></h2>
 	<p class="description">
-		<?php esc_html_e( 'Controls the appearance and visible actions for every Business Contact Card widget, block, and shortcode on this site.', 'metamanager' ); ?>
-		<?php esc_html_e( 'Add the card via the "GCM Business Contact Card" widget, the "Business Contact Card" Gutenberg block, or the [gcm_business_contact] shortcode.', 'metamanager' ); ?>
+		<?php esc_html_e( 'Controls the appearance and visible actions for the auto-generated Contact Page and any Business Contact Card widgets, blocks, or shortcodes on this site.', 'metamanager' ); ?>
+		<?php esc_html_e( 'The Contact Page is built from your Business Info settings. You can also add the card via the "GCM Business Contact Card" widget, the "Business Contact Card" Gutenberg block, or the [gcm_business_contact] shortcode.', 'metamanager' ); ?>
 	</p>
 
 	<?php /* ------------------------------------------------------------------ */ ?>

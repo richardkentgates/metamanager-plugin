@@ -92,6 +92,29 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 			</td>
 		</tr>
 		<tr>
+			<th><label for="gcm_biz_description">Business Description</label></th>
+			<td>
+				<textarea id="gcm_biz_description" name="<?php echo esc_attr($opt); ?>[description]" rows="4" class="large-text" placeholder="Describe your business — used for AboutPage schema and meta description"><?php echo esc_textarea($b['description']??''); ?></textarea>
+				<p class="description">Used for AboutPage schema, LocalBusiness <code>description</code>, and meta description tag.</p>
+			</td>
+		</tr>
+		<tr>
+			<th><label for="gcm_biz_founding_date">Founding Date</label></th>
+			<td>
+				<input type="date" id="gcm_biz_founding_date" name="<?php echo esc_attr($opt); ?>[founding_date]"
+					value="<?php echo esc_attr($b['founding_date']??''); ?>" class="regular-text">
+				<p class="description">Optional. Used in Organization/LocalBusiness schema.</p>
+			</td>
+		</tr>
+		<tr>
+			<th><label for="gcm_biz_number_of_employees">Number of Employees</label></th>
+			<td>
+				<input type="text" id="gcm_biz_number_of_employees" name="<?php echo esc_attr($opt); ?>[number_of_employees]"
+					value="<?php echo esc_attr($b['number_of_employees']??''); ?>" class="regular-text" placeholder="e.g. 5-10">
+				<p class="description">Optional. Used in Organization schema.</p>
+			</td>
+		</tr>
+		<tr>
 			<th>Payment Accepted</th>
 			<td>
 				<?php

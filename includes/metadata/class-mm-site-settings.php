@@ -503,26 +503,29 @@ class MM_Site_Settings {
 
 	public static function business_defaults(): array {
 		return [
-			'name'             => '',
-			'type'             => 'LocalBusiness',
-			'logo_id'          => 0,
-			'logo_url'         => '',
-			'phone'            => '',
-			'email'            => '',
-			'address'          => [
+			'name'                 => '',
+			'type'                 => 'LocalBusiness',
+			'logo_id'              => 0,
+			'logo_url'             => '',
+			'phone'                => '',
+			'email'                => '',
+			'description'          => '',
+			'founding_date'        => '',
+			'number_of_employees'  => '',
+			'address'              => [
 				'street'  => '',
 				'city'    => '',
 				'state'   => '',
 				'zip'     => '',
 				'country' => 'US',
 			],
-			'lat'              => '',
-			'lng'              => '',
-			'price_range'      => '',
-			'payment_accepted' => [],
-			'hours'            => [],
-			'service_areas'    => [],
-			'accounts'         => [
+			'lat'                  => '',
+			'lng'                  => '',
+			'price_range'          => '',
+			'payment_accepted'     => [],
+			'hours'                => [],
+			'service_areas'        => [],
+			'accounts'             => [
 				'facebook'  => '',
 				'instagram' => '',
 				'linkedin'  => '',

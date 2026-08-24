@@ -370,6 +370,136 @@ Product schema must auto-populate from WooCommerce product data when WooCommerce
 
 ---
 
+### HIGH — Event as WooCommerce Product (S-4)
+
+Simple WooCommerce integration for Event posts — make events purchasable as products with ticket generation and QR codes.
+
+**Scope:** Utilize WooCommerce, don't replace it. Let WC handle inventory, analytics, coupons, etc.
+
+**What we add:**
+| Feature | Implementation |
+|---------|----------------|
+| Event ↔ Product link | Custom field `_mm_wc_product_id` on Event, `_mm_event_id` on Product |
+| Ticket purchase | WC Product type "Event Ticket" with event linking |
+| Ticket hash | Unique hash per order item: `md5($order_id . $item_id . $salt)` |
+| QR code | `chillerlan/php-qrcode` library, payload: `site/event/{slug}?ticket={hash}` |
+| Ticket download | Rewrite endpoint: `/gcm-event/{event_id}/ticket/{hash}/` |
+| Order email | WC email attachment with QR code image |
+| Check-in | Simple REST endpoint: `POST /wp-json/metamanager/v1/checkin` with ticket hash |
+
+**Files to change:**
+- New: `includes/class-mm-event-product.php` — WC product type registration, event linking UI
+- New: `includes/class-mm-ticket-qr.php` — QR code generation and download endpoint
+- Modified: `includes/metadata/class-mm-schema-types.php` — add `event_ticket_url` and `event_capacity` fields
+- Modified: `includes/metadata/modules/class-mm-mod-business-contact.php` — update .ical to include ticket URL
+- New: `includes/rest-api/class-mm-rest-checkin.php` — ticket validation endpoint
+
+**WooCommerce integration points:**
+- Register custom product type "Event Ticket" in WC admin
+- Product data tab shows event selector dropdown
+- On order complete → generate ticket hash, save to order meta
+- WC email template filter → attach QR code image
+- REST API endpoint for door check-in (validates hash, returns event/attendee data)
+
+**Dependencies:** `chillerlan/php-qrcode` (composer require chillerlan/php-qrcode)
+
+**NOT in scope:** (WooCommerce handles these)
+- Inventory management
+- Analytics and reporting
+- Coupon/discount codes
+- Refund processing
+- Attendee management beyond basic check-in
+- PDF ticket generation (QR code image is sufficient)
+
+---
+
+### MEDIUM — Schema Type Cleanup (S-5)
+
+Remove redundant schema types that map to WordPress built-ins:
+
+| Type | Maps to | Action |
+|------|---------|--------|
+| BlogPosting | Default `post` type | Remove CPT, schema module detects `post` type |
+| WebPage | Default `page` type | Remove CPT, schema module detects `page` type |
+| ProfilePage | Author archive pages | Remove CPT, schema module detects `is_author()` |
+| Article | Redundant with WebPage + BlogPosting | Remove entirely |
+
+**Final CPT list:**
+| CPT | Type | Status |
+|-----|------|--------|
+| `mm_event` | Event | Editable, .ical, WC product integration |
+| `mm_service` | Service | Editable |
+| `mm_how_to` | HowTo | Editable |
+| `mm_about_page` | AboutPage | Read-only, auto-generated |
+| `mm_contact_page` | ContactPage | Read-only, auto-generated |
+| `mm_calendar` | Calendar | Read-only, auto-generated |
+
+---
+
+### MEDIUM — ContactPage Auto-Generation (S-6)
+
+ContactPage CPT auto-generates content from Business Profile settings.
+
+**Content rendered:**
+- Business name, logo
+- HTML5 `<address>` element with geo: protocol links
+- Phone (click-to-call), email, vCard download
+- Opening hours
+- Action buttons (controlled via Contact Page settings)
+
+**Settings page renamed:** "Contact Card" → "Contact Page"
+
+**Files changed:**
+- `class-mm-schema-post-types.php` — ContactPage CPT with disabled editor
+- `class-mm-mod-business-contact.php` — `render_contact_page()` method
+- `class-mm-mod-schema.php` — ContactPage schema populated from business info
+- `page-contact.php` — renamed heading and descriptions
+
+---
+
+### MEDIUM — AboutPage Auto-Generation (S-7)
+
+AboutPage CPT auto-generates content from Business Profile settings.
+
+**Content rendered:**
+- Business name, logo, description
+- Founding date, number of employees, price range
+- Full address with geo: protocol link
+- Service areas, payment methods
+- Social profile links
+
+**New Business Profile fields:**
+- Description (textarea)
+- Founding Date (date picker)
+- Number of Employees (text)
+
+**Files changed:**
+- `class-mm-schema-post-types.php` — AboutPage CPT with disabled editor
+- `class-mm-mod-business-contact.php` — `render_about_page()` method
+- `class-mm-mod-schema.php` — AboutPage schema populated from business info
+- `class-mm-site-settings.php` — business_defaults() updated
+- `page-business.php` — new fields added
+
+---
+
+### MEDIUM — Calendar Auto-Generation (S-8)
+
+Calendar CPT auto-generates a navigable month-by-month event calendar.
+
+**Features:**
+- Month navigation (forward/backward)
+- Today button
+- Events shown on their start date
+- Click-through to individual event posts
+- Full responsive CSS
+
+**Files changed:**
+- `class-mm-schema-post-types.php` — Calendar CPT with disabled editor
+- `class-mm-mod-business-contact.php` — `render_calendar()` method
+- `biz-contact.css` — calendar styles added
+
+---
+
 ## Integration Tests on PEO
 
 Integration tests require WordPress test suite at `/tmp/wordpress-tests-lib`. PEO has MySQL test database (`metamanager_test`) ready. Install test suite and run PHPUnit.

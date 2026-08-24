@@ -1,0 +1,143 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://example.com/#website",
+      "url": "https://example.com/",
+      "name": "Guttertymer Pressure Washing"
+    },
+    {
+      "@type": "LocalBusiness",
+      "@id": "https://example.com/#localbusiness",
+      "name": "Guttertymer Pressure Washing",
+      "url": "https://example.com/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://example.com/logo.png"
+      },
+      "telephone": "+18505551234",
+      "email": "info@guttertymer.com",
+      "description": "Professional pressure washing services in the Destin, Florida area.",
+      "foundingDate": "2018-03-15",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Main St",
+        "addressLocality": "Destin",
+        "addressRegion": "FL",
+        "postalCode": "32541",
+        "addressCountry": "US"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 30.3935,
+        "longitude": -86.4958
+      },
+      "priceRange": "$$",
+      "paymentAccepted": "Cash, Credit Card, Venmo",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+18505551234",
+        "contactType": "customer service"
+      }
+    },
+    {
+      "@type": "ContactPage",
+      "@id": "https://example.com/contact/#webpage",
+      "url": "https://example.com/contact/",
+      "name": "Guttertymer Pressure Washing",
+      "isPartOf": {
+        "@id": "https://example.com/#website"
+      },
+      "telephone": "+18505551234",
+      "email": "info@guttertymer.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Main St",
+        "addressLocality": "Destin",
+        "addressRegion": "FL",
+        "postalCode": "32541",
+        "addressCountry": "US"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 30.3935,
+        "longitude": -86.4958
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+18505551234",
+        "contactType": "customer service"
+      }
+    },
+    {
+      "@type": "AboutPage",
+      "@id": "https://example.com/about/#webpage",
+      "url": "https://example.com/about/",
+      "name": "Guttertymer Pressure Washing",
+      "description": "Professional pressure washing services in the Destin, Florida area.",
+      "foundingDate": "2018-03-15",
+      "numberOfEmployees": "5-10",
+      "isPartOf": {
+        "@id": "https://example.com/#website"
+      },
+      "telephone": "+18505551234",
+      "email": "info@guttertymer.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Main St",
+        "addressLocality": "Destin",
+        "addressRegion": "FL",
+        "postalCode": "32541",
+        "addressCountry": "US"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 30.3935,
+        "longitude": -86.4958
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+18505551234",
+        "contactType": "customer service"
+      }
+    },
+    {
+      "@type": "Event",
+      "@id": "https://example.com/event/crab-island-tour/#event",
+      "name": "Crab Island Boat Tour",
+      "url": "https://example.com/event/crab-island-tour/",
+      "startDate": "2025-08-15T10:00",
+      "endDate": "2025-08-15T18:00",
+      "eventStatus": "EventScheduled",
+      "location": {
+        "@type": "Place",
+        "name": "Crab Island",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "",
+          "addressLocality": "Destin",
+          "addressRegion": "FL",
+          "postalCode": "32541",
+          "addressCountry": "US"
+        }
+      },
+      "organizer": {
+        "@type": "Organization",
+        "name": "Guttertymer Pressure Washing",
+        "telephone": "+18505551234",
+        "email": "info@guttertymer.com"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "150",
+        "priceCurrency": "USD",
+        "url": "https://example.com/event/crab-island-tour/tickets/",
+        "availability": "https://schema.org/InStock"
+      },
+      "performer": {
+        "@id": "https://example.com/#localbusiness"
+      }
+    }
+  ]
+}
