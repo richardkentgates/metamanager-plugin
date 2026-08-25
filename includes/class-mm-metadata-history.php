@@ -344,7 +344,7 @@ class MM_Metadata_History {
 			if ( $old !== $new ) {
 				$diff[] = [
 					'field' => $key,
-					'label' => self::FIELD_LABELS[ $key ] ?? $key,
+					'label' => self::FIELD_LABELS[ $key ],
 					'old'   => $old,
 					'new'   => $new,
 				];
@@ -530,7 +530,7 @@ class MM_Metadata_History {
 		echo '</tbody></table>';
 
 		// Inline script for diff AJAX.
-		$js_msg_same = esc_js__( 'Select two different versions to compare.', 'metamanager' );
+		$js_msg_same = esc_js( __( 'Select two different versions to compare.', 'metamanager' ) );
 		$js_nonce    = esc_js( $nonce );
 		$js_post_id  = absint( $post_id );
 		echo "<script>
