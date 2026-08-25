@@ -123,7 +123,7 @@ The SEO features (metadata panels, Open Graph, Schema.org, sitemaps, link checke
 
 = What image formats are supported for lossless compression? =
 
-JPEG (jpegtran), PNG (optipng), and WebP (cwebp -lossless). GIF and AVIF are not currently supported.
+JPEG (jpegtran), PNG (optipng), and WebP (cwebp -lossless). GIF and AVIF are compressed losslessly where tooling is available.
 
 = Does compression affect image quality? =
 

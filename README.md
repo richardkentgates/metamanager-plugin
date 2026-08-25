@@ -4,7 +4,7 @@
 
 **Media layer** — lossless compression for images, video, and audio; bidirectional metadata sync between WordPress fields and embedded file tags (EXIF/IPTC/XMP, ID3, QuickTime atoms, Vorbis comments, and XMP); PDF metadata import and write-back; GPS coordinate import; write-back verification — all via OS-level daemons using ExifTool and ffmpeg.
 
-**Web layer** — per-post/page/term/user title and description control; Open Graph and Twitter/X card output for all content types; Schema.org JSON-LD for 20+ types (Article, LocalBusiness, Product, Event, FAQPage, Recipe, and more); XML sitemaps (pages, media, video); HTML sitemap shortcode; robots.txt management; async broken link checker; business profile with contact card block; author profiles with structured data.
+**Web layer** — per-post/page/term/user title and description control; Open Graph and Twitter/X card output for all content types; Schema.org JSON-LD (10 selectable types — Article, BlogPosting, Event, Product, Service, HowTo, AboutPage, ContactPage, ProfilePage, WebPage — plus automatic WebSite, BreadcrumbList, ImageObject/VideoObject nodes); XML sitemaps (pages, media, video); HTML sitemap shortcode; robots.txt management; async broken link checker; business profile with contact card block; author profiles with structured data.
 
 [![License: GPL 3.0+](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759B?logo=wordpress&logoColor=white)](https://wordpress.org)
@@ -52,7 +52,7 @@ PHP's role throughout is coordinator only: write the instruction, let the daemon
 
 - **Title & description control**: per-post/page/term/user override with template tokens (`%%post_title%%`, `%%sitetitle%%`, `%%sep%%`, `%%search_query%%`, and more); configurable default template per post type and taxonomy; dedicated templates for search results and 404 pages
 - **Open Graph**: `og:title`, `og:description`, `og:image` for all content; `og:image:width/height/type/alt` for media; `og:video` and `og:audio` for media attachments; `article:published_time` and `article:modified_time` for posts; Twitter/X card output
-- **Schema.org JSON-LD**: 19 types — `Article`, `BlogPosting`, `WebPage`, `WebSite`, `SearchResultsPage`, `BreadcrumbList`, `ImageObject`, `VideoObject`, `AudioObject`, `DigitalDocument`, `Product`, `FAQPage`, `HowTo`, `Event`, `Service`, `TouristTrip`, `TouristAttraction`, `RealEstateListing`, `Organization`, `LocalBusiness`, `Person`
+- **Schema.org JSON-LD**: 10 selectable types (`Article`, `BlogPosting`, `WebPage`, `AboutPage`, `ContactPage`, `ProfilePage`, `HowTo`, `Event`, `Product`, `Service`) plus automatic nodes (`WebSite`, `SearchResultsPage`, `BreadcrumbList`, `ImageObject`, `VideoObject`, `AudioObject`, `Organization`, `Person`)
 - **XML sitemaps**: `/sitemap.xml` (all public content), `/sitemap-media.xml` (images + video), `/sitemap-video.xml` (Google Video format); 1-hour transient caching; auto-flush on publish; configurable per post type and taxonomy; Google and Bing pinged on publish
 - **HTML sitemap**: `[mm_sitemap]` shortcode embeds a formatted sitemap on any page; supports `post_types`, `taxonomies`, and `depth` attributes
 - **Robots.txt**: active sitemaps appended as `Sitemap:` directives automatically; per-post-type global noindex; per-post noindex/nofollow/noarchive/nosnippet from the metadata panel
@@ -72,7 +72,7 @@ PHP's role throughout is coordinator only: write the instruction, let the daemon
 - **Upload receipt emails**: batched digest email (one per 60-second window); per-user opt-in; configurable CC address; failed sends surfaced as a dismissible notice with retry
 - **Auto-updates**: native WordPress update pipeline integration — updates appear in Dashboard → Updates; includes "Check for Updates" link; notice prompts daemon restart after updates
 - **Multisite compatible**: network activation creates the DB table and schedules cron on every existing site; new blog creation handled via `wp_initialize_site`
-- **Clean uninstall**: opt-in "Remove all data on uninstall" setting wipes options, post meta (17 keys), job log table, job queue directory, and updater transients — nothing removed by default
+- **Clean uninstall**: opt-in "Remove all data on uninstall" setting wipes options, post meta (22 keys) and the mm_meta_history table, job log table, job queue directory, and updater transients — nothing removed by default
 
 ---
 
@@ -328,7 +328,6 @@ Metamanager generates two XML sitemap endpoints served directly by WordPress wit
 | Endpoint | Content |
 |----------|---------|
 | `/sitemap-media.xml` | All images and (optionally) videos uploaded to the Media Library |
-| `/sitemap-video.xml` | Videos sourced from self-hosted files, YouTube embeds, and Vimeo embeds in post content |
 
 ### Media sitemap (`/sitemap-media.xml`)
 
@@ -357,22 +356,19 @@ Each `<url>` entry contains an `<image:image>` extension node (when the Image Si
 Scans all published posts for embedded video and emits one `<url>` per video found. Sources:
 
 - **Self-hosted** — `<video src="…">` tags in post content
-- **YouTube** — `<iframe>` embeds and WordPress oEmbed blocks (`youtu.be`, `youtube.com`)
-- **Vimeo** — `<iframe>` embeds and WordPress oEmbed blocks (`vimeo.com`)
+Video sitemap covers self-hosted `<video>` tags and video attachments. External embeds (YouTube/Vimeo) are not included.
 
 YouTube and Vimeo metadata is resolved via the oEmbed API and cached as transients for one week.
 
 ### Settings
 
-Sitemap settings are under **Media → MM Settings → Sitemaps**. Each source can be toggled independently:
+Sitemap settings are under **Metamanager → Sitemaps**. Each source can be toggled independently:
 
 | Setting | Default | Effect |
 |---------|---------|--------|
 | Serve media sitemap | On | Enable/disable `/sitemap-media.xml` |
 | Include image nodes | On | Toggle `<image:image>` nodes |
 | Serve video sitemap | On | Enable/disable `/sitemap-video.xml` |
-| YouTube embeds | On | Include YouTube sources in video sitemap |
-| Vimeo embeds | On | Include Vimeo sources in video sitemap |
 | Self-hosted video | On | Include `<video>` tag sources |
 
 ### Submitting to Google Search Console
@@ -716,7 +712,7 @@ sudo systemctl restart metamanager-meta-daemon
 
 ### Removing plugin data via the WordPress admin (recommended)
 
-Before deleting the plugin, go to **Media → MM Settings → Data & Uninstall** and enable **Remove all data on uninstall**. Once that box is checked and you delete the plugin from the Plugins screen, Metamanager will automatically:
+Before deleting the plugin, go to **Metamanager → Preferences → Data & Uninstall** and enable **Remove all data on uninstall**. Once that box is checked and you delete the plugin from the Plugins screen, Metamanager will automatically:
 
 - Delete all plugin settings
 - Remove all plugin settings, the SEO/metadata subsystem (`_mm_meta` on posts/terms/users), attachment meta keys, and schema CPT fields
