@@ -719,7 +719,7 @@ sudo systemctl restart metamanager-meta-daemon
 Before deleting the plugin, go to **Media → MM Settings → Data & Uninstall** and enable **Remove all data on uninstall**. Once that box is checked and you delete the plugin from the Plugins screen, Metamanager will automatically:
 
 - Delete all plugin settings
-- Remove all metadata it stored on attachments (18 post meta keys + `_mm_compressed_*` keys)
+- Remove all plugin settings, the SEO/metadata subsystem (`_mm_meta` on posts/terms/users), attachment meta keys, and schema CPT fields
 - Drop the `wp_metamanager_jobs` job-log table
 - Remove the `wp-content/metamanager-jobs/` queue directory
 - Delete the updater transient
@@ -767,7 +767,7 @@ DELETE FROM wp_postmeta WHERE meta_key IN
    'mm_date_created','mm_location_city','mm_location_state','mm_location_country',
    'mm_rating','mm_gps_lat','mm_gps_lon','mm_gps_alt',
    'mm_duration','mm_verify_discrepancies','mm_verified_at');
-DELETE FROM wp_postmeta WHERE meta_key LIKE '_mm_compressed_%';
+DELETE FROM wp_postmeta WHERE meta_key IN ('_mm_meta', 'mm_schema_fields', '_mm_wc_product_id');
 ```
 
 ---

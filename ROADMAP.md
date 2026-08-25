@@ -350,7 +350,7 @@ Simple WooCommerce integration for Event posts — make events purchasable as pr
 **What we add:**
 | Feature | Implementation |
 |---------|----------------|
-| Event ↔ Product link | Custom field `_mm_wc_product_id` on Event, `_mm_event_id` on Product |
+| Event ↔ Product link | Custom field `_mm_wc_product_id` on Event (Product side handled by WooCommerce) |
 | Ticket purchase | WC Product type "Event Ticket" with event linking |
 | Ticket hash | Unique hash per order item: `md5($order_id . $item_id . $salt)` |
 | QR code | `chillerlan/php-qrcode` library, payload: `site/event/{slug}?ticket={hash}` |
@@ -393,7 +393,7 @@ Simple WooCommerce integration for Service posts — make services purchasable a
 **What we add:**
 | Feature | Implementation |
 |---------|----------------|
-| Service ↔ Product link | Custom field `_mm_wc_product_id` on Service, `_mm_service_id` on Product |
+| Service ↔ Product link | Custom field `_mm_wc_product_id` on Service (Product side handled by WooCommerce) |
 | Service purchase | WC Product type "Service Booking" with service linking |
 | Booking confirmation | Unique booking hash: `md5($order_id . $item_id . $salt)` |
 | Booking details | Custom order meta: service name, date/time, location, notes |
