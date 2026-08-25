@@ -105,6 +105,7 @@ require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-html-sitemap.
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-business-contact.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-rss.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-discovery.php';
+require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-media-display.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-metadata-help.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-metadata-admin.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-post-meta-panel.php';
@@ -123,7 +124,7 @@ add_action( 'plugins_loaded', function (): void {
 MM_Schema_Post_Types::init();
 
 // Apply max revisions setting from Metamanager preferences.
-add_filter( 'wp_revisions_to_store', function( $num, $post ) {
+add_filter( 'wp_revisions_to_keep', function( $num, $post ) {
 	$max = MM_Settings::get_max_revisions();
 	if ( $max === 0 ) {
 		return $num; // Unlimited.
@@ -131,8 +132,7 @@ add_filter( 'wp_revisions_to_store', function( $num, $post ) {
 	$post_type = get_post_type( $post );
 	// Apply to pages, posts, and schema CPTs.
 	if ( in_array( $post_type, [ 'page', 'post' ], true ) || MM_Schema_Post_Types::is_schema_cpt( $post_type ) ) {
-		$count = wp_count_revisions( $post->ID );
-		return $count >= $max ? 0 : 1;
+		return min( $num < 0 ? $max : $num, $max );
 	}
 	return $num;
 }, 10, 2 );

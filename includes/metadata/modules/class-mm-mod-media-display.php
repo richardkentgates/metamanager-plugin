@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 class MM_Mod_Media_Display {
 
 	public function register_hooks(): void {
-		$settings = new MM_Site_Settings();
+		$settings = MM_Site_Settings::get_instance();
 
 		if ( $settings->get( 'media.featured_image_citation', false ) ) {
 			add_filter( 'wp_get_attachment_image', [ $this, 'filter_featured_image_citation' ], 10, 5 );
