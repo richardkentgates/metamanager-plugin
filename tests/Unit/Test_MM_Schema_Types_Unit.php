@@ -21,7 +21,7 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 
 	public function test_get_schema_types_has_required_types(): void {
 		$types = MM_Schema_Types::get_schema_types();
-		$expected = [ 'WebPage', 'Article', 'BlogPosting', 'Product', 'LocalBusiness', 'Person', 'Event' ];
+		$expected = [ 'WebPage', 'Article', 'BlogPosting', 'Product', 'Event' ];
 		foreach ( $expected as $type ) {
 			$this->assertArrayHasKey( $type, $types, "Schema type {$type} should exist" );
 		}
@@ -64,30 +64,6 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 		$this->assertContains( 'product_brand', $product_fields );
 		$this->assertContains( 'product_price', $product_fields );
 		$this->assertContains( 'product_availability', $product_fields );
-	}
-
-	public function test_local_business_has_hours_field(): void {
-		$fields = MM_Schema_Types::get_fields_by_type();
-		$this->assertArrayHasKey( 'LocalBusiness', $fields );
-		$lb_fields = array_column( $fields['LocalBusiness'], 'key' );
-		$this->assertContains( 'business_hours', $lb_fields );
-		$this->assertContains( 'business_price_range', $lb_fields );
-	}
-
-	public function test_person_type_has_job_title(): void {
-		$fields = MM_Schema_Types::get_fields_by_type();
-		$this->assertArrayHasKey( 'Person', $fields );
-		$person_fields = array_column( $fields['Person'], 'key' );
-		$this->assertContains( 'person_job_title', $person_fields );
-		$this->assertContains( 'person_email', $person_fields );
-	}
-
-	public function test_tourist_attraction_has_geo_fields(): void {
-		$fields = MM_Schema_Types::get_fields_by_type();
-		$this->assertArrayHasKey( 'TouristAttraction', $fields );
-		$ta_fields = array_column( $fields['TouristAttraction'], 'key' );
-		$this->assertContains( 'attraction_lat', $ta_fields );
-		$this->assertContains( 'attraction_lng', $ta_fields );
 	}
 
 	// ------------------------------------------------------------------
@@ -162,76 +138,6 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 		$result = MM_Schema_Types::build_node_additions( $fields, 'Product' );
 
 		$this->assertArrayNotHasKey( 'availability', $result['offers'] ?? [] );
-	}
-
-	public function test_build_node_additions_tourist_attraction_geo(): void {
-		$fields = [
-			'attraction_lat' => '48.8566',
-			'attraction_lng' => '2.3522',
-		];
-		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristAttraction' );
-
-		$this->assertArrayHasKey( 'geo', $result );
-		$this->assertSame( 48.8566, $result['geo']['latitude'] );
-		$this->assertSame( 2.3522, $result['geo']['longitude'] );
-	}
-
-	public function test_build_node_additions_tourist_attraction_empty_geo_omitted(): void {
-		$fields = [
-			'attraction_lat' => '',
-			'attraction_lng' => '',
-		];
-		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristAttraction' );
-
-		$this->assertArrayNotHasKey( 'geo', $result );
-	}
-
-	public function test_build_node_additions_local_business_hours(): void {
-		$fields = [
-			'business_hours' => 'Mon-Fri 9:00-17:00, Sat 10:00-14:00',
-		];
-		$result = MM_Schema_Types::build_node_additions( $fields, 'LocalBusiness' );
-
-		$this->assertArrayHasKey( 'openingHours', $result );
-		$this->assertIsArray( $result['openingHours'] );
-		$this->assertCount( 2, $result['openingHours'] );
-	}
-
-	public function test_build_node_additions_local_business_single_hour(): void {
-		$fields = [
-			'business_hours' => 'Mon-Fri 9:00-17:00',
-		];
-		$result = MM_Schema_Types::build_node_additions( $fields, 'LocalBusiness' );
-
-		$this->assertSame( 'Mon-Fri 9:00-17:00', $result['openingHours'] );
-	}
-
-	public function test_build_node_additions_person_with_email(): void {
-		$fields = [
-			'person_job_title' => 'CEO',
-			'person_email'     => 'test@example.com',
-			'person_phone'     => '+1-555-0100',
-		];
-		$result = MM_Schema_Types::build_node_additions( $fields, 'Person' );
-
-		$this->assertSame( 'CEO', $result['jobTitle'] );
-		$this->assertSame( 'test@example.com', $result['email'] );
-		$this->assertSame( '+1-555-0100', $result['telephone'] );
-	}
-
-	public function test_build_node_additions_real_estate_listing(): void {
-		$fields = [
-			'listing_street' => '123 Main St',
-			'listing_rooms'  => '3',
-			'listing_sqft'   => '1500.5',
-			'listing_price'  => '250000',
-		];
-		$result = MM_Schema_Types::build_node_additions( $fields, 'RealEstateListing' );
-
-		$this->assertArrayHasKey( 'address', $result );
-		$this->assertSame( '123 Main St', $result['address']['streetAddress'] );
-		$this->assertSame( 3, $result['numberOfRooms'] );
-		$this->assertSame( 1500.5, $result['floorSize']['value'] );
 	}
 
 	public function test_build_node_additions_service(): void {

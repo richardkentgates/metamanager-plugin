@@ -369,9 +369,42 @@ class MM_Schema_Types {
 				}
 				$out['location'] = $place;
 			}
+			$status = $str( 'event_status' );
+			if ( $status ) {
+				$out['eventStatus'] = $status;
+			}
 			$offer = $make_offer( 'event_price', 'event_currency' );
 			if ( $offer ) {
 				$out['offers'] = $offer;
+			}
+			$tickets = esc_url_raw( $str( 'event_ticket_url' ) );
+			if ( $tickets ) {
+				if ( isset( $out['offers'] ) ) {
+					$out['offers']['url'] = $tickets;
+				} else {
+					$out['offers'] = [
+						'@type' => 'Offer',
+						'url'   => $tickets,
+					];
+				}
+			}
+			$org_name = $str( 'event_organizer_name' );
+			if ( $org_name ) {
+				$organizer = [
+					'@type' => 'Organization',
+					'name'  => $org_name,
+				];
+				if ( $str( 'event_organizer_phone' ) ) {
+					$organizer['telephone'] = $str( 'event_organizer_phone' );
+				}
+				if ( $str( 'event_organizer_email' ) ) {
+					$organizer['email'] = $str( 'event_organizer_email' );
+				}
+				$org_url = esc_url_raw( $str( 'event_organizer_url' ) );
+				if ( $org_url ) {
+					$organizer['url'] = $org_url;
+				}
+				$out['organizer'] = $organizer;
 			}
 		}
 
