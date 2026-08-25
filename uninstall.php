@@ -43,6 +43,8 @@ function _mm_uninstall_site(): void {
 		'mm_sitemap_video',
 		'mm_sitemap_video_selfhosted',
 		'mm_auto_provenance',
+		'mm_meta_settings',
+		'mm_meta_business',
 	];
 	foreach ( $options as $option ) {
 		delete_option( $option );
@@ -71,10 +73,21 @@ function _mm_uninstall_site(): void {
 		'mm_duration',
 		'mm_verify_discrepancies',
 		'mm_verified_at',
+		'mm_meta_synced',
+		'mm_schema_fields',
+		'mm_breadcrumb_label',
 	];
 	foreach ( $meta_keys as $key ) {
 		delete_post_meta_by_key( $key );
 	}
+
+	// Metadata subsystem keys (post, term, and user scopes).
+	delete_post_meta_by_key( '_mm_meta' );
+	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_delete_meta -- Bulk uninstall cleanup across all terms/users.
+	delete_metadata( 'term', 0, '_mm_meta', '', true );
+	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_delete_meta -- Bulk uninstall cleanup across all users.
+	delete_metadata( 'user', 0, '_mm_meta', '', true );
+	delete_post_meta_by_key( '_mm_wc_product_id' );
 
 	// Drop the plugin DB tables.
 	$table = $wpdb->prefix . 'metamanager_jobs';
