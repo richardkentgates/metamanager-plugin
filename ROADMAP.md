@@ -341,35 +341,6 @@ main ──push──> release.yml (tag + GitHub release + apt server deploy)
 
 ## What's Left
 
-### HIGH — WooCommerce Product Schema Integration (S-2)
-
-Product schema must auto-populate from WooCommerce product data when WooCommerce is active. Manual fields become fallback only.
-
-**Detection:** Check `class_exists('WooCommerce')` or `WC()` at runtime.
-
-**Auto-populate from WooCommerce meta (when active):**
-| Schema Field | WooCommerce Source | Fallback (no WooCommerce) |
-|-------------|-------------------|--------------------------|
-| `offers.price` | `_price` (or `_sale_price` if set) | Manual `product_price` field |
-| `offers.priceCurrency` | WooCommerce currency (`get_woocommerce_currency()`) | Manual `product_currency` field |
-| `offers.availability` | `_stock_status` → schema mapping (`instock`→`InStock`, `outofstock`→`OutOfStock`, `onbackorder`→`PreOrder`) | Manual `product_availability` select |
-| `brand` | `_brand` meta or `pa_brand` attribute | Manual `product_brand` field |
-| `sku` | `_sku` | N/A |
-| `image` | Product gallery featured image | OG image fallback |
-| `name` | Product post title | Post title |
-| `description` | Product short description (`_short_description`) or post excerpt | Post excerpt |
-
-**Files to change:**
-- `includes/metadata/class-mm-schema-types.php` — modify `get_fields_by_type()['Product']` to add `auto_label` hints when WooCommerce is active
-- `includes/metadata/modules/class-mm-mod-schema.php` — modify `add_content_node()` Product branch to pull from WC data when available
-- New helper: `MM_Mod_Schema::get_woocommerce_product_data(int $post_id): array` — returns normalized price/availability/brand/sku from WC meta
-
-**Conditional field visibility:** When WooCommerce is active, Product fields in the metabox show "Auto: from WooCommerce" labels. Manual inputs remain as overrides (user can override WC data per-post if needed).
-
-**WooCommerce hooks:** Hook into `woocommerce_update_product` and `woocommerce_update_attribute` to trigger schema re-validation (optional — the existing `save_post` hook already fires for WC product saves).
-
----
-
 ### HIGH — Event as WooCommerce Product (S-4)
 
 Simple WooCommerce integration for Event posts — make events purchasable as products with ticket generation and QR codes.
@@ -566,33 +537,6 @@ Sell digital media files (photos, videos, documents) as WooCommerce products wit
 
 ---
 
-### MEDIUM — Featured Image Citation (S-11)
-
-Display attribution HTML under featured images when shown on pages.
-
-**Settings:**
-- `media.featured_image_citation` — Enable/disable citation under featured images
-
-**Citation content (from attachment metadata):**
-- Creator (if set)
-- Copyright notice (if set) or Owner (if set)
-- Date (if set)
-
-**Output format:**
-```html
-<figure>
-  <img src="..." alt="...">
-  <figcaption class="mm-image-citation">Creator Name | © Owner | 2024</figcaption>
-</figure>
-```
-
-**Files changed:**
-- New: `includes/metadata/modules/class-mm-mod-media-display.php` — Citation HTML output
-- Modified: `includes/metadata/class-mm-site-settings.php` — Add media.featured_image_citation setting
-- Modified: `includes/metadata/class-mm-metadata-loader.php` — Register new module
-
----
-
 ### MEDIUM — Schema Type Cleanup (S-5)
 
 Remove redundant schema types that map to WordPress built-ins:
@@ -613,70 +557,6 @@ Remove redundant schema types that map to WordPress built-ins:
 | `mm_about_page` | AboutPage | Read-only, auto-generated |
 | `mm_contact_page` | ContactPage | Read-only, auto-generated |
 | `mm_calendar` | Calendar | Read-only, auto-generated |
-
----
-
-### MEDIUM — ContactPage Auto-Generation (S-6)
-
-ContactPage CPT auto-generates content from Business Profile settings.
-
-**Content rendered:**
-- Business name, logo
-- HTML5 `<address>` element with geo: protocol links
-- Phone (click-to-call), email, vCard download
-- Opening hours
-- Action buttons (controlled via Contact Page settings)
-
-**Settings page renamed:** "Contact Card" → "Contact Page"
-
-**Files changed:**
-- `class-mm-schema-post-types.php` — ContactPage CPT with disabled editor
-- `class-mm-mod-business-contact.php` — `render_contact_page()` method
-- `class-mm-mod-schema.php` — ContactPage schema populated from business info
-- `page-contact.php` — renamed heading and descriptions
-
----
-
-### MEDIUM — AboutPage Auto-Generation (S-7)
-
-AboutPage CPT auto-generates content from Business Profile settings.
-
-**Content rendered:**
-- Business name, logo, description
-- Founding date, number of employees, price range
-- Full address with geo: protocol link
-- Service areas, payment methods
-- Social profile links
-
-**New Business Profile fields:**
-- Description (textarea)
-- Founding Date (date picker)
-- Number of Employees (text)
-
-**Files changed:**
-- `class-mm-schema-post-types.php` — AboutPage CPT with disabled editor
-- `class-mm-mod-business-contact.php` — `render_about_page()` method
-- `class-mm-mod-schema.php` — AboutPage schema populated from business info
-- `class-mm-site-settings.php` — business_defaults() updated
-- `page-business.php` — new fields added
-
----
-
-### MEDIUM — Calendar Auto-Generation (S-8)
-
-Calendar CPT auto-generates a navigable month-by-month event calendar.
-
-**Features:**
-- Month navigation (forward/backward)
-- Today button
-- Events shown on their start date
-- Click-through to individual event posts
-- Full responsive CSS
-
-**Files changed:**
-- `class-mm-schema-post-types.php` — Calendar CPT with disabled editor
-- `class-mm-mod-business-contact.php` — `render_calendar()` method
-- `biz-contact.css` — calendar styles added
 
 ---
 
@@ -743,18 +623,26 @@ Compression support:
 | S-1 | Schema type thinning | HIGH | Done — removed 7 types (LocalBusiness, Organization, Person, FAQPage, TouristAttraction, TouristTrip, RealEstateListing), locked BlogPosting for posts, removed dead FAQ extraction code |
 | S-2 | WooCommerce Product schema | HIGH | Done — auto-populates Product schema from WooCommerce meta (price, availability, brand, sku), manual fields as overrides |
 | S-3 | Facebook Page ID field | MEDIUM | Done — fb:admins field added under fb:app_id on Social settings, meta tag emitted in head |
+| S-4 | Event as WooCommerce Product | HIGH | Planned — event-ticket linking, QR codes, check-in endpoint |
+| S-5 | Schema Type Cleanup | MEDIUM | Planned — remove redundant CPTs (BlogPosting, WebPage, ProfilePage, Article) |
+| S-6 | ContactPage Auto-Generation | MEDIUM | Done — auto-generates from Business Profile settings |
+| S-7 | AboutPage Auto-Generation | MEDIUM | Done — auto-generates from Business Profile settings |
+| S-8 | Calendar Auto-Generation | MEDIUM | Done — navigable month-by-month event calendar |
+| S-9 | Service as WooCommerce Product | HIGH | Planned — service-booking linking, booking hashes |
+| S-10 | Digital Media as WooCommerce Product | HIGH | Planned — file protection, watermarks, licensing |
+| S-11 | Featured Image Citation | MEDIUM | Done — attribution HTML under featured images |
 
 ---
 
 ## Audit #4 — 2026-08-24 (Cross-Repo Audit)
 
-### Documentation Stale
+### Documentation Stale — RESOLVED
 
 | # | File | Issue | Severity | Status |
 |---|------|-------|----------|--------|
-| D-1 | `ROADMAP.md:344-370` | S-2 "WooCommerce Product Schema" listed in "What's Left" but marked Done in Expansion table | MEDIUM | — |
-| D-2 | `ROADMAP.md:569-594` | S-11 "Featured Image Citation" listed in "What's Left" but marked Done | MEDIUM | — |
-| D-3 | `ROADMAP.md:619-680` | S-6/S-7/S-8 (ContactPage/AboutPage/Calendar Auto-Generation) implemented but not in Expansion table | LOW | — |
+| D-1 | `ROADMAP.md:344-370` | S-2 "WooCommerce Product Schema" listed in "What's Left" but marked Done | MEDIUM | ✅ Fixed — removed from "What's Left" |
+| D-2 | `ROADMAP.md:569-594` | S-11 "Featured Image Citation" listed in "What's Left" but marked Done | MEDIUM | ✅ Fixed — removed from "What's Left" |
+| D-3 | `ROADMAP.md:619-680` | S-6/S-7/S-8 implemented but not in Expansion table | LOW | ✅ Fixed — added to Expansion table |
 
 ### Code Issues
 

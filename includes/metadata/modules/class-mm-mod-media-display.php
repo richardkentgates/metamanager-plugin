@@ -7,9 +7,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class MM_Mod_Media_Display extends MM_Mod_Base {
+class MM_Mod_Media_Display {
 
-	public function register(): void {
+	public function register_hooks(): void {
 		$settings = new MM_Site_Settings();
 
 		if ( $settings->get( 'media.featured_image_citation', false ) ) {
