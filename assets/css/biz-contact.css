@@ -62,3 +62,320 @@
 		max-width: 100% !important;
 	}
 }
+
+/* =========================================================================
+   Contact Page
+   ========================================================================= */
+
+.gcm-contact-page {
+	box-sizing: border-box;
+	font-family: inherit;
+	max-width: 600px;
+}
+
+.gcm-contact-page *,
+.gcm-contact-page *::before,
+.gcm-contact-page *::after {
+	box-sizing: inherit;
+}
+
+.gcm-contact-page__logo img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin-bottom: 16px;
+}
+
+.gcm-contact-page__name {
+	font-size: 1.5em;
+	font-weight: 600;
+	margin-bottom: 12px;
+}
+
+.gcm-contact-page__address {
+	font-style: normal;
+	margin-bottom: 16px;
+	line-height: 1.6;
+}
+
+.gcm-contact-page__map-link {
+	display: inline-block;
+	margin-top: 8px;
+	color: #2271b1;
+	text-decoration: none;
+}
+
+.gcm-contact-page__map-link:hover {
+	text-decoration: underline;
+}
+
+.gcm-contact-page__hours {
+	margin-bottom: 16px;
+}
+
+.gcm-contact-page__hours-row {
+	display: flex;
+	gap: 16px;
+}
+
+.gcm-contact-page__hours-day {
+	font-weight: 600;
+	min-width: 100px;
+}
+
+.gcm-contact-page__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.gcm-contact-page__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	cursor: pointer;
+	text-decoration: none;
+	border: none;
+	transition: filter 0.15s ease;
+}
+
+.gcm-contact-page__btn .dashicons {
+	vertical-align: middle;
+	flex-shrink: 0;
+	line-height: 1;
+}
+
+.gcm-contact-page__btn:focus {
+	outline: 2px solid;
+	outline-offset: 2px;
+}
+
+.gcm-contact-page__btn:hover {
+	filter: brightness(0.9);
+}
+
+/* =========================================================================
+   About Page
+   ========================================================================= */
+
+.gcm-about-page {
+	box-sizing: border-box;
+	font-family: inherit;
+	max-width: 700px;
+}
+
+.gcm-about-page *,
+.gcm-about-page *::before,
+.gcm-about-page *::after {
+	box-sizing: inherit;
+}
+
+.gcm-about-page__logo img {
+	display: block;
+	max-width: 200px;
+	height: auto;
+	margin-bottom: 16px;
+}
+
+.gcm-about-page__name {
+	font-size: 1.5em;
+	font-weight: 600;
+	margin-bottom: 12px;
+}
+
+.gcm-about-page__description {
+	margin-bottom: 20px;
+	line-height: 1.6;
+}
+
+.gcm-about-page__details {
+	margin-bottom: 16px;
+	line-height: 1.8;
+}
+
+.gcm-about-page__address {
+	font-style: normal;
+	margin-bottom: 16px;
+	line-height: 1.6;
+}
+
+.gcm-about-page__map-link {
+	display: inline-block;
+	margin-top: 8px;
+	color: #2271b1;
+	text-decoration: none;
+}
+
+.gcm-about-page__map-link:hover {
+	text-decoration: underline;
+}
+
+.gcm-about-page__contact {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+
+.gcm-about-page__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: #2271b1;
+	text-decoration: none;
+}
+
+.gcm-about-page__link:hover {
+	text-decoration: underline;
+}
+
+.gcm-about-page__hours {
+	margin-bottom: 16px;
+}
+
+.gcm-about-page__hours h3 {
+	margin-bottom: 8px;
+}
+
+.gcm-about-page__hours-row {
+	display: flex;
+	gap: 16px;
+}
+
+.gcm-about-page__hours-day {
+	font-weight: 600;
+	min-width: 100px;
+}
+
+.gcm-about-page__areas,
+.gcm-about-page__payment,
+.gcm-about-page__social {
+	margin-bottom: 16px;
+}
+
+.gcm-about-page__social {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.gcm-about-page__social-link {
+	color: #2271b1;
+	text-decoration: none;
+}
+
+.gcm-about-page__social-link:hover {
+	text-decoration: underline;
+}
+
+/* =========================================================================
+   Calendar
+   ========================================================================= */
+
+.gcm-calendar {
+	box-sizing: border-box;
+	font-family: inherit;
+	max-width: 700px;
+}
+
+.gcm-calendar *,
+.gcm-calendar *::before,
+.gcm-calendar *::after {
+	box-sizing: inherit;
+}
+
+.gcm-calendar__nav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.gcm-calendar__nav-link {
+	color: #2271b1;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.gcm-calendar__nav-link:hover {
+	text-decoration: underline;
+}
+
+.gcm-calendar__month-title {
+	font-size: 1.3em;
+	font-weight: 600;
+}
+
+.gcm-calendar__table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.gcm-calendar__table th {
+	padding: 8px 4px;
+	text-align: center;
+	font-weight: 600;
+	border-bottom: 2px solid #c3c4c7;
+}
+
+.gcm-calendar__table td {
+	padding: 6px 4px;
+	vertical-align: top;
+	border: 1px solid #e0e0e0;
+	height: 80px;
+}
+
+.gcm-calendar__cell--empty {
+	background: #f9f9f9;
+}
+
+.gcm-calendar__cell--today {
+	background: #f0f6fc;
+}
+
+.gcm-calendar__cell--has-events {
+	background: #fefcf0;
+}
+
+.gcm-calendar__day-num {
+	font-weight: 600;
+	display: block;
+	margin-bottom: 4px;
+}
+
+.gcm-calendar__events {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.gcm-calendar__event-link {
+	display: block;
+	font-size: 12px;
+	color: #2271b1;
+	text-decoration: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.gcm-calendar__event-link:hover {
+	text-decoration: underline;
+}
+
+.gcm-calendar__legend {
+	margin-top: 12px;
+	text-align: center;
+}
+
+@media (max-width: 480px) {
+	.gcm-calendar__table td {
+		height: 60px;
+		padding: 4px 2px;
+	}
+	.gcm-calendar__event-link {
+		font-size: 11px;
+	}
+}

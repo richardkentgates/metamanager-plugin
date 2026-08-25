@@ -32,6 +32,9 @@ class MM_Updater {
 	/** URL of the apt server metadata.json. */
 	private const METADATA_URL = 'https://apt.richardkentgates.com/metamanager/metadata.json';
 
+	/** URL of the apt server test channel metadata.json. */
+	private const METADATA_URL_TEST = 'https://apt.richardkentgates.com/metamanager-test/metadata.json';
+
 	/** Basename of this plugin file, e.g. "metamanager/metamanager.php". */
 	private string $plugin_basename;
 
@@ -83,7 +86,11 @@ class MM_Updater {
 	 * @return object|null  Decoded metadata object, or null on failure.
 	 */
 	private function get_metadata(): ?object {
-		$response = wp_remote_get( self::METADATA_URL, [
+		// Use test channel if MM_UPDATE_CHANNEL is set to 'test'.
+		$channel = defined( 'MM_UPDATE_CHANNEL' ) ? MM_UPDATE_CHANNEL : 'production';
+		$url     = ( 'test' === $channel ) ? self::METADATA_URL_TEST : self::METADATA_URL;
+
+		$response = wp_remote_get( $url, [
 			'timeout'    => 10,
 			'user-agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; Metamanager/' . MM_VERSION,
 		] );

@@ -2,7 +2,7 @@
  * Metamanager — Business Contact Card block registration.
  *
  * Server-side rendered. No per-instance settings — all configuration is
- * managed at SEO → Contact Card in the WordPress admin.
+ * managed at SEO → Contact Page in the WordPress admin.
  */
 ( function () {
 	'use strict';
@@ -17,7 +17,7 @@
 		title:    __( 'Business Contact Card', 'metamanager' ),
 		icon:     BlockIcon,
 		category: 'widgets',
-		description: __( 'Displays the business contact card with click-to-call, SMS, email, and contact download buttons. Configure appearance at SEO → Contact Card.', 'metamanager' ),
+		description: __( 'Displays the business contact card with click-to-call, SMS, email, and contact download buttons. Configure appearance at SEO → Contact Page.', 'metamanager' ),
 		supports: {
 			html:              false,
 			multiple:          true,
@@ -45,7 +45,7 @@
 				el(
 					'p',
 					{ style: { margin: '6px 0 10px', color: '#646970', fontSize: '13px' } },
-					__( 'Renders the business contact card with the actions and styles configured at SEO → Contact Card.', 'metamanager' )
+					__( 'Renders the business contact card with the actions and styles configured at SEO → Contact Page.', 'metamanager' )
 				),
 				el(
 					'a',
@@ -55,7 +55,7 @@
 						rel:    'noopener noreferrer',
 						style:  { fontSize: '12px' },
 					},
-					__( 'Open Contact Card settings ↗', 'metamanager' )
+					__( 'Open Contact Page settings ↗', 'metamanager' )
 				)
 			);
 		},

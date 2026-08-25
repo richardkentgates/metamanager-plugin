@@ -43,6 +43,7 @@ class MM_Metadata_Loader {
 		( new MM_Mod_Business_Contact( $this->settings ) )->register_hooks();
 		( new MM_Mod_Rss( $this->settings ) )->register_hooks();
 		( new MM_Mod_Discovery( $this->settings ) )->register_hooks();
+		( new MM_Mod_Media_Display() )->register();
 
 		// --- AI integration (Abilities API + MCP) ------------------------------
 		( new MM_Abilities() )->register_hooks();

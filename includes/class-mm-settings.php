@@ -47,6 +47,7 @@ class MM_Settings {
 	const OPTION_UPLOAD_NOTIFY_EXTRA    = 'mm_upload_notify_extra_email';
 	const OPTION_AUTO_PROVENANCE        = 'mm_auto_provenance';
 	const OPTION_BATCH_SIZE             = 'mm_batch_size';
+	const OPTION_MAX_REVISIONS          = 'mm_max_revisions';
 
 	// -----------------------------------------------------------------------
 	// Boot
@@ -160,6 +161,33 @@ class MM_Settings {
 			[ __CLASS__, 'field_batch_size' ],
 			'metamanager-settings',
 			'mm_section_memory'
+		);
+
+		// --- Revisions ---
+
+		register_setting(
+			'mm_settings_group',
+			self::OPTION_MAX_REVISIONS,
+			[
+				'type'              => 'integer',
+				'sanitize_callback' => fn( $v ) => max( 0, (int) $v ),
+				'default'           => 36,
+			]
+		);
+
+		add_settings_section(
+			'mm_section_revisions',
+			esc_html__( 'Post Revisions', 'metamanager' ),
+			fn() => esc_html_e( 'Control the maximum number of revisions stored per post. Set to 0 for unlimited revisions. This applies to pages, posts, and media metadata revisions.', 'metamanager' ),
+			'metamanager-settings'
+		);
+
+		add_settings_field(
+			'mm_max_revisions',
+			esc_html__( 'Max revisions', 'metamanager' ),
+			[ __CLASS__, 'field_max_revisions' ],
+			'metamanager-settings',
+			'mm_section_revisions'
 		);
 
 		add_settings_section(
@@ -339,6 +367,16 @@ class MM_Settings {
 		echo '<p class="description">' . esc_html__( 'Maximum number of files processed per batch cycle (upload scan, cron tick, or WP-CLI batch). The plugin checks available memory before each cycle and automatically reduces this number if memory is limited. If memory is critically low, processing pauses and resumes on the next cycle.', 'metamanager' ) . '</p>';
 	}
 
+	public static function field_max_revisions(): void {
+		$value = self::get_max_revisions();
+		printf(
+			'<input type="number" id="mm_max_revisions" name="%s" value="%d" min="0" max="100" step="1" class="small-text">',
+			esc_attr( self::OPTION_MAX_REVISIONS ),
+			absint( $value )
+		);
+		echo '<p class="description">' . esc_html__( 'Maximum number of revisions stored per post (pages, posts, and media metadata). Set to 0 for unlimited revisions. Default: 36.', 'metamanager' ) . '</p>';
+	}
+
 	public static function field_notify_enabled(): void {
 		$checked = (bool) get_option( self::OPTION_NOTIFY_ENABLED, false );
 		printf(
@@ -459,6 +497,13 @@ class MM_Settings {
 	 */
 	public static function get_batch_size(): int {
 		return max( 10, min( 500, (int) get_option( self::OPTION_BATCH_SIZE, 50 ) ) );
+	}
+
+	/**
+	 * Maximum revisions per post. 0 = unlimited.
+	 */
+	public static function get_max_revisions(): int {
+		return max( 0, (int) get_option( self::OPTION_MAX_REVISIONS, 36 ) );
 	}
 
 	/**
