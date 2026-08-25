@@ -746,6 +746,35 @@ Compression support:
 
 ---
 
+## Audit #4 — 2026-08-24 (Cross-Repo Audit)
+
+### Documentation Stale
+
+| # | File | Issue | Severity | Status |
+|---|------|-------|----------|--------|
+| D-1 | `ROADMAP.md:344-370` | S-2 "WooCommerce Product Schema" listed in "What's Left" but marked Done in Expansion table | MEDIUM | — |
+| D-2 | `ROADMAP.md:569-594` | S-11 "Featured Image Citation" listed in "What's Left" but marked Done | MEDIUM | — |
+| D-3 | `ROADMAP.md:619-680` | S-6/S-7/S-8 (ContactPage/AboutPage/Calendar Auto-Generation) implemented but not in Expansion table | LOW | — |
+
+### Code Issues
+
+| # | File | Line | Issue | Severity | Status |
+|---|------|------|-------|----------|--------|
+| C-1 | `class-mm-mod-media-display.php` | 10-12 | Extends `MM_Mod_Base` vestigially — never participates in `populate()` pipeline, doesn't call `parent::__construct()` | MEDIUM | — |
+| C-2 | `class-mm-mod-media-display.php` | — | Uses `register()` method while all other modules use `register_hooks()` — inconsistent pattern | LOW | — |
+| C-3 | `class-mm-mod-discovery.php` | 14 | Does not extend `MM_Mod_Base` (all 13 other modules do) — parallel pattern | LOW | — |
+
+### Test Coverage Gaps
+
+| # | Module | Issue | Severity | Status |
+|---|--------|-------|----------|--------|
+| T-1 | `MM_Mod_Robots` | No unit or integration tests | MEDIUM | — |
+| T-2 | `MM_Mod_Hygiene` | No unit or integration tests | MEDIUM | — |
+| T-3 | `MM_Mod_Html_Sitemap` | No unit or integration tests | MEDIUM | — |
+| T-4 | `MM_Mod_Media_Display` | No unit or integration tests | MEDIUM | — |
+
+---
+
 ## Conventions
 
 - All work on `dev` only. Never checkout/edit/push `test` or `main`.
