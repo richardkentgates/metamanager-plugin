@@ -492,6 +492,9 @@ class MM_Schema_Post_Types {
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
 
 		$raw_fields = (array) ( $_POST['mm_schema_fields'] ?? [] );
 		$fields     = [];
@@ -505,6 +508,14 @@ class MM_Schema_Post_Types {
 
 		$bc_label = sanitize_text_field( wp_unslash( $_POST['mm_breadcrumb_label'] ?? '' ) );
 		update_post_meta( $post_id, 'mm_breadcrumb_label', $bc_label );
+
+		// WooCommerce product linking (Event/Service metabox section).
+		$wc_product_id = isset( $_POST['mm_wc_product_id'] ) ? absint( $_POST['mm_wc_product_id'] ) : 0;
+		if ( $wc_product_id > 0 ) {
+			update_post_meta( $post_id, '_mm_wc_product_id', $wc_product_id );
+		} else {
+			delete_post_meta( $post_id, '_mm_wc_product_id' );
+		}
 	}
 
 	/**
