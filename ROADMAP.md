@@ -370,6 +370,316 @@ Product schema must auto-populate from WooCommerce product data when WooCommerce
 
 ---
 
+### HIGH — Event as WooCommerce Product (S-4)
+
+Simple WooCommerce integration for Event posts — make events purchasable as products with ticket generation and QR codes.
+
+**Scope:** Utilize WooCommerce, don't replace it. Let WC handle inventory, analytics, coupons, etc.
+
+**What we add:**
+| Feature | Implementation |
+|---------|----------------|
+| Event ↔ Product link | Custom field `_mm_wc_product_id` on Event, `_mm_event_id` on Product |
+| Ticket purchase | WC Product type "Event Ticket" with event linking |
+| Ticket hash | Unique hash per order item: `md5($order_id . $item_id . $salt)` |
+| QR code | `chillerlan/php-qrcode` library, payload: `site/event/{slug}?ticket={hash}` |
+| Ticket download | Rewrite endpoint: `/gcm-event/{event_id}/ticket/{hash}/` |
+| Order email | WC email attachment with QR code image |
+| Check-in | Simple REST endpoint: `POST /wp-json/metamanager/v1/checkin` with ticket hash |
+
+**Files to change:**
+- New: `includes/class-mm-event-product.php` — WC product type registration, event linking UI
+- New: `includes/class-mm-ticket-qr.php` — QR code generation and download endpoint
+- Modified: `includes/metadata/class-mm-schema-types.php` — add `event_ticket_url` and `event_capacity` fields
+- Modified: `includes/metadata/modules/class-mm-mod-business-contact.php` — update .ical to include ticket URL
+- New: `includes/rest-api/class-mm-rest-checkin.php` — ticket validation endpoint
+
+**WooCommerce integration points:**
+- Register custom product type "Event Ticket" in WC admin
+- Product data tab shows event selector dropdown
+- On order complete → generate ticket hash, save to order meta
+- WC email template filter → attach QR code image
+- REST API endpoint for door check-in (validates hash, returns event/attendee data)
+
+**Dependencies:** `chillerlan/php-qrcode` (composer require chillerlan/php-qrcode)
+
+**NOT in scope:** (WooCommerce handles these)
+- Inventory management
+- Analytics and reporting
+- Coupon/discount codes
+- Refund processing
+- Attendee management beyond basic check-in
+- PDF ticket generation (QR code image is sufficient)
+
+---
+
+### HIGH — Service as WooCommerce Product (S-9)
+
+Simple WooCommerce integration for Service posts — make services purchasable as products with booking/scheduling.
+
+**Scope:** Utilize WooCommerce, don't replace it. Let WC handle payment processing, analytics, coupons, etc.
+
+**What we add:**
+| Feature | Implementation |
+|---------|----------------|
+| Service ↔ Product link | Custom field `_mm_wc_product_id` on Service, `_mm_service_id` on Product |
+| Service purchase | WC Product type "Service Booking" with service linking |
+| Booking confirmation | Unique booking hash: `md5($order_id . $item_id . $salt)` |
+| Booking details | Custom order meta: service name, date/time, location, notes |
+| Service page | Auto-generated service details from business profile + service meta |
+
+**Files to change:**
+- New: `includes/class-mm-service-product.php` — WC product type registration, service linking UI
+- Modified: `includes/metadata/class-mm-schema-types.php` — add `service_booking_url` field
+- Modified: `includes/metadata/modules/class-mm-mod-schema.php` — Service schema includes offers from WC when available
+
+**WooCommerce integration points:**
+- Register custom product type "Service Booking" in WC admin
+- Product data tab shows service selector dropdown
+- On order complete → generate booking hash, save to order meta
+- WC email template filter → include booking confirmation details
+- Service schema auto-populates price/availability from WC product data
+
+**Service-specific fields:**
+| Field | Purpose |
+|-------|---------|
+| `service_type` | Type of service (e.g., "Pressure Washing") |
+| `service_area` | Area served (e.g., "Destin, FL") |
+| `service_price` | Base price (fallback when no WC product) |
+| `service_currency` | Currency code |
+| `service_booking_url` | Link to book/purchase the service |
+| `service_duration` | Estimated duration (for scheduling) |
+| `service_includes` | What's included in the service |
+
+**NOT in scope:** (WooCommerce handles these)
+- Payment processing
+- Analytics and reporting
+- Coupon/discount codes
+- Refund processing
+- Appointment scheduling beyond basic booking hash
+- Calendar integration (use Bookly, Amelia, etc. if needed)
+
+---
+
+### HIGH — Digital Media as WooCommerce Product (S-10)
+
+Sell digital media files (photos, videos, documents) as WooCommerce products with file protection, watermarked previews, and per-customer licensing.
+
+**Scope:** Extend existing WordPress attachments (media library), NOT a new CPT. Utilize WooCommerce for payment, order management, and customer accounts.
+
+**Architecture:**
+- Work with WordPress `attachment` post type (existing media library)
+- Add product linking via custom field `_mm_wc_product_id` on attachment
+- Move protected files to secure directory outside web root
+- Watermarked previews replace public images for protected files
+- License generation per customer (not per purchase)
+
+**File Protection Strategy:**
+- Protected files stored in `/srv/media/` (outside web root)
+- On product link: move file from `wp-content/uploads/` to `/srv/media/`
+- Update attachment `_wp_attached_file` to point to new location
+- Serve via PHP streaming endpoint with purchase validation
+- Watermarked preview replaces public image in media library
+
+**Watermarking (Imagick):**
+| Element | Behavior |
+|---------|----------|
+| Site title | Translucent text overlay on all preview images |
+| Site logo | Desaturated + translucent overlay (if logo is set) |
+| Applied to | Preview/thumbnail images only, not original downloads |
+| Auto-generate | When protection is enabled, before file is moved |
+
+**License System:**
+- One license document **per customer** (not per purchase)
+- Generated from business license text (configurable in settings)
+- Attached to WooCommerce order confirmation email
+- Accessible in WooCommerce "My Account" → Downloads
+- Applies to **all** purchases by that customer
+- License includes: usage rights, restrictions, attribution requirements
+
+**Files to change:**
+- New: `includes/class-mm-media-protection.php` — File protection, watermarking, license generation
+- New: `includes/rest-api/class-mm-rest-media-download.php` — PHP streaming endpoint with purchase validation
+- New: `includes/metadata/modules/class-mm-mod-media-display.php` — Featured image citation HTML output
+- Modified: `includes/class-mm-admin.php` — Add protection toggle and product linking to attachment edit screen
+- Modified: `includes/metadata/class-mm-site-settings.php` — Add media.featured_image_citation setting
+- Modified: `includes/metadata/class-mm-schema-types.php` — MediaObject schema from existing attachment metadata
+- Modified: `includes/metadata/modules/class-mm-mod-schema.php` — Archive media schema, protected media schema references
+
+**Media Library Integration:**
+- Single unified library (no separate directory for protected files)
+- Protected files show "Protected" badge/column
+- Filter by status: All | Public | Protected
+- Protected files display watermarked preview in library
+- Clicking protected file shows protection status + product link
+
+**Attachment edit screen additions:**
+- Protection toggle (on/off)
+- Product selector (link to WooCommerce product)
+- Watermarked preview preview
+- Protected file status indicator
+- **Public file warning**: When linking to product, warn if file is publicly accessible
+
+**Upload Flow (new media as product):**
+- "Add Media" button on product edit screen
+- Upload goes directly to `/srv/media/` (protected)
+- No reference detection needed (file is new)
+- Watermarked preview auto-generated for images
+- Product linked automatically
+- Metadata edited before upload (license type, etc.)
+
+**Protection Flow (existing media → product):**
+1. System scans for all public references to the media (posts, pages, widgets, etc.)
+2. If references found: Prompt user with list of locations using this media
+3. User selects replacement media (must be different file)
+4. System replaces ALL references with selected replacement
+5. Move original file from `wp-content/uploads/` to `/srv/media/` (protected)
+6. Update `_wp_attached_file` to point to new protected location
+7. Link attachment to WooCommerce product
+8. If no replacement selected: Product linking is ABORTED, media remains public
+
+**Reference Detection:**
+- Search `post_content` for original media URL/ID
+- Search `postmeta` for media references
+- Search widget options for media URLs
+- Search gallery/block references
+- Return list of locations for user to review
+
+**Replacement Options:**
+- Select existing media from media library (must be different file)
+- Upload new media to use as replacement
+- If no replacement selected: Product linking is ABORTED, media remains public
+
+**WooCommerce integration points:**
+- On order complete → move file to protected storage, generate watermarked preview, create license
+- WC email template filter → attach license document
+- My Account page → license document accessible in Downloads section
+- Download counter/limit enforcement via streaming endpoint
+
+**NOT in scope:** (WooCommerce handles these)
+- Payment processing
+- Order management
+- Customer account management
+- Download tracking/limits (we enforce, WC stores)
+- Coupon/discount codes
+- Refund processing
+
+---
+
+### MEDIUM — Featured Image Citation (S-11)
+
+Display attribution HTML under featured images when shown on pages.
+
+**Settings:**
+- `media.featured_image_citation` — Enable/disable citation under featured images
+
+**Citation content (from attachment metadata):**
+- Creator (if set)
+- Copyright notice (if set) or Owner (if set)
+- Date (if set)
+
+**Output format:**
+```html
+<figure>
+  <img src="..." alt="...">
+  <figcaption class="mm-image-citation">Creator Name | © Owner | 2024</figcaption>
+</figure>
+```
+
+**Files changed:**
+- New: `includes/metadata/modules/class-mm-mod-media-display.php` — Citation HTML output
+- Modified: `includes/metadata/class-mm-site-settings.php` — Add media.featured_image_citation setting
+- Modified: `includes/metadata/class-mm-metadata-loader.php` — Register new module
+
+---
+
+### MEDIUM — Schema Type Cleanup (S-5)
+
+Remove redundant schema types that map to WordPress built-ins:
+
+| Type | Maps to | Action |
+|------|---------|--------|
+| BlogPosting | Default `post` type | Remove CPT, schema module detects `post` type |
+| WebPage | Default `page` type | Remove CPT, schema module detects `page` type |
+| ProfilePage | Author archive pages | Remove CPT, schema module detects `is_author()` |
+| Article | Redundant with WebPage + BlogPosting | Remove entirely |
+
+**Final CPT list:**
+| CPT | Type | Status |
+|-----|------|--------|
+| `mm_event` | Event | Editable, .ical, WC product integration |
+| `mm_service` | Service | Editable, WC product integration |
+| `mm_how_to` | HowTo | Editable |
+| `mm_about_page` | AboutPage | Read-only, auto-generated |
+| `mm_contact_page` | ContactPage | Read-only, auto-generated |
+| `mm_calendar` | Calendar | Read-only, auto-generated |
+
+---
+
+### MEDIUM — ContactPage Auto-Generation (S-6)
+
+ContactPage CPT auto-generates content from Business Profile settings.
+
+**Content rendered:**
+- Business name, logo
+- HTML5 `<address>` element with geo: protocol links
+- Phone (click-to-call), email, vCard download
+- Opening hours
+- Action buttons (controlled via Contact Page settings)
+
+**Settings page renamed:** "Contact Card" → "Contact Page"
+
+**Files changed:**
+- `class-mm-schema-post-types.php` — ContactPage CPT with disabled editor
+- `class-mm-mod-business-contact.php` — `render_contact_page()` method
+- `class-mm-mod-schema.php` — ContactPage schema populated from business info
+- `page-contact.php` — renamed heading and descriptions
+
+---
+
+### MEDIUM — AboutPage Auto-Generation (S-7)
+
+AboutPage CPT auto-generates content from Business Profile settings.
+
+**Content rendered:**
+- Business name, logo, description
+- Founding date, number of employees, price range
+- Full address with geo: protocol link
+- Service areas, payment methods
+- Social profile links
+
+**New Business Profile fields:**
+- Description (textarea)
+- Founding Date (date picker)
+- Number of Employees (text)
+
+**Files changed:**
+- `class-mm-schema-post-types.php` — AboutPage CPT with disabled editor
+- `class-mm-mod-business-contact.php` — `render_about_page()` method
+- `class-mm-mod-schema.php` — AboutPage schema populated from business info
+- `class-mm-site-settings.php` — business_defaults() updated
+- `page-business.php` — new fields added
+
+---
+
+### MEDIUM — Calendar Auto-Generation (S-8)
+
+Calendar CPT auto-generates a navigable month-by-month event calendar.
+
+**Features:**
+- Month navigation (forward/backward)
+- Today button
+- Events shown on their start date
+- Click-through to individual event posts
+- Full responsive CSS
+
+**Files changed:**
+- `class-mm-schema-post-types.php` — Calendar CPT with disabled editor
+- `class-mm-mod-business-contact.php` — `render_calendar()` method
+- `biz-contact.css` — calendar styles added
+
+---
+
 ## Integration Tests on PEO
 
 Integration tests require WordPress test suite at `/tmp/wordpress-tests-lib`. PEO has MySQL test database (`metamanager_test`) ready. Install test suite and run PHPUnit.

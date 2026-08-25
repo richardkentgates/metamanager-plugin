@@ -110,6 +110,42 @@ class MM_Schema_Types {
 					'description' => '',
 				],
 				[
+					'key'         => 'event_organizer_name',
+					'label'       => 'Organizer Name',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Auto-populated from business profile if empty.',
+				],
+				[
+					'key'         => 'event_organizer_email',
+					'label'       => 'Organizer Email',
+					'type'        => 'email',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Auto-populated from business profile if empty.',
+				],
+				[
+					'key'         => 'event_organizer_phone',
+					'label'       => 'Organizer Phone',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Auto-populated from business profile if empty.',
+				],
+				[
+					'key'         => 'event_organizer_url',
+					'label'       => 'Organizer URL',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+				],
+				[
 					'key'         => 'event_price',
 					'label'       => 'Price',
 					'type'        => 'text',
@@ -126,6 +162,39 @@ class MM_Schema_Types {
 					'auto_label'  => null,
 					'placeholder' => 'USD',
 					'description' => 'ISO 4217 currency code. Defaults to USD.',
+				],
+				[
+					'key'         => 'event_ticket_url',
+					'label'       => 'Ticket URL',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Link to purchase tickets.',
+				],
+				[
+					'key'         => 'event_status',
+					'label'       => 'Event Status',
+					'type'        => 'select',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+					'options'     => [
+						'EventScheduled'   => 'Scheduled',
+						'EventCancelled'   => 'Cancelled',
+						'EventPostponed'   => 'Postponed',
+						'EventRescheduled' => 'Rescheduled',
+					],
+				],
+				[
+					'key'         => 'event_offers',
+					'label'       => 'Offers Description',
+					'type'        => 'textarea',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Optional description for offers (e.g. "Early bird pricing available").',
 				],
 			],
 
@@ -166,6 +235,33 @@ class MM_Schema_Types {
 					'auto_label'  => null,
 					'placeholder' => 'USD',
 					'description' => 'ISO 4217. Used only when Price is a number.',
+				],
+				[
+					'key'         => 'service_booking_url',
+					'label'       => 'Booking URL',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Link to book/purchase this service.',
+				],
+				[
+					'key'         => 'service_duration',
+					'label'       => 'Duration',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 2 hours, Half day',
+					'description' => 'Estimated service duration.',
+				],
+				[
+					'key'         => 'service_includes',
+					'label'       => 'What\'s Included',
+					'type'        => 'textarea',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'List what the service includes.',
 				],
 			],
 
@@ -301,9 +397,9 @@ class MM_Schema_Types {
 			$offer = $make_offer( 'product_price', 'product_currency' );
 			if ( $offer ) {
 				$avail = $str( 'product_availability' );
-				if ( in_array( $avail, [ 'InStock', 'OutOfStock', 'PreOrder' ], true ) ) {
-					$offer['availability'] = 'https://schema.org/' . $avail;
-				}
+			if ( in_array( $avail, [ 'InStock', 'OutOfStock', 'PreOrder' ], true ) ) {
+				$offer['availability'] = 'https://schema.org/' . $avail;
+			}
 				$out['offers'] = $offer;
 			}
 		}

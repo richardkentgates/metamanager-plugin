@@ -412,6 +412,7 @@ class MM_Site_Settings {
 			'website_searchaction'  => true,
 			'breadcrumbs'           => true,
 			'archive_itemlist'      => true,
+			'archive_media'         => false,
 				'post_type_types'       => [
 					'post'    => 'BlogPosting',
 					'page'    => 'WebPage',
@@ -419,6 +420,10 @@ class MM_Site_Settings {
 					'course'  => 'Course',
 				],
 				'custom_json_ld'        => '',
+			],
+
+			'media' => [
+				'featured_image_citation' => false,
 			],
 
 			'sitemap' => [
@@ -503,26 +508,29 @@ class MM_Site_Settings {
 
 	public static function business_defaults(): array {
 		return [
-			'name'             => '',
-			'type'             => 'LocalBusiness',
-			'logo_id'          => 0,
-			'logo_url'         => '',
-			'phone'            => '',
-			'email'            => '',
-			'address'          => [
+			'name'                 => '',
+			'type'                 => 'LocalBusiness',
+			'logo_id'              => 0,
+			'logo_url'             => '',
+			'phone'                => '',
+			'email'                => '',
+			'description'          => '',
+			'founding_date'        => '',
+			'number_of_employees'  => '',
+			'address'              => [
 				'street'  => '',
 				'city'    => '',
 				'state'   => '',
 				'zip'     => '',
 				'country' => 'US',
 			],
-			'lat'              => '',
-			'lng'              => '',
-			'price_range'      => '',
-			'payment_accepted' => [],
-			'hours'            => [],
-			'service_areas'    => [],
-			'accounts'         => [
+			'lat'                  => '',
+			'lng'                  => '',
+			'price_range'          => '',
+			'payment_accepted'     => [],
+			'hours'                => [],
+			'service_areas'        => [],
+			'accounts'             => [
 				'facebook'  => '',
 				'instagram' => '',
 				'linkedin'  => '',

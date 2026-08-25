@@ -38,6 +38,10 @@ class MM_Post_Meta_Panel {
 			if ( in_array( $pt, $this->excluded_types, true ) ) {
 				continue;
 			}
+			// Schema CPTs have their own dedicated meta box — skip legacy panel.
+			if ( MM_Schema_Post_Types::is_schema_cpt( $pt ) ) {
+				continue;
+			}
 			add_meta_box(
 				'mm_meta_post_meta',
 				'<span class="mm-meta-metabox-title">Metamanager</span>',

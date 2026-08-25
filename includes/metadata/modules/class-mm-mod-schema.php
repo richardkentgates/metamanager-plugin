@@ -36,6 +36,11 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			$this->add_itemlist_node( $data, $context );
 		}
 
+		// Archive media schema: scan archive pages for media when enabled.
+		if ( ! $context->is_singular() && $settings->get( 'schema.archive_media', false ) ) {
+			$this->add_archive_media_schema( $data, $context );
+		}
+
 		// Custom JSON-LD appended verbatim (power user escape hatch).
 		$custom = trim( $settings->get( 'schema.custom_json_ld', '' ) );
 		if ( $custom ) {
@@ -127,12 +132,23 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		if ( $context->is_singular() ) {
 			$post = $context->get_post();
 			if ( $post ) {
-				$meta = $settings->get_post_meta( $post->ID );
-				$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
-				$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
-				// Map content types to their WebPage counterpart.
-				if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
-					$type = 'WebPage'; // WebPage is the containing page; content type is separate.
+				// CPT posts use their schema type directly.
+				if ( MM_Schema_Post_Types::is_schema_cpt( $post->post_type ) ) {
+					$schema_type = MM_Schema_Post_Types::slug_to_type( $post->post_type );
+					// Content types get WebPage as the container; the content node is separate.
+					if ( in_array( $schema_type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
+						$type = 'WebPage';
+					} else {
+						$type = $schema_type;
+					}
+				} else {
+					$meta = $settings->get_post_meta( $post->ID );
+					$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
+					$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
+					// Map content types to their WebPage counterpart.
+					if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
+						$type = 'WebPage';
+					}
 				}
 			}
 		} elseif ( $context->is_front_page() ) {
@@ -150,6 +166,107 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			'name'        => $title,
 			'isPartOf'    => [ '@id' => $this->site_id( 'website' ) ],
 		];
+
+		// ContactPage: add business info data from settings.
+		if ( 'ContactPage' === $type && $context->is_singular() ) {
+			$biz  = $settings->all_business();
+			if ( ! empty( $biz['name'] ) ) {
+				$node['name'] = sanitize_text_field( $biz['name'] );
+			}
+			if ( ! empty( $biz['phone'] ) ) {
+				$node['telephone'] = sanitize_text_field( $biz['phone'] );
+			}
+			if ( ! empty( $biz['email'] ) ) {
+				$node['email'] = sanitize_email( $biz['email'] );
+			}
+			$addr = MM_Mod_Base::postal_address_node( $biz['address'] ?? [] );
+			if ( $addr ) {
+				$node['address'] = $addr;
+			}
+			$geo_lat = isset( $biz['lat'] ) && is_numeric( $biz['lat'] ) ? (float) $biz['lat'] : null;
+			$geo_lng = isset( $biz['lng'] ) && is_numeric( $biz['lng'] ) ? (float) $biz['lng'] : null;
+			if ( null !== $geo_lat && null !== $geo_lng ) {
+				$node['geo'] = [
+					'@type'     => 'GeoCoordinates',
+					'latitude'  => $geo_lat,
+					'longitude' => $geo_lng,
+				];
+			}
+			// ContactPoint nodes.
+			$contact_points = [];
+			if ( ! empty( $biz['phone'] ) ) {
+				$contact_points[] = [
+					'@type'       => 'ContactPoint',
+					'telephone'   => sanitize_text_field( $biz['phone'] ),
+					'contactType' => 'customer service',
+				];
+			}
+			if ( ! empty( $biz['email'] ) ) {
+				$contact_points[] = [
+					'@type'       => 'ContactPoint',
+					'email'       => sanitize_email( $biz['email'] ),
+					'contactType' => 'customer service',
+				];
+			}
+			if ( $contact_points ) {
+				$node['contactPoint'] = ( 1 === count( $contact_points ) ) ? $contact_points[0] : $contact_points;
+			}
+		}
+
+		// AboutPage: add business info data from settings.
+		if ( 'AboutPage' === $type && $context->is_singular() ) {
+			$biz  = $settings->all_business();
+			if ( ! empty( $biz['name'] ) ) {
+				$node['name'] = sanitize_text_field( $biz['name'] );
+			}
+			if ( ! empty( $biz['description'] ) ) {
+				$node['description'] = sanitize_text_field( $biz['description'] );
+			}
+			if ( ! empty( $biz['founding_date'] ) ) {
+				$node['foundingDate'] = sanitize_text_field( $biz['founding_date'] );
+			}
+			if ( ! empty( $biz['number_of_employees'] ) ) {
+				$node['numberOfEmployees'] = sanitize_text_field( $biz['number_of_employees'] );
+			}
+			$addr = MM_Mod_Base::postal_address_node( $biz['address'] ?? [] );
+			if ( $addr ) {
+				$node['address'] = $addr;
+			}
+			$geo_lat = isset( $biz['lat'] ) && is_numeric( $biz['lat'] ) ? (float) $biz['lat'] : null;
+			$geo_lng = isset( $biz['lng'] ) && is_numeric( $biz['lng'] ) ? (float) $biz['lng'] : null;
+			if ( null !== $geo_lat && null !== $geo_lng ) {
+				$node['geo'] = [
+					'@type'     => 'GeoCoordinates',
+					'latitude'  => $geo_lat,
+					'longitude' => $geo_lng,
+				];
+			}
+			if ( ! empty( $biz['phone'] ) ) {
+				$node['telephone'] = sanitize_text_field( $biz['phone'] );
+			}
+			if ( ! empty( $biz['email'] ) ) {
+				$node['email'] = sanitize_email( $biz['email'] );
+			}
+			// ContactPoint nodes.
+			$contact_points = [];
+			if ( ! empty( $biz['phone'] ) ) {
+				$contact_points[] = [
+					'@type'       => 'ContactPoint',
+					'telephone'   => sanitize_text_field( $biz['phone'] ),
+					'contactType' => 'customer service',
+				];
+			}
+			if ( ! empty( $biz['email'] ) ) {
+				$contact_points[] = [
+					'@type'       => 'ContactPoint',
+					'email'       => sanitize_email( $biz['email'] ),
+					'contactType' => 'customer service',
+				];
+			}
+			if ( $contact_points ) {
+				$node['contactPoint'] = ( 1 === count( $contact_points ) ) ? $contact_points[0] : $contact_points;
+			}
+		}
 
 		// Description from meta.
 		foreach ( $data['meta'] as $mt ) {
@@ -217,8 +334,12 @@ class MM_Mod_Schema extends MM_Mod_Base {
 					}
 				}
 				// The post itself.
-				$meta  = $settings->get_post_meta( $post->ID );
+			$meta  = $settings->get_post_meta( $post->ID );
+			// Read breadcrumb label from CPT meta first, then legacy _mm_meta.
+			$label = get_post_meta( $post->ID, 'mm_breadcrumb_label', true );
+			if ( ! $label ) {
 				$label = ! empty( $meta['breadcrumb_label'] ) ? $meta['breadcrumb_label'] : get_the_title( $post );
+			}
 				$items[] = $this->crumb( $pos++, $label, get_permalink( $post ) );
 			}
 		} elseif ( $context->is_tax() || $context->is_category() || $context->is_tag() ) {
@@ -267,9 +388,16 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			return;
 		}
 
-		$meta         = $settings->get_post_meta( $post->ID );
-		$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
-		$type         = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
+		// Determine schema type: CPT slug → schema type, or legacy _mm_meta schema_type.
+		$type = null;
+		if ( MM_Schema_Post_Types::is_schema_cpt( $post->post_type ) ) {
+			$type = MM_Schema_Post_Types::slug_to_type( $post->post_type );
+		}
+		if ( ! $type ) {
+			$meta         = $settings->get_post_meta( $post->ID );
+			$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
+			$type         = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
+		}
 
 		// WebPage itself is already added above; skip if type resolves to WebPage.
 		if ( in_array( $type, [ 'WebPage', 'WebSite' ], true ) ) {
@@ -312,8 +440,17 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		// Merge per-post schema field overrides (Event dates, prices, addresses, etc.).
-		// For Product type with WooCommerce active: WC data populates first, then manual overrides.
-		$schema_fields = $meta['schema_fields'] ?? [];
+		// Read from CPT meta first, then legacy _mm_meta schema_fields.
+		$schema_fields = [];
+		if ( MM_Schema_Post_Types::is_schema_cpt( $post->post_type ) ) {
+			$cpt_fields = get_post_meta( $post->ID, 'mm_schema_fields', true );
+			if ( is_array( $cpt_fields ) ) {
+				$schema_fields = $cpt_fields;
+			}
+		}
+		if ( empty( $schema_fields ) ) {
+			$schema_fields = $meta['schema_fields'] ?? [];
+		}
 		if ( 'Product' === $type && $this->is_woocommerce_active() ) {
 			$wc_data = $this->get_woocommerce_product_data( $post->ID );
 			if ( ! empty( $wc_data ) ) {
@@ -526,6 +663,96 @@ class MM_Mod_Schema extends MM_Mod_Base {
 					break;
 			}
 		}
+
+		// Featured image: add schema if present on page and not already added from content.
+		$this->add_featured_image_schema( $data, $post, $media );
+	}
+
+	/**
+	 * Emit ImageObject schema for featured image if present on page.
+	 */
+	private function add_featured_image_schema( array &$data, \WP_Post $post, array $content_media ): void {
+		$thumb_id = (int) get_post_thumbnail_id( $post->ID );
+		if ( ! $thumb_id ) {
+			return;
+		}
+
+		$thumb_url = wp_get_attachment_url( $thumb_id );
+		if ( ! $thumb_url ) {
+			return;
+		}
+
+		// Check if this image was already added from content scanning.
+		foreach ( $content_media as $item ) {
+			if ( isset( $item['attachment_id'] ) && $item['attachment_id'] === $thumb_id ) {
+				return; // Already added.
+			}
+			if ( isset( $item['url'] ) && $item['url'] === $thumb_url ) {
+				return; // Already added.
+			}
+		}
+
+		// Add featured image schema.
+		$src = wp_get_attachment_image_src( $thumb_id, 'full' );
+		$item = [
+			'type'          => 'image',
+			'url'           => $thumb_url,
+			'attachment_id' => $thumb_id,
+			'width'         => $src ? $src[1] : 0,
+			'height'        => $src ? $src[2] : 0,
+			'alt'           => (string) get_post_meta( $thumb_id, '_wp_attachment_image_alt', true ),
+			'caption'       => trim( get_post( $thumb_id )->post_excerpt ),
+		];
+
+		$this->add_image_schema( $data, $item, $post );
+	}
+
+	/**
+	 * Emit ImageObject schema for featured images on archive pages.
+	 */
+	private function add_archive_media_schema( array &$data, MM_Page_Context $context ): void {
+		global $wp_query;
+
+		if ( ! $wp_query->have_posts() ) {
+			return;
+		}
+
+		$added_ids = [];
+
+		while ( $wp_query->have_posts() ) {
+			$wp_query->the_post();
+			$post = get_post();
+
+			if ( ! $post ) {
+				continue;
+			}
+
+			$thumb_id = (int) get_post_thumbnail_id( $post->ID );
+			if ( ! $thumb_id || in_array( $thumb_id, $added_ids, true ) ) {
+				continue;
+			}
+
+			$thumb_url = wp_get_attachment_url( $thumb_id );
+			if ( ! $thumb_url ) {
+				continue;
+			}
+
+			$src  = wp_get_attachment_image_src( $thumb_id, 'full' );
+			$item = [
+				'type'          => 'image',
+				'url'           => $thumb_url,
+				'attachment_id' => $thumb_id,
+				'width'         => $src ? $src[1] : 0,
+				'height'        => $src ? $src[2] : 0,
+				'alt'           => (string) get_post_meta( $thumb_id, '_wp_attachment_image_alt', true ),
+				'caption'       => trim( get_post( $thumb_id )->post_excerpt ),
+			];
+
+			$this->add_image_schema( $data, $item, $post );
+			$added_ids[] = $thumb_id;
+		}
+
+		wp_reset_postdata();
 	}
 
 	/**
@@ -580,11 +807,21 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	private function add_image_schema( array &$data, array $item, \WP_Post $post ): void {
 		$meta = static fn( string $key ): string => (string) get_post_meta( $item['attachment_id'], $key, true );
 
+		// Check if media is protected (S-10): use watermarked preview for schema.
+		$is_protected = 'yes' === get_post_meta( $item['attachment_id'], '_mm_media_protected', true );
+		$schema_url   = $item['url'];
+		if ( $is_protected ) {
+			$preview_url = get_post_meta( $item['attachment_id'], '_mm_media_watermarked_url', true );
+			if ( $preview_url ) {
+				$schema_url = $preview_url;
+			}
+		}
+
 		$node = [
 			'@type'      => 'ImageObject',
 			'@id'        => $item['url'] . '#image',
-			'url'        => $item['url'],
-			'contentUrl' => $item['url'],
+			'url'        => $schema_url,
+			'contentUrl' => $schema_url,
 		];
 
 		if ( $item['width'] ) {
@@ -660,11 +897,21 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	private function add_video_schema( array &$data, array $item, \WP_Post $post ): void {
 		$meta = static fn( string $key ): string => (string) get_post_meta( $item['attachment_id'], $key, true );
 
+		// Check if media is protected (S-10): use watermarked preview for schema.
+		$is_protected = 'yes' === get_post_meta( $item['attachment_id'], '_mm_media_protected', true );
+		$schema_url   = $item['url'];
+		if ( $is_protected ) {
+			$preview_url = get_post_meta( $item['attachment_id'], '_mm_media_watermarked_url', true );
+			if ( $preview_url ) {
+				$schema_url = $preview_url;
+			}
+		}
+
 		$node = [
 			'@type'       => 'VideoObject',
 			'@id'         => $item['url'] . '#video',
-			'url'         => $item['url'],
-			'contentUrl'  => $item['url'],
+			'url'         => $schema_url,
+			'contentUrl'  => $schema_url,
 			'uploadDate'  => gmdate( 'Y-m-d', strtotime( $post->post_date_gmt ) ),
 		];
 
@@ -717,11 +964,21 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			? (string) get_post_mime_type( $item['attachment_id'] )
 			: 'audio/mpeg';
 
+		// Check if media is protected (S-10): use watermarked preview for schema.
+		$is_protected = 'yes' === get_post_meta( $item['attachment_id'], '_mm_media_protected', true );
+		$schema_url   = $item['url'];
+		if ( $is_protected ) {
+			$preview_url = get_post_meta( $item['attachment_id'], '_mm_media_watermarked_url', true );
+			if ( $preview_url ) {
+				$schema_url = $preview_url;
+			}
+		}
+
 		$node = [
 			'@type'          => 'AudioObject',
 			'@id'            => $item['url'] . '#audio',
-			'url'            => $item['url'],
-			'contentUrl'     => $item['url'],
+			'url'            => $schema_url,
+			'contentUrl'     => $schema_url,
 			'encodingFormat' => $mime,
 		];
 
@@ -756,11 +1013,21 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	 * Emit a DigitalDocument schema node for a detected PDF.
 	 */
 	private function add_document_schema( array &$data, array $item ): void {
+		// Check if media is protected (S-10): use watermarked preview for schema.
+		$is_protected = 'yes' === get_post_meta( $item['attachment_id'] ?? 0, '_mm_media_protected', true );
+		$schema_url   = $item['url'];
+		if ( $is_protected ) {
+			$preview_url = get_post_meta( $item['attachment_id'], '_mm_media_watermarked_url', true );
+			if ( $preview_url ) {
+				$schema_url = $preview_url;
+			}
+		}
+
 		$node = [
 			'@type'          => 'DigitalDocument',
 			'@id'            => $item['url'] . '#document',
-			'url'            => $item['url'],
-			'contentUrl'     => $item['url'],
+			'url'            => $schema_url,
+			'contentUrl'     => $schema_url,
 			'encodingFormat' => 'application/pdf',
 		];
 
