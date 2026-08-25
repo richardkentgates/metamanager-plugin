@@ -421,7 +421,7 @@ class MM_Schema_Post_Types {
 					<tr>
 						<th><label for="mm_wc_product">Linked Product</label></th>
 						<td>
-							<input type="hidden" id="mm_wc_product_id" name="mm_wc_product_id" value="<?php echo esc_attr( $linked_product_id ); ?>">
+							<input type="hidden" id="mm_wc_product_id" name="mm_wc_product_id" value="<?php echo esc_attr( (string) $linked_product_id ); ?>">
 							<input type="text" id="mm_wc_product" value="<?php echo esc_attr( $product_title ); ?>" class="regular-text" placeholder="Search for a product...">
 							<button type="button" id="mm_wc_product_search" class="button">Search</button>
 							<?php if ( $linked_product_id ) : ?>
@@ -493,7 +493,14 @@ class MM_Schema_Post_Types {
 			return;
 		}
 
-		$fields = sanitize_post_meta( $_POST['mm_schema_fields'] ?? [] );
+		$raw_fields = (array) ( $_POST['mm_schema_fields'] ?? [] );
+		$fields     = [];
+		foreach ( $raw_fields as $key => $value ) {
+			if ( is_array( $value ) ) {
+				continue;
+			}
+			$fields[ sanitize_key( (string) $key ) ] = sanitize_text_field( wp_unslash( $value ) );
+		}
 		update_post_meta( $post_id, 'mm_schema_fields', $fields );
 
 		$bc_label = sanitize_text_field( wp_unslash( $_POST['mm_breadcrumb_label'] ?? '' ) );

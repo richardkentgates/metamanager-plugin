@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.124
+ * Version:      2.3.125
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.124' );
+define( 'MM_VERSION',     '2.3.125' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -105,6 +105,7 @@ require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-html-sitemap.
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-business-contact.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-rss.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-discovery.php';
+require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-media-display.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-metadata-help.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-metadata-admin.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-post-meta-panel.php';
@@ -123,7 +124,7 @@ add_action( 'plugins_loaded', function (): void {
 MM_Schema_Post_Types::init();
 
 // Apply max revisions setting from Metamanager preferences.
-add_filter( 'wp_revisions_to_store', function( $num, $post ) {
+add_filter( 'wp_revisions_to_keep', function( $num, $post ) {
 	$max = MM_Settings::get_max_revisions();
 	if ( $max === 0 ) {
 		return $num; // Unlimited.
@@ -131,8 +132,7 @@ add_filter( 'wp_revisions_to_store', function( $num, $post ) {
 	$post_type = get_post_type( $post );
 	// Apply to pages, posts, and schema CPTs.
 	if ( in_array( $post_type, [ 'page', 'post' ], true ) || MM_Schema_Post_Types::is_schema_cpt( $post_type ) ) {
-		$count = wp_count_revisions( $post->ID );
-		return $count >= $max ? 0 : 1;
+		return min( $num < 0 ? $max : $num, $max );
 	}
 	return $num;
 }, 10, 2 );

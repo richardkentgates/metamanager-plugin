@@ -719,9 +719,8 @@ class MM_Mod_Schema extends MM_Mod_Base {
 
 		$added_ids = [];
 
-		while ( $wp_query->have_posts() ) {
-			$wp_query->the_post();
-			$post = get_post();
+		foreach ( $wp_query->posts as $query_post ) {
+			$post = get_post( $query_post );
 
 			if ( ! $post ) {
 				continue;
@@ -751,8 +750,6 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			$this->add_image_schema( $data, $item, $post );
 			$added_ids[] = $thumb_id;
 		}
-
-		wp_reset_postdata();
 	}
 
 	/**
