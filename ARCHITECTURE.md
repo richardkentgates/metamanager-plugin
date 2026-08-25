@@ -397,7 +397,7 @@ All types also emit one of:
 
 ## Settings (`MM_Settings`)
 
-All options are registered with `register_setting()` and sanitize callbacks. The settings page is at **Media → MM Settings**.
+All options are registered with `register_setting()` and sanitize callbacks. The settings page is at **Metamanager → Preferences**.
 
 | Option key | Type | Default | Description |
 |------------|------|---------|-------------|
@@ -521,7 +521,8 @@ Logged-in requests (valid nonce or cookie) bypass the IP allowlist entirely.
 
 ## Auto-Updater (`MM_Updater`)
 
-Queries `https://api.github.com/repos/richardkentgates/metamanager-plugin/releases/latest` and caches the result as a transient for 12 hours. The result is injected into the WordPress transients that power the `Dashboard → Updates` screen using the `pre_set_site_transient_update_plugins` filter. Download URL points to the release ZIP asset on GitHub.
+Fetches `https://apt.richardkentgates.com/metamanager/metadata.json` (production) or
+`https://apt.richardkentgates.com/metamanager-test/metadata.json` (test channel), cached 12 hours.
 
 A "Check for Updates" inline action on the Plugins page forces an immediate cache flush.
 

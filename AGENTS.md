@@ -47,8 +47,8 @@ All software must move to production through native update systems:
 
 - **Plugin test channel**: Push to `dev` → trigger `promote-to-test.yml` → merges dev→test, builds zip → deploys to `metamanager-test/` on apt server → WordPress detects update via `MM_Updater`
 - **Plugin production channel**: Push to `dev` → trigger `promote-to-main.yml` → merges test→main, tags, releases → deploys to `metamanager/` on apt server → WordPress detects update via `MM_Updater`
-- **Daemon test channel**: Push to `dev` → trigger `promote-to-test.yml` → merges dev→test, builds `.deb` → deploys to `dists/bookworm-test` on apt server → install on test site via `apt-get install -t bookworm-test`
-- **Daemon production channel**: Push to `dev` → trigger `promote-to-main.yml` → merges test→main, tags, releases → deploys to `dists/bookworm` on apt server → install on production site via `apt-get upgrade` or `apt-get install -t bookworm`
+- **Daemon test channel**: Push to `dev` → trigger `promote-to-test.yml` → merges dev→test, builds `.deb` → deploys to `dists/test` on apt server → install on test site via `apt-get install -t test`
+- **Daemon production channel**: Push to `dev` → trigger `promote-to-main.yml` → merges test→main, tags, releases → deploys to `dists/stable` on apt server → install on production site via `apt-get upgrade` or `apt-get install -t stable`
 
 The only exception is temporary testing during active development sessions, where files may be SCP'd for immediate verification. After testing, the fix must go through the proper pipeline before being considered deployed.
 
@@ -123,8 +123,8 @@ Before pushing a new plugin version to dev:
 
 - **Test channel (plugin)**: `metamanager-test/` — WordPress detects update via `MM_Updater`
 - **Production channel (plugin)**: `metamanager/` — WordPress detects update via `MM_Updater`
-- **Test channel (daemons)**: `dists/bookworm-test` — install via `apt-get install -t bookworm-test`
-- **Production channel (daemons)**: `dists/bookworm` — install via `apt-get install -t bookworm` or `apt-get upgrade`
+- **Test channel (daemons)**: `dists/test` — install via `apt-get install -t test`
+- **Production channel (daemons)**: `dists/stable` — install via `apt-get install -t stable` or `apt-get upgrade`
 
 ## Conventions
 
