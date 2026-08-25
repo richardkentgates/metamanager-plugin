@@ -323,39 +323,18 @@ wp plugin status metamanager</code></pre>
 <section id="cli">
     <h2>WP-CLI</h2>
     <p class="section-lead">All Metamanager operations are available as WP-CLI commands under the <code>wp metamanager</code> namespace.</p>
-
-    <h3>Media commands</h3>
     <table>
-        <thead><tr><th>Command</th><th>Description</th></tr></thead>
-        <tbody>
-            <tr><td><code>wp metamanager compress --all</code></td><td>Queue compression jobs for all uncompressed attachments</td></tr>
-            <tr><td><code>wp metamanager compress --post-id=&lt;id&gt;</code></td><td>Queue compression for a specific attachment</td></tr>
-            <tr><td><code>wp metamanager embed --all</code></td><td>Queue metadata write-back for all attachments</td></tr>
-            <tr><td><code>wp metamanager embed --post-id=&lt;id&gt;</code></td><td>Queue metadata write-back for a specific attachment</td></tr>
-            <tr><td><code>wp metamanager import --post-id=&lt;id&gt;</code></td><td>Re-read file metadata and sync to WordPress fields</td></tr>
-            <tr><td><code>wp metamanager queue list</code></td><td>List pending jobs in the queue</td></tr>
-            <tr><td><code>wp metamanager queue clear</code></td><td>Clear all pending jobs</td></tr>
-            <tr><td><code>wp metamanager scan</code></td><td>Scan all attachments and report metadata status</td></tr>
-            <tr><td><code>wp metamanager stats</code></td><td>Show compression savings, job counts, and daemon status</td></tr>
-        </tbody>
+      <thead><tr><th>Command</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>wp metamanager compress &lt;id&gt;|all [--force]</code></td><td>Queue lossless compression for one attachment or the whole library</td></tr>
+        <tr><td><code>wp metamanager import &lt;id&gt;|all</code></td><td>Read embedded metadata from files into WordPress fields</td></tr>
+        <tr><td><code>wp metamanager scan</code></td><td>Batch-import un-synced library files and queue daemon jobs</td></tr>
+        <tr><td><code>wp metamanager embed &lt;id&gt;|all --force</code></td><td>Write current WordPress fields back into file metadata</td></tr>
+        <tr><td><code>wp metamanager queue status</code></td><td>Show pending/processing/completed/failed job counts</td></tr>
+        <tr><td><code>wp metamanager stats</code></td><td>Library compression and sync statistics</td></tr>
+      </tbody>
     </table>
-
-    <h3>Metadata commands</h3>
-    <table>
-        <thead><tr><th>Command</th><th>Description</th></tr></thead>
-        <tbody>
-            <tr><td><code>wp metamanager metadata flush-cache</code></td><td>Flush cached sitemap transients</td></tr>
-            <tr><td><code>wp metamanager metadata ping-sitemap</code></td><td>Send sitemap ping to search engines</td></tr>
-            <tr><td><code>wp metamanager metadata check-links</code></td><td>Queue a full link check pass</td></tr>
-            <tr><td><code>wp metamanager metadata import-settings &lt;file&gt;</code></td><td>Import settings from a JSON export</td></tr>
-            <tr><td><code>wp metamanager metadata export-settings</code></td><td>Export all settings to JSON</td></tr>
-        </tbody>
-    </table>
-</section>
-
-<!-- ── REST API ──────────────────────────────────────────────────────────── -->
-<section id="rest-api">
-    <h2>REST API</h2>
+<h2>REST API</h2>
     <p class="section-lead">All Metamanager REST routes are under <code>/wp-json/metamanager/v1/</code>. You can restrict access to a comma-separated list of allowed IP addresses from <strong>Settings → REST API</strong>.</p>
 
     <table>
