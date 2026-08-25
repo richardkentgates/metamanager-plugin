@@ -192,8 +192,10 @@ jobs:
       - name: Run PHPUnit
         run: |
           if [ "${{ matrix.coverage }}" = "true" ]; then
+            phpunit --configuration phpunit.xml --testsuite Unit
             phpunit --configuration phpunit.xml --testsuite Integration --coverage-clover=coverage.xml
           else
+            phpunit --configuration phpunit.xml --testsuite Unit
             phpunit --configuration phpunit.xml --testsuite Integration
           fi
 
