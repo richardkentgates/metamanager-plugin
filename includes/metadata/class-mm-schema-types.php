@@ -268,62 +268,12 @@ class MM_Schema_Types {
 			],
 
 			// ── FAQPage ──────────────────────────────────────────────────────
-			'FAQPage' => [
-				[
-					'key'         => 'faq_question_1',
-					'label'       => 'Question 1',
-					'type'        => 'text',
-					'required'    => false,
-					'auto_label'  => null,
-					'placeholder' => '',
-					'description' => '',
-				],
-				[
-					'key'         => 'faq_answer_1',
-					'label'       => 'Answer 1',
-					'type'        => 'textarea',
-					'required'    => false,
-					'auto_label'  => null,
-					'placeholder' => '',
-					'description' => '',
-				],
-				[
-					'key'         => 'faq_question_2',
-					'label'       => 'Question 2',
-					'type'        => 'text',
-					'required'    => false,
-					'auto_label'  => null,
-					'placeholder' => '',
-					'description' => '',
-				],
-				[
-					'key'         => 'faq_answer_2',
-					'label'       => 'Answer 2',
-					'type'        => 'textarea',
-					'required'    => false,
-					'auto_label'  => null,
-					'placeholder' => '',
-					'description' => '',
-				],
-				[
-					'key'         => 'faq_question_3',
-					'label'       => 'Question 3',
-					'type'        => 'text',
-					'required'    => false,
-					'auto_label'  => null,
-					'placeholder' => '',
-					'description' => '',
-				],
-				[
-					'key'         => 'faq_answer_3',
-					'label'       => 'Answer 3',
-					'type'        => 'textarea',
-					'required'    => false,
-					'auto_label'  => null,
-					'placeholder' => '',
-					'description' => '',
-				],
-			],
+			// Fields are dynamically rendered in the metabox (not static field defs).
+			'FAQPage' => [],
+
+			// ── HowTo ──────────────────────────────────────────────────────
+			// Fields are dynamically rendered in the metabox (not static field defs).
+			'HowTo' => [],
 
 			// ── Product ───────────────────────────────────────────────────────
 			'Product' => [
@@ -485,7 +435,7 @@ class MM_Schema_Types {
 		// ── FAQPage ──────────────────────────────────────────────────────────
 		if ( 'FAQPage' === $type ) {
 			$main_entity = [];
-			for ( $i = 1; $i <= 10; $i++ ) {
+			for ( $i = 1; $i <= 20; $i++ ) {
 				$question = $str( "faq_question_{$i}" );
 				$answer   = $str( "faq_answer_{$i}" );
 				if ( $question && $answer ) {
@@ -501,6 +451,30 @@ class MM_Schema_Types {
 			}
 			if ( ! empty( $main_entity ) ) {
 				$out['mainEntity'] = $main_entity;
+			}
+		}
+
+		// ── HowTo ──────────────────────────────────────────────────────────
+		if ( 'HowTo' === $type ) {
+			$steps = [];
+			for ( $i = 1; $i <= 20; $i++ ) {
+				$step_name  = $str( "howto_step_name_{$i}" );
+				$step_text  = $str( "howto_step_text_{$i}" );
+				$step_image = $str( "howto_step_image_{$i}" );
+				if ( $step_name || $step_text ) {
+					$step = [
+						'@type'          => 'HowToStep',
+						'name'           => $step_name,
+						'text'           => $step_text,
+					];
+					if ( $step_image ) {
+						$step['image'] = $step_image;
+					}
+					$steps[] = $step;
+				}
+			}
+			if ( ! empty( $steps ) ) {
+				$out['step'] = $steps;
 			}
 		}
 
