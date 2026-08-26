@@ -30,6 +30,8 @@ class MM_Schema_Types {
 			'AboutPage'     => 'AboutPage',
 			'ContactPage'   => 'ContactPage',
 			'ProfilePage'   => 'ProfilePage',
+			'Calendar'      => 'Calendar',
+			'FAQPage'       => 'FAQPage',
 			// ── Articles ─────────────────────────────────────────────────────
 			'Article'       => 'Article',
 			'BlogPosting'   => 'BlogPosting',
@@ -265,6 +267,64 @@ class MM_Schema_Types {
 				],
 			],
 
+			// ── FAQPage ──────────────────────────────────────────────────────
+			'FAQPage' => [
+				[
+					'key'         => 'faq_question_1',
+					'label'       => 'Question 1',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+				],
+				[
+					'key'         => 'faq_answer_1',
+					'label'       => 'Answer 1',
+					'type'        => 'textarea',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+				],
+				[
+					'key'         => 'faq_question_2',
+					'label'       => 'Question 2',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+				],
+				[
+					'key'         => 'faq_answer_2',
+					'label'       => 'Answer 2',
+					'type'        => 'textarea',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+				],
+				[
+					'key'         => 'faq_question_3',
+					'label'       => 'Question 3',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+				],
+				[
+					'key'         => 'faq_answer_3',
+					'label'       => 'Answer 3',
+					'type'        => 'textarea',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+				],
+			],
+
 			// ── Product ───────────────────────────────────────────────────────
 			'Product' => [
 				[
@@ -419,6 +479,28 @@ class MM_Schema_Types {
 			$offer = $make_offer( 'service_price', 'service_currency' );
 			if ( $offer ) {
 				$out['offers'] = $offer;
+			}
+		}
+
+		// ── FAQPage ──────────────────────────────────────────────────────────
+		if ( 'FAQPage' === $type ) {
+			$main_entity = [];
+			for ( $i = 1; $i <= 10; $i++ ) {
+				$question = $str( "faq_question_{$i}" );
+				$answer   = $str( "faq_answer_{$i}" );
+				if ( $question && $answer ) {
+					$main_entity[] = [
+						'@type'          => 'Question',
+						'name'           => $question,
+						'acceptedAnswer' => [
+							'@type' => 'Answer',
+							'text'  => $answer,
+						],
+					];
+				}
+			}
+			if ( ! empty( $main_entity ) ) {
+				$out['mainEntity'] = $main_entity;
 			}
 		}
 

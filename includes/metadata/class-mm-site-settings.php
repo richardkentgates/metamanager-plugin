@@ -417,7 +417,6 @@ class MM_Site_Settings {
 					'post'    => 'BlogPosting',
 					'page'    => 'WebPage',
 					'product' => 'Product',
-					'course'  => 'Course',
 				],
 				'custom_json_ld'        => '',
 			],
