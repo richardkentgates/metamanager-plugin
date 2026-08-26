@@ -4,7 +4,7 @@ Tags: seo, metadata, sitemap, schema, open-graph
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 2.3.132
+Stable tag: 2.3.134
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -54,7 +54,7 @@ Use the bundled `metamanager-install.sh` script to install everything automatica
 
 * Per-post/page/term/user title and description with template tokens
 * Open Graph: og:title, og:description, og:image (with dimensions/type/alt), og:video, og:audio, article timestamps; Twitter/X cards
-* Schema.org JSON-LD: Article, BlogPosting, WebPage, BreadcrumbList, ImageObject, VideoObject, AudioObject, DigitalDocument, Product, FAQPage, HowTo, Recipe, Event, Course, JobPosting, Review, Service, Organization, LocalBusiness, Person — 20+ types
+* Schema.org JSON-LD: Article, BlogPosting, WebPage, BreadcrumbList, ImageObject, VideoObject, AudioObject, DigitalDocument, Product, FAQPage, HowTo, Event, Service, Organization, LocalBusiness, Person — 12 selectable types with dedicated CPTs for Event, Service, HowTo, FAQPage, Calendar, AboutPage, ContactPage
 * XML sitemaps: /sitemap.xml, /sitemap-media.xml, /sitemap-video.xml with ping on publish
 * HTML sitemap via [mm_sitemap] shortcode
 * Robots.txt: auto-appended Sitemap: directives; global per-type noindex; per-post robots controls

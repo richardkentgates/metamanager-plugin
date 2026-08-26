@@ -20,6 +20,7 @@ class MM_Schema_Post_Types {
 		'mm_about_page'  => [ 'AboutPage',   [ 'title', 'thumbnail' ], 'info' ],  // Editor disabled — content auto-generated from business info.
 		'mm_contact_page'=> [ 'ContactPage', [ 'title', 'thumbnail' ], 'email-alt' ],  // Editor disabled — content auto-generated from business info.
 		'mm_calendar'    => [ 'Calendar',    [ 'title', 'thumbnail' ], 'calendar' ],  // Editor disabled — auto-generated event calendar.
+		'mm_faq_page'    => [ 'FAQPage',     [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'editor' ],
 		// WebPage maps to default `page` type — not a separate CPT.
 		// BlogPosting maps to default `post` type — not a separate CPT.
 		// ProfilePage maps to author archive pages — not a separate CPT.
@@ -107,6 +108,14 @@ class MM_Schema_Post_Types {
 		}
 		if ( 'mm_calendar' === $slug ) {
 			self::render_calendar_meta_box( $post );
+			return;
+		}
+		if ( 'mm_faq_page' === $slug ) {
+			self::render_faq_page_meta_box( $post );
+			return;
+		}
+		if ( 'mm_how_to' === $slug ) {
+			self::render_how_to_meta_box( $post );
 			return;
 		}
 
@@ -402,6 +411,177 @@ class MM_Schema_Post_Types {
 			],
 		] );
 		return $query->posts;
+	}
+
+	/**
+	 * Render the FAQPage meta box — dynamic Q&A pairs.
+	 */
+	private static function render_faq_page_meta_box( \WP_Post $post ): void {
+		$saved = get_post_meta( $post->ID, 'mm_schema_fields', true );
+		if ( ! is_array( $saved ) ) {
+			$saved = [];
+		}
+
+		// Count existing pairs.
+		$pair_count = 0;
+		for ( $i = 1; $i <= 20; $i++ ) {
+			if ( ! empty( $saved[ "faq_question_{$i}" ] ) || ! empty( $saved[ "faq_answer_{$i}" ] ) ) {
+				$pair_count = $i;
+			}
+		}
+		if ( $pair_count < 1 ) {
+			$pair_count = 1;
+		}
+
+		echo '<div id="mm-faq-pairs">';
+		for ( $i = 1; $i <= $pair_count; $i++ ) {
+			self::render_faq_pair( $i, $saved );
+		}
+		echo '</div>';
+		printf(
+			'<p><button type="button" id="mm-add-faq-pair" class="button button-secondary">+ Add Question</button></p>'
+		);
+		?>
+		<script>
+		(function(){
+			var pairCount = <?php echo esc_js( (string) $pair_count ); ?>;
+			var container = document.getElementById('mm-faq-pairs');
+			document.getElementById('mm-add-faq-pair').addEventListener('click', function(){
+				pairCount++;
+				var div = document.createElement('div');
+				div.className = 'mm-faq-pair';
+				div.style.cssText = 'background:#f0f0f1;padding:12px;margin-bottom:12px;border-radius:4px;position:relative;';
+				div.innerHTML =
+					'<button type="button" class="button mm-remove-faq-pair" style="position:absolute;top:8px;right:8px;">&times;</button>' +
+					'<p><strong>Q&amp;A Pair ' + pairCount + '</strong></p>' +
+					'<table class="form-table"><tbody>' +
+					'<tr><th><label for="mm_faq_question_' + pairCount + '">Question</label></th>' +
+					'<td><input type="text" id="mm_faq_question_' + pairCount + '" name="mm_schema_fields[faq_question_' + pairCount + ']" value="" class="regular-text"></td></tr>' +
+					'<tr><th><label for="mm_faq_answer_' + pairCount + '">Answer</label></th>' +
+					'<td><textarea id="mm_faq_answer_' + pairCount + '" name="mm_schema_fields[faq_answer_' + pairCount + ']" rows="4" class="large-text"></textarea></td></tr>' +
+					'</tbody></table>';
+				container.appendChild(div);
+				div.querySelector('.mm-remove-faq-pair').addEventListener('click', function(){
+					div.remove();
+				});
+			});
+			container.addEventListener('click', function(e){
+				if(e.target.classList.contains('mm-remove-faq-pair')){
+					e.target.closest('.mm-faq-pair').remove();
+				}
+			});
+		})();
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render a single FAQ Q&A pair.
+	 */
+	private static function render_faq_pair( int $i, array $saved ): void {
+		$question = $saved[ "faq_question_{$i}" ] ?? '';
+		$answer   = $saved[ "faq_answer_{$i}" ] ?? '';
+		$si       = (string) $i;
+		?>
+		<div class="mm-faq-pair" style="background:#f0f0f1;padding:12px;margin-bottom:12px;border-radius:4px;position:relative;">
+			<button type="button" class="button mm-remove-faq-pair" style="position:absolute;top:8px;right:8px;">&times;</button>
+			<p><strong>Q&amp;A Pair <?php echo esc_html( $si ); ?></strong></p>
+			<table class="form-table"><tbody>
+				<tr><th><label for="mm_faq_question_<?php echo esc_attr( $si ); ?>">Question</label></th>
+				<td><input type="text" id="mm_faq_question_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[faq_question_<?php echo esc_attr( $si ); ?>]" value="<?php echo esc_attr( $question ); ?>" class="regular-text"></td></tr>
+				<tr><th><label for="mm_faq_answer_<?php echo esc_attr( $si ); ?>">Answer</label></th>
+				<td><textarea id="mm_faq_answer_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[faq_answer_<?php echo esc_attr( $si ); ?>]" rows="4" class="large-text"><?php echo esc_textarea( $answer ); ?></textarea></td></tr>
+			</tbody></table>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the HowTo meta box — dynamic steps.
+	 */
+	private static function render_how_to_meta_box( \WP_Post $post ): void {
+		$saved = get_post_meta( $post->ID, 'mm_schema_fields', true );
+		if ( ! is_array( $saved ) ) {
+			$saved = [];
+		}
+
+		// Count existing steps.
+		$step_count = 0;
+		for ( $i = 1; $i <= 20; $i++ ) {
+			if ( ! empty( $saved[ "howto_step_name_{$i}" ] ) || ! empty( $saved[ "howto_step_text_{$i}" ] ) ) {
+				$step_count = $i;
+			}
+		}
+		if ( $step_count < 1 ) {
+			$step_count = 1;
+		}
+
+		echo '<div id="mm-howto-steps">';
+		for ( $i = 1; $i <= $step_count; $i++ ) {
+			self::render_how_to_step( $i, $saved );
+		}
+		echo '</div>';
+		printf(
+			'<p><button type="button" id="mm-add-howto-step" class="button button-secondary">+ Add Step</button></p>'
+		);
+		?>
+		<script>
+		(function(){
+			var stepCount = <?php echo esc_js( (string) $step_count ); ?>;
+			var container = document.getElementById('mm-howto-steps');
+			document.getElementById('mm-add-howto-step').addEventListener('click', function(){
+				stepCount++;
+				var div = document.createElement('div');
+				div.className = 'mm-howto-step';
+				div.style.cssText = 'background:#f0f0f1;padding:12px;margin-bottom:12px;border-radius:4px;position:relative;';
+				div.innerHTML =
+					'<button type="button" class="button mm-remove-howto-step" style="position:absolute;top:8px;right:8px;">&times;</button>' +
+					'<p><strong>Step ' + stepCount + '</strong></p>' +
+					'<table class="form-table"><tbody>' +
+					'<tr><th><label for="mm_howto_step_name_' + stepCount + '">Step Name</label></th>' +
+					'<td><input type="text" id="mm_howto_step_name_' + stepCount + '" name="mm_schema_fields[howto_step_name_' + stepCount + ']" value="" class="regular-text" placeholder="e.g. Preheat the oven"></td></tr>' +
+					'<tr><th><label for="mm_howto_step_text_' + stepCount + '">Step Instructions</label></th>' +
+					'<td><textarea id="mm_howto_step_text_' + stepCount + '" name="mm_schema_fields[howto_step_text_' + stepCount + ']" rows="4" class="large-text" placeholder="Detailed instructions for this step..."></textarea></td></tr>' +
+					'<tr><th><label for="mm_howto_step_image_' + stepCount + '">Step Image URL</label></th>' +
+					'<td><input type="url" id="mm_howto_step_image_' + stepCount + '" name="mm_schema_fields[howto_step_image_' + stepCount + ']" value="" class="regular-text" placeholder="https://example.com/step-image.jpg"></td></tr>' +
+					'</tbody></table>';
+				container.appendChild(div);
+				div.querySelector('.mm-remove-howto-step').addEventListener('click', function(){
+					div.remove();
+				});
+			});
+			container.addEventListener('click', function(e){
+				if(e.target.classList.contains('mm-remove-howto-step')){
+					e.target.closest('.mm-howto-step').remove();
+				}
+			});
+		})();
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render a single HowTo step.
+	 */
+	private static function render_how_to_step( int $i, array $saved ): void {
+		$name  = $saved[ "howto_step_name_{$i}" ] ?? '';
+		$text  = $saved[ "howto_step_text_{$i}" ] ?? '';
+		$image = $saved[ "howto_step_image_{$i}" ] ?? '';
+		$si    = (string) $i;
+		?>
+		<div class="mm-howto-step" style="background:#f0f0f1;padding:12px;margin-bottom:12px;border-radius:4px;position:relative;">
+			<button type="button" class="button mm-remove-howto-step" style="position:absolute;top:8px;right:8px;">&times;</button>
+			<p><strong>Step <?php echo esc_html( $si ); ?></strong></p>
+			<table class="form-table"><tbody>
+				<tr><th><label for="mm_howto_step_name_<?php echo esc_attr( $si ); ?>">Step Name</label></th>
+				<td><input type="text" id="mm_howto_step_name_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[howto_step_name_<?php echo esc_attr( $si ); ?>]" value="<?php echo esc_attr( $name ); ?>" class="regular-text" placeholder="e.g. Preheat the oven"></td></tr>
+				<tr><th><label for="mm_howto_step_text_<?php echo esc_attr( $si ); ?>">Step Instructions</label></th>
+				<td><textarea id="mm_howto_step_text_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[howto_step_text_<?php echo esc_attr( $si ); ?>]" rows="4" class="large-text" placeholder="Detailed instructions for this step..."><?php echo esc_textarea( $text ); ?></textarea></td></tr>
+				<tr><th><label for="mm_howto_step_image_<?php echo esc_attr( $si ); ?>">Step Image URL</label></th>
+				<td><input type="url" id="mm_howto_step_image_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[howto_step_image_<?php echo esc_attr( $si ); ?>]" value="<?php echo esc_attr( $image ); ?>" class="regular-text" placeholder="https://example.com/step-image.jpg"></td></tr>
+			</tbody></table>
+		</div>
+		<?php
 	}
 
 	/**

@@ -28,9 +28,7 @@ metamanager/
 │   ├── class-mm-job-queue.php    Job file write/read/cleanup (filesystem only — no DB)
 │   ├── class-mm-metadata.php     Field constants, WP field sync, daemon job payload builder
 │   ├── class-mm-admin.php        All wp-admin integration: columns, panes, bulk, dashboard, help tabs
-│   ├── class-mm-frontend.php     Legacy wp_head scaffold; main head output now delegated to metadata subsystem
 │   ├── class-mm-settings.php     Media/compression Preferences page registration and rendering
-│   ├── class-mm-sitemap.php      Media sitemap endpoints (/sitemap-media.xml, /sitemap-video.xml)
 │   ├── class-mm-status.php       Dependency detection (ExifTool, jpegtran, optipng, cwebp, ffmpeg, daemons)
 │   ├── class-mm-upload-notify.php  Upload receipt emails with 60-second batching and retry
 │   ├── class-mm-updater.php      Native WordPress update pipeline integration (GitHub releases)
@@ -61,7 +59,7 @@ metamanager/
 │           ├── class-mm-mod-base.php          Abstract base class for all modules
 │           ├── class-mm-mod-head-meta.php     Title, description, canonical, robots per-page meta
 │           ├── class-mm-mod-social.php        Open Graph and Twitter/X Card tags
-│           ├── class-mm-mod-schema.php        Schema.org JSON-LD (20+ types)
+│           ├── class-mm-mod-schema.php        Schema.org JSON-LD (12 selectable types)
 │           ├── class-mm-mod-sitemap.php       XML sitemap index + per-type sub-sitemaps
 │           ├── class-mm-mod-robots.php        Dynamic robots.txt generation
 │           ├── class-mm-mod-html-sitemap.php  [mm_sitemap] shortcode

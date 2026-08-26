@@ -30,6 +30,8 @@ class MM_Schema_Types {
 			'AboutPage'     => 'AboutPage',
 			'ContactPage'   => 'ContactPage',
 			'ProfilePage'   => 'ProfilePage',
+			'Calendar'      => 'Calendar',
+			'FAQPage'       => 'FAQPage',
 			// ── Articles ─────────────────────────────────────────────────────
 			'Article'       => 'Article',
 			'BlogPosting'   => 'BlogPosting',
@@ -265,6 +267,14 @@ class MM_Schema_Types {
 				],
 			],
 
+			// ── FAQPage ──────────────────────────────────────────────────────
+			// Fields are dynamically rendered in the metabox (not static field defs).
+			'FAQPage' => [],
+
+			// ── HowTo ──────────────────────────────────────────────────────
+			// Fields are dynamically rendered in the metabox (not static field defs).
+			'HowTo' => [],
+
 			// ── Product ───────────────────────────────────────────────────────
 			'Product' => [
 				[
@@ -419,6 +429,52 @@ class MM_Schema_Types {
 			$offer = $make_offer( 'service_price', 'service_currency' );
 			if ( $offer ) {
 				$out['offers'] = $offer;
+			}
+		}
+
+		// ── FAQPage ──────────────────────────────────────────────────────────
+		if ( 'FAQPage' === $type ) {
+			$main_entity = [];
+			for ( $i = 1; $i <= 20; $i++ ) {
+				$question = $str( "faq_question_{$i}" );
+				$answer   = $str( "faq_answer_{$i}" );
+				if ( $question && $answer ) {
+					$main_entity[] = [
+						'@type'          => 'Question',
+						'name'           => $question,
+						'acceptedAnswer' => [
+							'@type' => 'Answer',
+							'text'  => $answer,
+						],
+					];
+				}
+			}
+			if ( ! empty( $main_entity ) ) {
+				$out['mainEntity'] = $main_entity;
+			}
+		}
+
+		// ── HowTo ──────────────────────────────────────────────────────────
+		if ( 'HowTo' === $type ) {
+			$steps = [];
+			for ( $i = 1; $i <= 20; $i++ ) {
+				$step_name  = $str( "howto_step_name_{$i}" );
+				$step_text  = $str( "howto_step_text_{$i}" );
+				$step_image = $str( "howto_step_image_{$i}" );
+				if ( $step_name || $step_text ) {
+					$step = [
+						'@type'          => 'HowToStep',
+						'name'           => $step_name,
+						'text'           => $step_text,
+					];
+					if ( $step_image ) {
+						$step['image'] = $step_image;
+					}
+					$steps[] = $step;
+				}
+			}
+			if ( ! empty( $steps ) ) {
+				$out['step'] = $steps;
 			}
 		}
 
