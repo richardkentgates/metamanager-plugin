@@ -444,7 +444,7 @@ class MM_Schema_Post_Types {
 		?>
 		<script>
 		(function(){
-			var pairCount = <?php echo esc_js( $pair_count ); ?>;
+			var pairCount = <?php echo esc_js( (string) $pair_count ); ?>;
 			var container = document.getElementById('mm-faq-pairs');
 			document.getElementById('mm-add-faq-pair').addEventListener('click', function(){
 				pairCount++;
@@ -481,15 +481,16 @@ class MM_Schema_Post_Types {
 	private static function render_faq_pair( int $i, array $saved ): void {
 		$question = $saved[ "faq_question_{$i}" ] ?? '';
 		$answer   = $saved[ "faq_answer_{$i}" ] ?? '';
+		$si       = (string) $i;
 		?>
 		<div class="mm-faq-pair" style="background:#f0f0f1;padding:12px;margin-bottom:12px;border-radius:4px;position:relative;">
 			<button type="button" class="button mm-remove-faq-pair" style="position:absolute;top:8px;right:8px;">&times;</button>
-			<p><strong>Q&amp;A Pair <?php echo esc_html( $i ); ?></strong></p>
+			<p><strong>Q&amp;A Pair <?php echo esc_html( $si ); ?></strong></p>
 			<table class="form-table"><tbody>
-				<tr><th><label for="mm_faq_question_<?php echo esc_attr( $i ); ?>">Question</label></th>
-				<td><input type="text" id="mm_faq_question_<?php echo esc_attr( $i ); ?>" name="mm_schema_fields[faq_question_<?php echo esc_attr( $i ); ?>]" value="<?php echo esc_attr( $question ); ?>" class="regular-text"></td></tr>
-				<tr><th><label for="mm_faq_answer_<?php echo esc_attr( $i ); ?>">Answer</label></th>
-				<td><textarea id="mm_faq_answer_<?php echo esc_attr( $i ); ?>" name="mm_schema_fields[faq_answer_<?php echo esc_attr( $i ); ?>]" rows="4" class="large-text"><?php echo esc_textarea( $answer ); ?></textarea></td></tr>
+				<tr><th><label for="mm_faq_question_<?php echo esc_attr( $si ); ?>">Question</label></th>
+				<td><input type="text" id="mm_faq_question_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[faq_question_<?php echo esc_attr( $si ); ?>]" value="<?php echo esc_attr( $question ); ?>" class="regular-text"></td></tr>
+				<tr><th><label for="mm_faq_answer_<?php echo esc_attr( $si ); ?>">Answer</label></th>
+				<td><textarea id="mm_faq_answer_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[faq_answer_<?php echo esc_attr( $si ); ?>]" rows="4" class="large-text"><?php echo esc_textarea( $answer ); ?></textarea></td></tr>
 			</tbody></table>
 		</div>
 		<?php
@@ -526,7 +527,7 @@ class MM_Schema_Post_Types {
 		?>
 		<script>
 		(function(){
-			var stepCount = <?php echo esc_js( $step_count ); ?>;
+			var stepCount = <?php echo esc_js( (string) $step_count ); ?>;
 			var container = document.getElementById('mm-howto-steps');
 			document.getElementById('mm-add-howto-step').addEventListener('click', function(){
 				stepCount++;
@@ -566,17 +567,18 @@ class MM_Schema_Post_Types {
 		$name  = $saved[ "howto_step_name_{$i}" ] ?? '';
 		$text  = $saved[ "howto_step_text_{$i}" ] ?? '';
 		$image = $saved[ "howto_step_image_{$i}" ] ?? '';
+		$si    = (string) $i;
 		?>
 		<div class="mm-howto-step" style="background:#f0f0f1;padding:12px;margin-bottom:12px;border-radius:4px;position:relative;">
 			<button type="button" class="button mm-remove-howto-step" style="position:absolute;top:8px;right:8px;">&times;</button>
-			<p><strong>Step <?php echo esc_html( $i ); ?></strong></p>
+			<p><strong>Step <?php echo esc_html( $si ); ?></strong></p>
 			<table class="form-table"><tbody>
-				<tr><th><label for="mm_howto_step_name_<?php echo esc_attr( $i ); ?>">Step Name</label></th>
-				<td><input type="text" id="mm_howto_step_name_<?php echo esc_attr( $i ); ?>" name="mm_schema_fields[howto_step_name_<?php echo esc_attr( $i ); ?>]" value="<?php echo esc_attr( $name ); ?>" class="regular-text" placeholder="e.g. Preheat the oven"></td></tr>
-				<tr><th><label for="mm_howto_step_text_<?php echo esc_attr( $i ); ?>">Step Instructions</label></th>
-				<td><textarea id="mm_howto_step_text_<?php echo esc_attr( $i ); ?>" name="mm_schema_fields[howto_step_text_<?php echo esc_attr( $i ); ?>]" rows="4" class="large-text" placeholder="Detailed instructions for this step..."><?php echo esc_textarea( $text ); ?></textarea></td></tr>
-				<tr><th><label for="mm_howto_step_image_<?php echo esc_attr( $i ); ?>">Step Image URL</label></th>
-				<td><input type="url" id="mm_howto_step_image_<?php echo esc_attr( $i ); ?>" name="mm_schema_fields[howto_step_image_<?php echo esc_attr( $i ); ?>]" value="<?php echo esc_attr( $image ); ?>" class="regular-text" placeholder="https://example.com/step-image.jpg"></td></tr>
+				<tr><th><label for="mm_howto_step_name_<?php echo esc_attr( $si ); ?>">Step Name</label></th>
+				<td><input type="text" id="mm_howto_step_name_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[howto_step_name_<?php echo esc_attr( $si ); ?>]" value="<?php echo esc_attr( $name ); ?>" class="regular-text" placeholder="e.g. Preheat the oven"></td></tr>
+				<tr><th><label for="mm_howto_step_text_<?php echo esc_attr( $si ); ?>">Step Instructions</label></th>
+				<td><textarea id="mm_howto_step_text_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[howto_step_text_<?php echo esc_attr( $si ); ?>]" rows="4" class="large-text" placeholder="Detailed instructions for this step..."><?php echo esc_textarea( $text ); ?></textarea></td></tr>
+				<tr><th><label for="mm_howto_step_image_<?php echo esc_attr( $si ); ?>">Step Image URL</label></th>
+				<td><input type="url" id="mm_howto_step_image_<?php echo esc_attr( $si ); ?>" name="mm_schema_fields[howto_step_image_<?php echo esc_attr( $si ); ?>]" value="<?php echo esc_attr( $image ); ?>" class="regular-text" placeholder="https://example.com/step-image.jpg"></td></tr>
 			</tbody></table>
 		</div>
 		<?php
