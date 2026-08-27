@@ -266,13 +266,13 @@ class Test_MM_Post_Meta_Panel extends WP_UnitTestCase {
 		wp_set_current_user( $user_id );
 
 		$_POST = $this->base_post( [
-			'mm_meta_schema_type'      => 'Article',
+			'mm_meta_schema_type'      => 'BlogPosting',
 			'mm_meta_breadcrumb_label' => 'Home > Blog',
 		] );
 		$this->panel->save_meta( $this->post_id, get_post( $this->post_id ) );
 		$meta = json_decode( get_post_meta( $this->post_id, MM_META_KEY, true ), true );
 
-		$this->assertSame( 'article', $meta['schema_type'] );
+		$this->assertSame( 'blogposting', $meta['schema_type'] );
 		$this->assertSame( 'Home > Blog', $meta['breadcrumb_label'] );
 
 		unset( $_POST );

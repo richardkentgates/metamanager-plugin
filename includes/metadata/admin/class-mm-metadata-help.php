@@ -123,7 +123,7 @@ class MM_Metadata_Help {
 					'<li><strong>WebSite</strong> — ' . esc_html__( 'Once per site; includes a SearchAction for sitelinks search box eligibility.', 'metamanager' ) . '</li>' .
 					'<li><strong>WebPage / subtypes</strong> — ' . esc_html__( 'One node per page (AboutPage, ContactPage, FAQPage, SearchResultsPage, ProfilePage…).', 'metamanager' ) . '</li>' .
 					'<li><strong>BreadcrumbList</strong> — ' . esc_html__( 'Automatic breadcrumb trail using post ancestors and primary category.', 'metamanager' ) . '</li>' .
-					'<li><strong>BlogPosting / Article</strong> — ' . esc_html__( 'Assigned per post type; linked to the Author Person node.', 'metamanager' ) . '</li>' .
+					'<li><strong>BlogPosting</strong> — ' . esc_html__( 'Assigned per post type; linked to the Author Person node.', 'metamanager' ) . '</li>' .
 					'<li><strong>LocalBusiness subtypes</strong> — ' . esc_html__( 'Added to every page via the Business profile; includes OpeningHoursSpecification and GeoCoordinates.', 'metamanager' ) . '</li>' .
 					'<li><strong>Person</strong> — ' . esc_html__( 'On author archives and singular posts; includes sameAs social links.', 'metamanager' ) . '</li>' .
 					'<li><strong>ImageObject</strong> — ' . esc_html__( 'Emitted automatically when an OG image is present.', 'metamanager' ) . '</li>' .

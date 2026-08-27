@@ -173,10 +173,9 @@ class Test_MM_Site_Settings_Save extends WP_UnitTestCase {
 				'breadcrumbs'          => '1',
 				'archive_itemlist'     => '1',
 				'post_type_types'      => [
-					'post'    => 'Article',
+					'post'    => 'BlogPosting',
 					'page'    => 'WebPage',
 					'product' => 'Product',
-					'course'  => 'Course',
 				],
 				'custom_json_ld'       => '',
 			],
