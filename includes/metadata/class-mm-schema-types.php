@@ -33,7 +33,6 @@ class MM_Schema_Types {
 			'Calendar'      => 'Calendar',
 			'FAQPage'       => 'FAQPage',
 			// ── Articles ─────────────────────────────────────────────────────
-			'Article'       => 'Article',
 			'BlogPosting'   => 'BlogPosting',
 			'HowTo'         => 'HowTo',
 			// ── Products & services ───────────────────────────────────────────
@@ -198,6 +197,48 @@ class MM_Schema_Types {
 					'placeholder' => '',
 					'description' => 'Optional description for offers (e.g. "Early bird pricing available").',
 				],
+				[
+					'key'         => 'event_attendance_mode',
+					'label'       => 'Attendance Mode',
+					'type'        => 'select',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Required for Google rich results if event is online or mixed.',
+					'options'     => [
+						''                                    => '— Not specified —',
+						'OfflineEventAttendanceMode'         => 'In-Person Only',
+						'OnlineEventAttendanceMode'          => 'Online Only',
+						'MixedEventAttendanceMode'           => 'Mixed (In-Person + Online)',
+					],
+				],
+				[
+					'key'         => 'event_type',
+					'label'       => 'Event Type',
+					'type'        => 'select',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Category of event (used by Google for rich results filtering).',
+					'options'     => [
+						''                  => '— Not specified —',
+						'BusinessEvent'     => 'Business Event',
+						'ChildrensEvent'    => "Children's Event",
+						'ComedyEvent'       => 'Comedy Event',
+						'DanceEvent'        => 'Dance Event',
+						'ExhibitionEvent'   => 'Exhibition Event',
+						'FestivalEvent'     => 'Festival Event',
+						'FoodEvent'         => 'Food Event',
+						'LiteraryEvent'     => 'Literary Event',
+						'MusicEvent'        => 'Music Event',
+						'PoliticalEvent'    => 'Political Event',
+						'SaleEvent'         => 'Sale Event',
+						'SocialEvent'       => 'Social Event',
+						'SportsEvent'       => 'Sports Event',
+						'TheaterEvent'      => 'Theater Event',
+						'VisualArtsEvent'   => 'Visual Arts Event',
+					],
+				],
 			],
 
 			// ── Service ───────────────────────────────────────────────────────
@@ -265,6 +306,15 @@ class MM_Schema_Types {
 					'placeholder' => '',
 					'description' => 'List what the service includes.',
 				],
+				[
+					'key'         => 'service_provider_name',
+					'label'       => 'Provider Name',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Auto-populated from business profile if empty.',
+				],
 			],
 
 			// ── FAQPage ──────────────────────────────────────────────────────
@@ -272,8 +322,36 @@ class MM_Schema_Types {
 			'FAQPage' => [],
 
 			// ── HowTo ──────────────────────────────────────────────────────
-			// Fields are dynamically rendered in the metabox (not static field defs).
-			'HowTo' => [],
+			// Steps are dynamically rendered; these are HowTo-level fields.
+			'HowTo' => [
+				[
+					'key'         => 'howto_total_time',
+					'label'       => 'Total Time',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. PT30M, PT1H, P1D',
+					'description' => 'ISO 8601 duration. PT30M = 30 minutes, PT1H = 1 hour, P1D = 1 day.',
+				],
+				[
+					'key'         => 'howto_cost_amount',
+					'label'       => 'Estimated Cost',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 25.00',
+					'description' => 'Numeric cost value. Leave blank to omit.',
+				],
+				[
+					'key'         => 'howto_cost_currency',
+					'label'       => 'Cost Currency',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'USD',
+					'description' => 'ISO 4217 currency code.',
+				],
+			],
 
 			// ── Product ───────────────────────────────────────────────────────
 			'Product' => [
@@ -367,6 +445,14 @@ class MM_Schema_Types {
 			if ( $str( 'event_end_date' ) ) {
 				$out['endDate'] = $str( 'event_end_date' );
 			}
+			$attendance = $str( 'event_attendance_mode' );
+			if ( $attendance ) {
+				$out['eventAttendanceMode'] = 'https://schema.org/' . $attendance;
+			}
+			$event_type = $str( 'event_type' );
+			if ( $event_type ) {
+				$out['eventType'] = 'https://schema.org/' . $event_type;
+			}
 			$loc_name = $str( 'event_location_name' );
 			$loc_addr = $str( 'event_location_address' );
 			if ( $loc_name || $loc_addr ) {
@@ -430,6 +516,13 @@ class MM_Schema_Types {
 			if ( $offer ) {
 				$out['offers'] = $offer;
 			}
+			$provider = $str( 'service_provider_name' );
+			if ( $provider ) {
+				$out['provider'] = [
+					'@type' => 'Organization',
+					'name'  => $provider,
+				];
+			}
 		}
 
 		// ── FAQPage ──────────────────────────────────────────────────────────
@@ -456,6 +549,44 @@ class MM_Schema_Types {
 
 		// ── HowTo ──────────────────────────────────────────────────────────
 		if ( 'HowTo' === $type ) {
+			$total_time = $str( 'howto_total_time' );
+			if ( $total_time ) {
+				$out['totalTime'] = $total_time;
+			}
+			$cost_amount = $str( 'howto_cost_amount' );
+			if ( $cost_amount ) {
+				$out['estimatedCost'] = [
+					'@type'         => 'MonetaryAmount',
+					'currency'      => $str( 'howto_cost_currency' ) ?: 'USD',
+					'value'         => $cost_amount,
+				];
+			}
+			$supply = [];
+			for ( $i = 1; $i <= 20; $i++ ) {
+				$item = $str( "howto_supply_{$i}" );
+				if ( $item ) {
+					$supply[] = [
+						'@type' => 'HowToSupply',
+						'name'  => $item,
+					];
+				}
+			}
+			if ( ! empty( $supply ) ) {
+				$out['supply'] = $supply;
+			}
+			$tool = [];
+			for ( $i = 1; $i <= 20; $i++ ) {
+				$item = $str( "howto_tool_{$i}" );
+				if ( $item ) {
+					$tool[] = [
+						'@type' => 'HowToTool',
+						'name'  => $item,
+					];
+				}
+			}
+			if ( ! empty( $tool ) ) {
+				$out['tool'] = $tool;
+			}
 			$steps = [];
 			for ( $i = 1; $i <= 20; $i++ ) {
 				$step_name  = $str( "howto_step_name_{$i}" );
