@@ -21,7 +21,7 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 
 	public function test_get_schema_types_has_required_types(): void {
 		$types = MM_Schema_Types::get_schema_types();
-		$expected = [ 'WebPage', 'Article', 'BlogPosting', 'Product', 'Event' ];
+		$expected = [ 'WebPage', 'BlogPosting', 'Product', 'Event', 'Service' ];
 		foreach ( $expected as $type ) {
 			$this->assertArrayHasKey( $type, $types, "Schema type {$type} should exist" );
 		}
@@ -55,6 +55,26 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 		$this->assertContains( 'event_start_date', $event_fields );
 		$this->assertContains( 'event_end_date', $event_fields );
 		$this->assertContains( 'event_price', $event_fields );
+		$this->assertContains( 'event_attendance_mode', $event_fields );
+		$this->assertContains( 'event_type', $event_fields );
+	}
+
+	public function test_service_type_has_provider_field(): void {
+		$fields = MM_Schema_Types::get_fields_by_type();
+		$this->assertArrayHasKey( 'Service', $fields );
+		$service_fields = array_column( $fields['Service'], 'key' );
+		$this->assertContains( 'service_provider_name', $service_fields );
+		$this->assertContains( 'service_type', $service_fields );
+		$this->assertContains( 'service_area', $service_fields );
+	}
+
+	public function test_howto_type_has_time_and_cost_fields(): void {
+		$fields = MM_Schema_Types::get_fields_by_type();
+		$this->assertArrayHasKey( 'HowTo', $fields );
+		$howto_fields = array_column( $fields['HowTo'], 'key' );
+		$this->assertContains( 'howto_total_time', $howto_fields );
+		$this->assertContains( 'howto_cost_amount', $howto_fields );
+		$this->assertContains( 'howto_cost_currency', $howto_fields );
 	}
 
 	public function test_product_type_has_brand_field(): void {
@@ -151,5 +171,85 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 		$this->assertSame( 'Plumbing', $result['serviceType'] );
 		$this->assertSame( 'Greater Portland', $result['areaServed'] );
 		$this->assertArrayHasKey( 'offers', $result );
+	}
+
+	public function test_build_node_additions_event_attendance_mode(): void {
+		$fields = [
+			'event_start_date'       => '2025-06-15T10:00',
+			'event_attendance_mode'  => 'OnlineEventAttendanceMode',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'Event' );
+
+		$this->assertSame( 'https://schema.org/OnlineEventAttendanceMode', $result['eventAttendanceMode'] );
+	}
+
+	public function test_build_node_additions_event_type(): void {
+		$fields = [
+			'event_start_date' => '2025-06-15T10:00',
+			'event_type'       => 'MusicEvent',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'Event' );
+
+		$this->assertSame( 'https://schema.org/MusicEvent', $result['eventType'] );
+	}
+
+	public function test_build_node_additions_service_provider(): void {
+		$fields = [
+			'service_type'          => 'Plumbing',
+			'service_provider_name' => 'Acme Plumbing Co',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'Service' );
+
+		$this->assertArrayHasKey( 'provider', $result );
+		$this->assertSame( 'Acme Plumbing Co', $result['provider']['name'] );
+		$this->assertSame( 'Organization', $result['provider']['@type'] );
+	}
+
+	public function test_build_node_additions_howto_total_time(): void {
+		$fields = [
+			'howto_total_time' => 'PT30M',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'HowTo' );
+
+		$this->assertSame( 'PT30M', $result['totalTime'] );
+	}
+
+	public function test_build_node_additions_howto_estimated_cost(): void {
+		$fields = [
+			'howto_cost_amount'   => '25.00',
+			'howto_cost_currency' => 'USD',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'HowTo' );
+
+		$this->assertArrayHasKey( 'estimatedCost', $result );
+		$this->assertSame( 'MonetaryAmount', $result['estimatedCost']['@type'] );
+		$this->assertSame( '25.00', $result['estimatedCost']['value'] );
+		$this->assertSame( 'USD', $result['estimatedCost']['currency'] );
+	}
+
+	public function test_build_node_additions_howto_supply(): void {
+		$fields = [
+			'howto_supply_1' => '2 cups flour',
+			'howto_supply_2' => '1 egg',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'HowTo' );
+
+		$this->assertCount( 2, $result['supply'] );
+		$this->assertSame( 'HowToSupply', $result['supply'][0]['@type'] );
+		$this->assertSame( '2 cups flour', $result['supply'][0]['name'] );
+		$this->assertSame( '1 egg', $result['supply'][1]['name'] );
+	}
+
+	public function test_build_node_additions_howto_tool(): void {
+		$fields = [
+			'howto_tool_1' => 'Screwdriver',
+			'howto_tool_2' => 'Hammer',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'HowTo' );
+
+		$this->assertCount( 2, $result['tool'] );
+		$this->assertSame( 'HowToTool', $result['tool'][0]['@type'] );
+		$this->assertSame( 'Screwdriver', $result['tool'][0]['name'] );
+		$this->assertSame( 'Hammer', $result['tool'][1]['name'] );
 	}
 }

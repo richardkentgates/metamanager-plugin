@@ -140,7 +140,7 @@ class MM_Schema_Post_Types {
 		echo '<table class="form-table"><tbody>';
 
 		// Get business profile defaults for auto-population.
-		$biz = ( 'mm_event' === $slug ) ? MM_Site_Settings::get_instance()->all_business() : [];
+		$biz = in_array( $slug, [ 'mm_event', 'mm_service' ], true ) ? MM_Site_Settings::get_instance()->all_business() : [];
 		$biz_addr = $biz['address'] ?? [];
 
 		foreach ( $type_fields as $field ) {
@@ -179,6 +179,9 @@ class MM_Schema_Post_Types {
 						$biz_attr = ! empty( $biz['phone'] ) ? sprintf( ' data-biz-default="%s"', esc_attr( $biz['phone'] ) ) : '';
 						break;
 				}
+			}
+			if ( 'mm_service' === $slug && 'service_provider_name' === $key ) {
+				$biz_attr = ! empty( $biz['name'] ) ? sprintf( ' data-biz-default="%s"', esc_attr( $biz['name'] ) ) : '';
 			}
 
 			printf( '<tr><th><label for="mm_%s">%s%s</label></th><td>', esc_attr( $key ), esc_html( $label ), $required ? ' <span class="required">*</span>' : '' );
@@ -226,8 +229,8 @@ class MM_Schema_Post_Types {
 			);
 		}
 
-		// Event: add auto-populate JavaScript.
-		if ( 'mm_event' === $slug ) {
+		// Event/Service: add auto-populate JavaScript.
+		if ( in_array( $slug, [ 'mm_event', 'mm_service' ], true ) ) {
 			?>
 			<script>
 			(function(){
@@ -497,7 +500,7 @@ class MM_Schema_Post_Types {
 	}
 
 	/**
-	 * Render the HowTo meta box — dynamic steps.
+	 * Render the HowTo meta box — HowTo-level fields, dynamic supply/tools, dynamic steps.
 	 */
 	private static function render_how_to_meta_box( \WP_Post $post ): void {
 		$saved = get_post_meta( $post->ID, 'mm_schema_fields', true );
@@ -505,7 +508,90 @@ class MM_Schema_Post_Types {
 			$saved = [];
 		}
 
-		// Count existing steps.
+		// HowTo-level fields (totalTime, estimatedCost).
+		echo '<h4>HowTo Details</h4>';
+		echo '<table class="form-table"><tbody>';
+
+		$total_time = $saved['howto_total_time'] ?? '';
+		printf(
+			'<tr><th><label for="mm_howto_total_time">Total Time</label></th><td>' .
+			'<input type="text" id="mm_howto_total_time" name="mm_schema_fields[howto_total_time]" value="%s" class="regular-text" placeholder="e.g. PT30M, PT1H, P1D">' .
+			'<p class="description">ISO 8601 duration. PT30M = 30 min, PT1H = 1 hour, P1D = 1 day.</p></td></tr>',
+			esc_attr( $total_time )
+		);
+
+		$cost_amount = $saved['howto_cost_amount'] ?? '';
+		$cost_currency = $saved['howto_cost_currency'] ?? '';
+		printf(
+			'<tr><th><label for="mm_howto_cost_amount">Estimated Cost</label></th><td>' .
+			'<input type="text" id="mm_howto_cost_amount" name="mm_schema_fields[howto_cost_amount]" value="%s" class="regular-text" placeholder="e.g. 25.00" style="width:120px;">' .
+			'&nbsp;<input type="text" id="mm_howto_cost_currency" name="mm_schema_fields[howto_cost_currency]" value="%s" class="regular-text" placeholder="USD" style="width:80px;">' .
+			'<p class="description">Cost value and ISO 4217 currency code. Leave blank to omit.</p></td></tr>',
+			esc_attr( $cost_amount ),
+			esc_attr( $cost_currency )
+		);
+
+		echo '</tbody></table>';
+
+		// Dynamic supply list.
+		$supply_count = 0;
+		for ( $i = 1; $i <= 20; $i++ ) {
+			if ( ! empty( $saved[ "howto_supply_{$i}" ] ) ) {
+				$supply_count = $i;
+			}
+		}
+		if ( $supply_count < 1 ) {
+			$supply_count = 1;
+		}
+
+		echo '<h4>Materials (Supply)</h4>';
+		echo '<div id="mm-howto-supplies">';
+		for ( $i = 1; $i <= $supply_count; $i++ ) {
+			$val = $saved[ "howto_supply_{$i}" ] ?? '';
+			printf(
+				'<div class="mm-howto-supply" style="display:flex;gap:8px;margin-bottom:6px;">' .
+				'<input type="text" name="mm_schema_fields[howto_supply_%d]" value="%s" class="regular-text" placeholder="e.g. 2 cups flour" style="flex:1;">' .
+				'<button type="button" class="button mm-remove-howto-supply">&times;</button>' .
+				'</div>',
+				$i,
+				esc_attr( $val )
+			);
+		}
+		echo '</div>';
+		printf(
+			'<p><button type="button" id="mm-add-howto-supply" class="button button-secondary">+ Add Material</button></p>'
+		);
+
+		// Dynamic tool list.
+		$tool_count = 0;
+		for ( $i = 1; $i <= 20; $i++ ) {
+			if ( ! empty( $saved[ "howto_tool_{$i}" ] ) ) {
+				$tool_count = $i;
+			}
+		}
+		if ( $tool_count < 1 ) {
+			$tool_count = 1;
+		}
+
+		echo '<h4>Tools</h4>';
+		echo '<div id="mm-howto-tools">';
+		for ( $i = 1; $i <= $tool_count; $i++ ) {
+			$val = $saved[ "howto_tool_{$i}" ] ?? '';
+			printf(
+				'<div class="mm-howto-tool" style="display:flex;gap:8px;margin-bottom:6px;">' .
+				'<input type="text" name="mm_schema_fields[howto_tool_%d]" value="%s" class="regular-text" placeholder="e.g. Screwdriver" style="flex:1;">' .
+				'<button type="button" class="button mm-remove-howto-tool">&times;</button>' .
+				'</div>',
+				$i,
+				esc_attr( $val )
+			);
+		}
+		echo '</div>';
+		printf(
+			'<p><button type="button" id="mm-add-howto-tool" class="button button-secondary">+ Add Tool</button></p>'
+		);
+
+		// Dynamic steps.
 		$step_count = 0;
 		for ( $i = 1; $i <= 20; $i++ ) {
 			if ( ! empty( $saved[ "howto_step_name_{$i}" ] ) || ! empty( $saved[ "howto_step_text_{$i}" ] ) ) {
@@ -516,6 +602,7 @@ class MM_Schema_Post_Types {
 			$step_count = 1;
 		}
 
+		echo '<h4>Steps</h4>';
 		echo '<div id="mm-howto-steps">';
 		for ( $i = 1; $i <= $step_count; $i++ ) {
 			self::render_how_to_step( $i, $saved );
@@ -527,8 +614,37 @@ class MM_Schema_Post_Types {
 		?>
 		<script>
 		(function(){
+			var supplyCount = <?php echo esc_js( (string) $supply_count ); ?>;
+			var toolCount = <?php echo esc_js( (string) $tool_count ); ?>;
 			var stepCount = <?php echo esc_js( (string) $step_count ); ?>;
-			var container = document.getElementById('mm-howto-steps');
+
+			// Supply add/remove.
+			document.getElementById('mm-add-howto-supply').addEventListener('click', function(){
+				supplyCount++;
+				var div = document.createElement('div');
+				div.className = 'mm-howto-supply';
+				div.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;';
+				div.innerHTML = '<input type="text" name="mm_schema_fields[howto_supply_' + supplyCount + ']" value="" class="regular-text" placeholder="e.g. 2 cups flour" style="flex:1;"><button type="button" class="button mm-remove-howto-supply">&times;</button>';
+				document.getElementById('mm-howto-supplies').appendChild(div);
+			});
+			document.getElementById('mm-howto-supplies').addEventListener('click', function(e){
+				if(e.target.classList.contains('mm-remove-howto-supply')) e.target.closest('.mm-howto-supply').remove();
+			});
+
+			// Tool add/remove.
+			document.getElementById('mm-add-howto-tool').addEventListener('click', function(){
+				toolCount++;
+				var div = document.createElement('div');
+				div.className = 'mm-howto-tool';
+				div.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;';
+				div.innerHTML = '<input type="text" name="mm_schema_fields[howto_tool_' + toolCount + ']" value="" class="regular-text" placeholder="e.g. Screwdriver" style="flex:1;"><button type="button" class="button mm-remove-howto-tool">&times;</button>';
+				document.getElementById('mm-howto-tools').appendChild(div);
+			});
+			document.getElementById('mm-howto-tools').addEventListener('click', function(e){
+				if(e.target.classList.contains('mm-remove-howto-tool')) e.target.closest('.mm-howto-tool').remove();
+			});
+
+			// Step add/remove.
 			document.getElementById('mm-add-howto-step').addEventListener('click', function(){
 				stepCount++;
 				var div = document.createElement('div');
@@ -545,15 +661,10 @@ class MM_Schema_Post_Types {
 					'<tr><th><label for="mm_howto_step_image_' + stepCount + '">Step Image URL</label></th>' +
 					'<td><input type="url" id="mm_howto_step_image_' + stepCount + '" name="mm_schema_fields[howto_step_image_' + stepCount + ']" value="" class="regular-text" placeholder="https://example.com/step-image.jpg"></td></tr>' +
 					'</tbody></table>';
-				container.appendChild(div);
-				div.querySelector('.mm-remove-howto-step').addEventListener('click', function(){
-					div.remove();
-				});
+				document.getElementById('mm-howto-steps').appendChild(div);
 			});
-			container.addEventListener('click', function(e){
-				if(e.target.classList.contains('mm-remove-howto-step')){
-					e.target.closest('.mm-howto-step').remove();
-				}
+			document.getElementById('mm-howto-steps').addEventListener('click', function(e){
+				if(e.target.classList.contains('mm-remove-howto-step')) e.target.closest('.mm-howto-step').remove();
 			});
 		})();
 		</script>
