@@ -88,6 +88,7 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-page-context.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-head-emitter.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-schema-types.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-schema-post-types.php';
+require_once MM_META_DIR . 'includes/metadata/class-mm-page-generator.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-biz-card-css.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-cli.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-abilities.php';
@@ -122,6 +123,9 @@ add_action( 'plugins_loaded', function (): void {
 
 // Register schema custom post types (Event, Product, Service, etc.).
 MM_Schema_Post_Types::init();
+
+// Register page generator hooks (auto-regeneration on data changes).
+MM_Page_Generator::init();
 
 // Apply max revisions setting from Metamanager preferences.
 add_filter( 'wp_revisions_to_keep', function( $num, $post ) {
