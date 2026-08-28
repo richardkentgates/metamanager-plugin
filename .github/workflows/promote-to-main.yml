@@ -33,6 +33,20 @@ jobs:
           VERSION=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
+      - name: Update daemon-compatibility.json
+        run: |
+          DAEMON_VER=$(curl -sf https://raw.githubusercontent.com/richardkentgates/metamanager/dev/VERSION)
+          PLUGIN_VER="${{ steps.version.outputs.version }}"
+          echo "Mapping plugin v${PLUGIN_VER} → daemon v${DAEMON_VER}"
+          jq --arg pv "$PLUGIN_VER" --arg dv "$DAEMON_VER" '.[$pv] = $dv' \
+            daemon-compatibility.json > daemon-compatibility.json.tmp
+          mv daemon-compatibility.json.tmp daemon-compatibility.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add daemon-compatibility.json
+          git diff --cached --quiet || git commit -m "ci: map plugin v${PLUGIN_VER} → daemon v${DAEMON_VER}"
+          git push origin main
+
       - name: Check if tag exists
         id: check
         run: |
