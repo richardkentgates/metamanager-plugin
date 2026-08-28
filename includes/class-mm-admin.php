@@ -86,6 +86,9 @@ class MM_Admin {
 		// AJAX: live job dashboard.
 		add_action( 'wp_ajax_mm_jobs_refresh', [ __CLASS__, 'ajax_jobs_refresh' ] );
 
+		// AJAX: dashboard widget system status refresh.
+		add_action( 'wp_ajax_mm_status_refresh', [ __CLASS__, 'ajax_status_refresh' ] );
+
 		// Note: rest_api_init for register_rest_routes is registered unconditionally
 		// in metamanager.php so REST requests (which are not is_admin() context)
 		// also have the routes available.
@@ -554,6 +557,47 @@ class MM_Admin {
 				<?php endif; ?>
 			</tbody>
 		</table>
+		<script>
+		(function(){
+			function refreshMMStatus(){
+				var fd=new FormData();
+				fd.append('action','mm_status_refresh');
+				fd.append('_wpnonce','<?php echo esc_js( wp_create_nonce( 'mm_status_refresh' ) ); ?>');
+				fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',{method:'POST',body:fd})
+					.then(function(r){return r.json();})
+					.then(function(r){
+						if(!r.success)return;
+						var d=r.data;
+						var w=document.getElementById('mm_system_status');
+						if(!w)return;
+						var tables=w.querySelectorAll('.inside table');
+						// First table: tools + queues
+						if(tables[0]){
+							var qr=tables[0].querySelector('tbody tr:last-child');
+							if(qr&&d.queues){
+								var q=d.queues;
+								var td=qr.querySelectorAll('td')[1];
+								if(td) td.innerHTML='<span style="color:#00a32a;">'+q.compress+'</span> compress, <span style="color:#00a32a;">'+q.meta+'</span> meta, <span style="color:#00a32a;">'+q.completed+'</span> completed, <span style="color:'+(q.failed>0?'#d63638':'#00a32a')+';">'+q.failed+'</span> failed';
+							}
+						}
+						// Second table: versions
+						if(tables[1]){
+							var rows=tables[1].querySelectorAll('tbody tr');
+							if(rows[3]&&d.daemon_status){
+								var td=rows[3].querySelectorAll('td')[1];
+								if(td) td.innerHTML=d.daemon_status;
+							}
+							if(rows[4]&&d.updater_row){
+								var td=rows[4].querySelectorAll('td')[1];
+								if(td) td.innerHTML=d.updater_row;
+							}
+						}
+					})
+					.catch(function(){});
+			}
+			setInterval(refreshMMStatus,60000);
+		})();
+		</script>
 	<?php
 	}
 
@@ -1723,6 +1767,68 @@ class MM_Admin {
 		}
 		self::render_jobs_content();
 		wp_die();
+	}
+
+	public static function ajax_status_refresh(): void {
+		check_ajax_referer( 'mm_status_refresh', 'nonce' );
+		if ( ! current_user_can( 'upload_files' ) ) {
+			wp_send_json_error( 'Unauthorized' );
+		}
+
+		$file  = '/var/run/metamanager-status.json';
+		$json  = is_readable( $file ) ? @file_get_contents( $file ) : false;
+		$data  = $json ? json_decode( $json, true ) : null;
+		$queues = $data['queues'] ?? [];
+
+		$installed_ver = MM_Daemon_Updater::get_daemon_version();
+		$info          = MM_Daemon_Updater::get_required_daemon_version();
+		$required_ver  = $info['required'] ?? null;
+
+		if ( null === $installed_ver || null === $required_ver ) {
+			$daemon_ok = false;
+		} else {
+			$daemon_ok = ( $installed_ver === $required_ver );
+		}
+
+		if ( $daemon_ok ) {
+			$daemon_status = '<span style="color:#00a32a;font-weight:600;">Daemon is up to date</span>';
+		} elseif ( null === $installed_ver ) {
+			$daemon_status = '<span style="color:#d63638;font-weight:600;">Daemon not installed</span>';
+		} elseif ( null === $required_ver ) {
+			$daemon_status = '<span style="color:#d63638;font-weight:600;">No compatibility mapping for this plugin version</span>';
+		} else {
+			$daemon_status = sprintf(
+				'<span style="color:#dba617;font-weight:600;">Daemon v%s installed, v%s required</span>',
+				esc_html( $installed_ver ),
+				esc_html( $required_ver )
+			);
+		}
+
+		$action_labels = [
+			'ok'       => 'Up to date',
+			'updated'  => 'Updated successfully',
+			'updating' => 'Updating...',
+			'failed'   => 'Update failed',
+			'error'    => 'Error',
+			'ahead'    => 'Ahead of required',
+			'waiting'  => 'Waiting for plugin',
+			'none'     => 'None',
+		];
+		$action = $data['updater']['status'] ?? 'none';
+		$color  = in_array( $action, [ 'ok', 'updated', 'ahead' ], true ) ? '#00a32a'
+			: ( in_array( $action, [ 'failed', 'error' ], true ) ? '#d63638' : '#dba617' );
+		$updater_row = '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
+			. esc_html( $action_labels[ $action ] ?? $action )
+			. '</span>';
+		if ( ! empty( $data['updater']['message'] ) ) {
+			$updater_row .= '<br><span style="font-size:12px;color:#666;">' . esc_html( $data['updater']['message'] ) . '</span>';
+		}
+
+		wp_send_json_success( [
+			'queues'        => $queues,
+			'daemon_status' => $daemon_status,
+			'updater_row'   => $updater_row,
+		] );
 	}
 
 	public static function ajax_requeue_job(): void {
