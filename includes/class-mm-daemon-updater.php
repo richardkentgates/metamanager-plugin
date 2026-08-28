@@ -165,7 +165,7 @@ class MM_Daemon_Updater {
 			];
 		}
 
-		// Case 6: Version mismatch — update needed.
+		// Case 6: Version mismatch — daemon is behind required, update needed.
 		return [
 			'status'   => 'mismatch',
 			'message'  => sprintf(

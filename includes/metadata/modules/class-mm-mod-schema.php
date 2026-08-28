@@ -142,12 +142,19 @@ class MM_Mod_Schema extends MM_Mod_Base {
 						$type = $schema_type;
 					}
 				} else {
-					$meta = $settings->get_post_meta( $post->ID );
-					$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
-					$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
-					// Map content types to their WebPage counterpart.
-					if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
-						$type = 'WebPage';
+					// Page templates use their schema type directly.
+					$template = MM_Schema_Post_Types::get_post_template( $post );
+					if ( $template ) {
+						$schema_type = MM_Schema_Post_Types::template_to_type( $template );
+						$type        = $schema_type ?? 'WebPage';
+					} else {
+						$meta = $settings->get_post_meta( $post->ID );
+						$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
+						$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
+						// Map content types to their WebPage counterpart.
+						if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
+							$type = 'WebPage';
+						}
 					}
 				}
 			}
@@ -388,10 +395,16 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			return;
 		}
 
-		// Determine schema type: CPT slug → schema type, or legacy _mm_meta schema_type.
+		// Determine schema type: CPT slug → schema type, or page template → schema type.
 		$type = null;
 		if ( MM_Schema_Post_Types::is_schema_cpt( $post->post_type ) ) {
 			$type = MM_Schema_Post_Types::slug_to_type( $post->post_type );
+		}
+		if ( ! $type ) {
+			$template = MM_Schema_Post_Types::get_post_template( $post );
+			if ( $template ) {
+				$type = MM_Schema_Post_Types::template_to_type( $template );
+			}
 		}
 		if ( ! $type ) {
 			$meta         = $settings->get_post_meta( $post->ID );
@@ -399,8 +412,8 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			$type         = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
 		}
 
-		// WebPage itself is already added above; skip if type resolves to WebPage.
-		if ( in_array( $type, [ 'WebPage', 'WebSite' ], true ) ) {
+		// WebPage and its subtypes (AboutPage, ContactPage, Calendar) are already on the WebPage node; skip.
+		if ( in_array( $type, [ 'WebPage', 'WebSite', 'AboutPage', 'ContactPage', 'Calendar' ], true ) ) {
 			return;
 		}
 

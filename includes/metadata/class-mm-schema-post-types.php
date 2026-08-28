@@ -14,17 +14,21 @@ class MM_Schema_Post_Types {
 
 	/** Map of post type slug => [schema_type_label, supports, icon]. */
 	private const TYPES = [
-		'mm_event'       => [ 'Event',       [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'calendar-alt' ],
-		'mm_service'     => [ 'Service',     [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'hammer' ],
-		'mm_how_to'      => [ 'HowTo',       [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'list-view' ],
-		'mm_about_page'  => [ 'AboutPage',   [ 'title', 'thumbnail' ], 'info' ],  // Editor disabled — content auto-generated from business info.
-		'mm_contact_page'=> [ 'ContactPage', [ 'title', 'thumbnail' ], 'email-alt' ],  // Editor disabled — content auto-generated from business info.
-		'mm_calendar'    => [ 'Calendar',    [ 'title', 'thumbnail' ], 'calendar' ],  // Editor disabled — auto-generated event calendar.
-		'mm_faq_page'    => [ 'FAQPage',     [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'editor' ],
+		'mm_event'    => [ 'Event',   [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'calendar-alt' ],
+		'mm_service'  => [ 'Service', [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'hammer' ],
+		'mm_how_to'   => [ 'HowTo',   [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'list-view' ],
+		'mm_faq_page' => [ 'FAQPage', [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'editor' ],
+		// AboutPage, ContactPage, Calendar are WordPress Page Templates — not CPTs.
 		// WebPage maps to default `page` type — not a separate CPT.
 		// BlogPosting maps to default `post` type — not a separate CPT.
 		// ProfilePage maps to author archive pages — not a separate CPT.
-		// Article removed — redundant with WebPage + BlogPosting.
+	];
+
+	/** Map of page template slug => schema type. */
+	public const TEMPLATES = [
+		'mm-about'   => 'AboutPage',
+		'mm-contact' => 'ContactPage',
+		'mm-calendar'=> 'Calendar',
 	];
 
 	/**
@@ -34,6 +38,7 @@ class MM_Schema_Post_Types {
 		add_action( 'init', [ __CLASS__, 'register_post_types' ] );
 		add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ __CLASS__, 'save_meta' ], 10, 2 );
+		add_filter( 'template_include', [ __CLASS__, 'load_page_template' ] );
 	}
 
 	/**
@@ -67,7 +72,7 @@ class MM_Schema_Post_Types {
 	}
 
 	/**
-	 * Add meta boxes for each schema post type.
+	 * Add meta boxes for schema CPTs and page templates.
 	 */
 	public static function add_meta_boxes(): void {
 		foreach ( self::TYPES as $slug => $config ) {
@@ -81,6 +86,37 @@ class MM_Schema_Post_Types {
 				'high'
 			);
 		}
+
+		// Page template metaboxes — detect on the page screen.
+		add_action( 'load-post.php', [ __CLASS__, 'add_page_template_meta_boxes' ] );
+		add_action( 'load-post-new.php', [ __CLASS__, 'add_page_template_meta_boxes' ] );
+	}
+
+	/**
+	 * Add metaboxes for pages using schema templates.
+	 */
+	public static function add_page_template_meta_boxes(): void {
+		$screen = get_current_screen();
+		if ( ! $screen || 'page' !== $screen->id ) {
+			return;
+		}
+
+		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+		$template = $post_id ? get_page_template_slug( $post_id ) : '';
+
+		if ( ! isset( self::TEMPLATES[ $template ] ) ) {
+			return;
+		}
+
+		$schema_type = self::TEMPLATES[ $template ];
+		add_meta_box(
+			'mm_schema_fields',
+			$schema_type . ' Details',
+			[ __CLASS__, 'render_page_template_meta_box' ],
+			'page',
+			'normal',
+			'high'
+		);
 	}
 
 	/**
@@ -97,19 +133,6 @@ class MM_Schema_Post_Types {
 
 		$schema_type = $config[0];
 
-		// Auto-generated CPTs: show preview, not fields.
-		if ( 'mm_contact_page' === $slug ) {
-			self::render_contact_page_meta_box( $post );
-			return;
-		}
-		if ( 'mm_about_page' === $slug ) {
-			self::render_about_page_meta_box( $post );
-			return;
-		}
-		if ( 'mm_calendar' === $slug ) {
-			self::render_calendar_meta_box( $post );
-			return;
-		}
 		if ( 'mm_faq_page' === $slug ) {
 			self::render_faq_page_meta_box( $post );
 			return;
@@ -258,6 +281,37 @@ class MM_Schema_Post_Types {
 	}
 
 	/**
+	 * Render the meta box for pages using schema templates.
+	 */
+	public static function render_page_template_meta_box( \WP_Post $post ): void {
+		wp_nonce_field( 'mm_schema_meta', 'mm_schema_nonce' );
+
+		$template = get_page_template_slug( $post->ID );
+		if ( ! isset( self::TEMPLATES[ $template ] ) ) {
+			return;
+		}
+
+		switch ( $template ) {
+			case 'mm-contact':
+				self::render_contact_page_meta_box( $post );
+				break;
+			case 'mm-about':
+				self::render_about_page_meta_box( $post );
+				break;
+			case 'mm-calendar':
+				self::render_calendar_meta_box( $post );
+				break;
+		}
+
+		// Breadcrumb label.
+		$bc_label = get_post_meta( $post->ID, 'mm_breadcrumb_label', true );
+		printf(
+			'<tr><th><label for="mm_breadcrumb_label">Breadcrumb Label</label></th><td><input type="text" id="mm_breadcrumb_label" name="mm_breadcrumb_label" value="%s" class="regular-text" placeholder="Override page title for breadcrumbs"></td></tr>',
+			esc_attr( $bc_label ?? '' )
+		);
+	}
+
+	/**
 	 * Render the ContactPage meta box — auto-generated from business info.
 	 */
 	private static function render_contact_page_meta_box( \WP_Post $post ): void {
@@ -273,21 +327,20 @@ class MM_Schema_Post_Types {
 
 		echo '<div style="background:#f0f0f1;padding:16px;border-radius:4px;margin-bottom:16px;">';
 		echo '<p style="margin:0 0 8px 0;"><strong>Contact Page</strong> is auto-generated from your Business Info settings.</p>';
-		echo '<p style="margin:0;">Content and schema are built dynamically — no manual editing needed.</p>';
+		echo '<p style="margin:0;">Content and schema are built from your business profile. Edit business info to change what appears here.</p>';
 		echo '</div>';
 
-		// Preview of what will render.
-		echo '<h4>Preview</h4>';
+		echo '<h4>Current Business Info</h4>';
 		echo '<table class="form-table"><tbody>';
 
 		printf( '<tr><th>Name</th><td>%s</td></tr>', esc_html( $name ?: '<em>Not set</em>' ) );
 		printf( '<tr><th>Phone</th><td>%s</td></tr>', esc_html( $phone ?: '<em>Not set</em>' ) );
 		printf( '<tr><th>Email</th><td>%s</td></tr>', esc_html( $email ?: '<em>Not set</em>' ) );
 
-		$street = $addr['street'] ?? '';
-		$city   = $addr['city'] ?? '';
-		$state  = $addr['state'] ?? '';
-		$zip    = $addr['zip'] ?? '';
+		$street   = $addr['street'] ?? '';
+		$city     = $addr['city'] ?? '';
+		$state    = $addr['state'] ?? '';
+		$zip      = $addr['zip'] ?? '';
 		$full_addr = trim( "$street, $city, $state $zip", ', ' );
 		printf( '<tr><th>Address</th><td>%s</td></tr>', esc_html( $full_addr ?: '<em>Not set</em>' ) );
 
@@ -302,7 +355,6 @@ class MM_Schema_Post_Types {
 
 		echo '</tbody></table>';
 
-		// Link to settings.
 		printf(
 			'<p><a href="%s" class="button button-secondary">Edit Business Info</a></p>',
 			esc_url( admin_url( 'admin.php?page=mm-settings&tab=mm_tab_biz' ) )
@@ -326,11 +378,10 @@ class MM_Schema_Post_Types {
 
 		echo '<div style="background:#f0f0f1;padding:16px;border-radius:4px;margin-bottom:16px;">';
 		echo '<p style="margin:0 0 8px 0;"><strong>About Page</strong> is auto-generated from your Business Info settings.</p>';
-		echo '<p style="margin:0;">Content and schema are built dynamically — no manual editing needed.</p>';
+		echo '<p style="margin:0;">Content and schema are built from your business profile. Edit business info to change what appears here.</p>';
 		echo '</div>';
 
-		// Preview of what will render.
-		echo '<h4>Preview</h4>';
+		echo '<h4>Current Business Info</h4>';
 		echo '<table class="form-table"><tbody>';
 
 		printf( '<tr><th>Name</th><td>%s</td></tr>', esc_html( $name ?: '<em>Not set</em>' ) );
@@ -343,10 +394,10 @@ class MM_Schema_Post_Types {
 			printf( '<tr><th>Employees</th><td>%s</td></tr>', esc_html( $employees ) );
 		}
 
-		$street = $addr['street'] ?? '';
-		$city   = $addr['city'] ?? '';
-		$state  = $addr['state'] ?? '';
-		$zip    = $addr['zip'] ?? '';
+		$street   = $addr['street'] ?? '';
+		$city     = $addr['city'] ?? '';
+		$state    = $addr['state'] ?? '';
+		$zip      = $addr['zip'] ?? '';
 		$full_addr = trim( "$street, $city, $state $zip", ', ' );
 		printf( '<tr><th>Address</th><td>%s</td></tr>', esc_html( $full_addr ?: '<em>Not set</em>' ) );
 
@@ -356,7 +407,6 @@ class MM_Schema_Post_Types {
 
 		echo '</tbody></table>';
 
-		// Link to settings.
 		printf(
 			'<p><a href="%s" class="button button-secondary">Edit Business Info</a></p>',
 			esc_url( admin_url( 'admin.php?page=mm-settings&tab=mm_tab_biz' ) )
@@ -371,7 +421,7 @@ class MM_Schema_Post_Types {
 
 		echo '<div style="background:#f0f0f1;padding:16px;border-radius:4px;margin-bottom:16px;">';
 		echo '<p style="margin:0 0 8px 0;"><strong>Calendar</strong> is auto-generated from your Event posts.</p>';
-		echo '<p style="margin:0;">Events are pulled dynamically — no manual editing needed.</p>';
+		echo '<p style="margin:0;">Events are pulled dynamically — add or edit events to change what appears here.</p>';
 		echo '</div>';
 
 		if ( empty( $events ) ) {
@@ -771,7 +821,11 @@ class MM_Schema_Post_Types {
 	 * Save meta box data.
 	 */
 	public static function save_meta( int $post_id, \WP_Post $post ): void {
-		if ( ! isset( self::TYPES[ $post->post_type ] ) ) {
+		$is_schema_cpt = isset( self::TYPES[ $post->post_type ] );
+		$template      = get_page_template_slug( $post_id );
+		$is_schema_page = 'page' === $post->post_type && isset( self::TEMPLATES[ $template ] );
+
+		if ( ! $is_schema_cpt && ! $is_schema_page ) {
 			return;
 		}
 		if ( ! isset( $_POST['mm_schema_nonce'] ) || ! wp_verify_nonce( $_POST['mm_schema_nonce'], 'mm_schema_meta' ) ) {
@@ -808,6 +862,65 @@ class MM_Schema_Post_Types {
 			delete_post_meta( $post_id, '_mm_wc_product_id' );
 		}
 	}
+
+	// -------------------------------------------------------------------------
+	// Page templates
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the plugin page template file for schema templates.
+	 */
+	public static function load_page_template( string $template ): string {
+		if ( ! is_singular( 'page' ) ) {
+			return $template;
+		}
+
+		$post = get_post();
+		if ( ! $post ) {
+			return $template;
+		}
+
+		$page_template = get_page_template_slug( $post->ID );
+		if ( ! isset( self::TEMPLATES[ $page_template ] ) ) {
+			return $template;
+		}
+
+		$plugin_template = MM_META_DIR . 'templates/page-' . $page_template . '.php';
+		if ( file_exists( $plugin_template ) ) {
+			return $plugin_template;
+		}
+
+		return $template;
+	}
+
+	/**
+	 * Check if a page template slug is a schema template.
+	 */
+	public static function is_schema_template( string $template ): bool {
+		return isset( self::TEMPLATES[ $template ] );
+	}
+
+	/**
+	 * Convert a page template slug to its schema type name.
+	 */
+	public static function template_to_type( string $template ): ?string {
+		return self::TEMPLATES[ $template ] ?? null;
+	}
+
+	/**
+	 * Get the schema template slug for a post, or null if not using one.
+	 */
+	public static function get_post_template( \WP_Post $post ): ?string {
+		if ( 'page' !== $post->post_type ) {
+			return null;
+		}
+		$template = get_page_template_slug( $post->ID );
+		return isset( self::TEMPLATES[ $template ] ) ? $template : null;
+	}
+
+	// -------------------------------------------------------------------------
+	// Migration (legacy)
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Migrate a post from its current type to the appropriate schema CPT.
