@@ -21,7 +21,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git merge origin/dev --no-edit
+          git merge origin/dev --no-edit -X theirs
 
       - name: Push test
         run: git push origin test
@@ -40,11 +40,6 @@ jobs:
           jq --arg pv "$PLUGIN_VER" --arg dv "$DAEMON_VER" '.[$pv] = $dv' \
             daemon-compatibility.json > daemon-compatibility.json.tmp
           mv daemon-compatibility.json.tmp daemon-compatibility.json
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add daemon-compatibility.json
-          git diff --cached --quiet || git commit -m "ci: map plugin v${PLUGIN_VER} → daemon v${DAEMON_VER}"
-          git push origin test
 
       - name: Build plugin zip
         run: |
