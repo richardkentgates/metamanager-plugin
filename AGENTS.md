@@ -96,17 +96,26 @@ The `diagnose()` method returns a specific status for display:
 
 Multiple plugin versions map to the same daemon version. This is normal — most plugin releases are plugin-only changes (UI fixes, new metadata fields, etc.) that don't require daemon changes.
 
-**Rule**: When releasing a new plugin version, always add an entry to `daemon-compatibility.json`:
-- **If daemon code changed**: Map to the new daemon version (you must also push the daemon to dev to trigger its version bump)
-- **If daemon code did NOT change**: Map to the existing daemon version (same as the previous plugin version)
+### Auto-Update by Daemon Workflows
+
+The daemon promotion workflows (`promote-to-test.yml`, `promote-to-main.yml` in the daemon repo) automatically add entries to this file. When the daemon is promoted:
+1. The workflow reads the current `MM_VERSION` from this repo's dev/main branch
+2. Adds a map entry: current plugin version → new daemon version
+3. Commits and pushes to this repo
+
+This means `daemon-compatibility.json` is updated by the daemon's CI, not manually. The release checklist below still applies for plugin-only releases where no daemon code changed.
+
+**Branch targeting**: Daemon `promote-to-test.yml` writes to this repo's `dev` branch. Daemon `promote-to-main.yml` writes to this repo's `main` branch.
+
+**Secrets required**: `PLUGIN_REPO_PAT` in the daemon repo — GitHub PAT with `contents: write` on this repo.
 
 ### Release Checklist
 
 Before pushing a new plugin version to dev:
 
 1. **Did daemon code change?**
-   - Yes → Push daemon changes to dev first. Wait for CI to bump `debian/changelog` and `VERSION`. Then add an entry mapping the new plugin version to the new daemon version.
-   - No → Add an entry mapping the new plugin version to the current daemon version.
+   - Yes → The daemon promotion workflow will automatically update this file when the daemon is promoted. No manual action needed for the map.
+   - No → Add an entry manually mapping the new plugin version to the current daemon version (same as the previous plugin version).
 2. **Verify the entry exists**: Open `daemon-compatibility.json` and confirm your new plugin version has a mapping.
 3. **CI will auto-bump** `MM_VERSION` in `metamanager.php` — do NOT manually set the version number.
 

@@ -119,6 +119,7 @@ class MM_Site_Settings {
 	public function save_business( array $data ): void {
 		update_option( MM_META_OPT_BUSINESS, $data, false );
 		$this->business_data = null;
+		do_action( 'mm_business_profile_saved', $data );
 	}
 
 	// -------------------------------------------------------------------------

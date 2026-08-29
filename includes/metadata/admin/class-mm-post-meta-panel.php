@@ -51,6 +51,23 @@ class MM_Post_Meta_Panel {
 				'high'
 			);
 		}
+
+		// For pages: remove legacy panel if page uses a schema template.
+		add_action( 'add_meta_boxes_page', [ $this, 'maybe_remove_legacy_panel' ] );
+	}
+
+	/**
+	 * Remove the legacy Metamanager panel from pages that use schema templates.
+	 */
+	public function maybe_remove_legacy_panel(): void {
+		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+		if ( ! $post_id ) {
+			return;
+		}
+		$template = get_page_template_slug( $post_id );
+		if ( MM_Schema_Post_Types::is_schema_template( $template ) ) {
+			remove_meta_box( 'mm_meta_post_meta', 'page', 'normal' );
+		}
 	}
 
 	// -------------------------------------------------------------------------

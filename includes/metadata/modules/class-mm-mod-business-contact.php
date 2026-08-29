@@ -34,32 +34,6 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 		add_action( 'widgets_init',       [ $this, 'register_widget' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ] );
 		add_shortcode( 'gcm_business_contact', [ $this, 'render_shortcode' ] );
-		add_filter( 'the_content',        [ $this, 'filter_auto_generated_page_content' ] );
-	}
-
-	/**
-	 * Filter the_content for auto-generated CPTs (ContactPage, AboutPage, Calendar) — replace with generated content.
-	 */
-	public function filter_auto_generated_page_content( string $content ): string {
-		if ( ! is_singular() || ! is_main_query() ) {
-			return $content;
-		}
-
-		$post = get_post();
-		if ( ! $post ) {
-			return $content;
-		}
-
-		switch ( $post->post_type ) {
-			case 'mm_contact_page':
-				return $this->render_contact_page();
-			case 'mm_about_page':
-				return $this->render_about_page();
-			case 'mm_calendar':
-				return $this->render_calendar();
-			default:
-				return $content;
-		}
 	}
 
 	// -------------------------------------------------------------------------
