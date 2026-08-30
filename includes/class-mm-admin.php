@@ -545,15 +545,15 @@ class MM_Admin {
 					<td><?php esc_html_e( 'Installed daemon', 'metamanager' ); ?></td>
 					<td><?php echo $installed_ver ? esc_html( 'v' . $installed_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not installed', 'metamanager' ) . '</span>'; ?></td>
 				</tr>
-				<tr>
-					<td><?php esc_html_e( 'Status', 'metamanager' ); ?></td>
-					<td><?php echo $daemon_icon . ' ' . $daemon_status; ?></td>
-				</tr>
-				<?php if ( $updater ) : ?>
-				<tr>
-					<td><?php esc_html_e( 'Auto-update', 'metamanager' ); ?></td>
-					<td><?php echo $updater_row; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
-				</tr>
+			<tr data-row="daemon-status">
+				<td><?php esc_html_e( 'Status', 'metamanager' ); ?></td>
+				<td><?php echo $daemon_icon . ' ' . $daemon_status; ?></td>
+			</tr>
+			<?php if ( $updater ) : ?>
+			<tr data-row="updater">
+				<td><?php esc_html_e( 'Auto-update', 'metamanager' ); ?></td>
+				<td><?php echo $updater_row; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
+			</tr>
 				<?php endif; ?>
 			</tbody>
 		</table>
@@ -580,18 +580,13 @@ class MM_Admin {
 								if(td) td.innerHTML='<span style="color:#00a32a;">'+q.compress+'</span> compress, <span style="color:#00a32a;">'+q.meta+'</span> meta, <span style="color:#00a32a;">'+q.completed+'</span> completed, <span style="color:'+(q.failed>0?'#d63638':'#00a32a')+';">'+q.failed+'</span> failed';
 							}
 						}
-						// Second table: versions
-						if(tables[1]){
-							var rows=tables[1].querySelectorAll('tbody tr');
-							if(rows[3]&&d.daemon_status){
-								var td=rows[3].querySelectorAll('td')[1];
-								if(td) td.innerHTML=d.daemon_status;
-							}
-							if(rows[4]&&d.updater_row){
-								var td=rows[4].querySelectorAll('td')[1];
-								if(td) td.innerHTML=d.updater_row;
-							}
-						}
+					// Second table: versions
+					if(tables[1]){
+						var ds=tables[1].querySelector('[data-row="daemon-status"] td:last-child');
+						if(ds&&d.daemon_status) ds.innerHTML=d.daemon_status;
+						var ur=tables[1].querySelector('[data-row="updater"] td:last-child');
+						if(ur&&d.updater_row) ur.innerHTML=d.updater_row;
+					}
 					})
 					.catch(function(){});
 			}
