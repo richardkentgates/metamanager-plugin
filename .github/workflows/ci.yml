@@ -35,7 +35,7 @@ jobs:
           NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
 
           if ! grep -q "\"${NEXT}\"" daemon-compatibility.json; then
-            DAEMON_VER=$(gh api repos/richardkentgates/metamanager/contents/VERSION -q '.content' | base64 -d | tr -d '[:space:]' || true)
+            DAEMON_VER=$(gh api repos/richardkentgates/metamanager/contents/VERSION?ref=dev -q '.content' | base64 -d | tr -d '[:space:]' || true)
             if [ -z "$DAEMON_VER" ]; then
               DAEMON_VER="2.4.32"
             fi
