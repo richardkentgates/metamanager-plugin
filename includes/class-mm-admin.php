@@ -617,12 +617,12 @@ class MM_Admin {
 		}
 		// Flatten for the dashboard widget.
 		return [
-			'installed_version' => $data['updater']['installed_version'] ?? 'unknown',
-			'required_version'  => $data['updater']['required_version'] ?? 'unknown',
-			'last_check'        => $data['updater']['last_check'] ?? '',
-			'last_update'       => $data['updater']['last_update'] ?? '',
-			'status'            => $data['updater']['status'] ?? 'unknown',
-			'message'           => $data['updater']['message'] ?? '',
+			'installed_version' => $data['daemon_version'] ?? null,
+			'required_version'  => $data['required_version'] ?? null,
+			'last_check'        => $data['ts'] ?? '',
+			'last_update'       => '',
+			'status'            => ( $data['daemon_version'] ?? null ) === ( $data['required_version'] ?? null ) ? 'ok' : 'mismatch',
+			'message'           => '',
 			'daemon_pid_compress' => $data['daemons']['compress']['pid'] ?? '',
 			'daemon_pid_meta'     => $data['daemons']['meta']['pid'] ?? '',
 			'queues'             => $data['queues'] ?? [],
