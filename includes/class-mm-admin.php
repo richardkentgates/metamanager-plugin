@@ -448,10 +448,9 @@ class MM_Admin {
 			array( 'Metadata daemon',   $status['meta_daemon'],     'Metadata daemon running',       'Metadata daemon stopped' ),
 		);
 
-		$installed_ver = MM_Daemon_Updater::get_daemon_version();
-		$info          = MM_Daemon_Updater::get_required_daemon_version();
-		$required_ver  = $info['required'] ?? null;
-		$plugin_ver    = defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown';
+		$installed_ver = $updater['daemon_version'] ?? null;
+		$required_ver  = $updater['required_version'] ?? null;
+		$plugin_ver    = $updater['plugin_version'] ?? ( defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown' );
 
 		if ( null === $installed_ver ) {
 			$daemon_ok = false;
@@ -1773,9 +1772,8 @@ class MM_Admin {
 		$data  = $json ? json_decode( $json, true ) : null;
 		$queues = $data['queues'] ?? [];
 
-		$installed_ver = MM_Daemon_Updater::get_daemon_version();
-		$info          = MM_Daemon_Updater::get_required_daemon_version();
-		$required_ver  = $info['required'] ?? null;
+		$installed_ver = $data['daemon_version'] ?? null;
+		$required_ver  = $data['required_version'] ?? null;
 
 		if ( null === $installed_ver || null === $required_ver ) {
 			$daemon_ok = false;
