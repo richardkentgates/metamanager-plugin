@@ -54,7 +54,7 @@ The only exception is temporary testing during active development sessions, wher
 
 ## Daemon Version Detection
 
-The plugin provides version detection for display purposes only. Daemon updates are handled by the shell-based self-updater (see `metamanager/AGENTS.md`).
+The plugin is the single authority for daemon version management. The plugin's `MM_Daemon_Updater` reads `daemon-compatibility.json` and the installed `VERSION` file, and triggers `apt-get update && apt-get install -y metamanager` when versions don't match.
 
 ### Architecture
 
@@ -118,7 +118,7 @@ Before pushing a new plugin version to dev:
 2. **Verify the entry exists**: Open `daemon-compatibility.json` and confirm your new plugin version has a mapping.
 3. **CI will auto-bump** `MM_VERSION` in `metamanager.php` — do NOT manually set the version number.
 
-**If you forget step 2**, the shell self-updater will show status "Cannot determine required version (plugin missing or no compat map)" in the dashboard widget and status JSON.
+**If you forget step 2**, the plugin's `MM_Daemon_Updater::diagnose()` will show status "Cannot determine required version (plugin missing or no compat map)" in the dashboard widget.
 
 ## Repos
 
@@ -139,7 +139,7 @@ Before pushing a new plugin version to dev:
 - Branch protection on `test` and `main`: PRs required, no direct pushes
 - Promotion = workflow_dispatch triggers direct git merge (no PRs)
 - Shell scripts/daemons update via apt; plugin updates via WordPress native update
-- Daemon updates are handled by the shell self-updater, not by the plugin PHP
+- Daemon updates are handled by the plugin's `MM_Daemon_Updater` class (called via `MM_Updater` after plugin update).
 - PHP 8.4 for WP-CLI (`php8.4 /usr/local/bin/wp --path=/srv/www/wordpress`)
 - CI auto-bumps `MM_VERSION` on every dev push — do not manually edit version numbers
 - **Test channel**: Used for development verification before production deployment
