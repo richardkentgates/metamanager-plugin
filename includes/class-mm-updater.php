@@ -74,6 +74,9 @@ class MM_Updater {
 
 		// Handle the manual check-for-updates request.
 		add_action( 'admin_init', [ $this, 'handle_manual_check' ] );
+
+		// After any plugin is updated, trigger daemon package upgrade if needed.
+		add_action( 'upgrader_process_complete', [ $this, 'on_plugin_updated' ], 10, 2 );
 	}
 
 	// -------------------------------------------------------------------------
@@ -338,6 +341,33 @@ class MM_Updater {
 			admin_url( 'plugins.php' )
 		) );
 		exit;
+	}
+
+	/**
+	 * Fires after the upgrader process completes. Triggers an automatic
+	 * daemon package update when the plugin version changes.
+	 *
+	 * @param \WP_Upgrader $upgrader Upgrader instance (unused).
+	 * @param array        $options  Upgrader context: type, action, plugins list.
+	 */
+	public function on_plugin_updated( $upgrader, array $options ): void {
+		if ( 'update' !== ( $options['action'] ?? '' ) ) {
+			return;
+		}
+		if ( 'plugin' !== ( $options['type'] ?? '' ) ) {
+			return;
+		}
+		$updated_plugins = $options['plugins'] ?? [];
+		if ( ! in_array( $this->plugin_basename, (array) $updated_plugins, true ) ) {
+			return;
+		}
+
+		// Trigger automatic daemon update.
+		$daemon_result = MM_Daemon_Updater::handle_plugin_update();
+
+		if ( $daemon_result['update_needed'] && $daemon_result['result']['success'] ) {
+			set_transient( 'mm_daemon_restart_notice', '1', 7 * DAY_IN_SECONDS );
+		}
 	}
 
 	/**
