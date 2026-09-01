@@ -285,6 +285,7 @@ add_filter( 'cron_schedules', function ( array $schedules ): array {
 // ---------------------------------------------------------------------------
 
 add_action( 'mm_import_completed_jobs', 'mm_import_completed_jobs' );
+add_action( 'mm_import_completed_jobs', [ 'MM_Status', 'write_status_json' ] );
 
 /**
  * Scan completed/failed result directories and persist to DB.
@@ -510,9 +511,6 @@ if ( is_admin() ) {
 
 	// Persistent admin notice if daemon package is missing.
 	add_action( 'admin_init', function (): void {
-		// Write comprehensive status JSON on every admin load.
-		MM_Status::write_status_json();
-
 		if ( ! MM_Status::daemon_package_installed() ) {
 			add_action( 'admin_notices', function (): void {
 				printf(
