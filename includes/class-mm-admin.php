@@ -1377,6 +1377,8 @@ class MM_Admin {
 		);
 
 		// --- System status (daemon status, queues, tools) ---
+		// Protected by WordPress Application Passwords for external access.
+		// Internal admin features use AJAX handlers with nonce auth.
 		register_rest_route(
 			'metamanager/v1',
 			'/status',
@@ -1384,21 +1386,14 @@ class MM_Admin {
 				'methods'             => 'GET',
 				'callback'            => [ __CLASS__, 'rest_get_status' ],
 				'permission_callback' => function () {
-					if ( is_user_logged_in() ) {
-						return current_user_can( 'manage_options' );
+					if ( ! is_user_logged_in() ) {
+						return new \WP_Error(
+							'rest_unauthorized',
+							__( 'Authentication required.', 'metamanager' ),
+							[ 'status' => 401 ]
+						);
 					}
-					if ( MM_Settings::get_api_disabled() ) {
-						return false;
-					}
-					$allowed = MM_Settings::get_api_allowed_ips();
-					if ( ! empty( $allowed ) ) {
-						$remote = MM_Settings::get_current_ip();
-						if ( ! in_array( $remote, $allowed, true ) ) {
-							return false;
-						}
-					}
-					// External callers must authenticate.
-					return false;
+					return current_user_can( 'manage_options' );
 				},
 			]
 		);
