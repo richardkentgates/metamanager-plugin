@@ -448,7 +448,7 @@ class MM_Admin {
 			array( 'Metadata daemon',   $status['meta_daemon'],     'Metadata daemon running',       'Metadata daemon stopped' ),
 		);
 
-		$installed_ver = $updater['daemon_version'] ?? null;
+		$installed_ver = $updater['installed_version'] ?? null;
 		$required_ver  = $updater['required_version'] ?? null;
 		$plugin_ver    = $updater['plugin_version'] ?? ( defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown' );
 
