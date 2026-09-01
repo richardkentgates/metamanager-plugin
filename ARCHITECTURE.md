@@ -108,8 +108,8 @@ metamanager/
 5. Register `admin_init` hook for `MM_DB::create_or_update_table()` (safe to run on every request — `dbDelta` is a no-op when no schema changes are needed).
 6. Register WP-Cron intervals and the `mm_import_completed_jobs` event handler.
 7. Register `delete_attachment` hook for `MM_DB::delete_jobs_for_attachment()`.
-8. `MM_Frontend::init()` registers `wp_head` hook unconditionally; output is suppressed in admin/non-attachment contexts by the resolver returning 0.
-9. `MM_Sitemap::init()` unconditionally (rewrites must register on every request).
+8. `MM_Head_Emitter` registers `wp_head` hook; modules emit schema/OG/meta tags.
+9. `MM_Mod_Sitemap_Web` registers rewrite rules for sitemaps.
 10. Register activation/deactivation hooks.
 
 ---
