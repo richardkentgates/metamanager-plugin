@@ -157,9 +157,9 @@ The plugin checks `https://apt.richardkentgates.com/metamanager/metadata.json` e
 1. WordPress downloads and installs the plugin zip
 2. WordPress activates the updated plugin
 
-### Daemon self-updater
+### Daemon updates
 
-Daemon updates are handled by a shell script (`/usr/local/bin/metamanager-self-updater.sh`) that runs every 60 seconds via systemd timer. It reads `daemon-compatibility.json` from the plugin directory, extracts the installed plugin version, looks up the required daemon version, and runs `apt-get upgrade` if needed. No manual SSH required.
+Daemon updates are handled by the plugin's `MM_Daemon_Updater` class. When the plugin is updated, it reads `daemon-compatibility.json` from the plugin directory, compares the installed daemon version against the required version, and triggers `apt-get install` automatically if a mismatch is detected. No manual SSH required.
 
 ## Documentation
 

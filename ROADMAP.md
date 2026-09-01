@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Last updated 2026-08-31.
+Last updated 2026-09-01.
 
 ---
 
@@ -53,6 +53,10 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 ---
 
 ## What's Done
+
+### Charset Fix (2026-09-01)
+
+- **wp_mail charset fix**: Added `Content-Type: text/plain; charset=UTF-8` to all `wp_mail()` calls in `metamanager.php` and `class-mm-mod-links.php`. Without this, UTF-8 characters (bullets, middle dots) were garbled when MXRoute defaulted to Latin-1.
 
 ### Recent — Schema, Dashboard, Status JSON Fixes (2026-08-25 to 2026-08-31)
 
