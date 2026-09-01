@@ -297,7 +297,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 				home_url(),
 				admin_url( 'admin.php?page=mm-meta-links' )
 			);
-			wp_mail( $email, $subject, $body ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wpmail_wp_mail
+			wp_mail( $email, $subject, $body, [ 'Content-Type: text/plain; charset=UTF-8' ] ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wpmail_wp_mail
 			set_transient( $cache_key, 1, $interval );
 		}
 	}

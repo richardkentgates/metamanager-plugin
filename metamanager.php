@@ -448,7 +448,7 @@ function mm_import_completed_jobs(): void {
 		$lines[] = '';
 		$lines[] = 'View the Job Dashboard: ' . admin_url( 'upload.php?page=metamanager-jobs' );
 
-		wp_mail( $to, $subject, implode( "\n", $lines ) );
+		wp_mail( $to, $subject, implode( "\n", $lines ), [ 'Content-Type: text/plain; charset=UTF-8' ] );
 	}
 
 	// Release the concurrency lock.
