@@ -54,7 +54,7 @@ The only exception is temporary testing during active development sessions, wher
 
 ## Daemon Version Detection
 
-The plugin provides version detection for display purposes only. Daemon updates are handled by the shell-based self-updater (see `metamanager/AGENTS.md`).
+The plugin is the single authority for daemon version management. The plugin's `MM_Daemon_Updater` reads `daemon-compatibility.json` and the installed `VERSION` file, and triggers `apt-get update && apt-get install -y metamanager` when versions don't match.
 
 ### Architecture
 
@@ -95,30 +95,23 @@ The `diagnose()` method returns a specific status for display:
 
 Multiple plugin versions map to the same daemon version. This is normal — most plugin releases are plugin-only changes (UI fixes, new metadata fields, etc.) that don't require daemon changes.
 
-### Auto-Update by Daemon Workflows
+### Plugin Manages the Map
 
-The daemon promotion workflows (`promote-to-test.yml`, `promote-to-main.yml` in the daemon repo) automatically add entries to this file. When the daemon is promoted:
-1. The workflow reads the current `MM_VERSION` from this repo's dev/main branch
-2. Adds a map entry: current plugin version → new daemon version
-3. Commits and pushes to this repo
+The plugin is the single authority for `daemon-compatibility.json`. The plugin reads this file to determine which daemon version is required, and triggers `apt-get update && apt-get install -y metamanager` when versions don't match. The daemon repo does NOT write to this file.
 
-This means `daemon-compatibility.json` is updated by the daemon's CI, not manually. The release checklist below still applies for plugin-only releases where no daemon code changed.
-
-**Branch targeting**: Daemon `promote-to-test.yml` writes to this repo's `dev` branch. Daemon `promote-to-main.yml` writes to this repo's `main` branch.
-
-**Secrets required**: `PLUGIN_REPO_PAT` in the daemon repo — GitHub PAT with `contents: write` on this repo.
+When a new daemon version is released, the plugin developer adds an entry to `daemon-compatibility.json` mapping the current plugin version to the new daemon version.
 
 ### Release Checklist
 
 Before pushing a new plugin version to dev:
 
 1. **Did daemon code change?**
-   - Yes → The daemon promotion workflow will automatically update this file when the daemon is promoted. No manual action needed for the map.
-   - No → Add an entry manually mapping the new plugin version to the current daemon version (same as the previous plugin version).
+   - Yes → Add an entry mapping the new plugin version to the new daemon version.
+   - No → Add an entry mapping the new plugin version to the current daemon version (same as the previous plugin version).
 2. **Verify the entry exists**: Open `daemon-compatibility.json` and confirm your new plugin version has a mapping.
 3. **CI will auto-bump** `MM_VERSION` in `metamanager.php` — do NOT manually set the version number.
 
-**If you forget step 2**, the shell self-updater will show status "Cannot determine required version (plugin missing or no compat map)" in the dashboard widget and status JSON.
+**If you forget step 2**, the dashboard widget will show "No compatibility mapping for this plugin version".
 
 ## Repos
 
@@ -139,7 +132,7 @@ Before pushing a new plugin version to dev:
 - Branch protection on `test` and `main`: PRs required, no direct pushes
 - Promotion = workflow_dispatch triggers direct git merge (no PRs)
 - Shell scripts/daemons update via apt; plugin updates via WordPress native update
-- Daemon updates are handled by the shell self-updater, not by the plugin PHP
+- Daemon updates are handled by the plugin's `MM_Daemon_Updater` class (called via `MM_Updater` after plugin update).
 - PHP 8.4 for WP-CLI (`php8.4 /usr/local/bin/wp --path=/srv/www/wordpress`)
 - CI auto-bumps `MM_VERSION` on every dev push — do not manually edit version numbers
 - **Test channel**: Used for development verification before production deployment

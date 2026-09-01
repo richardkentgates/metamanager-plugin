@@ -448,10 +448,9 @@ class MM_Admin {
 			array( 'Metadata daemon',   $status['meta_daemon'],     'Metadata daemon running',       'Metadata daemon stopped' ),
 		);
 
-		$installed_ver = MM_Daemon_Updater::get_daemon_version();
-		$info          = MM_Daemon_Updater::get_required_daemon_version();
-		$required_ver  = $info['required'] ?? null;
-		$plugin_ver    = defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown';
+		$installed_ver = $updater['installed_version'] ?? null;
+		$required_ver  = $updater['required_version'] ?? null;
+		$plugin_ver    = $updater['plugin_version'] ?? ( defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown' );
 
 		if ( null === $installed_ver ) {
 			$daemon_ok = false;
@@ -602,7 +601,8 @@ class MM_Admin {
 	 * @return array|null Status data or null if unavailable.
 	 */
 	private static function get_updater_status(): ?array {
-		$file = '/var/run/metamanager-status.json';
+		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
+		$file = $job_root . '/metamanager-status.json';
 		if ( ! is_readable( $file ) ) {
 			return null;
 		}
@@ -617,12 +617,12 @@ class MM_Admin {
 		}
 		// Flatten for the dashboard widget.
 		return [
-			'installed_version' => $data['updater']['installed_version'] ?? 'unknown',
-			'required_version'  => $data['updater']['required_version'] ?? 'unknown',
-			'last_check'        => $data['updater']['last_check'] ?? '',
-			'last_update'       => $data['updater']['last_update'] ?? '',
-			'status'            => $data['updater']['status'] ?? 'unknown',
-			'message'           => $data['updater']['message'] ?? '',
+			'installed_version' => $data['daemon_version'] ?? null,
+			'required_version'  => $data['required_version'] ?? null,
+			'last_check'        => $data['ts'] ?? '',
+			'last_update'       => '',
+			'status'            => ( $data['daemon_version'] ?? null ) === ( $data['required_version'] ?? null ) ? 'ok' : 'mismatch',
+			'message'           => '',
 			'daemon_pid_compress' => $data['daemons']['compress']['pid'] ?? '',
 			'daemon_pid_meta'     => $data['daemons']['meta']['pid'] ?? '',
 			'queues'             => $data['queues'] ?? [],
@@ -1506,17 +1506,18 @@ class MM_Admin {
 	}
 
 	/**
-	 * REST: system status (daemon status, queues, tools).
+	 * Return MetaManager system status as JSON.
 	 *
-	 * Reads the status JSON written by the daemon-side self-updater.
+	 * Reads the status JSON written by the plugin.
 	 * Requires manage_options for authenticated requests, or IP allowlist for external.
 	 */
 	public static function rest_get_status( \WP_REST_Request $request ) {
-		$file = '/var/run/metamanager-status.json';
+		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
+		$file = $job_root . '/metamanager-status.json';
 		if ( ! is_readable( $file ) ) {
 			return new \WP_Error(
 				'status_unavailable',
-				__( 'Status file not available. The daemon self-updater may not have run yet.', 'metamanager' ),
+				__( 'Status file not available.', 'metamanager' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -1765,14 +1766,14 @@ class MM_Admin {
 			wp_send_json_error( 'Unauthorized' );
 		}
 
-		$file  = '/var/run/metamanager-status.json';
+		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
+		$file  = $job_root . '/metamanager-status.json';
 		$json  = is_readable( $file ) ? @file_get_contents( $file ) : false;
 		$data  = $json ? json_decode( $json, true ) : null;
 		$queues = $data['queues'] ?? [];
 
-		$installed_ver = MM_Daemon_Updater::get_daemon_version();
-		$info          = MM_Daemon_Updater::get_required_daemon_version();
-		$required_ver  = $info['required'] ?? null;
+		$installed_ver = $data['daemon_version'] ?? null;
+		$required_ver  = $data['required_version'] ?? null;
 
 		if ( null === $installed_ver || null === $required_ver ) {
 			$daemon_ok = false;

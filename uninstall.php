@@ -169,4 +169,5 @@ _mm_rmdir_recursive( $job_root );
 // ---------------------------------------------------------------------------
 
 wp_clear_scheduled_hook( 'mm_import_completed_jobs' );
+wp_clear_scheduled_hook( 'mm_write_status_json' );
 wp_clear_scheduled_hook( 'mm_send_upload_receipt' );

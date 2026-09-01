@@ -113,7 +113,7 @@ The daemon package provides the OS-level services for compression and metadata e
 
 ```bash
 # Add the repository
-echo 'deb https://apt.richardkentgates.com bookworm main' | sudo tee /etc/apt/sources.list.d/metamanager.list
+echo 'deb [signed-by=/usr/share/keyrings/metamanager.gpg] https://apt.richardkentgates.com stable main' | sudo tee /etc/apt/sources.list.d/metamanager.list
 
 # Install
 sudo apt update && sudo apt install metamanager
