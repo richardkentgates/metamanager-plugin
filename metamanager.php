@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.153
+ * Version:      2.3.155
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.153' );
+define( 'MM_VERSION',     '2.3.155' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -285,6 +285,7 @@ add_filter( 'cron_schedules', function ( array $schedules ): array {
 // ---------------------------------------------------------------------------
 
 add_action( 'mm_import_completed_jobs', 'mm_import_completed_jobs' );
+add_action( 'mm_import_completed_jobs', [ 'MM_Status', 'write_status_json' ] );
 
 /**
  * Scan completed/failed result directories and persist to DB.
@@ -510,9 +511,6 @@ if ( is_admin() ) {
 
 	// Persistent admin notice if daemon package is missing.
 	add_action( 'admin_init', function (): void {
-		// Write comprehensive status JSON on every admin load.
-		MM_Status::write_status_json();
-
 		if ( ! MM_Status::daemon_package_installed() ) {
 			add_action( 'admin_notices', function (): void {
 				printf(
