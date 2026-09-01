@@ -168,6 +168,10 @@ function mm_activate_single_site(): void {
 		wp_schedule_event( time(), 'mm_every_minute', 'mm_import_completed_jobs' );
 	}
 
+	if ( ! wp_next_scheduled( 'mm_write_status_json' ) ) {
+		wp_schedule_event( time(), 'mm_every_minute', 'mm_write_status_json' );
+	}
+
 	// Migrate option keys from old gcm-seo-core names to mm_meta_* keys.
 	// Safe to run on every activation — only copies when old key exists and new
 	// key does not, then removes the old key so it is a one-time migration.
@@ -232,6 +236,7 @@ function mm_deactivate( bool $network_wide = false ): void {
  */
 function mm_deactivate_site(): void {
 	wp_clear_scheduled_hook( 'mm_import_completed_jobs' );
+	wp_clear_scheduled_hook( 'mm_write_status_json' );
 	wp_clear_scheduled_hook( 'mm_send_upload_receipt' );
 	wp_clear_scheduled_hook( 'mm_meta_check_links' );
 	flush_rewrite_rules();
@@ -285,7 +290,7 @@ add_filter( 'cron_schedules', function ( array $schedules ): array {
 // ---------------------------------------------------------------------------
 
 add_action( 'mm_import_completed_jobs', 'mm_import_completed_jobs' );
-add_action( 'mm_import_completed_jobs', [ 'MM_Status', 'write_status_json' ] );
+add_action( 'mm_write_status_json', [ 'MM_Status', 'write_status_json' ] );
 
 /**
  * Scan completed/failed result directories and persist to DB.
