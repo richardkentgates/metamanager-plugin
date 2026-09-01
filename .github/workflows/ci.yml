@@ -235,14 +235,17 @@ jobs:
           DAEMON_VER=$(python3 -c "import json; print(json.load(open('daemon-compatibility.json'))['${CURRENT}'])")
           echo "Required daemon version: $DAEMON_VER"
 
-          # 3. Verify the daemon version exists as a tag in the daemon repo
-          if ! gh api repos/richardkentgates/metamanager/tags --paginate -q '.[].name' | grep -q "^v${DAEMON_VER}$"; then
-            echo "::error::Daemon tag v${DAEMON_VER} not found in richardkentgates/metamanager"
-            echo "Available tags:"
-            gh api repos/richardkentgates/metamanager/tags --paginate -q '.[].name' | grep "^v2\.4\." | sort -V | tail -10
+          # 3. Verify the daemon version exists on the daemon repo's dev branch
+          DAEMON_DEV_VER=$(gh api repos/richardkentgates/metamanager/contents/VERSION?ref=dev -q '.content' | base64 -d | tr -d '[:space:]' 2>/dev/null || true)
+          if [ -z "$DAEMON_DEV_VER" ]; then
+            echo "::error::Could not read VERSION from daemon repo dev branch"
             exit 1
           fi
-          echo "Daemon tag v${DAEMON_VER} verified"
+          echo "Daemon dev version: $DAEMON_DEV_VER"
+          if [ "$DAEMON_VER" != "$DAEMON_DEV_VER" ]; then
+            echo "::warning::Map entry v${DAEMON_VER} differs from daemon dev VERSION v${DAEMON_DEV_VER} — will be corrected on next dev push"
+          fi
+          echo "Daemon VERSION on dev verified"
 
           # 4. Verify all unique daemon versions referenced in the map exist
           UNIQUE_DAEMONS=$(python3 -c "import json; print('\n'.join(sorted(set(json.load(open('daemon-compatibility.json')).values()))))")

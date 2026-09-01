@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Last updated 2026-08-09.
+Last updated 2026-08-31.
 
 ---
 
@@ -53,6 +53,24 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 ---
 
 ## What's Done
+
+### Recent — Schema, Dashboard, Status JSON Fixes (2026-08-25 to 2026-08-31)
+
+- **Schema field completeness audit**: compared all fields against schema.org spec
+- **Article removed from schema types** — redundant with BlogPosting
+- **Event fields added**: `eventAttendanceMode`, `eventType` (16 categories)
+- **Service field added**: `service_provider_name`
+- **HowTo fields added**: `totalTime`, `estimatedCost`, `supply`, `tool`
+- **JSON-LD builders updated** for all new fields
+- **PHP lint + PHPStan pass** on all modified files
+- **Unit tests updated** — 8 new test methods; all pass
+- **Dashboard widget AJAX refresh** — `mm_status_refresh` endpoint
+- **daemon-compatibility.json automation implemented** in plugin workflows
+- **Plugin CI daemon-compat validation fixed** — now checks VERSION file on dev branch
+- **Removed duplicate map logic** from plugin promote-to-test.yml and promote-to-main.yml
+- **Fixed daemon-compatibility.json entry** — 2.3.143 → 2.4.75
+- **PHP test updated** — removed references to deleted functions
+- **Bug fixes**: self-updater `count_jobs()`, `gcm_mm_job_count()` double-count, AJAX hardcoded row indices
 
 ### Audit #1 Bugs (2026-07-31) — All Fixed
 
@@ -635,7 +653,7 @@ Compression support:
 
 ---
 
-## Audit #4 — 2026-08-24 (Cross-Repo Audit)
+## Audit #4 — 2026-08-24 (Cross-Repo Audit) — RESOLVED
 
 ### Documentation Stale — RESOLVED
 
@@ -645,22 +663,32 @@ Compression support:
 | D-2 | `ROADMAP.md:569-594` | S-11 "Featured Image Citation" listed in "What's Left" but marked Done | MEDIUM | ✅ Fixed — removed from "What's Left" |
 | D-3 | `ROADMAP.md:619-680` | S-6/S-7/S-8 implemented but not in Expansion table | LOW | ✅ Fixed — added to Expansion table |
 
-### Code Issues
+### Code Issues — RESOLVED
 
 | # | File | Line | Issue | Severity | Status |
 |---|------|------|-------|----------|--------|
-| C-1 | `class-mm-mod-media-display.php` | 10-12 | Extends `MM_Mod_Base` vestigially — never participates in `populate()` pipeline, doesn't call `parent::__construct()` | MEDIUM | — |
-| C-2 | `class-mm-mod-media-display.php` | — | Uses `register()` method while all other modules use `register_hooks()` — inconsistent pattern | LOW | — |
-| C-3 | `class-mm-mod-discovery.php` | 14 | Does not extend `MM_Mod_Base` (all 13 other modules do) — parallel pattern | LOW | — |
+| C-1 | `class-mm-mod-media-display.php` | 10-12 | Extends `MM_Mod_Base` vestigially | MEDIUM | ✅ Fixed |
+| C-2 | `class-mm-mod-media-display.php` | — | Uses `register()` method inconsistent with other modules | LOW | ✅ Fixed |
+| C-3 | `class-mm-mod-discovery.php` | 14 | Does not extend `MM_Mod_Base` | LOW | ✅ Fixed |
 
-### Test Coverage Gaps
+### Test Coverage Gaps — RESOLVED
 
 | # | Module | Issue | Severity | Status |
 |---|--------|-------|----------|--------|
-| T-1 | `MM_Mod_Robots` | No unit or integration tests | MEDIUM | — |
-| T-2 | `MM_Mod_Hygiene` | No unit or integration tests | MEDIUM | — |
-| T-3 | `MM_Mod_Html_Sitemap` | No unit or integration tests | MEDIUM | — |
-| T-4 | `MM_Mod_Media_Display` | No unit or integration tests | MEDIUM | — |
+| T-1 | `MM_Mod_Robots` | No unit or integration tests | MEDIUM | ✅ Fixed |
+| T-2 | `MM_Mod_Hygiene` | No unit or integration tests | MEDIUM | ✅ Fixed |
+| T-3 | `MM_Mod_Html_Sitemap` | No unit or integration tests | MEDIUM | ✅ Fixed |
+| T-4 | `MM_Mod_Media_Display` | No unit or integration tests | MEDIUM | ✅ Fixed |
+
+### REST API — Application Passwords Migration
+
+Replace IP allowlist authentication on `metamanager/v1/status` with WordPress Application Passwords.
+
+**Current:** `rest_get_status()` uses `MM_Settings::get_api_disabled()` + `MM_Settings::get_api_allowed_ips()` for external callers.
+
+**New:** External callers authenticate via `Authorization: Basic base64(username:app-password)`. WordPress validates Application Passwords automatically. Remove IP allowlist logic from the permission callback.
+
+**File:** `includes/class-mm-admin.php` — `register_rest_routes()` permission callback for `metamanager/v1/status`
 
 ---
 

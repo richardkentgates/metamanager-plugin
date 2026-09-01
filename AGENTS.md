@@ -58,10 +58,9 @@ The plugin provides version detection for display purposes only. Daemon updates 
 
 ### Architecture
 
-- **Shell self-updater** (`/usr/local/bin/metamanager-self-updater.sh`): Reads `daemon-compatibility.json` from the plugin directory, extracts the installed plugin version from the plugin header, looks up the required daemon version, and runs `apt-get upgrade` if needed. Runs every 60 seconds via systemd timer.
-- **Plugin PHP** (`MM_Daemon_Updater`): Reads `daemon-compatibility.json` and the `VERSION` file to display version status in the dashboard widget. No apt/exec logic — display only.
+- **Plugin PHP** (`MM_Daemon_Updater`): Reads `daemon-compatibility.json` (bundled with the plugin) and the `VERSION` file. When versions don't match, triggers `apt-get update && apt-get install -y metamanager` and restarts daemons. Called via `MM_Updater` after plugin update.
 
-The plugin does NOT trigger daemon updates. The shell self-updater is the single authority for daemon version management.
+The plugin is the single authority for daemon version management.
 
 ### Diagnosis Cases
 
