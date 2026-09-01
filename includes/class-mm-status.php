@@ -374,8 +374,7 @@ class MM_Status {
 
 		// Version info.
 		$installed_ver = MM_Daemon_Updater::get_daemon_version();
-		$required_info = MM_Daemon_Updater::get_required_daemon_version();
-		$required_ver  = $required_info['required'] ?? null;
+		$required_ver  = MM_Daemon_Updater::get_required_daemon_version();
 		$plugin_ver    = defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown';
 
 		$data = array(
