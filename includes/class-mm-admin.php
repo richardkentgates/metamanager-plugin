@@ -602,7 +602,8 @@ class MM_Admin {
 	 * @return array|null Status data or null if unavailable.
 	 */
 	private static function get_updater_status(): ?array {
-		$file = '/var/run/metamanager-status.json';
+		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
+		$file = $job_root . '/metamanager-status.json';
 		if ( ! is_readable( $file ) ) {
 			return null;
 		}
@@ -1506,17 +1507,18 @@ class MM_Admin {
 	}
 
 	/**
-	 * REST: system status (daemon status, queues, tools).
+	 * Return MetaManager system status as JSON.
 	 *
-	 * Reads the status JSON written by the daemon-side self-updater.
+	 * Reads the status JSON written by the plugin.
 	 * Requires manage_options for authenticated requests, or IP allowlist for external.
 	 */
 	public static function rest_get_status( \WP_REST_Request $request ) {
-		$file = '/var/run/metamanager-status.json';
+		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
+		$file = $job_root . '/metamanager-status.json';
 		if ( ! is_readable( $file ) ) {
 			return new \WP_Error(
 				'status_unavailable',
-				__( 'Status file not available. The daemon self-updater may not have run yet.', 'metamanager' ),
+				__( 'Status file not available.', 'metamanager' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -1765,7 +1767,8 @@ class MM_Admin {
 			wp_send_json_error( 'Unauthorized' );
 		}
 
-		$file  = '/var/run/metamanager-status.json';
+		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
+		$file  = $job_root . '/metamanager-status.json';
 		$json  = is_readable( $file ) ? @file_get_contents( $file ) : false;
 		$data  = $json ? json_decode( $json, true ) : null;
 		$queues = $data['queues'] ?? [];

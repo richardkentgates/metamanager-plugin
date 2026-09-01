@@ -335,4 +335,89 @@ class MM_Status {
 			'meta_daemon'      => self::meta_daemon_running(),
 		];
 	}
+
+	/**
+	 * Write comprehensive status JSON to metamanager-status.json.
+	 *
+	 * Single source of truth for all MetaManager status: daemon liveness,
+	 * tool availability, version info, queue depth. Read by GCM dashboard.
+	 *
+	 * @return void
+	 */
+	public static function write_status_json(): void {
+		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
+		$status_file = $job_root . '/metamanager-status.json';
+
+		$system = self::system_status();
+
+		// Queue depth from job directories.
+		$compress_queue = 0;
+		$meta_queue     = 0;
+		$completed      = 0;
+		$failed         = 0;
+		foreach ( [ 'compress' => 'compress_queue', 'meta' => 'meta_queue', 'completed' => 'completed', 'failed' => 'failed' ] as $dir => $key ) {
+			$path = $job_root . '/' . $dir;
+			if ( is_dir( $path ) ) {
+				$$key = count( glob( $path . '/*.json' ) ) + count( glob( $path . '/*.json.processing' ) );
+			}
+		}
+
+		// Daemon PIDs.
+		$compress_pid = null;
+		$meta_pid     = null;
+		if ( file_exists( MM_PID_COMPRESS ) ) {
+			$compress_pid = (int) trim( file_get_contents( MM_PID_COMPRESS ) );
+		}
+		if ( file_exists( MM_PID_META ) ) {
+			$meta_pid = (int) trim( file_get_contents( MM_PID_META ) );
+		}
+
+		// Version info.
+		$installed_ver = MM_Daemon_Updater::get_daemon_version();
+		$required_info = MM_Daemon_Updater::get_required_daemon_version();
+		$required_ver  = $required_info['required'] ?? null;
+		$plugin_ver    = defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown';
+
+		$data = array(
+			'ts'              => gmdate( 'Y-m-d\TH:i:s\Z' ),
+			'plugin_version'  => $plugin_ver,
+			'daemon_version'  => $installed_ver,
+			'required_version'=> $required_ver,
+			'daemons'         => array(
+				'compress' => array(
+					'running' => $system['compress_daemon'],
+					'pid'     => $compress_pid,
+				),
+				'meta'     => array(
+					'running' => $system['meta_daemon'],
+					'pid'     => $meta_pid,
+				),
+			),
+			'queues'          => array(
+				'compress'  => $compress_queue,
+				'meta'      => $meta_queue,
+				'completed' => $completed,
+				'failed'    => $failed,
+			),
+			'tools'           => array(
+				'exiftool'  => $system['exiftool'],
+				'jpegtran'  => $system['jpegtran'],
+				'optipng'   => $system['optipng'],
+				'cwebp'     => $system['cwebp'],
+				'ffmpeg'    => $system['ffmpeg'],
+			),
+		);
+
+		$json = wp_json_encode( $data, JSON_PRETTY_PRINT );
+		if ( false === $json ) {
+			return;
+		}
+
+		$tmp = $status_file . '.tmp';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		@file_put_contents( $tmp, $json );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_function
+		@rename( $tmp, $status_file );
+		@chmod( $status_file, 0644 );
+	}
 }
