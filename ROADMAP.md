@@ -137,7 +137,7 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 - GitHub Pages rewritten for both repos
 - Memory manager with dynamic batch sizing
 - AGENTS.md mandatory workflow rules
-- **Cross-repo automation**: Daemon promotion workflows auto-update `daemon-compatibility.json` in this repo before deploying to apt (eliminates manual coordination, prevents "ahead" status)
+- **Plugin manages daemon updates**: Plugin reads `daemon-compatibility.json` and triggers `apt-get install metamanager` when versions don't match. Daemon repo only builds and deploys the .deb package.
 
 ### Audit #3 — Parallel Logic (2026-08-04) — All Fixed
 

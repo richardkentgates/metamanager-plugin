@@ -106,12 +106,12 @@ When a new daemon version is released, the plugin developer adds an entry to `da
 Before pushing a new plugin version to dev:
 
 1. **Did daemon code change?**
-   - Yes → The daemon promotion workflow will automatically update this file when the daemon is promoted. No manual action needed for the map.
-   - No → Add an entry manually mapping the new plugin version to the current daemon version (same as the previous plugin version).
+   - Yes → Add an entry mapping the new plugin version to the new daemon version.
+   - No → Add an entry mapping the new plugin version to the current daemon version (same as the previous plugin version).
 2. **Verify the entry exists**: Open `daemon-compatibility.json` and confirm your new plugin version has a mapping.
 3. **CI will auto-bump** `MM_VERSION` in `metamanager.php` — do NOT manually set the version number.
 
-**If you forget step 2**, the plugin's `MM_Daemon_Updater::diagnose()` will show status "Cannot determine required version (plugin missing or no compat map)" in the dashboard widget.
+**If you forget step 2**, the dashboard widget will show "No compatibility mapping for this plugin version".
 
 ## Repos
 
