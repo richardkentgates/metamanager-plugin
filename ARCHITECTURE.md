@@ -59,7 +59,7 @@ metamanager/
 │           ├── class-mm-mod-base.php          Abstract base class for all modules
 │           ├── class-mm-mod-head-meta.php     Title, description, canonical, robots per-page meta
 │           ├── class-mm-mod-social.php        Open Graph and Twitter/X Card tags
-│           ├── class-mm-mod-schema.php        Schema.org JSON-LD (12 selectable types)
+│           ├── class-mm-mod-schema.php        Schema.org JSON-LD (11 selectable types)
 │           ├── class-mm-mod-sitemap.php       XML sitemap index + per-type sub-sitemaps
 │           ├── class-mm-mod-robots.php        Dynamic robots.txt generation
 │           ├── class-mm-mod-html-sitemap.php  [mm_sitemap] shortcode
@@ -69,8 +69,7 @@ metamanager/
 │           ├── class-mm-mod-hygiene.php       Head cleanup and content audit tools
 │           ├── class-mm-mod-business-contact.php  Contact card block, widget, and shortcode
 │           ├── class-mm-mod-discovery.php     AI agent discovery files (/llms.txt)
-│           ├── class-mm-mod-rss.php           RSS feed cleanup module
-│           └── class-mm-mod-rss.php            RSS 2.0 feed cleanup — strips noise tags via output buffering
+│           └── class-mm-mod-rss.php           RSS 2.0 feed cleanup — strips noise tags via output buffering
 │
 ├── assets/
 │   └── js/mm-status.js           Frontend JS for live Media Library column polling
