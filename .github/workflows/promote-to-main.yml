@@ -27,28 +27,6 @@ jobs:
       - name: Push main
         run: git push origin main
 
-      - name: Sync daemon-compatibility.json to daemon main branch version
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          DAEMON_VER=$(gh api repos/richardkentgates/metamanager/contents/VERSION?ref=main -q '.content' | base64 -d | tr -d '[:space:]' 2>/dev/null || true)
-          if [ -z "$DAEMON_VER" ]; then
-            echo "::error::Could not read VERSION from daemon repo main branch"
-            exit 1
-          fi
-          echo "Daemon main branch version: $DAEMON_VER"
-
-          PLUGIN_VER=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
-          echo "Plugin version: $PLUGIN_VER"
-
-          jq --arg pv "$PLUGIN_VER" --arg dv "$DAEMON_VER" '.[$pv] = $dv' daemon-compatibility.json > tmp.json && mv tmp.json daemon-compatibility.json
-          echo "Updated daemon-compatibility.json: ${PLUGIN_VER} -> ${DAEMON_VER}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add daemon-compatibility.json
-          git diff --cached --quiet || git commit -m "chore: sync daemon-compat to main branch daemon v${DAEMON_VER}"
-          git push origin main
-
       - name: Get version
         id: version
         run: |

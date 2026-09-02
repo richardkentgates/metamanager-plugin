@@ -33,7 +33,7 @@ metamanager/
 │   ├── class-mm-upload-notify.php  Upload receipt emails with 60-second batching and retry
 │   ├── class-mm-updater.php      Native WordPress update pipeline integration (GitHub releases)
 │   ├── class-mm-cli.php          WP-CLI command group: compress, embed, import, queue, scan, stats
-│   ├── class-mm-daemon-updater.php  Reads daemon-compatibility.json and VERSION for display/diagnostics
+│   ├── class-mm-daemon-updater.php  Triggers apt upgrade after plugin update; reads VERSION for display
 │   ├── class-mm-db.php           Database layer: job log table, CRUD, stats, self-healing schema
 │   │
 │   └── metadata/                 Web-layer metadata subsystem (integrated from gcm-seo-core)
