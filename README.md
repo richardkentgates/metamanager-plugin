@@ -4,7 +4,7 @@
 
 **Media layer** — lossless compression for images, video, and audio; bidirectional metadata sync between WordPress fields and embedded file tags (EXIF/IPTC/XMP, ID3, QuickTime atoms, Vorbis comments, and XMP); PDF metadata import and write-back; GPS coordinate import; write-back verification — all via OS-level daemons using ExifTool and ffmpeg.
 
-**Web layer** — per-post/page/term/user title and description control; Open Graph and Twitter/X card output for all content types; Schema.org JSON-LD (10 selectable types — Article, BlogPosting, Event, Product, Service, HowTo, AboutPage, ContactPage, ProfilePage, WebPage — plus automatic WebSite, BreadcrumbList, ImageObject/VideoObject nodes); XML sitemaps (pages, media, video); HTML sitemap shortcode; robots.txt management; async broken link checker; business profile with contact card block; author profiles with structured data.
+**Web layer** — per-post/page/term/user title and description control; Open Graph and Twitter/X card output for all content types; Schema.org JSON-LD (11 selectable types — WebPage, AboutPage, ContactPage, ProfilePage, Calendar, FAQPage, BlogPosting, HowTo, Event, Product, Service — plus automatic WebSite, BreadcrumbList, ImageObject/VideoObject nodes); XML sitemaps (pages, media, video); HTML sitemap shortcode; robots.txt management; async broken link checker; business profile with contact card block; author profiles with structured data.
 
 [![License: GPL 3.0+](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759B?logo=wordpress&logoColor=white)](https://wordpress.org)

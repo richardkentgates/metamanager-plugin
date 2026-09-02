@@ -5,8 +5,8 @@
 This is a WordPress plugin with bash daemons — no Composer dependencies.
 
 ### Requirements
-- PHP 8.2+
-- WordPress 6.4+
+- PHP 8.0+
+- WordPress 6.0+
 - ExifTool (`sudo apt install libimage-exiftool-perl`)
 
 ### Local Testing

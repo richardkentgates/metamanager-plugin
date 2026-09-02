@@ -59,7 +59,7 @@ metamanager/
 │           ├── class-mm-mod-base.php          Abstract base class for all modules
 │           ├── class-mm-mod-head-meta.php     Title, description, canonical, robots per-page meta
 │           ├── class-mm-mod-social.php        Open Graph and Twitter/X Card tags
-│           ├── class-mm-mod-schema.php        Schema.org JSON-LD (12 selectable types)
+│           ├── class-mm-mod-schema.php        Schema.org JSON-LD (11 selectable types)
 │           ├── class-mm-mod-sitemap.php       XML sitemap index + per-type sub-sitemaps
 │           ├── class-mm-mod-robots.php        Dynamic robots.txt generation
 │           ├── class-mm-mod-html-sitemap.php  [mm_sitemap] shortcode
@@ -69,8 +69,7 @@ metamanager/
 │           ├── class-mm-mod-hygiene.php       Head cleanup and content audit tools
 │           ├── class-mm-mod-business-contact.php  Contact card block, widget, and shortcode
 │           ├── class-mm-mod-discovery.php     AI agent discovery files (/llms.txt)
-│           ├── class-mm-mod-rss.php           RSS feed cleanup module
-│           └── class-mm-mod-rss.php            RSS 2.0 feed cleanup — strips noise tags via output buffering
+│           └── class-mm-mod-rss.php           RSS 2.0 feed cleanup — strips noise tags via output buffering
 │
 ├── assets/
 │   └── js/mm-status.js           Frontend JS for live Media Library column polling
@@ -109,8 +108,8 @@ metamanager/
 5. Register `admin_init` hook for `MM_DB::create_or_update_table()` (safe to run on every request — `dbDelta` is a no-op when no schema changes are needed).
 6. Register WP-Cron intervals and the `mm_import_completed_jobs` event handler.
 7. Register `delete_attachment` hook for `MM_DB::delete_jobs_for_attachment()`.
-8. `MM_Frontend::init()` registers `wp_head` hook unconditionally; output is suppressed in admin/non-attachment contexts by the resolver returning 0.
-9. `MM_Sitemap::init()` unconditionally (rewrites must register on every request).
+8. `MM_Head_Emitter` registers `wp_head` hook; modules emit schema/OG/meta tags.
+9. `MM_Mod_Sitemap_Web` registers rewrite rules for sitemaps.
 10. Register activation/deactivation hooks.
 
 ---

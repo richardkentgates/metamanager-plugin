@@ -220,11 +220,10 @@ class MM_Admin {
 				'id'      => 'mm_help_updates',
 				'title'   => __( 'Updates', 'metamanager' ),
 				'content' =>
-					'<h2>' . esc_html__( 'Keeping Metamanager Up to Date', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'Metamanager integrates with the WordPress update system. New GitHub releases appear automatically in Dashboard → Updates within 12 hours.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'To check immediately, go to Plugins → Installed Plugins and click the “Check for Updates” link next to Metamanager.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'To update only the plugin files from the server without restarting daemons:', 'metamanager' ) . '</p>' .
-					'<code>sudo bash metamanager-install.sh --update</code>',
+				'<h2>' . esc_html__( 'Keeping Metamanager Up to Date', 'metamanager' ) . '</h2>' .
+					'<p>' . esc_html__( 'Metamanager integrates with the WordPress update system. New releases from the apt server appear automatically in Dashboard → Updates.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'To check immediately, go to Plugins → Installed Plugins and click the "Check for Updates" link next to Metamanager.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'Daemon updates are triggered automatically by the plugin when a version mismatch is detected.', 'metamanager' ) . '</p>',
 			] );
 
 			$screen->set_help_sidebar(
