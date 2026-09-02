@@ -363,6 +363,9 @@ class MM_Updater {
 		}
 
 		// Ensure cron events are scheduled after plugin update.
+		if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {
+			wp_schedule_event( time(), 'mm_every_minute', 'mm_import_completed_jobs' );
+		}
 		if ( ! wp_next_scheduled( 'mm_write_status_json' ) ) {
 			wp_schedule_event( time(), 'mm_every_minute', 'mm_write_status_json' );
 		}
