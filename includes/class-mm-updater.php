@@ -146,7 +146,7 @@ class MM_Updater {
 	public function inject_update( $transient ) {
 		$metadata = $this->get_metadata();
 		if ( null === $metadata ) {
-			return false;
+			return $transient;
 		}
 
 		$remote_version = $metadata->version;
@@ -179,9 +179,10 @@ class MM_Updater {
 			return $transient;
 		}
 
-		// No update available — return false so WordPress runs its normal
-		// update check and populates the transient correctly.
-		return false;
+		// No update for this plugin — pass through the transient unchanged
+		// so other updaters' data is preserved.  Returning false would tell
+		// WordPress to skip the pre_ filter and overwrite the transient.
+		return $transient;
 	}
 
 	/**
