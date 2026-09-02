@@ -374,14 +374,12 @@ class MM_Status {
 
 		// Version info.
 		$installed_ver = MM_Daemon_Updater::get_daemon_version();
-		$required_ver  = MM_Daemon_Updater::get_required_daemon_version();
 		$plugin_ver    = defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown';
 
 		$data = array(
 			'ts'              => gmdate( 'Y-m-d\TH:i:s\Z' ),
 			'plugin_version'  => $plugin_ver,
 			'daemon_version'  => $installed_ver,
-			'required_version'=> $required_ver,
 			'daemons'         => array(
 				'compress' => array(
 					'running' => $system['compress_daemon'],

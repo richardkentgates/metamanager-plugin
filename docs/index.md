@@ -159,7 +159,7 @@ The plugin checks `https://apt.richardkentgates.com/metamanager/metadata.json` e
 
 ### Daemon updates
 
-Daemon updates are handled by the plugin's `MM_Daemon_Updater` class. When the plugin is updated, it reads `daemon-compatibility.json` from the plugin directory, compares the installed daemon version against the required version, and triggers `apt-get install` automatically if a mismatch is detected. No manual SSH required.
+Daemon updates are handled by the plugin's `MM_Daemon_Updater` class. When the plugin is updated, it triggers `apt-get update && apt-get install -y metamanager`. The server's apt channel determines which version is installed. No manual SSH required.
 
 ## Documentation
 

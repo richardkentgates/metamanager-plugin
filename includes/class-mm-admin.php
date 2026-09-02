@@ -448,32 +448,18 @@ class MM_Admin {
 		);
 
 		$installed_ver = $updater['installed_version'] ?? null;
-		$required_ver  = $updater['required_version'] ?? null;
 		$plugin_ver    = $updater['plugin_version'] ?? ( defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown' );
 
-		if ( null === $installed_ver ) {
-			$daemon_ok = false;
-		} elseif ( null === $required_ver ) {
-			$daemon_ok = false;
-		} else {
-			$daemon_ok = ( $installed_ver === $required_ver );
-		}
+		$daemon_ok = ( $installed_ver !== null );
 
 		$daemon_icon = $daemon_ok
 			? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span>'
 			: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span>';
 
 		if ( $daemon_ok ) {
-			$daemon_status = '<span style="color:#00a32a;font-weight:600;">' . esc_html__( 'Daemon is up to date', 'metamanager' ) . '</span>';
-		} elseif ( null === $installed_ver ) {
-			$daemon_status = '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'Daemon not installed', 'metamanager' ) . '</span>';
-		} elseif ( null === $required_ver ) {
-			$daemon_status = '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'No compatibility mapping for this plugin version', 'metamanager' ) . '</span>';
+			$daemon_status = '<span style="color:#00a32a;font-weight:600;">' . esc_html__( 'Daemon installed', 'metamanager' ) . '</span>';
 		} else {
-			$daemon_status = sprintf(
-				'<span style="color:#dba617;font-weight:600;">%s</span>',
-				esc_html( sprintf( 'Daemon v%s installed, v%s required', $installed_ver, $required_ver ) )
-			);
+			$daemon_status = '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'Daemon not installed', 'metamanager' ) . '</span>';
 		}
 
 		// Updater status row (from status JSON).
@@ -536,11 +522,7 @@ class MM_Admin {
 					<td><?php echo esc_html( $plugin_ver ); ?></td>
 				</tr>
 				<tr>
-					<td><?php esc_html_e( 'Required daemon', 'metamanager' ); ?></td>
-					<td><?php echo $required_ver ? esc_html( 'v' . $required_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not mapped', 'metamanager' ) . '</span>'; ?></td>
-				</tr>
-				<tr>
-					<td><?php esc_html_e( 'Installed daemon', 'metamanager' ); ?></td>
+					<td><?php esc_html_e( 'Daemon', 'metamanager' ); ?></td>
 					<td><?php echo $installed_ver ? esc_html( 'v' . $installed_ver ) : '<span style="color:#d63638;">' . esc_html__( 'Not installed', 'metamanager' ) . '</span>'; ?></td>
 				</tr>
 			<tr data-row="daemon-status">
@@ -617,10 +599,9 @@ class MM_Admin {
 		// Flatten for the dashboard widget.
 		return [
 			'installed_version' => $data['daemon_version'] ?? null,
-			'required_version'  => $data['required_version'] ?? null,
 			'last_check'        => $data['ts'] ?? '',
 			'last_update'       => '',
-			'status'            => ( $data['daemon_version'] ?? null ) === ( $data['required_version'] ?? null ) ? 'ok' : 'mismatch',
+			'status'            => ( $data['daemon_version'] ?? null ) !== null ? 'ok' : 'error',
 			'message'           => '',
 			'daemon_pid_compress' => $data['daemons']['compress']['pid'] ?? '',
 			'daemon_pid_meta'     => $data['daemons']['meta']['pid'] ?? '',

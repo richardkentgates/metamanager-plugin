@@ -54,64 +54,11 @@ The only exception is temporary testing during active development sessions, wher
 
 ## Daemon Version Detection
 
-The plugin is the single authority for daemon version management. The plugin's `MM_Daemon_Updater` reads `daemon-compatibility.json` and the installed `VERSION` file, and triggers `apt-get update && apt-get install -y metamanager` when versions don't match.
+The plugin's `MM_Daemon_Updater` triggers `apt-get update && apt-get install -y metamanager` after every plugin update. The server's channel (test/stable) — configured in GCM — determines which daemon version apt installs. No version mapping file is needed.
 
 ### Architecture
 
-- **Plugin PHP** (`MM_Daemon_Updater`): Reads `daemon-compatibility.json` (bundled with the plugin) and the `VERSION` file. When versions don't match, triggers `apt-get update && apt-get install -y metamanager` and restarts daemons. Called via `MM_Updater` after plugin update.
-
-The plugin is the single authority for daemon version management.
-
-### Diagnosis Cases
-
-The `diagnose()` method returns a specific status for display:
-
-| Status | Condition | Message |
-|--------|-----------|---------|
-| `ok` | VERSION matches map | "Daemon v{X} is up to date." |
-| `error` | VERSION file missing | "Daemon VERSION file not found at {path}." |
-| `error` | VERSION file empty/unreadable | "Daemon VERSION file exists at {path} but is empty or unreadable." |
-| `error` | Compatibility map missing | "Compatibility map not found at {path}." |
-| `error` | Plugin version not in map | "Plugin v{X} is not listed in daemon-compatibility.json." |
-| `mismatch` | Installed ≠ required | "Daemon version mismatch: installed v{X}, required v{Y}." |
-
-### Compatibility Map
-
-**File**: `daemon-compatibility.json` (in plugin root)
-
-**Format**:
-```json
-{
-  "2.3.82": "2.4.32",
-  "2.3.81": "2.4.32",
-  "2.3.80": "2.4.32"
-}
-```
-
-**Keys**: Plugin version strings (`MM_VERSION` from `metamanager.php`)
-**Values**: Daemon version strings (from `/usr/local/lib/metamanager/VERSION`)
-
-### Many-to-One Mapping
-
-Multiple plugin versions map to the same daemon version. This is normal — most plugin releases are plugin-only changes (UI fixes, new metadata fields, etc.) that don't require daemon changes.
-
-### Plugin Manages the Map
-
-The plugin is the single authority for `daemon-compatibility.json`. The plugin reads this file to determine which daemon version is required, and triggers `apt-get update && apt-get install -y metamanager` when versions don't match. The daemon repo does NOT write to this file.
-
-When a new daemon version is released, the plugin developer adds an entry to `daemon-compatibility.json` mapping the current plugin version to the new daemon version.
-
-### Release Checklist
-
-Before pushing a new plugin version to dev:
-
-1. **Did daemon code change?**
-   - Yes → Add an entry mapping the new plugin version to the new daemon version.
-   - No → Add an entry mapping the new plugin version to the current daemon version (same as the previous plugin version).
-2. **Verify the entry exists**: Open `daemon-compatibility.json` and confirm your new plugin version has a mapping.
-3. **CI will auto-bump** `MM_VERSION` in `metamanager.php` — do NOT manually set the version number.
-
-**If you forget step 2**, the dashboard widget will show "No compatibility mapping for this plugin version".
+- **Plugin PHP** (`MM_Daemon_Updater`): After plugin update, runs `apt-get update && apt-get install -y metamanager` and restarts daemons. The server's apt channel determines the installed version. Called via `MM_Updater` after plugin update.
 
 ## Repos
 

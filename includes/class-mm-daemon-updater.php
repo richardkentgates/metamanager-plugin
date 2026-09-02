@@ -3,8 +3,8 @@
  * Metamanager Daemon Updater
  *
  * Automatically updates the OS daemon package when the plugin is updated.
- * Reads a compatibility map to determine which daemon version matches the
- * current plugin version, then triggers an apt upgrade if needed.
+ * Triggers apt upgrade and lets the server's channel (test/stable) determine
+ * which version is installed.
  *
  * @package Metamanager
  */
@@ -18,9 +18,6 @@ class MM_Daemon_Updater {
 
 	/** Path to the daemon VERSION file on the server. */
 	private const DAEMON_VERSION_FILE = '/usr/local/lib/metamanager/VERSION';
-
-	/** Path to the compatibility map bundled with the plugin. */
-	private const COMPAT_MAP_FILE = 'daemon-compatibility.json';
 
 	/** Option key for storing the last update result. */
 	private const OPTION_RESULT = 'mm_daemon_update_result';
@@ -37,7 +34,6 @@ class MM_Daemon_Updater {
 	 * Register WordPress hooks.
 	 */
 	private function hooks(): void {
-		// Admin notices for daemon update status.
 		add_action( 'admin_notices', [ $this, 'admin_notice' ] );
 	}
 
@@ -58,45 +54,6 @@ class MM_Daemon_Updater {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$version = trim( file_get_contents( self::DAEMON_VERSION_FILE ) );
 		return $version !== '' ? $version : null;
-	}
-
-	/**
-	 * Read the compatibility map and return the required daemon version
-	 * for the current plugin version.
-	 *
-	 * @return string|null Required daemon version, or null if not in map.
-	 */
-	public static function get_required_daemon_version(): ?string {
-		$map_file = MM_PLUGIN_DIR . self::COMPAT_MAP_FILE;
-		if ( ! file_exists( $map_file ) ) {
-			return null;
-		}
-
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-		$json = file_get_contents( $map_file );
-		$map  = json_decode( $json, true );
-
-		if ( ! is_array( $map ) ) {
-			return null;
-		}
-
-		return $map[ MM_VERSION ] ?? null;
-	}
-
-	/**
-	 * Check if the installed daemon version matches what the plugin needs.
-	 *
-	 * @return array{match: bool, current: string|null, required: string|null}
-	 */
-	public static function check_version(): array {
-		$current  = self::get_daemon_version();
-		$required = self::get_required_daemon_version();
-
-		return [
-			'match'    => ( $current !== null && $required !== null && $current === $required ),
-			'current'  => $current,
-			'required' => $required,
-		];
 	}
 
 	// -------------------------------------------------------------------------
@@ -150,27 +107,9 @@ class MM_Daemon_Updater {
 			}
 		}
 
-		// Verify the new version matches expectations.
 		$new_version = self::get_daemon_version();
-		$required    = self::get_required_daemon_version();
 
-		if ( $new_version !== $required ) {
-			$message = sprintf(
-				'Daemon updated but version mismatch: got %s, expected %s.',
-				$new_version ?? 'unknown',
-				$required ?? 'unknown'
-			);
-			self::log_wordpress( $message, 'warning' );
-			self::store_result( false, $message, $output );
-
-			return [
-				'success' => false,
-				'message' => $message,
-				'output'  => $output,
-			];
-		}
-
-		$message = sprintf( 'Daemon updated successfully to v%s.', $new_version );
+		$message = sprintf( 'Daemon updated successfully to v%s.', $new_version ?? 'unknown' );
 		self::log_wordpress( $message, 'info' );
 		self::store_result( true, $message, $output );
 
@@ -188,29 +127,13 @@ class MM_Daemon_Updater {
 	/**
 	 * Handle post-plugin-update logic.
 	 *
-	 * Called by MM_Updater::on_plugin_updated(). Checks version compatibility
-	 * and triggers daemon update if needed.
+	 * Called by MM_Updater::on_plugin_updated(). Triggers daemon apt upgrade
+	 * so the server's channel determines which version is installed.
 	 *
 	 * @return array{update_needed: bool, result: array|null}
 	 */
 	public static function handle_plugin_update(): array {
-		$check = self::check_version();
-
-		if ( $check['match'] ) {
-			return [
-				'update_needed' => false,
-				'result'       => null,
-			];
-		}
-
-		self::log_wordpress(
-			sprintf(
-				'Daemon version mismatch detected: installed=%s, required=%s. Triggering update.',
-				$check['current'] ?? 'unknown',
-				$check['required'] ?? 'unknown'
-			),
-			'info'
-		);
+		self::log_wordpress( 'Plugin updated — triggering daemon apt upgrade.', 'info' );
 
 		$result = self::trigger_update();
 
@@ -226,9 +149,6 @@ class MM_Daemon_Updater {
 
 	/**
 	 * Log a message to the WordPress error log.
-	 *
-	 * Respects WP_DEBUG_LOG: only writes when WP_DEBUG is true or
-	 * WP_DEBUG_LOG is explicitly enabled.
 	 *
 	 * @param string $message Log message.
 	 * @param string $level   Log level (info, warning, error).
@@ -246,9 +166,6 @@ class MM_Daemon_Updater {
 	/**
 	 * Log a message to the OS syslog (or /var/log/metamanager-update.log).
 	 *
-	 * Uses the syslog facility when available, falls back to a dedicated
-	 * log file for environments where syslog is not accessible.
-	 *
 	 * @param string $message Log message.
 	 */
 	private static function log_os( string $message ): void {
@@ -257,7 +174,6 @@ class MM_Daemon_Updater {
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_error_log
 		if ( ! @error_log( $line, 3, $log_file ) ) {
-			// Fallback: try syslog when available.
 			if ( function_exists( 'openlog' ) ) {
 				openlog( 'metamanager', LOG_PID, LOG_USER );
 				syslog( LOG_INFO, $message );

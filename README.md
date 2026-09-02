@@ -681,12 +681,12 @@ sudo chown -R www-data:www-data /srv/www/wordpress/wp-content/metamanager-jobs/
 
 ### WordPress updates not triggering daemon updates
 
-**Cause:** `MM_Updater` not detecting plugin update or compatibility map missing.
+**Cause:** `MM_Updater` not detecting plugin update or apt upgrade failing.
 
 **Fix:**
-1. Check the compatibility map: `cat /path/to/metamanager-plugin/daemon-compatibility.json`
-2. Verify your plugin version has an entry
-3. If missing, update the map and release a new plugin version
+1. Check the server's apt channel: `gcm config get channel`
+2. Verify apt can reach the server: `sudo apt-get update && sudo apt-get install -y metamanager`
+3. Check `/var/log/metamanager-update.log` for errors
 
 ---
 
