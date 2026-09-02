@@ -42,14 +42,14 @@ jobs:
           echo "Plugin version: $PLUGIN_VER"
 
           python3 -c "
-        import json
-        with open('daemon-compatibility.json', 'r') as f:
-            data = json.load(f)
-        data['${PLUGIN_VER}'] = '${DAEMON_VER}'
-        with open('daemon-compatibility.json', 'w') as f:
-            json.dump(data, f, indent=2)
-            f.write('\n')
-        "
+            import json
+            with open('daemon-compatibility.json', 'r') as f:
+                data = json.load(f)
+            data['${PLUGIN_VER}'] = '${DAEMON_VER}'
+            with open('daemon-compatibility.json', 'w') as f:
+                json.dump(data, f, indent=2)
+                f.write('\n')
+            "
           echo "Updated daemon-compatibility.json: ${PLUGIN_VER} -> ${DAEMON_VER}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
