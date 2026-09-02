@@ -26,34 +26,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/${{ github.repository }}.git"
 
-      - name: Validate compatibility map
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          CURRENT=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-          NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
-
-          if ! grep -q "\"${NEXT}\"" daemon-compatibility.json; then
-            DAEMON_VER=$(gh api repos/richardkentgates/metamanager/contents/VERSION?ref=dev -q '.content' | base64 -d | tr -d '[:space:]' || true)
-            if [ -z "$DAEMON_VER" ]; then
-              DAEMON_VER="2.4.32"
-            fi
-
-            echo "Auto-adding daemon-compatibility.json entry: ${NEXT} -> ${DAEMON_VER}"
-
-            python3 -c "
-          import json
-          with open('daemon-compatibility.json', 'r') as f:
-              data = json.load(f)
-          data = {'${NEXT}': '${DAEMON_VER}', **data}
-          with open('daemon-compatibility.json', 'w') as f:
-              json.dump(data, f, indent=2)
-              f.write('\n')
-          "
-          fi
-          echo "daemon-compatibility.json has entry for ${NEXT}"
-
       - name: Bump patch version
         run: |
           CURRENT=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
@@ -80,7 +52,7 @@ jobs:
               f.writelines(lines)
           PYEOF
 
-          git add metamanager.php readme.txt CHANGELOG.md daemon-compatibility.json
+          git add metamanager.php readme.txt CHANGELOG.md
           git commit -m "chore: bump version to ${NEW_VERSION}"
           git push origin dev
 
@@ -207,68 +179,10 @@ jobs:
           path: coverage.xml
           retention-days: 30
 
-  daemon-compat:
-    name: Daemon Compatibility
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate daemon-compatibility.json
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -e
-
-          # 1. JSON syntax
-          python3 -c "import json; json.load(open('daemon-compatibility.json'))"
-          echo "JSON syntax OK"
-
-          # 2. Current plugin version has an entry
-          CURRENT=$(grep -oP "define\(\s*'MM_VERSION'\s*,\s*'\\K[^']*" metamanager.php)
-          echo "Plugin version: $CURRENT"
-          if ! grep -q "\"${CURRENT}\"" daemon-compatibility.json; then
-            echo "::error::daemon-compatibility.json has no entry for current version ${CURRENT}"
-            exit 1
-          fi
-          DAEMON_VER=$(python3 -c "import json; print(json.load(open('daemon-compatibility.json'))['${CURRENT}'])")
-          echo "Required daemon version: $DAEMON_VER"
-
-          # 3. Verify the daemon version exists on the daemon repo's dev branch
-          DAEMON_DEV_VER=$(gh api repos/richardkentgates/metamanager/contents/VERSION?ref=dev -q '.content' | base64 -d | tr -d '[:space:]' 2>/dev/null || true)
-          if [ -z "$DAEMON_DEV_VER" ]; then
-            echo "::error::Could not read VERSION from daemon repo dev branch"
-            exit 1
-          fi
-          echo "Daemon dev version: $DAEMON_DEV_VER"
-          if [ "$DAEMON_VER" != "$DAEMON_DEV_VER" ]; then
-            echo "::warning::Map entry v${DAEMON_VER} differs from daemon dev VERSION v${DAEMON_DEV_VER} — will be corrected on next dev push"
-          fi
-          echo "Daemon VERSION on dev verified"
-
-          # 4. Verify all unique daemon versions referenced in the map exist
-          UNIQUE_DAEMONS=$(python3 -c "import json; print('\n'.join(sorted(set(json.load(open('daemon-compatibility.json')).values()))))")
-          echo "All unique daemon versions in map:"
-          echo "$UNIQUE_DAEMONS"
-          MISSING=0
-          while IFS= read -r ver; do
-            [ -z "$ver" ] && continue
-            if ! gh api repos/richardkentgates/metamanager/tags --paginate -q '.[].name' | grep -q "^v${ver}$"; then
-              echo "::warning::Daemon tag v${ver} not found in richardkentgates/metamanager (referenced in map)"
-              MISSING=1
-            fi
-          done <<< "$UNIQUE_DAEMONS"
-          if [ "$MISSING" -eq 1 ]; then
-            echo "::warning::Some daemon versions in the compatibility map have no matching tag"
-          else
-            echo "All daemon versions verified"
-          fi
-
   build:
     name: Build Artifact
     runs-on: ubuntu-latest
-    needs: [php-lint, phpstan, shellcheck, integration, daemon-compat]
+    needs: [php-lint, phpstan, shellcheck, integration]
     permissions:
       contents: read
     steps:
