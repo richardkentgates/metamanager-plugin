@@ -362,6 +362,11 @@ class MM_Updater {
 			return;
 		}
 
+		// Ensure cron events are scheduled after plugin update.
+		if ( ! wp_next_scheduled( 'mm_write_status_json' ) ) {
+			wp_schedule_event( time(), 'mm_every_minute', 'mm_write_status_json' );
+		}
+
 		// Trigger automatic daemon update.
 		$daemon_result = MM_Daemon_Updater::handle_plugin_update();
 
