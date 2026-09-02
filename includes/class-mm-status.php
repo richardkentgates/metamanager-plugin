@@ -403,6 +403,7 @@ class MM_Status {
 				'cwebp'     => $system['cwebp'],
 				'ffmpeg'    => $system['ffmpeg'],
 			),
+			'cron'            => MM_Cron_Tracker::get_all(),
 		);
 
 		$json = wp_json_encode( $data, JSON_PRETTY_PRINT );

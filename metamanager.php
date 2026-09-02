@@ -77,6 +77,7 @@ require_once MM_PLUGIN_DIR . 'includes/class-mm-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-daemon-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-cli.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-memory-manager.php';
+require_once MM_PLUGIN_DIR . 'includes/class-mm-cron-tracker.php';
 
 // ---------------------------------------------------------------------------
 // Metadata subsystem — page-level head output, structured data, social tags,
@@ -289,8 +290,8 @@ add_filter( 'cron_schedules', function ( array $schedules ): array {
 // history dashboard, then deletes the result files.
 // ---------------------------------------------------------------------------
 
-add_action( 'mm_import_completed_jobs', 'mm_import_completed_jobs' );
-add_action( 'mm_write_status_json', [ 'MM_Status', 'write_status_json' ] );
+add_action( 'mm_import_completed_jobs', MM_Cron_Tracker::wrap( 'mm_import_completed_jobs', 'mm_import_completed_jobs' ) );
+add_action( 'mm_write_status_json', MM_Cron_Tracker::wrap( 'mm_write_status_json', [ 'MM_Status', 'write_status_json' ] ) );
 
 /**
  * Scan completed/failed result directories and persist to DB.

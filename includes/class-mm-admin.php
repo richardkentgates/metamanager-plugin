@@ -430,6 +430,7 @@ class MM_Admin {
 		$status      = MM_Status::system_status();
 		$updater     = self::get_updater_status();
 		$queues      = $updater['queues'] ?? [];
+		$cron_data   = $updater['cron'] ?? [];
 
 		$tool_icon = function ( bool $ok, string $ok_title, string $fail_title ) {
 			return $ok
@@ -537,6 +538,27 @@ class MM_Admin {
 				<?php endif; ?>
 			</tbody>
 		</table>
+		<?php if ( ! empty( $cron_data ) ) : ?>
+		<br />
+		<table class="widefat striped" style="margin-bottom:0">
+			<thead><tr><th><?php esc_html_e( 'Cron Event', 'metamanager' ); ?></th><th><?php esc_html_e( 'Last Run', 'metamanager' ); ?></th><th><?php esc_html_e( 'Status', 'metamanager' ); ?></th><th><?php esc_html_e( 'Pass', 'metamanager' ); ?></th><th><?php esc_html_e( 'Fail', 'metamanager' ); ?></th></tr></thead>
+			<tbody>
+				<?php foreach ( $cron_data as $hook => $info ) : ?>
+				<tr>
+					<td><?php echo esc_html( $hook ); ?></td>
+					<td><?php echo esc_html( $info['last_run'] ? gmdate( 'Y-m-d H:i', strtotime( $info['last_run'] ) ) : '—' ); ?></td>
+					<td><?php echo 'pass' === ( $info['last_status'] ?? '' )
+						? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span>'
+						: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span>'; ?></td>
+					<td><?php echo esc_html( $info['pass_count'] ?? 0 ); ?></td>
+					<td><?php echo ( $info['fail_count'] ?? 0 ) > 0
+						? '<span style="color:#d63638;">' . esc_html( $info['fail_count'] ) . '</span>'
+						: esc_html( $info['fail_count'] ?? 0 ); ?></td>
+				</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<?php endif; ?>
 		<script>
 		(function(){
 			function refreshMMStatus(){
@@ -560,13 +582,27 @@ class MM_Admin {
 								if(td) td.innerHTML='<span style="color:#00a32a;">'+q.compress+'</span> compress, <span style="color:#00a32a;">'+q.meta+'</span> meta, <span style="color:#00a32a;">'+q.completed+'</span> completed, <span style="color:'+(q.failed>0?'#d63638':'#00a32a')+';">'+q.failed+'</span> failed';
 							}
 						}
-					// Second table: versions
-					if(tables[1]){
-						var ds=tables[1].querySelector('[data-row="daemon-status"] td:last-child');
-						if(ds&&d.daemon_status) ds.innerHTML=d.daemon_status;
-						var ur=tables[1].querySelector('[data-row="updater"] td:last-child');
-						if(ur&&d.updater_row) ur.innerHTML=d.updater_row;
+				// Second table: versions
+				if(tables[1]){
+					var ds=tables[1].querySelector('[data-row="daemon-status"] td:last-child');
+					if(ds&&d.daemon_status) ds.innerHTML=d.daemon_status;
+					var ur=tables[1].querySelector('[data-row="updater"] td:last-child');
+					if(ur&&d.updater_row) ur.innerHTML=d.updater_row;
+				}
+				// Third table: cron events
+				if(tables[2]&&d.cron){
+					var tbody=tables[2].querySelector('tbody');
+					if(tables[2].querySelector('thead'))thead=tables[2].querySelector('thead').innerHTML;
+					var html='';
+					for(var hook in d.cron){
+						var c=d.cron[hook];
+						var lr=c.last_run?new Date(c.last_run).toLocaleString():'—';
+						var icon=c.last_status==='pass'?'<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span>':'<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span>';
+						var fc=(c.fail_count||0)>0?'<span style="color:#d63638;">'+c.fail_count+'</span>':(c.fail_count||0);
+						html+='<tr><td>'+hook+'</td><td>'+lr+'</td><td>'+icon+'</td><td>'+(c.pass_count||0)+'</td><td>'+fc+'</td></tr>';
 					}
+					if(tbody)tbody.innerHTML=html;
+				}
 					})
 					.catch(function(){});
 			}
@@ -607,6 +643,7 @@ class MM_Admin {
 			'daemon_pid_meta'     => $data['daemons']['meta']['pid'] ?? '',
 			'queues'             => $data['queues'] ?? [],
 			'tools'              => $data['tools'] ?? [],
+			'cron'               => $data['cron'] ?? [],
 		];
 	}
 
@@ -1799,6 +1836,7 @@ class MM_Admin {
 			'queues'        => $queues,
 			'daemon_status' => $daemon_status,
 			'updater_row'   => $updater_row,
+			'cron'          => $data['cron'] ?? [],
 		] );
 	}
 
