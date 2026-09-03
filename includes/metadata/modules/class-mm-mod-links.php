@@ -26,7 +26,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 
 		// Schedule the recurring check if not yet set.
 		add_action( 'wp', [ $this, 'maybe_schedule_cron' ] );
-		add_action( 'mm_meta_check_links', [ $this, 'run_batch_check' ] );
+		add_action( 'mm_meta_check_links', MM_Cron_Tracker::wrap( 'mm_meta_check_links', [ $this, 'run_batch_check' ] ) );
 
 		// Extract links on post save.
 		add_action( 'save_post', [ $this, 'extract_from_post' ], 10, 2 );

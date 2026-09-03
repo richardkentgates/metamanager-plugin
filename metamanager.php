@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.168
+ * Version:      2.3.169
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.168' );
+define( 'MM_VERSION',     '2.3.169' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -77,6 +77,7 @@ require_once MM_PLUGIN_DIR . 'includes/class-mm-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-daemon-updater.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-cli.php';
 require_once MM_PLUGIN_DIR . 'includes/class-mm-memory-manager.php';
+require_once MM_PLUGIN_DIR . 'includes/class-mm-cron-tracker.php';
 
 // ---------------------------------------------------------------------------
 // Metadata subsystem — page-level head output, structured data, social tags,
@@ -289,8 +290,8 @@ add_filter( 'cron_schedules', function ( array $schedules ): array {
 // history dashboard, then deletes the result files.
 // ---------------------------------------------------------------------------
 
-add_action( 'mm_import_completed_jobs', 'mm_import_completed_jobs' );
-add_action( 'mm_write_status_json', [ 'MM_Status', 'write_status_json' ] );
+add_action( 'mm_import_completed_jobs', MM_Cron_Tracker::wrap( 'mm_import_completed_jobs', 'mm_import_completed_jobs' ) );
+add_action( 'mm_write_status_json', MM_Cron_Tracker::wrap( 'mm_write_status_json', [ 'MM_Status', 'write_status_json' ] ) );
 
 /**
  * Scan completed/failed result directories and persist to DB.
