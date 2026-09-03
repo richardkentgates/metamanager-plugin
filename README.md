@@ -4,7 +4,7 @@
 
 **Media layer** — lossless compression for images, video, and audio; bidirectional metadata sync between WordPress fields and embedded file tags (EXIF/IPTC/XMP, ID3, QuickTime atoms, Vorbis comments, and XMP); PDF metadata import and write-back; GPS coordinate import; write-back verification — all via OS-level daemons using ExifTool and ffmpeg.
 
-**Web layer** — per-post/page/term/user title and description control; Open Graph and Twitter/X card output for all content types; Schema.org JSON-LD (10 selectable types — Article, BlogPosting, Event, Product, Service, HowTo, AboutPage, ContactPage, ProfilePage, WebPage — plus automatic WebSite, BreadcrumbList, ImageObject/VideoObject nodes); XML sitemaps (pages, media, video); HTML sitemap shortcode; robots.txt management; async broken link checker; business profile with contact card block; author profiles with structured data.
+**Web layer** — per-post/page/term/user title and description control; Open Graph and Twitter/X card output for all content types; Schema.org JSON-LD (11 selectable types — WebPage, AboutPage, ContactPage, ProfilePage, Calendar, FAQPage, BlogPosting, HowTo, Event, Product, Service — plus automatic WebSite, BreadcrumbList, ImageObject/VideoObject nodes); XML sitemaps (pages, media, video); HTML sitemap shortcode; robots.txt management; async broken link checker; business profile with contact card block; author profiles with structured data.
 
 [![License: GPL 3.0+](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759B?logo=wordpress&logoColor=white)](https://wordpress.org)
@@ -681,12 +681,12 @@ sudo chown -R www-data:www-data /srv/www/wordpress/wp-content/metamanager-jobs/
 
 ### WordPress updates not triggering daemon updates
 
-**Cause:** `MM_Updater` not detecting plugin update or compatibility map missing.
+**Cause:** `MM_Updater` not detecting plugin update or apt upgrade failing.
 
 **Fix:**
-1. Check the compatibility map: `cat /path/to/metamanager-plugin/daemon-compatibility.json`
-2. Verify your plugin version has an entry
-3. If missing, update the map and release a new plugin version
+1. Check the server's apt channel: `gcm config get channel`
+2. Verify apt can reach the server: `sudo apt-get update && sudo apt-get install -y metamanager`
+3. Check `/var/log/metamanager-update.log` for errors
 
 ---
 

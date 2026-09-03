@@ -5,8 +5,8 @@
 This is a WordPress plugin with bash daemons — no Composer dependencies.
 
 ### Requirements
-- PHP 8.2+
-- WordPress 6.4+
+- PHP 8.0+
+- WordPress 6.0+
 - ExifTool (`sudo apt install libimage-exiftool-perl`)
 
 ### Local Testing
@@ -45,18 +45,6 @@ make lint
 
 **Do not manually edit version numbers.** The CI pipeline auto-bumps `MM_VERSION` in `metamanager.php`, the `Version:` header, `readme.txt` `Stable tag:`, and `CHANGELOG.md` on every push to `dev`.
 
-### If you change daemon code
+### Daemon updates
 
-1. Push daemon changes to the **server repo** `dev` branch first
-2. Wait for CI to bump `debian/changelog` and `VERSION`
-3. Open `daemon-compatibility.json` and add an entry mapping your new plugin version to the new daemon version
-4. Then push your plugin changes
-
-### If you only change plugin code (no daemon changes)
-
-1. Add an entry to `daemon-compatibility.json` mapping your new plugin version to the **current** daemon version (same as the previous plugin version)
-2. Push to `dev`
-
-### What happens if you forget
-
-If your plugin version is not in `daemon-compatibility.json`, the auto-updater will show a persistent error in wp-admin: "Plugin vX.Y.Z is not listed in daemon-compatibility.json." This error will not clear until you add the missing entry and release a new version.
+Daemon updates are handled automatically. When the plugin is updated, `MM_Daemon_Updater` triggers `apt-get update && apt-get install -y metamanager`. The server's apt channel (test/stable) determines which version is installed. No manual coordination needed.

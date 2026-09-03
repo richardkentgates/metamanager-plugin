@@ -146,7 +146,7 @@ class MM_Updater {
 	public function inject_update( $transient ) {
 		$metadata = $this->get_metadata();
 		if ( null === $metadata ) {
-			return false;
+			return $transient;
 		}
 
 		$remote_version = $metadata->version;
@@ -179,9 +179,10 @@ class MM_Updater {
 			return $transient;
 		}
 
-		// No update available — return false so WordPress runs its normal
-		// update check and populates the transient correctly.
-		return false;
+		// No update for this plugin — pass through the transient unchanged
+		// so other updaters' data is preserved.  Returning false would tell
+		// WordPress to skip the pre_ filter and overwrite the transient.
+		return $transient;
 	}
 
 	/**
@@ -360,6 +361,14 @@ class MM_Updater {
 		$updated_plugins = $options['plugins'] ?? [];
 		if ( ! in_array( $this->plugin_basename, (array) $updated_plugins, true ) ) {
 			return;
+		}
+
+		// Ensure cron events are scheduled after plugin update.
+		if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {
+			wp_schedule_event( time(), 'mm_every_minute', 'mm_import_completed_jobs' );
+		}
+		if ( ! wp_next_scheduled( 'mm_write_status_json' ) ) {
+			wp_schedule_event( time(), 'mm_every_minute', 'mm_write_status_json' );
 		}
 
 		// Trigger automatic daemon update.
