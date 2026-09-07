@@ -49,6 +49,8 @@ Use the bundled `metamanager-install.sh` script to install everything automatica
 * Write-back verification after daemon embedding
 * Bulk compress all unprocessed attachments
 * Expanded metadata fields: Creator, Copyright, Owner, Headline, Credit, Keywords, Date, Rating, City, State, Country
+* WP-Cron history tracking with pass/fail counts and last 20 runs per hook
+* Dashboard widget with real-time job queue, daemon health, and cron event history
 
 **Web / SEO:**
 
