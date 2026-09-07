@@ -52,21 +52,12 @@ defined( 'ABSPATH' ) || exit;
 		$status_json = is_readable( $status_file ) ? @file_get_contents( $status_file ) : false;
 		$status_data = $status_json ? json_decode( $status_json, true ) : null;
 		$daemon_ver = $status_data['daemon_version'] ?? null;
-		$required_ver = $status_data['required_version'] ?? null;
 		$plugin_ver = $status_data['plugin_version'] ?? ( defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown' );
 
-		if ( null === $daemon_ver ) {
-			printf( '<tr><th>Daemon Version</th><td><span style="color:red">✗ Daemon not installed</span></td></tr>' );
-		} elseif ( null === $required_ver ) {
-			printf( '<tr><th>Daemon Version</th><td><span style="color:red">✗ No compatibility mapping for plugin v%s</span></td></tr>', esc_html( $plugin_ver ) );
-		} elseif ( $daemon_ver === $required_ver ) {
+		if ( null !== $daemon_ver ) {
 			printf( '<tr><th>Daemon Version</th><td><span style="color:green">✓ %s</span></td></tr>', esc_html( $daemon_ver ) );
 		} else {
-			printf(
-				'<tr><th>Daemon Version</th><td><span style="color:orange">✗ Installed: %s — Expected: %s</span></td></tr>',
-				esc_html( $daemon_ver ),
-				esc_html( $required_ver )
-			);
+			printf( '<tr><th>Daemon Version</th><td><span style="color:red">✗ Daemon not installed</span></td></tr>' );
 		}
 		?>
 		<tr><th>WordPress Version</th><td><?php echo esc_html(get_bloginfo('version')); ?></td></tr>

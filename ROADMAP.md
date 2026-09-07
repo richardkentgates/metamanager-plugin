@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Last updated 2026-09-01.
+Last updated 2026-09-03.
 
 ---
 
@@ -44,7 +44,7 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 
 | Item | Value |
 |------|-------|
-| Plugin version | Auto-bumped by CI on every dev push |
+| Plugin version | v2.3.169 (production) |
 | Daemon version | Auto-bumped by CI on server repo dev push |
 | WordPress version | 6.9 |
 | Production URL | https://hyercleaning.com |
@@ -53,6 +53,17 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 ---
 
 ## What's Done
+
+### WP-Cron History Tracking, Dashboard Widget, inject_update Fix (2026-09-02 to 2026-09-03)
+
+- **WP-Cron history tracking**: New `MM_Cron_Tracker` class wraps cron callbacks to auto-track last run, next run, pass/fail counts, and last 20 runs per hook
+- **Dashboard widget**: Third table showing cron event history with status icons and pass/fail counts; AJAX refresh includes cron data
+- **inject_update fix**: `inject_update()` now returns `$transient` instead of `false` when no update available, preventing clobbering of other updaters' data
+- **`on_plugin_updated()`**: Re-registers both crons (`mm_import_completed_jobs`, `mm_write_status_json`) after plugin update
+- **Cron tracker registered in**: `metamanager.php`, `class-mm-mod-links.php`
+- **Status JSON**: New `cron` key via `MM_Cron_Tracker::get_all()`
+- **CI tests updated**: Removed daemon-compat jobs from `ci.yml`
+- **Production deployed**: v2.3.169 on all four servers
 
 ### Charset Fix (2026-09-01)
 

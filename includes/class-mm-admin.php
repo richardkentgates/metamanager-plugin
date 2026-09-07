@@ -132,8 +132,9 @@ class MM_Admin {
 				'title'   => __( 'Overview', 'metamanager' ),
 				'content' =>
 					'<h2>' . esc_html__( 'Metamanager Job Dashboard', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'This page shows everything Metamanager is doing or has done: pending jobs waiting for the OS daemons and the history of completed and failed jobs, all in a single unified view.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'This page shows everything Metamanager is doing or has done: pending jobs waiting for the OS daemons, the history of completed and failed jobs, and cron event execution history — all in a single unified view.', 'metamanager' ) . '</p>' .
 					'<p>' . esc_html__( 'The dashboard refreshes automatically every 5 seconds. You do not need to reload the page.', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'The dashboard includes three sections: pending jobs, job history (completed/failed), and cron event history with last run times, status icons, and pass/fail counts.', 'metamanager' ) . '</p>' .
 					'<p>' . esc_html__( 'Access to this dashboard and all write operations (bulk actions, re-queue, library scan) requires the Editor role or higher (edit_others_posts capability). Per-attachment actions such as recompressing or saving metadata on a single file respect normal WordPress ownership — Authors can act on their own uploads.', 'metamanager' ) . '</p>',
 			] );
 
@@ -223,14 +224,32 @@ class MM_Admin {
 				'<h2>' . esc_html__( 'Keeping Metamanager Up to Date', 'metamanager' ) . '</h2>' .
 					'<p>' . esc_html__( 'Metamanager integrates with the WordPress update system. New releases from the apt server appear automatically in Dashboard → Updates.', 'metamanager' ) . '</p>' .
 					'<p>' . esc_html__( 'To check immediately, go to Plugins → Installed Plugins and click the "Check for Updates" link next to Metamanager.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Daemon updates are triggered automatically by the plugin when a version mismatch is detected.', 'metamanager' ) . '</p>',
+					'<p>' . esc_html__( 'Daemon updates are triggered automatically by the plugin after every plugin update. The server\'s apt channel (test or stable) determines which daemon version is installed.', 'metamanager' ) . '</p>',
+			] );
+
+			$screen->add_help_tab( [
+				'id'      => 'mm_help_cron',
+				'title'   => __( 'WP-Cron History', 'metamanager' ),
+				'content' =>
+				'<h2>' . esc_html__( 'WP-Cron History Tracking', 'metamanager' ) . '</h2>' .
+					'<p>' . esc_html__( 'Metamanager tracks the execution history of all its cron events. Each cron callback is wrapped with MM_Cron_Tracker, which automatically records:', 'metamanager' ) . '</p>' .
+					'<ul>' .
+					'<li>' . esc_html__( 'Last run time and next scheduled time', 'metamanager' ) . '</li>' .
+					'<li>' . esc_html__( 'Pass/fail counts (total runs and failures)', 'metamanager' ) . '</li>' .
+					'<li>' . esc_html__( 'Last 20 runs per hook with timestamps and status', 'metamanager' ) . '</li>' .
+					'</ul>' .
+					'<p>' . esc_html__( 'Tracked cron events:', 'metamanager' ) . '</p>' .
+					'<ul>' .
+					'<li><strong>mm_import_completed_jobs</strong> — ' . esc_html__( 'Reads completed job results from the daemon output directories and updates the database.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_write_status_json</strong> — ' . esc_html__( 'Writes the status JSON file consumed by GCM and monitoring tools.', 'metamanager' ) . '</li>' .
+					'</ul>' .
+					'<p>' . esc_html__( 'Cron history is visible in the dashboard widget under Metamanager → Dashboard, and in the status JSON file under the "cron" key.', 'metamanager' ) . '</p>',
 			] );
 
 			$screen->set_help_sidebar(
 				'<p><strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ' ' . MM_VERSION . '</strong></p>' .
 				'<p><a href="https://metamanager.richardkentgates.com" target="_blank" rel="noopener">' . esc_html__( 'Documentation Website', 'metamanager' ) . ' ↗</a></p>' .
 				'<p><a href="https://github.com/richardkentgates/metamanager-plugin" target="_blank" rel="noopener">' . esc_html__( 'Plugin Repository', 'metamanager' ) . ' ↗</a></p>' .
-				'<p><a href="https://github.com/richardkentgates/metamanager" target="_blank" rel="noopener">' . esc_html__( 'Server Repository', 'metamanager' ) . ' ↗</a></p>' .
 				'<p><a href="https://github.com/richardkentgates/metamanager-plugin/issues" target="_blank" rel="noopener">' . esc_html__( 'Report an Issue', 'metamanager' ) . ' ↗</a></p>' .
 				'<p><a href="https://github.com/richardkentgates/metamanager-plugin/blob/main/CHANGELOG.md" target="_blank" rel="noopener">' . esc_html__( 'Changelog', 'metamanager' ) . ' ↗</a></p>'
 			);
@@ -541,19 +560,18 @@ class MM_Admin {
 		<?php if ( ! empty( $cron_data ) ) : ?>
 		<br />
 		<table class="widefat striped" style="margin-bottom:0">
-			<thead><tr><th><?php esc_html_e( 'Cron Event', 'metamanager' ); ?></th><th><?php esc_html_e( 'Last Run', 'metamanager' ); ?></th><th><?php esc_html_e( 'Status', 'metamanager' ); ?></th><th><?php esc_html_e( 'Pass', 'metamanager' ); ?></th><th><?php esc_html_e( 'Fail', 'metamanager' ); ?></th></tr></thead>
+			<thead><tr><th><?php esc_html_e( 'Cron Event', 'metamanager' ); ?></th><th style="text-align:right"><?php esc_html_e( 'Pass / Fail', 'metamanager' ); ?></th></tr></thead>
 			<tbody>
 				<?php foreach ( $cron_data as $hook => $info ) : ?>
 				<tr>
 					<td><?php echo esc_html( $hook ); ?></td>
-					<td><?php echo esc_html( $info['last_run'] ? gmdate( 'Y-m-d H:i', strtotime( $info['last_run'] ) ) : '—' ); ?></td>
-					<td><?php echo 'pass' === ( $info['last_status'] ?? '' )
-						? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;font-size:18px;width:18px;height:18px;"></span>'
-						: '<span class="dashicons dashicons-dismiss" style="color:#d63638;font-size:18px;width:18px;height:18px;"></span>'; ?></td>
-					<td><?php echo esc_html( $info['pass_count'] ?? 0 ); ?></td>
-					<td><?php echo ( $info['fail_count'] ?? 0 ) > 0
-						? '<span style="color:#d63638;">' . esc_html( $info['fail_count'] ) . '</span>'
-						: esc_html( $info['fail_count'] ?? 0 ); ?></td>
+					<td style="text-align:right;white-space:nowrap">
+						<?php echo esc_html( $info['pass_count'] ?? 0 ); ?>
+						/
+						<?php echo ( $info['fail_count'] ?? 0 ) > 0
+							? '<span style="color:#d63638;font-weight:600">' . esc_html( $info['fail_count'] ) . '</span>'
+							: esc_html( $info['fail_count'] ?? 0 ); ?>
+					</td>
 				</tr>
 				<?php endforeach; ?>
 			</tbody>
@@ -1790,26 +1808,11 @@ class MM_Admin {
 		$queues = $data['queues'] ?? [];
 
 		$installed_ver = $data['daemon_version'] ?? null;
-		$required_ver  = $data['required_version'] ?? null;
 
-		if ( null === $installed_ver || null === $required_ver ) {
-			$daemon_ok = false;
+		if ( null !== $installed_ver ) {
+			$daemon_status = '<span style="color:#00a32a;font-weight:600;">Daemon v' . esc_html( $installed_ver ) . ' installed</span>';
 		} else {
-			$daemon_ok = ( $installed_ver === $required_ver );
-		}
-
-		if ( $daemon_ok ) {
-			$daemon_status = '<span style="color:#00a32a;font-weight:600;">Daemon is up to date</span>';
-		} elseif ( null === $installed_ver ) {
 			$daemon_status = '<span style="color:#d63638;font-weight:600;">Daemon not installed</span>';
-		} elseif ( null === $required_ver ) {
-			$daemon_status = '<span style="color:#d63638;font-weight:600;">No compatibility mapping for this plugin version</span>';
-		} else {
-			$daemon_status = sprintf(
-				'<span style="color:#dba617;font-weight:600;">Daemon v%s installed, v%s required</span>',
-				esc_html( $installed_ver ),
-				esc_html( $required_ver )
-			);
 		}
 
 		$action_labels = [

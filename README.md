@@ -70,6 +70,8 @@ PHP's role throughout is coordinator only: write the instruction, let the daemon
 - **Daemon health indicator**: status banner shows whether each daemon is running (via PID file — no `systemctl` privilege required)
 - **REST API access control**: disable all endpoints or restrict to a comma-separated IP allowlist; unauthorized requests receive a `403`
 - **Upload receipt emails**: batched digest email (one per 60-second window); per-user opt-in; configurable CC address; failed sends surfaced as a dismissible notice with retry
+- **WP-Cron history tracking**: every cron event is wrapped with `MM_Cron_Tracker` which records last run, next scheduled, pass/fail counts, and last 20 runs per hook — visible in the dashboard widget and status JSON
+- **Dashboard widget**: real-time job queue, daemon health, and cron event history table with status icons and pass/fail counts — auto-refreshes every 5 seconds
 - **Auto-updates**: native WordPress update pipeline integration — updates appear in Dashboard → Updates; includes "Check for Updates" link; notice prompts daemon restart after updates
 - **Multisite compatible**: network activation creates the DB table and schedules cron on every existing site; new blog creation handled via `wp_initialize_site`
 - **Clean uninstall**: opt-in "Remove all data on uninstall" setting wipes options, post meta (22 keys) and the mm_meta_history table, job log table, job queue directory, and updater transients — nothing removed by default
