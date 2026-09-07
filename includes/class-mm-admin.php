@@ -1808,26 +1808,11 @@ class MM_Admin {
 		$queues = $data['queues'] ?? [];
 
 		$installed_ver = $data['daemon_version'] ?? null;
-		$required_ver  = $data['required_version'] ?? null;
 
-		if ( null === $installed_ver || null === $required_ver ) {
-			$daemon_ok = false;
+		if ( null !== $installed_ver ) {
+			$daemon_status = '<span style="color:#00a32a;font-weight:600;">Daemon v' . esc_html( $installed_ver ) . ' installed</span>';
 		} else {
-			$daemon_ok = ( $installed_ver === $required_ver );
-		}
-
-		if ( $daemon_ok ) {
-			$daemon_status = '<span style="color:#00a32a;font-weight:600;">Daemon is up to date</span>';
-		} elseif ( null === $installed_ver ) {
 			$daemon_status = '<span style="color:#d63638;font-weight:600;">Daemon not installed</span>';
-		} elseif ( null === $required_ver ) {
-			$daemon_status = '<span style="color:#d63638;font-weight:600;">No compatibility mapping for this plugin version</span>';
-		} else {
-			$daemon_status = sprintf(
-				'<span style="color:#dba617;font-weight:600;">Daemon v%s installed, v%s required</span>',
-				esc_html( $installed_ver ),
-				esc_html( $required_ver )
-			);
 		}
 
 		$action_labels = [
