@@ -550,8 +550,8 @@ class MM_Admin {
 				<td><?php echo $daemon_icon . ' ' . $daemon_status; ?></td>
 			</tr>
 			<?php if ( $updater ) : ?>
-			<tr data-row="updater">
-				<td><?php esc_html_e( 'Auto-update', 'metamanager' ); ?></td>
+				<tr data-row="updater">
+				<td><?php esc_html_e( 'Daemon Version', 'metamanager' ); ?></td>
 				<td><?php echo $updater_row; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
 			</tr>
 				<?php endif; ?>
@@ -1825,15 +1825,12 @@ class MM_Admin {
 			'waiting'  => 'Waiting for plugin',
 			'none'     => 'None',
 		];
-		$action = $data['updater']['status'] ?? 'none';
+		$action = ( null !== $installed_ver ) ? 'ok' : 'error';
 		$color  = in_array( $action, [ 'ok', 'updated', 'ahead' ], true ) ? '#00a32a'
 			: ( in_array( $action, [ 'failed', 'error' ], true ) ? '#d63638' : '#dba617' );
 		$updater_row = '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
 			. esc_html( $action_labels[ $action ] ?? $action )
 			. '</span>';
-		if ( ! empty( $data['updater']['message'] ) ) {
-			$updater_row .= '<br><span style="font-size:12px;color:#666;">' . esc_html( $data['updater']['message'] ) . '</span>';
-		}
 
 		wp_send_json_success( [
 			'queues'        => $queues,
