@@ -163,6 +163,7 @@ register_deactivation_hook( MM_PLUGIN_FILE, 'mm_deactivate' );
 function mm_activate_single_site(): void {
 	MM_DB::create_or_update_table();
 	MM_Metadata_History::create_or_update_table();
+	MM_Mod_Links::create_table();
 	MM_Job_Queue::ensure_dirs();
 
 	if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {
@@ -510,7 +511,6 @@ MM_Updater::init();
 if ( is_admin() ) {
 	MM_Admin::init();
 	MM_Settings::init();
-	MM_Daemon_Updater::init();
 
 	// Memory limit admin notice (dynamic — set/cleared by cron cycles).
 	add_action( 'admin_notices', [ 'MM_Memory_Manager', 'render_notice' ] );

@@ -370,13 +370,6 @@ class MM_Updater {
 		if ( ! wp_next_scheduled( 'mm_write_status_json' ) ) {
 			wp_schedule_event( time(), 'mm_every_minute', 'mm_write_status_json' );
 		}
-
-		// Trigger automatic daemon update.
-		$daemon_result = MM_Daemon_Updater::handle_plugin_update();
-
-		if ( $daemon_result['update_needed'] && $daemon_result['result']['success'] ) {
-			set_transient( 'mm_daemon_restart_notice', '1', 7 * DAY_IN_SECONDS );
-		}
 	}
 
 	/**
