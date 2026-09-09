@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.172
+ * Version:      2.3.173
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.172' );
+define( 'MM_VERSION',     '2.3.173' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -163,6 +163,7 @@ register_deactivation_hook( MM_PLUGIN_FILE, 'mm_deactivate' );
 function mm_activate_single_site(): void {
 	MM_DB::create_or_update_table();
 	MM_Metadata_History::create_or_update_table();
+	MM_Mod_Links::create_table();
 	MM_Job_Queue::ensure_dirs();
 
 	if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {
@@ -510,7 +511,6 @@ MM_Updater::init();
 if ( is_admin() ) {
 	MM_Admin::init();
 	MM_Settings::init();
-	MM_Daemon_Updater::init();
 
 	// Memory limit admin notice (dynamic — set/cleared by cron cycles).
 	add_action( 'admin_notices', [ 'MM_Memory_Manager', 'render_notice' ] );
