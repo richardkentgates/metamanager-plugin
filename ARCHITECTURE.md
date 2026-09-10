@@ -69,7 +69,8 @@ metamanager/
 │           ├── class-mm-mod-hygiene.php       Head cleanup and content audit tools
 │           ├── class-mm-mod-business-contact.php  Contact card block, widget, and shortcode
 │           ├── class-mm-mod-discovery.php     AI agent discovery files (/llms.txt)
-│           └── class-mm-mod-rss.php           RSS 2.0 feed cleanup — strips noise tags via output buffering
+│           ├── class-mm-mod-rss.php           RSS 2.0 feed cleanup — strips noise tags via output buffering
+│           └── class-mm-mod-media-display.php Featured image citation from EXIF metadata
 │
 ├── assets/
 │   └── js/mm-status.js           Frontend JS for live Media Library column polling
@@ -662,6 +663,136 @@ The generator tag (`<generator>`) is removed via the standard `the_generator` fi
 | `use_excerpt` | `false` | Replace `<content:encoded>` with `<description>` (excerpt only) |
 | `feed_title` | `''` | Override the channel `<title>` |
 | `feed_copyright` | `''` | Add `<copyright>` to the channel |
+
+---
+
+## Memory Manager (`MM_Memory_Manager`)
+
+Fluid memory management that scales batch processing to available system resources:
+
+| Constraint | How it works |
+|------------|--------------|
+| System memory pressure | Pauses processing when free RAM drops below 10% of total |
+| PHP memory limit | Calculates safe batch size based on available PHP memory minus 8MB floor |
+| Per-job cost estimation | Base 2MB per job + 1MB per megapixel (images) or 5MB per minute (video) |
+| Dynamic batch sizing | Automatically reduces batch size when memory is constrained |
+
+The memory manager ensures daemons never crash the server regardless of available RAM.
+
+---
+
+## Media Detector (`MM_Media_Detector`)
+
+Scans post content for embedded media elements and resolves them to WordPress attachment IDs:
+
+| Element | Data extracted |
+|---------|---------------|
+| `<img>` | URL, attachment ID, width, height, alt text, caption |
+| `<video>` | URL, attachment ID, width, height, duration |
+| `<audio>` | URL, attachment ID |
+| `<iframe>` | URL, type |
+| `<a>` | URL, link type |
+
+Used by the Schema module to include content-embedded images in `ImageObject` JSON-LD output with full metadata.
+
+---
+
+## Metadata History (`MM_Metadata_History`)
+
+Tracks changes to all 14 Metamanager metadata fields with full versioning:
+
+- Each change creates a timestamped snapshot with the user who made the change
+- Change sources tracked: edit, import, bulk, CLI, REST
+- Visual diff between any two versions showing field-by-field changes
+- Database table: `{prefix}mm_meta_history`
+
+---
+
+## Custom Post Types (`MM_Schema_Post_Types`)
+
+Registers dedicated custom post types for specific Schema.org types:
+
+| Post Type | Schema Type | Key Fields |
+|-----------|-------------|------------|
+| `mm_event` | Event | Start/end date, location, organizer, price, currency, ticket URL, status, attendance mode, event type (16 subtypes) |
+| `mm_service` | Service | Type, area, price, currency, booking URL, duration, includes, provider name |
+| `mm_how_to` | HowTo | Total time, cost, up to 20 supply items, up to 20 tools, up to 20 steps |
+| `mm_faq_page` | FAQPage | Up to 20 dynamic Question/Answer pairs |
+
+---
+
+## Page Templates
+
+Auto-generated pages from business profile and events:
+
+| Template | Schema Type | Content |
+|----------|-------------|---------|
+| `mm-about` | AboutPage | Auto-generated from business profile |
+| `mm-contact` | ContactPage | Auto-generated from business profile |
+| `mm-calendar` | Calendar | Event calendar with month-by-month navigation |
+
+Pages regenerate automatically when business profile is saved or events are created/updated/deleted.
+
+---
+
+## Business Contact Card (`MM_Mod_Business_Contact`)
+
+Embeddable business contact card with multiple delivery methods:
+
+| Method | Usage |
+|--------|-------|
+| Gutenberg Block | `metamanager/business-contact` |
+| Shortcode | `[gcm_business_contact]` |
+| Widget | Classic widget area: "Business Contact" |
+
+**Data exports:** vCard (`/gcm-biz-export/vcard/`), JSON (`/gcm-biz-export/json/`), CSV (`/gcm-biz-export/csv/`), iCal (`/gcm-event/{id}/ical/`)
+
+---
+
+## WooCommerce Integration
+
+Automatically extracts product data from WooCommerce for Schema.org output:
+
+| WooCommerce Field | Schema.org Property |
+|-------------------|---------------------|
+| Product name | `Product.name` |
+| Regular/Sale price | `Product.offers.price` |
+| Currency | `Product.offers.priceCurrency` |
+| Stock status | `Product.offers.availability` |
+| SKU | `Product.sku` |
+| Brand | `Product.brand` |
+
+Works automatically when WooCommerce is active — no configuration required.
+
+---
+
+## AI Discovery (`MM_Mod_Discovery`)
+
+Machine-readable discovery files for AI agents and crawlers:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/llms.txt` | Human-readable site description (llmstxt.org spec) |
+| `/llms-full.txt` | Same with content excerpts |
+| `/.well-known/api-catalog` | RFC 9727 linkset catalog (JSON) |
+
+When the MCP Adapter plugin is active, the API catalog includes an MCP endpoint reference.
+
+---
+
+## Featured Image Citation (`MM_Mod_Media_Display`)
+
+Automatically adds a `<figcaption>` to featured images with creator, copyright, and date from embedded file metadata. Configurable via `media.featured_image_citation` setting.
+
+---
+
+## Cron Tracker (`MM_Cron_Tracker`)
+
+Lightweight WP-Cron execution tracker that wraps cron callbacks to auto-track pass/fail:
+
+- Stores last_run, last_status, next_run, pass_count, fail_count
+- Maintains history of last 20 runs per hook with timestamps and status
+- Data stored in `{plugin}_cron_history` option
 
 ---
 
