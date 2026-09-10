@@ -1829,7 +1829,7 @@ class MM_Admin {
 		$color  = in_array( $action, [ 'ok', 'updated', 'ahead' ], true ) ? '#00a32a'
 			: ( in_array( $action, [ 'failed', 'error' ], true ) ? '#d63638' : '#dba617' );
 		$updater_row = '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
-			. esc_html( $action_labels[ $action ] ?? $action )
+			. esc_html( $action_labels[ $action ] )
 			. '</span>';
 
 		wp_send_json_success( [
