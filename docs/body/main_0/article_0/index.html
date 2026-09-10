@@ -356,14 +356,156 @@ wp plugin status metamanager</code></pre>
     <p>A single toggle completely disables all Metamanager REST endpoints. This does not affect WordPress core REST routes.</p>
 </section>
 
-<!-- ── Multisite ─────────────────────────────────────────────────────────── -->
-<section id="multisite">
-    <h2>Multisite</h2>
-    <p>Metamanager is multisite-compatible. Network activation creates the <code>metamanager_jobs</code> database table and schedules WP-Cron on every existing site in the network. New site creation is handled via <code>wp_initialize_site</code> — no manual steps needed.</p>
-    <p>Each site maintains its own metadata settings, business profile, and link database. The OS daemons are shared across all sites (they watch a single job directory tree under <code>wp-content/metamanager-jobs/</code>).</p>
+<!-- ── Head Hygiene ─────────────────────────────────────────────────────── -->
+<section id="head-hygiene">
+    <h2>Head Hygiene</h2>
+    <p class="section-lead">Remove unnecessary WordPress generator tags, oEmbed links, and other clutter from your HTML head — all configurable from the dashboard.</p>
+
+    <table>
+        <thead><tr><th>Element</th><th>What it removes</th></tr></thead>
+        <tbody>
+            <tr><td><code>&lt;meta name="generator"&gt;</code></td><td>WordPress version disclosure</td></tr>
+            <tr><td>oEmbed discovery links</td><td>Both the link tags and host JS</td></tr>
+            <tr><td>Shortlink</td><td><code>wp_shortlink_wp_head()</code></td></tr>
+            <tr><td>WLW manifest</td><td>Windows Live Writer manifest link</td></tr>
+            <tr><td>RSD link</td><td>Really Simple Discovery link</td></tr>
+            <tr><td>X-Pingback header</td><td>HTTP header that advertises XML-RPC pingback</td></tr>
+            <tr><td>X-Powered-By header</td><td>PHP version disclosure</td></tr>
+            <tr><td>DNS prefetch hints</td><td>Removes prefetch but preserves preconnect/preload</td></tr>
+        </tbody>
+    </table>
 </section>
 
-<!-- ── Contributing ──────────────────────────────────────────────────────── -->
+<!-- ── RSS Feed Cleanup ─────────────────────────────────────────────────── -->
+<section id="feed">
+    <h2>RSS Feed Cleanup</h2>
+    <p class="section-lead">Clean up WordPress RSS/Atom feeds to remove generator tags, comment noise, and serve only excerpts.</p>
+
+    <table>
+        <thead><tr><th>Feature</th><th>What it does</th></tr></thead>
+        <tbody>
+            <tr><td>Remove generator</td><td>Strips the <code>&lt;generator&gt;</code> tag from feed output</td></tr>
+            <tr><td>Strip comment elements</td><td>Removes <code>&lt;wfw:commentRss&gt;</code> and <code>&lt;slash:comments&gt;</code> via output buffer</td></tr>
+            <tr><td>Excerpt only</td><td>Serves only post excerpts instead of full content</td></tr>
+            <tr><td>Custom feed title</td><td>Override the default feed channel title</td></tr>
+            <tr><td>Copyright notice</td><td>Appends a <code>&lt;copyright&gt;</code> element to the channel</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ── Custom Post Types ────────────────────────────────────────────────── -->
+<section id="custom-post-types">
+    <h2>Custom Post Types</h2>
+    <p class="section-lead">Metamanager registers custom post types for specific Schema.org types with dedicated meta panels for structured data fields.</p>
+
+    <table>
+        <thead><tr><th>Post Type</th><th>Schema Type</th><th>Key Fields</th></tr></thead>
+        <tbody>
+            <tr><td><code>mm_event</code></td><td>Event</td><td>Start/end date, location, organizer, price, currency, ticket URL, status (Scheduled/Cancelled/Postponed), attendance mode, event type (16 subtypes)</td></tr>
+            <tr><td><code>mm_service</code></td><td>Service</td><td>Type, area, price, currency, booking URL, duration, includes, provider name</td></tr>
+            <tr><td><code>mm_how_to</code></td><td>HowTo</td><td>Total time, cost, up to 20 supply items, up to 20 tools, up to 20 steps with name/text/image</td></tr>
+            <tr><td><code>mm_faq_page</code></td><td>FAQPage</td><td>Up to 20 dynamic Question/Answer pairs</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ── Page Templates ───────────────────────────────────────────────────── -->
+<section id="page-templates">
+    <h2>Page Templates</h2>
+    <p class="section-lead">Auto-generated pages from your business profile and events — content updates automatically when you save settings.</p>
+
+    <table>
+        <thead><tr><th>Template</th><th>Schema Type</th><th>Content</th></tr></thead>
+        <tbody>
+            <tr><td><code>mm-about</code></td><td>AboutPage</td><td>Auto-generated from business profile: name, description, founding date, logo</td></tr>
+            <tr><td><code>mm-contact</code></td><td>ContactPage</td><td>Auto-generated from business profile: address, phone, email, hours, map</td></tr>
+            <tr><td><code>mm-calendar</code></td><td>Calendar</td><td>Auto-generated event calendar with month-by-month navigation from <code>mm_event</code> posts</td></tr>
+        </tbody>
+    </table>
+
+    <p>Pages regenerate automatically when you save the business profile or create/update/delete events. Manual regeneration available via <strong>Metamanager → Business Profile → Regenerate Pages</strong>.</p>
+</section>
+
+<!-- ── Business Contact Card ────────────────────────────────────────────── -->
+<section id="business-contact">
+    <h2>Business Contact Card</h2>
+    <p class="section-lead">Embed a formatted business contact card anywhere on your site — available as a Gutenberg block, shortcode, or widget.</p>
+
+    <h3>Delivery Methods</h3>
+    <table>
+        <thead><tr><th>Method</th><th>Usage</th></tr></thead>
+        <tbody>
+            <tr><td>Gutenberg Block</td><td><code>metamanager/business-contact</code></td></tr>
+            <tr><td>Shortcode</td><td><code>[gcm_business_contact]</code></td></tr>
+            <tr><td>Widget</td><td>Classic widget area: "Business Contact"</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Action Buttons</h3>
+    <p>Configurable buttons: phone call, SMS, email, vCard download, JSON export, CSV export. Button visibility is individually toggleable.</p>
+
+    <h3>Data Export</h3>
+    <ul>
+        <li><strong>vCard</strong> — <code>/gcm-biz-export/vcard/</code> — Standard contact card format</li>
+        <li><strong>JSON</strong> — <code>/gcm-biz-export/json/</code> — Machine-readable business data</li>
+        <li><strong>CSV</strong> — <code>/gcm-biz-export/csv/</code> — Spreadsheet-compatible format</li>
+        <li><strong>iCal</strong> — <code>/gcm-event/{id}/ical/</code> — Event calendar download</li>
+    </ul>
+</section>
+
+<!-- ── WooCommerce ──────────────────────────────────────────────────────── -->
+<section id="woocommerce">
+    <h2>WooCommerce Integration</h2>
+    <p class="section-lead">Automatically extracts product data from WooCommerce for Schema.org output.</p>
+
+    <table>
+        <thead><tr><th>WooCommerce Field</th><th>Schema.org Property</th></tr></thead>
+        <tbody>
+            <tr><td>Product name</td><td><code>Product.name</code></td></tr>
+            <tr><td>Regular/Sale price</td><td><code>Product.offers.price</code></td></tr>
+            <tr><td>Currency</td><td><code>Product.offers.priceCurrency</code></td></tr>
+            <tr><td>Stock status</td><td><code>Product.offers.availability</code> (InStock/OutOfStock/PreOrder)</td></tr>
+            <tr><td>SKU</td><td><code>Product.sku</code></td></tr>
+            <tr><td>Brand</td><td><code>Product.brand</code></td></tr>
+        </tbody>
+    </table>
+
+    <p>Works automatically when WooCommerce is active — no configuration required. Products get <code>Product</code> JSON-LD; events and services can link to WooCommerce products for pricing.</p>
+</section>
+
+<!-- ── Discovery ────────────────────────────────────────────────────────── -->
+<section id="discovery">
+    <h2>AI Discovery</h2>
+    <p class="section-lead">Machine-readable discovery files for AI agents and crawlers.</p>
+
+    <table>
+        <thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead>
+        <tbody>
+            <tr><td><code>/llms.txt</code></td><td>Human-readable site description (llmstxt.org spec)</td></tr>
+            <tr><td><code>/llms-full.txt</code></td><td>Same with content excerpts</td></tr>
+            <tr><td><code>/.well-known/api-catalog</code></td><td>RFC 9727 linkset catalog (JSON) — lists all available REST endpoints</td></tr>
+        </tbody>
+    </table>
+
+    <p>When the MCP Adapter plugin is active, the API catalog includes an MCP endpoint reference for AI agent discoverability.</p>
+</section>
+
+<!-- ── Featured Image Citation ──────────────────────────────────────────── -->
+<section id="media-display">
+    <h2>Featured Image Citation</h2>
+    <p class="section-lead">Automatically adds a <code>&lt;figcaption&gt;</code> to featured images with creator, copyright, and date from embedded file metadata.</p>
+
+    <p>When enabled, featured images display a caption below the image with:</p>
+    <ul>
+        <li>Creator name (from EXIF/IPTC/XMP metadata)</li>
+        <li>Copyright notice or owner name</li>
+        <li>Date originally created</li>
+    </ul>
+
+    <p>Configurable via <strong>Metamanager → Settings → Media → Featured Image Citation</strong>. Uses metadata from the file's embedded tags — no manual entry required.</p>
+</section>
+
+<!-- ── Contributing ─────────────────────────────────────────────────────── -->
 <section id="contributing">
     <h2>Contributing</h2>
     <p class="section-lead">Metamanager is open source under GPL v3. Contributions of all kinds are welcome.</p>
