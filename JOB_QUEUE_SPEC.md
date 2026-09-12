@@ -18,9 +18,9 @@ WP_CONTENT_DIR/metamanager-jobs/
 │   ├── *.json         # Pending jobs
 │   └── *.json.processing  # Jobs being processed (daemon-locked)
 ├── completed/         # Completed jobs (daemon writes, PHP reads)
-│   └── *-result.json  # Completed job results
+│   └── {uuid}.json    # Completed job results
 ├── failed/            # Failed jobs (daemon writes, PHP reads)
-│   └── *-result.json  # Failed job results
+│   └── {uuid}.json    # Failed job results
 ├── compress-daemon.pid    # PID file for compression daemon
 └── meta-daemon.pid        # PID file for metadata daemon
 ```
@@ -35,13 +35,13 @@ Queued by PHP when an image is uploaded or regenerated.
 
 ```json
 {
+  "attachment_id": 42,
+  "image_name": "photo.jpg",
   "job_type": "compression",
-  "attachment_id": 1234,
-  "file_path": "/var/www/html/wp-content/uploads/2026/07/image.jpg",
+  "job_trigger": "upload",
+  "file_path": "/srv/www/wordpress/wp-content/uploads/2026/03/photo.jpg",
   "size": "full",
-  "image_name": "image.jpg",
-  "submitted_at": "2026-07-22T12:00:00",
-  "optimize_level": 2
+  "dimensions": "3000x2000"
 }
 ```
 
@@ -50,11 +50,11 @@ Queued by PHP when an image is uploaded or regenerated.
 |-------|------|----------|-------------|
 | `job_type` | string | Yes | Must be `"compression"` |
 | `attachment_id` | int | Yes | WordPress attachment ID |
+| `image_name` | string | Yes | Original filename for logging |
+| `job_trigger` | string | Yes | `"upload"`, `"edit"`, `"scan"`, `"batch"`, or `"cli"` |
 | `file_path` | string | Yes | Absolute path to the file |
 | `size` | string | Yes | Image size slug (`"full"`, `"thumbnail"`, etc.) |
-| `image_name` | string | Yes | Original filename for logging |
-| `submitted_at` | string | Yes | ISO 8601 timestamp |
-| `optimize_level` | int | Yes | Compression level (1-3, default 2) |
+| `dimensions` | string | Yes | Image dimensions (e.g. `"3000x2000"`) |
 
 **Daemon Processing:**
 - JPEG: `jpegtran -copy all -optimize -progressive`
@@ -69,18 +69,18 @@ Queued by PHP when metadata is saved or after import.
 
 ```json
 {
+  "attachment_id": 42,
+  "image_name": "photo.jpg",
   "job_type": "metadata",
-  "attachment_id": 1234,
-  "file_path": "/var/www/html/wp-content/uploads/2026/07/image.jpg",
+  "job_trigger": "edit",
+  "file_path": "/srv/www/wordpress/wp-content/uploads/2026/03/photo.jpg",
   "size": "full",
-  "metadata": {
-    "title": "My Image",
-    "description": "A beautiful photo",
-    "creator": "John Doe",
-    "copyright": "© 2026 John Doe"
-  },
-  "submitted_at": "2026-07-22T12:00:00",
-  "trigger": "save"
+  "fields": {
+    "title": "Sunrise over the ridge",
+    "creator": "Jane Doe",
+    "copyright": "© 2026 Jane Doe",
+    "keywords": "landscape; sunrise; nature"
+  }
 }
 ```
 
@@ -91,22 +91,16 @@ Queued by PHP when metadata is saved or after import.
 | `attachment_id` | int | Yes | WordPress attachment ID |
 | `file_path` | string | Yes | Absolute path to the file |
 | `size` | string | Yes | Image size slug |
-| `metadata` | object | Yes | Key-value pairs to embed |
-| `submitted_at` | string | Yes | ISO 8601 timestamp |
-| `trigger` | string | No | `"upload"` (default), `"edit"`, `"scan"`, `"bulk"`, `"rest_api"`, `"cli"`, `"import"`, `"verify"`, or `"manual"` |
+| `fields` | object | Yes | Key-value pairs to embed (uses ExifTool tag names) |
+| `job_trigger` | string | No | `"upload"` (default), `"edit"`, `"scan"`, `"batch"`, `"rest_api"`, `"cli"`, `"import"`, `"verify"`, or `"manual"` |
 
-**Metadata Fields:**
-| Key | EXIF | IPTC | XMP |
-|-----|------|------|-----|
-| `title` | Title | ObjectName | Title |
-| `description` | ImageDescription | Caption-Abstract | Description |
-| `caption` | — | Caption-Abstract | Caption |
-| `alt_text` | — | — | AltTextAccessibility |
-| `creator` | Artist | By-line | Creator |
-| `copyright` | Copyright | CopyrightNotice | Rights |
-| `owner` | OwnerName | — | Owner |
-| `publisher` | — | Source | Publisher |
-| `website` | — | — | WebStatement |
+**Metadata Fields (ExifTool tag names used as keys):**
+| Key | Image ExifTool tags | MP3 tags | QuickTime tags |
+|-----|---------------------|----------|----------------|
+| `Creator` | `EXIF:Artist`, `IPTC:By-line`, `XMP:Creator` | `ID3:Artist`, `XMP:Creator` | `QuickTime:Author`, `XMP:Creator` |
+| `Copyright` | `EXIF:Copyright`, `IPTC:CopyrightNotice`, `XMP:Rights` | `ID3:Copyright`, `XMP:Rights` | `QuickTime:Copyright`, `XMP:Rights` |
+| `Headline` | `IPTC:Headline`, `XMP:Headline` | `XMP:Headline` | `XMP:Headline` |
+| `Keywords` | `IPTC:Keywords+=`, `XMP:Subject+=` | `ID3:Genre+=`, `XMP:Subject+=` | `QuickTime:Keywords+=`, `XMP:Subject+=` |
 
 ### 3. Import Job (`meta/` with `job_type: "import"`)
 
@@ -114,17 +108,18 @@ Queued by PHP to read embedded metadata from a file.
 
 ```json
 {
+  "attachment_id": 42,
+  "image_name": "photo.jpg",
   "job_type": "import",
-  "attachment_id": 1234,
-  "file_path": "/var/www/html/wp-content/uploads/2026/07/image.jpg",
-  "size": "full",
-  "submitted_at": "2026-07-22T12:00:00",
-  "trigger": "upload"
+  "job_trigger": "upload",
+  "file_path": "/srv/www/wordpress/wp-content/uploads/2026/03/photo.jpg",
+  "size": "full"
 }
 ```
 
 **Trigger Values:**
 - `"upload"` — Initial import after image upload
+- `"scan"` — Library scan for un-synced files
 - `"verify"` — Post-write-back verification (compares embedded vs WP meta)
 
 ---
@@ -133,15 +128,15 @@ Queued by PHP to read embedded metadata from a file.
 
 ### Completed Job
 
-Written to `completed/` directory.
+Written to `completed/` directory as `{uuid}.json`.
 
 ```json
 {
   "job_type": "compression",
-  "attachment_id": 1234,
-  "file_path": "/var/www/html/wp-content/uploads/2026/07/image.jpg",
+  "attachment_id": 42,
+  "file_path": "/srv/www/wordpress/wp-content/uploads/2026/03/photo.jpg",
   "size": "full",
-  "image_name": "image.jpg",
+  "image_name": "photo.jpg",
   "status": "completed",
   "completed_at": "2026-07-22 12:00:05",
   "bytes_before": 1048576,
@@ -154,20 +149,20 @@ Written to `completed/` directory.
 
 ### Failed Job
 
-Written to `failed/` directory.
+Written to `failed/` directory as `{uuid}.json`.
 
 ```json
 {
   "job_type": "compression",
-  "attachment_id": 1234,
-  "file_path": "/var/www/html/wp-content/uploads/2026/07/image.jpg",
+  "attachment_id": 42,
+  "file_path": "/srv/www/wordpress/wp-content/uploads/2026/03/photo.jpg",
   "size": "full",
   "status": "failed",
   "completed_at": "2026-07-22 12:00:05",
   "bytes_before": 0,
   "bytes_after": 0,
   "details": {
-    "message": "File not found: /var/www/html/wp-content/uploads/2026/07/image.jpg"
+    "message": "File not found: /srv/www/wordpress/wp-content/uploads/2026/03/photo.jpg"
   }
 }
 ```
@@ -179,8 +174,8 @@ For import jobs, the result includes embedded tags.
 ```json
 {
   "job_type": "import",
-  "attachment_id": 1234,
-  "file_path": "/var/www/html/wp-content/uploads/2026/07/image.jpg",
+  "attachment_id": 42,
+  "file_path": "/srv/www/wordpress/wp-content/uploads/2026/03/photo.jpg",
   "size": "full",
   "status": "completed",
   "completed_at": "2026-07-22 12:00:05",

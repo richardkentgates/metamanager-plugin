@@ -241,6 +241,9 @@ function mm_deactivate_site(): void {
 	wp_clear_scheduled_hook( 'mm_write_status_json' );
 	wp_clear_scheduled_hook( 'mm_send_upload_receipt' );
 	wp_clear_scheduled_hook( 'mm_meta_check_links' );
+	wp_clear_scheduled_hook( 'mm_meta_sitemap_ping' );
+	delete_option( 'mm_memory_limit_notice' );
+	delete_option( 'mm_cron_history' );
 	flush_rewrite_rules();
 }
 

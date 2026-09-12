@@ -54,11 +54,11 @@ The only exception is temporary testing during active development sessions, wher
 
 ## Daemon Version Detection
 
-The plugin's `MM_Daemon_Updater` triggers `apt-get update && apt-get install -y metamanager` after every plugin update. The server's channel (test/stable) — configured in GCM — determines which daemon version apt installs. No version mapping file is needed.
+The plugin's `MM_Daemon_Updater` reads the VERSION file for dashboard display only. Daemon updates are handled by OS apt (root context), not the plugin.
 
 ### Architecture
 
-- **Plugin PHP** (`MM_Daemon_Updater`): After plugin update, runs `apt-get update && apt-get install -y metamanager` and restarts daemons. The server's apt channel determines the installed version. Called via `MM_Updater` after plugin update.
+- **Plugin PHP** (`MM_Daemon_Updater`): Reads `/usr/local/lib/metamanager/VERSION` for dashboard display. Does not trigger updates.
 
 ## Repos
 
@@ -66,6 +66,29 @@ The plugin's `MM_Daemon_Updater` triggers `apt-get update && apt-get install -y 
 - Server repo: `richardkentgates/metamanager`
 - Apt server: `34.136.87.92` (DNS: `apt.richardkentgates.com`)
 - Production: `34.10.253.160` (Debian 13 trixie, WordPress at `/srv/www/wordpress/`)
+
+## Cross-Repo Scope
+
+**This repo owns:**
+- WordPress plugin PHP code (SEO, schema, OG tags, sitemaps, cron tracking, dashboard widget)
+- Job queue contract: PHP writes JSON job files to `wp-content/metamanager-jobs/`
+- Status JSON (`metamanager-status.json`) for dashboard widget
+- `MM_Updater` — WordPress auto-update from apt server `metadata.json`
+- `MM_Daemon_Updater` — reads VERSION for display only (does NOT trigger updates)
+
+**Daemon repo (`metamanager`) owns:**
+- Shell daemons that process job files (compress, metadata embed)
+- `.deb` package build and apt server deployment
+- systemd service units
+- VERSION file and `debian/changelog`
+
+**GCM CLI repo (`gcm`) owns:**
+- Server provisioning (`gcm install`, `gcm adopt`)
+- Backup/restore operations
+- Status JSON collection and dashboard widget in MU plugin
+- Operation gating (MetaManager idle check before backup/upgrade)
+
+**Contract point:** `JOB_QUEUE_SPEC.md` defines the JSON format between PHP and Bash. Both repos must stay in sync.
 
 ## Apt Server Channels
 
@@ -79,7 +102,7 @@ The plugin's `MM_Daemon_Updater` triggers `apt-get update && apt-get install -y 
 - Branch protection on `test` and `main`: PRs required, no direct pushes
 - Promotion = workflow_dispatch triggers direct git merge (no PRs)
 - Shell scripts/daemons update via apt; plugin updates via WordPress native update
-- Daemon updates are handled by the plugin's `MM_Daemon_Updater` class (called via `MM_Updater` after plugin update).
+- Daemon updates are handled by OS apt (gcm-upgrade timer), not the plugin.
 - PHP 8.4 for WP-CLI (`php8.4 /usr/local/bin/wp --path=/srv/www/wordpress`)
 - CI auto-bumps `MM_VERSION` on every dev push — do not manually edit version numbers
 - **Test channel**: Used for development verification before production deployment
