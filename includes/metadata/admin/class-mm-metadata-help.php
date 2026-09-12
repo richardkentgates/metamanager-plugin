@@ -130,6 +130,36 @@ class MM_Metadata_Help {
 					'<li><strong>ItemList</strong> — ' . esc_html__( 'On taxonomy archive pages listing posts.', 'metamanager' ) . '</li>' .
 					'</ul>',
 			];
+
+			$tabs[] = [
+				'id'      => 'mm_meta_schema_cpts',
+				'title'   => __( 'Custom Post Types', 'metamanager' ),
+				'content' =>
+					'<p>' . esc_html__( 'Metamanager registers four custom post types with dedicated meta panels for Schema.org fields:', 'metamanager' ) . '</p>' .
+					'<ul>' .
+					'<li><strong>mm_event</strong> — ' . esc_html__( 'Event schema. Fields: start/end date, location, organizer, price, currency, ticket URL, status (Scheduled/Cancelled/Postponed), attendance mode, event type (16 subtypes). Generates Calendar page template.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_service</strong> — ' . esc_html__( 'Service schema. Fields: type, area, price, currency, booking URL, duration, includes, provider name.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_how_to</strong> — ' . esc_html__( 'HowTo schema. Fields: total time, cost, up to 20 supply items, up to 20 tools, up to 20 steps with name/text/image.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_faq_page</strong> — ' . esc_html__( 'FAQPage schema. Fields: up to 20 dynamic Question/Answer pairs.', 'metamanager' ) . '</li>' .
+					'</ul>' .
+					'<p>' . esc_html__( 'Page templates (mm-about, mm-contact, mm-calendar) auto-generate content from your business profile and events. Pages regenerate automatically when you save settings.', 'metamanager' ) . '</p>',
+			];
+
+			$tabs[] = [
+				'id'      => 'mm_meta_schema_woocommerce',
+				'title'   => __( 'WooCommerce', 'metamanager' ),
+				'content' =>
+					'<p>' . esc_html__( 'When WooCommerce is active, Metamanager automatically extracts product data for Schema.org Product output:', 'metamanager' ) . '</p>' .
+					'<ul>' .
+				'<li><strong>Product name</strong> → ' . esc_html__( 'Product.name', 'metamanager' ) . '</li>' .
+				'<li><strong>Regular/Sale price</strong> → ' . esc_html__( 'Product.offers.price', 'metamanager' ) . '</li>' .
+				'<li><strong>Currency</strong> → ' . esc_html__( 'Product.offers.priceCurrency', 'metamanager' ) . '</li>' .
+				'<li><strong>Stock status</strong> → ' . esc_html__( 'Product.offers.availability (InStock/OutOfStock/PreOrder)', 'metamanager' ) . '</li>' .
+				'<li><strong>SKU</strong> → ' . esc_html__( 'Product.sku', 'metamanager' ) . '</li>' .
+				'<li><strong>Brand</strong> → ' . esc_html__( 'Product.brand', 'metamanager' ) . '</li>' .
+					'</ul>' .
+					'<p>' . esc_html__( 'No configuration required — works automatically when WooCommerce is active. Events and Services can also link to WooCommerce products for pricing.', 'metamanager' ) . '</p>',
+			];
 		}
 
 		if ( 'sitemaps' === $page ) {
@@ -208,6 +238,32 @@ class MM_Metadata_Help {
 					'<tr><td><code>wp metamanager metadata flush-rewrites</code></td><td>' . esc_html__( 'Flush WordPress rewrite rules.', 'metamanager' ) . '</td></tr>' .
 					'<tr><td><code>wp metamanager metadata schema-test &lt;url&gt;</code></td><td>' . esc_html__( 'Fetch a page URL and print its JSON-LD schema.', 'metamanager' ) . '</td></tr>' .
 					'</tbody></table>',
+			];
+
+			$tabs[] = [
+				'id'      => 'mm_meta_tools_discovery',
+				'title'   => __( 'AI Discovery', 'metamanager' ),
+				'content' =>
+					'<p>' . esc_html__( 'Metamanager generates machine-readable discovery files for AI agents and crawlers:', 'metamanager' ) . '</p>' .
+					'<ul>' .
+					'<li><strong>/llms.txt</strong> — ' . esc_html__( 'Human-readable site description following the llmstxt.org specification. Lists pages, recent posts, and contact info.', 'metamanager' ) . '</li>' .
+					'<li><strong>/llms-full.txt</strong> — ' . esc_html__( 'Same as llms.txt but includes content excerpts from pages and posts.', 'metamanager' ) . '</li>' .
+					'<li><strong>/.well-known/api-catalog</strong> — ' . esc_html__( 'RFC 9727 linkset catalog (JSON) listing all available REST endpoints for AI agent discoverability.', 'metamanager' ) . '</li>' .
+					'</ul>' .
+					'<p>' . esc_html__( 'These files are cached for 1 day and regenerated automatically when settings are saved. Manual regeneration: Metamanager → Tools → Regenerate Discovery Files.', 'metamanager' ) . '</p>',
+			];
+
+			$tabs[] = [
+				'id'      => 'mm_meta_tools_citation',
+				'title'   => __( 'Featured Image Citation', 'metamanager' ),
+				'content' =>
+					'<p>' . esc_html__( 'When enabled, featured images display a caption below the image with metadata from the file:', 'metamanager' ) . '</p>' .
+					'<ul>' .
+					'<li><strong>' . esc_html__( 'Creator name', 'metamanager' ) . '</strong> — ' . esc_html__( 'From EXIF/IPTC/XMP metadata', 'metamanager' ) . '</li>' .
+					'<li><strong>' . esc_html__( 'Copyright notice', 'metamanager' ) . '</strong> — ' . esc_html__( 'Or owner name if copyright is empty', 'metamanager' ) . '</li>' .
+					'<li><strong>' . esc_html__( 'Date originally created', 'metamanager' ) . '</strong> — ' . esc_html__( 'From EXIF DateTimeOriginal', 'metamanager' ) . '</li>' .
+					'</ul>' .
+					'<p>' . esc_html__( 'Configure via Metamanager → Settings → Media → Featured Image Citation.', 'metamanager' ) . '</p>',
 			];
 		}
 

@@ -45,6 +45,8 @@ function _mm_uninstall_site(): void {
 		'mm_auto_provenance',
 		'mm_meta_settings',
 		'mm_meta_business',
+		'mm_memory_limit_notice',
+		'mm_cron_history',
 	];
 	foreach ( $options as $option ) {
 		delete_option( $option );
@@ -97,6 +99,10 @@ function _mm_uninstall_site(): void {
 	$history_table = $wpdb->prefix . 'mm_meta_history';
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter
 	$wpdb->query( "DROP TABLE IF EXISTS `{$history_table}`" );
+
+	$links_table = $wpdb->prefix . 'mm_meta_links';
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter
+	$wpdb->query( "DROP TABLE IF EXISTS `{$links_table}`" );
 }
 
 // ---------------------------------------------------------------------------
@@ -171,3 +177,5 @@ _mm_rmdir_recursive( $job_root );
 wp_clear_scheduled_hook( 'mm_import_completed_jobs' );
 wp_clear_scheduled_hook( 'mm_write_status_json' );
 wp_clear_scheduled_hook( 'mm_send_upload_receipt' );
+wp_clear_scheduled_hook( 'mm_meta_check_links' );
+wp_clear_scheduled_hook( 'mm_meta_sitemap_ping' );

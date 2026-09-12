@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Last updated 2026-09-03.
+Last updated 2026-09-09.
 
 ---
 
@@ -44,15 +44,29 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 
 | Item | Value |
 |------|-------|
-| Plugin version | v2.3.169 (production) |
-| Daemon version | Auto-bumped by CI on server repo dev push |
-| WordPress version | 6.9 |
+| Plugin version | v2.3.173 (production) |
+| Daemon version | v2.4.79 |
+| WordPress version | 7.1 |
 | Production URL | https://hyercleaning.com |
 | Apt server | apt.richardkentgates.com |
 
 ---
 
 ## What's Done
+
+### WP Sitemap Core Conflict Fix, sameAs Merge Fix, CLI Registration (2026-07-27)
+
+- **WP sitemap 404 fix**: WordPress core registers `^wp-sitemap\.xml$` at init priority 1; MM registered at priority 10. Core rule matched first, but `wp_sitemaps_enabled=false` meant no handler → 404. Fix: `unset($wp_rewrite->extra_rules_top['^wp-sitemap\.xml$'])` before MM adds its own rule. Key insight: the key starts with `^` — first attempt without the anchor silently failed.
+- **sameAs merge fix**: `array_merge($social_accounts, $biz_accounts)` overwrote non-empty social URLs with empty business defaults. Fix: `array_filter()` both arrays before merge to remove empty values.
+- **PHPUnit Polyfills CI fix**: Resolved missing polyfills in CI test runs.
+- **MM_Metadata_CLI registration**: Class was loaded via `require_once` but never registered with `WP_CLI::add_command()`. 7 subcommands were invisible. Fix: added `\WP_CLI::add_command( 'metamanager', 'MM_Metadata_CLI' )`. All 15 subcommands now accessible.
+- **WP-CLI import command**: Added `wp metamanager import [<file>] [--dry-run]` — reads JSON from file or stdin, validates, deep-merges with defaults, shows per-key diff, supports dry-run preview. Round-trip verified on production.
+
+### Daemon Updater Removal, mm_meta_links Table Fix (2026-09-09)
+
+- **Daemon updater removed**: Removed `trigger_update()`, `handle_plugin_update()`, `init()`, `admin_notice()` from `MM_Daemon_Updater`. Kept `get_daemon_version()` for status reporting. Daemon updates handled by OS apt (root context), not plugin PHP (www-data context).
+- **mm_meta_links table creation**: Added `MM_Mod_Links::create_table()` to `mm_activate_single_site()` activation hook. Table was defined but never created, causing `mm_meta_check_links` cron to error every 12 hours.
+- **All five servers updated**: PEO, Gap Creek, Hyer, Guttertymer, Ouachita — all on v2.3.173 via adopt.
 
 ### WP-Cron History Tracking, Dashboard Widget, inject_update Fix (2026-09-02 to 2026-09-03)
 

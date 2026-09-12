@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.177
+ * Version:      2.3.183
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.177' );
+define( 'MM_VERSION',     '2.3.183' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -241,6 +241,9 @@ function mm_deactivate_site(): void {
 	wp_clear_scheduled_hook( 'mm_write_status_json' );
 	wp_clear_scheduled_hook( 'mm_send_upload_receipt' );
 	wp_clear_scheduled_hook( 'mm_meta_check_links' );
+	wp_clear_scheduled_hook( 'mm_meta_sitemap_ping' );
+	delete_option( 'mm_memory_limit_notice' );
+	delete_option( 'mm_cron_history' );
 	flush_rewrite_rules();
 }
 

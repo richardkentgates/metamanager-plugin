@@ -156,9 +156,9 @@ class MM_Updater {
 			if ( ! is_object( $transient ) ) {
 				$transient = new \stdClass();
 			}
-		if ( ! isset( $transient->response ) || ! is_array( $transient->response ) ) {
-			$transient->response = [];
-		}
+			if ( ! isset( $transient->response ) || ! is_array( $transient->response ) ) {
+				$transient->response = [];
+			}
 
 			$transient->response[ $this->plugin_basename ] = (object) [
 				'id'            => 'metamanager/apt-server',
@@ -363,13 +363,10 @@ class MM_Updater {
 			return;
 		}
 
-		// Ensure cron events are scheduled after plugin update.
-		if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {
-			wp_schedule_event( time(), 'mm_every_minute', 'mm_import_completed_jobs' );
-		}
-		if ( ! wp_next_scheduled( 'mm_write_status_json' ) ) {
-			wp_schedule_event( time(), 'mm_every_minute', 'mm_write_status_json' );
-		}
+		// Ensure cron events, DB tables, and directories are registered after
+		// plugin update.  Pass is_multisite() so all sites get re-registered
+		// during a network-wide update.
+		mm_activate( is_multisite() );
 	}
 
 	/**
