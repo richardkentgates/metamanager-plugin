@@ -151,12 +151,12 @@ class MM_Metadata_Help {
 				'content' =>
 					'<p>' . esc_html__( 'When WooCommerce is active, Metamanager automatically extracts product data for Schema.org Product output:', 'metamanager' ) . '</p>' .
 					'<ul>' .
-					'<li><strong>Product name</strong> → Product.name', 'metamanager' ) . '</li>' .
-					'<li><strong>Regular/Sale price</strong> → Product.offers.price', 'metamanager' ) . '</li>' .
-					'<li><strong>Currency</strong> → Product.offers.priceCurrency', 'metamanager' ) . '</li>' .
-					'<li><strong>Stock status</strong> → Product.offers.availability (InStock/OutOfStock/PreOrder)', 'metamanager' ) . '</li>' .
-					'<li><strong>SKU</strong> → Product.sku', 'metamanager' ) . '</li>' .
-					'<li><strong>Brand</strong> → Product.brand', 'metamanager' ) . '</li>' .
+				'<li><strong>Product name</strong> → ' . esc_html__( 'Product.name', 'metamanager' ) . '</li>' .
+				'<li><strong>Regular/Sale price</strong> → ' . esc_html__( 'Product.offers.price', 'metamanager' ) . '</li>' .
+				'<li><strong>Currency</strong> → ' . esc_html__( 'Product.offers.priceCurrency', 'metamanager' ) . '</li>' .
+				'<li><strong>Stock status</strong> → ' . esc_html__( 'Product.offers.availability (InStock/OutOfStock/PreOrder)', 'metamanager' ) . '</li>' .
+				'<li><strong>SKU</strong> → ' . esc_html__( 'Product.sku', 'metamanager' ) . '</li>' .
+				'<li><strong>Brand</strong> → ' . esc_html__( 'Product.brand', 'metamanager' ) . '</li>' .
 					'</ul>' .
 					'<p>' . esc_html__( 'No configuration required — works automatically when WooCommerce is active. Events and Services can also link to WooCommerce products for pricing.', 'metamanager' ) . '</p>',
 			];
