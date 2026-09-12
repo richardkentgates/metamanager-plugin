@@ -610,12 +610,9 @@ sudo apt update && sudo apt install metamanager
 
 **Cause:** Plugin version requires a different daemon version.
 
-**Fix:** The plugin should auto-update the daemon. If it doesn't:
+**Fix:** Daemon updates are handled by OS apt (gcm-upgrade timer). To update manually:
 ```bash
-# Manual daemon update
 sudo apt update && sudo apt upgrade metamanager
-
-# Restart daemons
 sudo systemctl restart metamanager-compress-daemon metamanager-meta-daemon
 ```
 
@@ -683,12 +680,12 @@ sudo chown -R www-data:www-data /srv/www/wordpress/wp-content/metamanager-jobs/
 
 ### WordPress updates not triggering daemon updates
 
-**Cause:** `MM_Updater` not detecting plugin update or apt upgrade failing.
+**Cause:** Daemon updates are handled by OS apt, not the plugin. The `gcm-upgrade` timer runs `apt-get upgrade` daily as root.
 
 **Fix:**
 1. Check the server's apt channel: `gcm config get channel`
 2. Verify apt can reach the server: `sudo apt-get update && sudo apt-get install -y metamanager`
-3. Check `/var/log/metamanager-update.log` for errors
+3. Check `sudo journalctl -u gcm-upgrade.service` for errors
 
 ---
 

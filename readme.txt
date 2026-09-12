@@ -4,7 +4,7 @@ Tags: seo, metadata, sitemap, schema, open-graph
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 2.3.177
+Stable tag: 2.3.183
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -18,11 +18,13 @@ Lossless media compression, EXIF/IPTC/XMP metadata sync, Schema.org JSON-LD, XML
 
 **Web layer** — per-post/page/term/user title and description control; Open Graph and Twitter/X card output; Schema.org JSON-LD for 20+ types; XML sitemaps (pages, media, video); HTML sitemap shortcode; robots.txt management; async broken link checker; business profile with contact card block; author profiles with structured data.
 
+**AI layer** — llms.txt and .well-known/api-catalog for AI agent discovery; WordPress Abilities API integration; MCP server support.
+
 = Requirements =
 
 This plugin requires the **Metamanager daemon package** installed on the server. The package provides OS-level tools and bash daemons that process media files asynchronously:
 
-* **metamanager-compress-daemon.sh** — lossless JPEG/PNG/WebP/video compression via jpegtran, optipng, cwebp, ffmpeg
+* **metamanager-compress-daemon.sh** — lossless JPEG/PNG/WebP/AVIF compression via jpegtran, optipng, cwebp, avifenc; video remux via ffmpeg
 * **metamanager-meta-daemon.sh** — EXIF/IPTC/XMP metadata read and write via ExifTool
 * **systemd** — daemon process supervision and auto-restart
 
@@ -32,6 +34,7 @@ Individual tool dependencies:
 * **jpegtran** — lossless JPEG compression
 * **optipng** — lossless PNG compression
 * **cwebp** — lossless WebP compression
+* **avifenc** — lossless AVIF compression (optional, from libavif)
 * **ffmpeg** — video remux
 
 Use the bundled `metamanager-install.sh` script to install everything automatically on Ubuntu/Debian or RHEL/Rocky Linux.
@@ -40,7 +43,8 @@ Use the bundled `metamanager-install.sh` script to install everything automatica
 
 **Media:**
 
-* Lossless compression: JPEG (jpegtran), PNG (optipng), WebP (cwebp -lossless)
+* Lossless compression: JPEG (jpegtran), PNG (optipng), WebP (cwebp -lossless), AVIF (avifenc -lossless)
+* Fluid memory manager — scales batch processing to available system RAM
 * EXIF/IPTC/XMP metadata written simultaneously via ExifTool
 * ID3 tags for MP3, QuickTime atoms for MP4/M4A, Vorbis comments for OGG/FLAC
 * PDF title, author, keywords imported on upload; XMP written back
@@ -57,13 +61,24 @@ Use the bundled `metamanager-install.sh` script to install everything automatica
 * Per-post/page/term/user title and description with template tokens
 * Open Graph: og:title, og:description, og:image (with dimensions/type/alt), og:video, og:audio, article timestamps; Twitter/X cards
 * Schema.org JSON-LD: Article, BlogPosting, WebPage, BreadcrumbList, ImageObject, VideoObject, AudioObject, DigitalDocument, Product, FAQPage, HowTo, Event, Service, Organization, LocalBusiness, Person — 12 selectable types with dedicated CPTs for Event, Service, HowTo, FAQPage, Calendar, AboutPage, ContactPage
+* Custom post types: Event (16 subtypes), Service, HowTo (steps/tools/supplies), FAQPage (up to 20 Q&As)
+* Page templates: AboutPage, ContactPage, Calendar — auto-generated from business profile and events
 * XML sitemaps: /sitemap.xml, /sitemap-media.xml, /sitemap-video.xml with ping on publish
 * HTML sitemap via [mm_sitemap] shortcode
 * Robots.txt: auto-appended Sitemap: directives; global per-type noindex; per-post robots controls
+* Head cleanup: remove generator, oEmbed links, shortlink, WLW manifest, RSD, X-Pingback, X-Powered-By
+* RSS feed cleanup: remove generator, strip comments, excerpt-only, custom title, copyright
 * Async broken link checker with HTTP codes, dashboard view, email alerts, re-check, and ignore
 * Link hygiene: global nofollow/noopener/target=_blank rules for external links
 * Business profile: name, address, contact, hours, geo — powers LocalBusiness JSON-LD, Gutenberg block, sameAs social links
+* Business contact card: Gutenberg block, shortcode [gcm_business_contact], widget; exports vCard, JSON, CSV
 * Author profiles: job title, bio, social links; Person JSON-LD on author archives
+* Featured image caption: auto-generates figcaption from EXIF metadata (creator, copyright, date)
+* WooCommerce integration: auto-extracts product price, SKU, availability, brand for Schema.org Product
+* AI discovery: /llms.txt, /llms-full.txt, /.well-known/api-catalog for AI agent discoverability
+* Metadata history: version tracking for all 14 metadata fields with visual diffs
+* Upload receipt emails: batched digest after uploads with per-user opt-in/out
+* Media detector: scans post content for embedded media elements
 
 == Installation ==
 
@@ -125,7 +140,7 @@ The SEO features (metadata panels, Open Graph, Schema.org, sitemaps, link checke
 
 = What image formats are supported for lossless compression? =
 
-JPEG (jpegtran), PNG (optipng), and WebP (cwebp -lossless). GIF and AVIF are compressed losslessly where tooling is available.
+JPEG (jpegtran), PNG (optipng), WebP (cwebp -lossless), and AVIF (avifenc -lossless). GIF is also supported where tooling is available.
 
 = Does compression affect image quality? =
 
