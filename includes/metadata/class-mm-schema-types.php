@@ -26,19 +26,26 @@ class MM_Schema_Types {
 	public static function get_schema_types( bool $include_empty = false ): array {
 		$types = [
 			// ── Page types ────────────────────────────────────────────────────
-			'WebPage'       => 'WebPage — Generic page',
-			'AboutPage'     => 'AboutPage',
-			'ContactPage'   => 'ContactPage',
-			'ProfilePage'   => 'ProfilePage',
-			'Calendar'      => 'Calendar',
-			'FAQPage'       => 'FAQPage',
+			'WebPage'            => 'WebPage — Generic page',
+			'AboutPage'          => 'AboutPage',
+			'ContactPage'        => 'ContactPage',
+			'ProfilePage'        => 'ProfilePage',
+			'Calendar'           => 'Calendar',
+			'FAQPage'            => 'FAQPage',
 			// ── Articles ─────────────────────────────────────────────────────
-			'BlogPosting'   => 'BlogPosting',
-			'HowTo'         => 'HowTo',
+			'BlogPosting'        => 'BlogPosting',
+			'HowTo'              => 'HowTo',
 			// ── Products & services ───────────────────────────────────────────
-			'Event'         => 'Event',
-			'Product'       => 'Product',
-			'Service'       => 'Service',
+			'Event'              => 'Event',
+			'Product'            => 'Product',
+			'Service'            => 'Service',
+			// ── Tourism ─────────────────────────────────────────────────────
+			'TouristTrip'        => 'TouristTrip — Bookable tour/experience',
+			'TouristDestination' => 'TouristDestination — Place/area being promoted',
+			// ── Vehicles ────────────────────────────────────────────────────
+			'Vehicle'            => 'Vehicle — Boat, car, or other vehicle',
+			// ── Education ───────────────────────────────────────────────────
+			'Course'             => 'Course — Educational course or certification',
 		];
 
 		if ( $include_empty ) {
@@ -398,6 +405,370 @@ class MM_Schema_Types {
 					],
 				],
 			],
+
+			// ── TouristTrip ───────────────────────────────────────────────────
+			'TouristTrip' => [
+				[
+					'key'         => 'trip_departure_name',
+					'label'       => 'Departure Location',
+					'type'        => 'text',
+					'required'    => true,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Harborwalk Village, Destin',
+					'description' => 'Boarding/departure location name.',
+				],
+				[
+					'key'         => 'trip_departure_address',
+					'label'       => 'Departure Address',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 10 Harbor Blvd, Destin FL 32541',
+					'description' => '',
+				],
+				[
+					'key'         => 'trip_departure_lat',
+					'label'       => 'Departure Latitude',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '30.3935',
+					'description' => '',
+				],
+				[
+					'key'         => 'trip_departure_lng',
+					'label'       => 'Departure Longitude',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '-86.5085',
+					'description' => '',
+				],
+				[
+					'key'         => 'trip_destination_name',
+					'label'       => 'Destination',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Crab Island, Gulf of Mexico',
+					'description' => 'Primary destination for this trip.',
+				],
+				[
+					'key'         => 'trip_duration',
+					'label'       => 'Duration (display)',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 4 hours, Half day',
+					'description' => 'Human-readable duration.',
+				],
+				[
+					'key'         => 'trip_duration_iso',
+					'label'       => 'Duration (ISO 8601)',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. PT4H, PT30M',
+					'description' => 'ISO 8601 duration for schema.org.',
+				],
+				[
+					'key'         => 'trip_max_passengers',
+					'label'       => 'Max Passengers',
+					'type'        => 'number',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '13',
+					'description' => '',
+				],
+				[
+					'key'         => 'trip_price',
+					'label'       => 'Price',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 350 or 75-200',
+					'description' => 'Numeric or range.',
+				],
+				[
+					'key'         => 'trip_currency',
+					'label'       => 'Currency',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'USD',
+					'description' => 'ISO 4217 currency code. Defaults to USD.',
+				],
+				[
+					'key'         => 'trip_booking_url',
+					'label'       => 'Booking URL',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Link to book this trip.',
+				],
+				[
+					'key'         => 'trip_departure_time',
+					'label'       => 'Departure Time',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 09:00',
+					'description' => 'Typical departure time.',
+				],
+				[
+					'key'         => 'trip_arrival_time',
+					'label'       => 'Arrival Time',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 13:00',
+					'description' => 'Typical return/arrival time.',
+				],
+				[
+					'key'         => 'trip_tourist_type',
+					'label'       => 'Tourist Type',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Family tourism, Adventure tourism',
+					'description' => 'Comma-separated audience types.',
+				],
+				[
+					'key'         => 'trip_includes',
+					'label'       => 'What\'s Included',
+					'type'        => 'textarea',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'What the trip includes (cooler, lily pad, stereo, etc.).',
+				],
+			],
+
+			// ── TouristDestination ────────────────────────────────────────────
+			'TouristDestination' => [
+				[
+					'key'         => 'destination_address',
+					'label'       => 'Address',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Destin, FL 32541',
+					'description' => '',
+				],
+				[
+					'key'         => 'destination_lat',
+					'label'       => 'Latitude',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '30.3935',
+					'description' => '',
+				],
+				[
+					'key'         => 'destination_lng',
+					'label'       => 'Longitude',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '-86.5085',
+					'description' => '',
+				],
+				[
+					'key'         => 'destination_tourist_type',
+					'label'       => 'Tourist Type',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Water tourism, Cultural tourism',
+					'description' => 'Comma-separated types.',
+				],
+				[
+					'key'         => 'destination_map_url',
+					'label'       => 'Map URL',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Google Maps or similar URL.',
+				],
+				[
+					'key'         => 'destination_attractions',
+					'label'       => 'Attractions',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Crab Island Sandbar, Destin Harbor',
+					'description' => 'Comma-separated attraction names.',
+				],
+				[
+					'key'         => 'destination_booking_url',
+					'label'       => 'Booking URL',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'URL to book tours of this destination.',
+				],
+			],
+
+			// ── Vehicle ───────────────────────────────────────────────────────
+			'Vehicle' => [
+				[
+					'key'         => 'vessel_year',
+					'label'       => 'Year',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '2022',
+					'description' => '',
+				],
+				[
+					'key'         => 'vessel_length',
+					'label'       => 'Length',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 24 ft',
+					'description' => '',
+				],
+				[
+					'key'         => 'vessel_engine',
+					'label'       => 'Engine',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 200HP Mercury Verado',
+					'description' => '',
+				],
+				[
+					'key'         => 'vessel_passengers',
+					'label'       => 'Max Passengers',
+					'type'        => 'number',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '13',
+					'description' => '',
+				],
+				[
+					'key'         => 'vessel_type',
+					'label'       => 'Vessel Type',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Tritoon, Sportfish, Parasail boat',
+					'description' => '',
+				],
+				[
+					'key'         => 'vessel_manufacturer',
+					'label'       => 'Manufacturer',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Barletta, Bertram',
+					'description' => '',
+				],
+				[
+					'key'         => 'vessel_amenities',
+					'label'       => 'Amenities',
+					'type'        => 'textarea',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Cooler with ice, Bluetooth stereo, Lily pad',
+					'description' => 'One amenity per line.',
+				],
+			],
+
+			// ── Course ────────────────────────────────────────────────────────
+			'Course' => [
+				[
+					'key'         => 'course_credential',
+					'label'       => 'Credential Awarded',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. CPR Certification, Phlebotomy Technician',
+					'description' => 'Certificate or credential awarded on completion.',
+				],
+				[
+					'key'         => 'course_mode',
+					'label'       => 'Delivery Mode',
+					'type'        => 'select',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+					'options'     => [
+						''          => '— Not specified —',
+						'In-person' => 'In-person',
+						'Online'    => 'Online',
+						'Hybrid'    => 'Hybrid',
+					],
+				],
+				[
+					'key'         => 'course_duration',
+					'label'       => 'Duration',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. PT8H, P2D',
+					'description' => 'ISO 8601 duration.',
+				],
+				[
+					'key'         => 'course_prerequisites',
+					'label'       => 'Prerequisites',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. High school diploma',
+					'description' => '',
+				],
+				[
+					'key'         => 'course_price',
+					'label'       => 'Price',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 150',
+					'description' => '',
+				],
+				[
+					'key'         => 'course_currency',
+					'label'       => 'Currency',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'USD',
+					'description' => 'ISO 4217 currency code.',
+				],
+				[
+					'key'         => 'course_enrollment_url',
+					'label'       => 'Enrollment URL',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Link to enroll in this course.',
+				],
+				[
+					'key'         => 'course_provider',
+					'label'       => 'Provider Name',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'Auto-populated from business profile if empty.',
+				],
+				[
+					'key'         => 'course_code',
+					'label'       => 'Course Code',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. CPR-101',
+					'description' => 'Internal course code/ID.',
+				],
+			],
 		];
 	}
 
@@ -620,6 +991,156 @@ class MM_Schema_Types {
 			if ( in_array( $avail, [ 'InStock', 'OutOfStock', 'PreOrder' ], true ) ) {
 				$offer['availability'] = 'https://schema.org/' . $avail;
 			}
+				$out['offers'] = $offer;
+			}
+		}
+
+		// ── TouristTrip ──────────────────────────────────────────────────────
+		if ( 'TouristTrip' === $type ) {
+			$dep_name = $str( 'trip_departure_name' );
+			if ( $dep_name ) {
+				$place = [ '@type' => 'Place', 'name' => $dep_name ];
+				if ( $str( 'trip_departure_address' ) ) {
+					$place['address'] = $str( 'trip_departure_address' );
+				}
+				$lat = $str( 'trip_departure_lat' );
+				$lng = $str( 'trip_departure_lng' );
+				if ( $lat && $lng && is_numeric( $lat ) && is_numeric( $lng ) ) {
+					$place['geo'] = [ '@type' => 'GeoCoordinates', 'latitude' => (float) $lat, 'longitude' => (float) $lng ];
+				}
+				$out['tripOrigin'] = $place;
+			}
+			$dest_name = $str( 'trip_destination_name' );
+			if ( $dest_name ) {
+				$out['itinerary'] = [
+					'@type'           => 'ItemList',
+					'itemListElement' => [
+						[ '@type' => 'ListItem', 'position' => 1, 'item' => [ '@type' => 'TouristAttraction', 'name' => $dest_name ] ],
+					],
+				];
+			}
+			if ( $str( 'trip_duration_iso' ) ) {
+				$out['estimatedDuration'] = $str( 'trip_duration_iso' );
+			}
+			$passengers = $str( 'trip_max_passengers' );
+			if ( $passengers && is_numeric( $passengers ) ) {
+				$out['maximumAttendeeCapacity'] = (int) $passengers;
+			}
+			if ( $str( 'trip_tourist_type' ) ) {
+				$ttypes = array_map( 'trim', explode( ',', $str( 'trip_tourist_type' ) ) );
+				$out['touristType'] = count( $ttypes ) === 1 ? $ttypes[0] : array_values( $ttypes );
+			}
+			if ( $str( 'trip_departure_time' ) ) {
+				$out['departureTime'] = $str( 'trip_departure_time' );
+			}
+			if ( $str( 'trip_arrival_time' ) ) {
+				$out['arrivalTime'] = $str( 'trip_arrival_time' );
+			}
+			$offer = $make_offer( 'trip_price', 'trip_currency' );
+			if ( $offer ) {
+				$booking = esc_url_raw( $str( 'trip_booking_url' ) );
+				if ( $booking ) {
+					$offer['url'] = $booking;
+				}
+				$out['offers'] = $offer;
+			}
+		}
+
+		// ── TouristDestination ───────────────────────────────────────────────
+		if ( 'TouristDestination' === $type ) {
+			if ( $str( 'destination_address' ) ) {
+				$out['address'] = $str( 'destination_address' );
+			}
+			$lat = $str( 'destination_lat' );
+			$lng = $str( 'destination_lng' );
+			if ( $lat && $lng && is_numeric( $lat ) && is_numeric( $lng ) ) {
+				$out['geo'] = [ '@type' => 'GeoCoordinates', 'latitude' => (float) $lat, 'longitude' => (float) $lng ];
+			}
+			if ( $str( 'destination_tourist_type' ) ) {
+				$ttypes = array_map( 'trim', explode( ',', $str( 'destination_tourist_type' ) ) );
+				$out['touristType'] = count( $ttypes ) === 1 ? $ttypes[0] : array_values( $ttypes );
+			}
+			if ( $str( 'destination_map_url' ) ) {
+				$out['hasMap'] = esc_url_raw( $str( 'destination_map_url' ) );
+			}
+			if ( $str( 'destination_booking_url' ) ) {
+				$out['tourBookingPage'] = esc_url_raw( $str( 'destination_booking_url' ) );
+			}
+			$attractions = $str( 'destination_attractions' );
+			if ( $attractions ) {
+				$names = array_map( 'trim', explode( ',', $attractions ) );
+				$includes = [];
+				foreach ( $names as $aname ) {
+					if ( $aname ) {
+						$includes[] = [ '@type' => 'TouristAttraction', 'name' => $aname ];
+					}
+				}
+				if ( ! empty( $includes ) ) {
+					$out['includesAttraction'] = $includes;
+				}
+			}
+		}
+
+		// ── Vehicle ──────────────────────────────────────────────────────────
+		if ( 'Vehicle' === $type ) {
+			if ( $str( 'vessel_year' ) ) {
+				$out['modelDate'] = $str( 'vessel_year' );
+			}
+			if ( $str( 'vessel_type' ) ) {
+				$out['bodyType'] = $str( 'vessel_type' );
+			}
+			if ( $str( 'vessel_manufacturer' ) ) {
+				$out['manufacturer'] = [ '@type' => 'Organization', 'name' => $str( 'vessel_manufacturer' ) ];
+			}
+			$passengers = $str( 'vessel_passengers' );
+			if ( $passengers && is_numeric( $passengers ) ) {
+				$out['seatingCapacity'] = (int) $passengers;
+			}
+			$length = $str( 'vessel_length' );
+			$engine = $str( 'vessel_engine' );
+			if ( $length || $engine ) {
+				$parts = array_filter( [ $length, $engine ] );
+				$out['vehicleConfiguration'] = implode( ', ', $parts );
+			}
+			$amenities = $str( 'vessel_amenities' );
+			if ( $amenities ) {
+				$items = array_filter( array_map( 'trim', explode( "\n", $amenities ) ) );
+				$props = [];
+				foreach ( $items as $item ) {
+					$props[] = [ '@type' => 'PropertyValue', 'name' => 'Amenity', 'value' => $item ];
+				}
+				if ( ! empty( $props ) ) {
+					$out['additionalProperty'] = $props;
+				}
+			}
+		}
+
+		// ── Course ───────────────────────────────────────────────────────────
+		if ( 'Course' === $type ) {
+			if ( $str( 'course_credential' ) ) {
+				$out['educationalCredentialAwarded'] = $str( 'course_credential' );
+			}
+			if ( $str( 'course_mode' ) ) {
+				$out['courseMode'] = $str( 'course_mode' );
+			}
+			if ( $str( 'course_duration' ) ) {
+				$out['timeToComplete'] = $str( 'course_duration' );
+			}
+			if ( $str( 'course_prerequisites' ) ) {
+				$out['coursePrerequisites'] = $str( 'course_prerequisites' );
+			}
+			if ( $str( 'course_code' ) ) {
+				$out['courseCode'] = $str( 'course_code' );
+			}
+			if ( $str( 'course_provider' ) ) {
+				$out['provider'] = [ '@type' => 'Organization', 'name' => $str( 'course_provider' ) ];
+			}
+			$offer = $make_offer( 'course_price', 'course_currency' );
+			if ( $offer ) {
+				$enroll = esc_url_raw( $str( 'course_enrollment_url' ) );
+				if ( $enroll ) {
+					$offer['url'] = $enroll;
+				}
 				$out['offers'] = $offer;
 			}
 		}
