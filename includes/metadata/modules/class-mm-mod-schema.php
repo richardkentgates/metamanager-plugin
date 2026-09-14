@@ -136,7 +136,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 				if ( MM_Schema_Post_Types::is_schema_cpt( $post->post_type ) ) {
 					$schema_type = MM_Schema_Post_Types::slug_to_type( $post->post_type );
 					// Content types get WebPage as the container; the content node is separate.
-					if ( in_array( $schema_type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
+					if ( in_array( $schema_type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service', 'TouristTrip', 'Vehicle', 'Course' ], true ) ) {
 						$type = 'WebPage';
 					} else {
 						$type = $schema_type;
@@ -152,7 +152,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 						$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
 						$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
 						// Map content types to their WebPage counterpart.
-						if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service' ], true ) ) {
+						if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service', 'TouristTrip', 'Vehicle', 'Course' ], true ) ) {
 							$type = 'WebPage';
 						}
 					}
@@ -413,7 +413,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		// WebPage and its subtypes (AboutPage, ContactPage, Calendar) are already on the WebPage node; skip.
-		if ( in_array( $type, [ 'WebPage', 'WebSite', 'AboutPage', 'ContactPage', 'Calendar' ], true ) ) {
+		if ( in_array( $type, [ 'WebPage', 'WebSite', 'AboutPage', 'ContactPage', 'Calendar', 'TouristDestination' ], true ) ) {
 			return;
 		}
 
@@ -483,6 +483,27 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			$additions = MM_Schema_Types::build_node_additions( $schema_fields, $type );
 			if ( ! empty( $additions ) ) {
 				$node = array_merge( $node, $additions );
+			}
+		}
+
+		// TouristTrip: merge vessel and destination relationships.
+		if ( 'TouristTrip' === $type ) {
+			// Vessel reference.
+			$vessel_id = (int) get_post_meta( $post->ID, '_mm_vessel_id', true );
+			if ( $vessel_id && get_post_status( $vessel_id ) === 'publish' ) {
+				$vessel_url = get_permalink( $vessel_id );
+				$node['vehicle'] = [ '@id' => $vessel_url . '#vehicle' ];
+			}
+			// Destination reference.
+			$dest_id = (int) get_post_meta( $post->ID, '_mm_destination_id', true );
+			if ( $dest_id && get_post_status( $dest_id ) === 'publish' ) {
+				$dest_url = get_permalink( $dest_id );
+				$node['itinerary'] = [
+					'@type'           => 'ItemList',
+					'itemListElement' => [
+						[ '@type' => 'ListItem', 'position' => 1, 'item' => [ '@id' => $dest_url . '#touristdestination' ] ],
+					],
+				];
 			}
 		}
 
