@@ -14,10 +14,14 @@ class MM_Schema_Post_Types {
 
 	/** Map of post type slug => [schema_type_label, supports, icon]. */
 	private const TYPES = [
-		'mm_event'    => [ 'Event',   [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'calendar-alt' ],
-		'mm_service'  => [ 'Service', [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'hammer' ],
-		'mm_how_to'   => [ 'HowTo',   [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'list-view' ],
-		'mm_faq_page' => [ 'FAQPage', [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'editor' ],
+		'mm_event'       => [ 'Event',              [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'calendar-alt' ],
+		'mm_service'     => [ 'Service',            [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'hammer' ],
+		'mm_how_to'      => [ 'HowTo',              [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'list-view' ],
+		'mm_faq_page'    => [ 'FAQPage',            [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'editor' ],
+		'mm_trip'        => [ 'TouristTrip',        [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'location-alt' ],
+		'mm_destination' => [ 'TouristDestination',  [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'location' ],
+		'mm_vessel'      => [ 'Vehicle',             [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'car' ],
+		'mm_course'      => [ 'Course',              [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'welcome-learn-more' ],
 		// AboutPage, ContactPage, Calendar are WordPress Page Templates — not CPTs.
 		// WebPage maps to default `page` type — not a separate CPT.
 		// BlogPosting maps to default `post` type — not a separate CPT.
@@ -26,9 +30,11 @@ class MM_Schema_Post_Types {
 
 	/** Map of page template slug => schema type. */
 	public const TEMPLATES = [
-		'mm-about'   => 'AboutPage',
-		'mm-contact' => 'ContactPage',
-		'mm-calendar'=> 'Calendar',
+		'mm-about'      => 'AboutPage',
+		'mm-contact'    => 'ContactPage',
+		'mm-calendar'   => 'Calendar',
+		'mm-area-guide' => 'TouristDestination',
+		'mm-venue'      => 'Place',
 	];
 
 	/**
@@ -39,6 +45,8 @@ class MM_Schema_Post_Types {
 		add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ __CLASS__, 'save_meta' ], 10, 2 );
 		add_filter( 'template_include', [ __CLASS__, 'load_page_template' ] );
+		add_action( 'wp_ajax_mm_search_vessels', [ __CLASS__, 'ajax_search_vessels' ] );
+		add_action( 'wp_ajax_mm_search_destinations', [ __CLASS__, 'ajax_search_destinations' ] );
 	}
 
 	/**
@@ -155,6 +163,12 @@ class MM_Schema_Post_Types {
 			self::render_wc_product_linking_section( $post, $slug );
 		}
 
+		// Vessel linking section for Trip.
+		if ( 'mm_trip' === $slug ) {
+			self::render_vessel_linking_section( $post );
+			self::render_destination_linking_section( $post );
+		}
+
 		if ( empty( $type_fields ) ) {
 			echo '<p>This schema type has no additional fields — all data is auto-populated from the post content.</p>';
 			return;
@@ -163,7 +177,7 @@ class MM_Schema_Post_Types {
 		echo '<table class="form-table"><tbody>';
 
 		// Get business profile defaults for auto-population.
-		$biz = in_array( $slug, [ 'mm_event', 'mm_service' ], true ) ? MM_Site_Settings::get_instance()->all_business() : [];
+		$biz = in_array( $slug, [ 'mm_event', 'mm_service', 'mm_trip', 'mm_course' ], true ) ? MM_Site_Settings::get_instance()->all_business() : [];
 		$biz_addr = $biz['address'] ?? [];
 
 		foreach ( $type_fields as $field ) {
@@ -204,6 +218,12 @@ class MM_Schema_Post_Types {
 				}
 			}
 			if ( 'mm_service' === $slug && 'service_provider_name' === $key ) {
+				$biz_attr = ! empty( $biz['name'] ) ? sprintf( ' data-biz-default="%s"', esc_attr( $biz['name'] ) ) : '';
+			}
+			if ( 'mm_trip' === $slug && 'trip_departure_name' === $key ) {
+				$biz_attr = ! empty( $biz['name'] ) ? sprintf( ' data-biz-default="%s"', esc_attr( $biz['name'] ) ) : '';
+			}
+			if ( 'mm_course' === $slug && 'course_provider' === $key ) {
 				$biz_attr = ! empty( $biz['name'] ) ? sprintf( ' data-biz-default="%s"', esc_attr( $biz['name'] ) ) : '';
 			}
 
@@ -252,8 +272,8 @@ class MM_Schema_Post_Types {
 			);
 		}
 
-		// Event/Service: add auto-populate JavaScript.
-		if ( in_array( $slug, [ 'mm_event', 'mm_service' ], true ) ) {
+		// Event/Service/Trip/Course: add auto-populate JavaScript.
+		if ( in_array( $slug, [ 'mm_event', 'mm_service', 'mm_trip', 'mm_course' ], true ) ) {
 			?>
 			<script>
 			(function(){
@@ -818,6 +838,193 @@ class MM_Schema_Post_Types {
 	}
 
 	/**
+	 * Render vessel linking section for Trip CPT.
+	 *
+	 * Allows linking a Trip to a Vessel post, similar to WC product linking.
+	 */
+	private static function render_vessel_linking_section( \WP_Post $post ): void {
+		$vessel_id    = (int) get_post_meta( $post->ID, '_mm_vessel_id', true );
+		$vessel_title = $vessel_id ? get_the_title( $vessel_id ) : '';
+		$nonce        = wp_create_nonce( 'mm_vessel_link' );
+		?>
+		<div class="mm-vessel-linking" style="background:#f0f0f1;padding:15px;margin-bottom:20px;border-radius:4px;">
+			<h3 style="margin-top:0;">Vessel</h3>
+			<p class="description">Link this trip to a vessel listing.</p>
+			<table class="form-table">
+				<tbody>
+					<tr>
+						<th><label for="mm_vessel">Linked Vessel</label></th>
+						<td>
+							<input type="hidden" id="mm_vessel_id" name="mm_vessel_id" value="<?php echo esc_attr( (string) $vessel_id ); ?>">
+							<input type="text" id="mm_vessel" value="<?php echo esc_attr( $vessel_title ); ?>" class="regular-text" placeholder="Search for a vessel...">
+							<button type="button" id="mm_vessel_search" class="button">Search</button>
+							<?php if ( $vessel_id ) : ?>
+								<button type="button" id="mm_vessel_clear" class="button">Remove</button>
+								<p class="description">Linked to: <a href="<?php echo esc_url( get_edit_post_link( $vessel_id ) ); ?>"><?php echo esc_html( $vessel_title ); ?></a></p>
+							<?php endif; ?>
+							<p class="description">Vessel specs (capacity, type, amenities) will be used in schema output.</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<script>
+			jQuery(function($) {
+				$('#mm_vessel_search').on('click', function() {
+					var search = $('#mm_vessel').val();
+					if (!search) return;
+					$.ajax({
+						url: ajaxurl,
+						data: {
+							action: 'mm_search_vessels',
+							search: search,
+							nonce: '<?php echo esc_js( $nonce ); ?>'
+						},
+						success: function(response) {
+							if (response.data && response.data.length) {
+								var selected = prompt('Select a vessel:\n' + response.data.map(function(p, i) {
+									return (i+1) + '. ' + p.title;
+								}).join('\n'));
+								if (selected) {
+									var idx = parseInt(selected) - 1;
+									if (response.data[idx]) {
+										$('#mm_vessel_id').val(response.data[idx].id);
+										$('#mm_vessel').val(response.data[idx].title);
+									}
+								}
+							}
+						}
+					});
+				});
+				$('#mm_vessel_clear').on('click', function() {
+					$('#mm_vessel_id').val('');
+					$('#mm_vessel').val('');
+					$(this).hide();
+				});
+			});
+			</script>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render destination linking section for Trip CPT.
+	 *
+	 * Allows linking a Trip to a Destination post.
+	 */
+	private static function render_destination_linking_section( \WP_Post $post ): void {
+		$dest_id    = (int) get_post_meta( $post->ID, '_mm_destination_id', true );
+		$dest_title = $dest_id ? get_the_title( $dest_id ) : '';
+		$nonce      = wp_create_nonce( 'mm_destination_link' );
+		?>
+		<div class="mm-destination-linking" style="background:#f0f0f1;padding:15px;margin-bottom:20px;border-radius:4px;">
+			<h3 style="margin-top:0;">Destination</h3>
+			<p class="description">Link this trip to a destination.</p>
+			<table class="form-table">
+				<tbody>
+					<tr>
+						<th><label for="mm_destination">Linked Destination</label></th>
+						<td>
+							<input type="hidden" id="mm_destination_id" name="mm_destination_id" value="<?php echo esc_attr( (string) $dest_id ); ?>">
+							<input type="text" id="mm_destination" value="<?php echo esc_attr( $dest_title ); ?>" class="regular-text" placeholder="Search for a destination...">
+							<button type="button" id="mm_destination_search" class="button">Search</button>
+							<?php if ( $dest_id ) : ?>
+								<button type="button" id="mm_destination_clear" class="button">Remove</button>
+								<p class="description">Linked to: <a href="<?php echo esc_url( get_edit_post_link( $dest_id ) ); ?>"><?php echo esc_html( $dest_title ); ?></a></p>
+							<?php endif; ?>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<script>
+			jQuery(function($) {
+				$('#mm_destination_search').on('click', function() {
+					var search = $('#mm_destination').val();
+					if (!search) return;
+					$.ajax({
+						url: ajaxurl,
+						data: {
+							action: 'mm_search_destinations',
+							search: search,
+							nonce: '<?php echo esc_js( $nonce ); ?>'
+						},
+						success: function(response) {
+							if (response.data && response.data.length) {
+								var selected = prompt('Select a destination:\n' + response.data.map(function(p, i) {
+									return (i+1) + '. ' + p.title;
+								}).join('\n'));
+								if (selected) {
+									var idx = parseInt(selected) - 1;
+									if (response.data[idx]) {
+										$('#mm_destination_id').val(response.data[idx].id);
+										$('#mm_destination').val(response.data[idx].title);
+									}
+								}
+							}
+						}
+					});
+				});
+				$('#mm_destination_clear').on('click', function() {
+					$('#mm_destination_id').val('');
+					$('#mm_destination').val('');
+					$(this).hide();
+				});
+			});
+			</script>
+		</div>
+		<?php
+	}
+
+	/**
+	 * AJAX handler for destination search.
+	 */
+	public static function ajax_search_destinations(): void {
+		check_ajax_referer( 'mm_destination_link', 'nonce' );
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Unauthorized' );
+		}
+		$search = sanitize_text_field( wp_unslash( $_GET['search'] ?? '' ) );
+		if ( ! $search ) {
+			wp_send_json_error( 'Empty search' );
+		}
+		$query = new \WP_Query( [
+			'post_type'      => 'mm_destination',
+			's'              => $search,
+			'posts_per_page' => 10,
+			'post_status'    => 'publish',
+		] );
+		$results = [];
+		foreach ( $query->posts as $dest ) {
+			$results[] = [ 'id' => $dest->ID, 'title' => get_the_title( $dest ) ];
+		}
+		wp_send_json_success( $results );
+	}
+
+	/**
+	 * AJAX handler for vessel search.
+	 */
+	public static function ajax_search_vessels(): void {
+		check_ajax_referer( 'mm_vessel_link', 'nonce' );
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( 'Unauthorized' );
+		}
+		$search = sanitize_text_field( wp_unslash( $_GET['search'] ?? '' ) );
+		if ( ! $search ) {
+			wp_send_json_error( 'Empty search' );
+		}
+		$query = new \WP_Query( [
+			'post_type'      => 'mm_vessel',
+			's'              => $search,
+			'posts_per_page' => 10,
+			'post_status'    => 'publish',
+		] );
+		$results = [];
+		foreach ( $query->posts as $vessel ) {
+			$results[] = [ 'id' => $vessel->ID, 'title' => get_the_title( $vessel ) ];
+		}
+		wp_send_json_success( $results );
+	}
+
+	/**
 	 * Save meta box data.
 	 */
 	public static function save_meta( int $post_id, \WP_Post $post ): void {
@@ -861,6 +1068,22 @@ class MM_Schema_Post_Types {
 		} else {
 			delete_post_meta( $post_id, '_mm_wc_product_id' );
 		}
+
+		// Vessel linking (Trip metabox section).
+		$vessel_id = isset( $_POST['mm_vessel_id'] ) ? absint( $_POST['mm_vessel_id'] ) : 0;
+		if ( $vessel_id > 0 ) {
+			update_post_meta( $post_id, '_mm_vessel_id', $vessel_id );
+		} else {
+			delete_post_meta( $post_id, '_mm_vessel_id' );
+		}
+
+		// Destination linking (Trip metabox section).
+		$dest_id = isset( $_POST['mm_destination_id'] ) ? absint( $_POST['mm_destination_id'] ) : 0;
+		if ( $dest_id > 0 ) {
+			update_post_meta( $post_id, '_mm_destination_id', $dest_id );
+		} else {
+			delete_post_meta( $post_id, '_mm_destination_id' );
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -868,9 +1091,35 @@ class MM_Schema_Post_Types {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the plugin page template file for schema templates.
+	 * Load plugin template files for schema CPTs and page templates.
+	 *
+	 * Handles both page templates (mm-about, mm-contact, etc.) and
+	 * CPT single/archive templates (mm_trip, mm_destination, etc.).
+	 * No theme dependency — plugin provides its own templates.
 	 */
 	public static function load_page_template( string $template ): string {
+		// CPT single templates.
+		$cpt_slugs = array_keys( self::TYPES );
+		foreach ( $cpt_slugs as $slug ) {
+			if ( is_singular( $slug ) ) {
+				$tpl = MM_META_DIR . 'templates/single-' . $slug . '.php';
+				if ( file_exists( $tpl ) ) {
+					return $tpl;
+				}
+			}
+		}
+
+		// CPT archive templates.
+		foreach ( $cpt_slugs as $slug ) {
+			if ( is_post_type_archive( $slug ) ) {
+				$tpl = MM_META_DIR . 'templates/archive-' . $slug . '.php';
+				if ( file_exists( $tpl ) ) {
+					return $tpl;
+				}
+			}
+		}
+
+		// Page templates (mm-about, mm-contact, mm-calendar, etc.).
 		if ( ! is_singular( 'page' ) ) {
 			return $template;
 		}

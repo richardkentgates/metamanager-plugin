@@ -322,6 +322,14 @@ class MM_Mod_Local extends MM_Mod_Base {
 				'TouristAttraction' => 'Tourist Attraction',
 				'TravelAgency'    => 'Travel Agency',
 			],
+			'Tourism & Recreation' => [
+				'TourismBusiness'        => 'Tourism Business (generic)',
+				'BoatRental'             => 'Boat Rental',
+				'BoatTour'               => 'Boat Tour',
+				'FishingCharter'         => 'Fishing Charter',
+				'AmusementPark'          => 'Amusement Park',
+				'Museum'                 => 'Museum',
+			],
 		];
 	}
 }

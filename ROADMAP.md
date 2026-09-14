@@ -54,6 +54,17 @@ WordPress Plugin (PHP)                    OS Daemons (Bash)
 
 ## What's Done
 
+### Schema Expansion — Tourism, Education, Vehicle Types (2026-09-13)
+
+- **New CPTs:** `mm_trip` (TouristTrip), `mm_destination` (TouristDestination), `mm_vessel` (Vehicle), `mm_course` (Course)
+- **New schema types:** TouristTrip, TouristDestination, Vehicle, Course added to type list and field definitions
+- **New business types:** TourismBusiness, BoatRental, BoatTour, FishingCharter, AmusementPark, Museum added to Business Profile
+- **JSON-LD builders:** `build_node_additions()` handles all new types — tripOrigin with Place/GeoCoordinates, itinerary with ItemList, offers with booking URL, vehicle with specs, course with credentials
+- **Cross-linking:** Trip→Vessel and Trip→Destination relationships via post meta and @id references in JSON-LD
+- **Templates:** Single and archive templates for all CPTs (no theme dependency). Page templates for Area Guide and Venue.
+- **Metaboxes:** Vessel linking on Trip, Destination linking on Trip, business profile auto-population for Trip and Course
+- **Documentation:** Schema type reference, industry guides (charter boats, home services, tourism publications), CPT vs template guide, cross-linking guide, ouachita.online reference implementation
+
 ### WP Sitemap Core Conflict Fix, sameAs Merge Fix, CLI Registration (2026-07-27)
 
 - **WP sitemap 404 fix**: WordPress core registers `^wp-sitemap\.xml$` at init priority 1; MM registered at priority 10. Core rule matched first, but `wp_sitemaps_enabled=false` meant no handler → 404. Fix: `unset($wp_rewrite->extra_rules_top['^wp-sitemap\.xml$'])` before MM adds its own rule. Key insight: the key starts with `^` — first attempt without the anchor silently failed.

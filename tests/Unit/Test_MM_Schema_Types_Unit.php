@@ -252,4 +252,205 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 		$this->assertSame( 'Screwdriver', $result['tool'][0]['name'] );
 		$this->assertSame( 'Hammer', $result['tool'][1]['name'] );
 	}
+
+	// ------------------------------------------------------------------
+	// TouristTrip
+	// ------------------------------------------------------------------
+
+	public function test_get_schema_types_has_tourist_trip(): void {
+		$types = MM_Schema_Types::get_schema_types();
+		$this->assertArrayHasKey( 'TouristTrip', $types );
+	}
+
+	public function test_get_fields_by_type_has_tourist_trip(): void {
+		$fields = MM_Schema_Types::get_fields_by_type();
+		$this->assertArrayHasKey( 'TouristTrip', $fields );
+		$keys = array_column( $fields['TouristTrip'], 'key' );
+		$this->assertContains( 'trip_departure_name', $keys );
+		$this->assertContains( 'trip_price', $keys );
+		$this->assertContains( 'trip_booking_url', $keys );
+		$this->assertContains( 'trip_tourist_type', $keys );
+	}
+
+	public function test_build_node_additions_tourist_trip_with_departure(): void {
+		$fields = [
+			'trip_departure_name'    => 'Harborwalk Village',
+			'trip_departure_address' => '10 Harbor Blvd, Destin FL',
+			'trip_departure_lat'     => '30.3935',
+			'trip_departure_lng'     => '-86.5085',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristTrip' );
+
+		$this->assertArrayHasKey( 'tripOrigin', $result );
+		$this->assertSame( 'Place', $result['tripOrigin']['@type'] );
+		$this->assertSame( 'Harborwalk Village', $result['tripOrigin']['name'] );
+		$this->assertSame( '10 Harbor Blvd, Destin FL', $result['tripOrigin']['address'] );
+		$this->assertSame( 30.3935, $result['tripOrigin']['geo']['latitude'] );
+		$this->assertSame( -86.5085, $result['tripOrigin']['geo']['longitude'] );
+	}
+
+	public function test_build_node_additions_tourist_trip_with_price(): void {
+		$fields = [
+			'trip_departure_name' => 'Harborwalk',
+			'trip_price'          => '350',
+			'trip_currency'       => 'USD',
+			'trip_booking_url'    => 'https://example.com/book/',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristTrip' );
+
+		$this->assertArrayHasKey( 'offers', $result );
+		$this->assertSame( '350', $result['offers']['price'] );
+		$this->assertSame( 'USD', $result['offers']['priceCurrency'] );
+		$this->assertSame( 'https://example.com/book/', $result['offers']['url'] );
+	}
+
+	public function test_build_node_additions_tourist_trip_with_tourist_types(): void {
+		$fields = [
+			'trip_departure_name' => 'Harborwalk',
+			'trip_tourist_type'   => 'Family tourism, Adventure tourism',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristTrip' );
+
+		$this->assertIsArray( $result['touristType'] );
+		$this->assertCount( 2, $result['touristType'] );
+		$this->assertSame( 'Family tourism', $result['touristType'][0] );
+	}
+
+	public function test_build_node_additions_tourist_trip_single_tourist_type(): void {
+		$fields = [
+			'trip_departure_name' => 'Harborwalk',
+			'trip_tourist_type'   => 'Boat rental',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristTrip' );
+
+		$this->assertSame( 'Boat rental', $result['touristType'] );
+	}
+
+	public function test_build_node_additions_tourist_trip_without_price_omits_offers(): void {
+		$fields = [
+			'trip_departure_name' => 'Harborwalk',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristTrip' );
+
+		$this->assertArrayNotHasKey( 'offers', $result );
+	}
+
+	public function test_build_node_additions_tourist_trip_capacity(): void {
+		$fields = [
+			'trip_departure_name' => 'Harborwalk',
+			'trip_max_passengers' => '13',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristTrip' );
+
+		$this->assertSame( 13, $result['maximumAttendeeCapacity'] );
+	}
+
+	// ------------------------------------------------------------------
+	// TouristDestination
+	// ------------------------------------------------------------------
+
+	public function test_get_schema_types_has_tourist_destination(): void {
+		$types = MM_Schema_Types::get_schema_types();
+		$this->assertArrayHasKey( 'TouristDestination', $types );
+	}
+
+	public function test_build_node_additions_tourist_destination_with_geo(): void {
+		$fields = [
+			'destination_address' => 'Destin, FL 32541',
+			'destination_lat'     => '30.3935',
+			'destination_lng'     => '-86.5085',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristDestination' );
+
+		$this->assertSame( 'Destin, FL 32541', $result['address'] );
+		$this->assertSame( 30.3935, $result['geo']['latitude'] );
+	}
+
+	public function test_build_node_additions_tourist_destination_with_attractions(): void {
+		$fields = [
+			'destination_attractions' => 'Crab Island Sandbar, Destin Harbor',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'TouristDestination' );
+
+		$this->assertArrayHasKey( 'includesAttraction', $result );
+		$this->assertCount( 2, $result['includesAttraction'] );
+		$this->assertSame( 'TouristAttraction', $result['includesAttraction'][0]['@type'] );
+		$this->assertSame( 'Crab Island Sandbar', $result['includesAttraction'][0]['name'] );
+	}
+
+	// ------------------------------------------------------------------
+	// Vehicle
+	// ------------------------------------------------------------------
+
+	public function test_get_schema_types_has_vehicle(): void {
+		$types = MM_Schema_Types::get_schema_types();
+		$this->assertArrayHasKey( 'Vehicle', $types );
+	}
+
+	public function test_build_node_additions_vehicle_with_specs(): void {
+		$fields = [
+			'vessel_year'        => '2022',
+			'vessel_type'        => 'Tritoon',
+			'vessel_passengers'  => '13',
+			'vessel_manufacturer'=> 'Barletta',
+			'vessel_length'      => '24 ft',
+			'vessel_engine'      => '200HP Mercury Verado',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'Vehicle' );
+
+		$this->assertSame( '2022', $result['modelDate'] );
+		$this->assertSame( 'Tritoon', $result['bodyType'] );
+		$this->assertSame( 13, $result['seatingCapacity'] );
+		$this->assertSame( 'Barletta', $result['manufacturer']['name'] );
+		$this->assertSame( '24 ft, 200HP Mercury Verado', $result['vehicleConfiguration'] );
+	}
+
+	// ------------------------------------------------------------------
+	// Course
+	// ------------------------------------------------------------------
+
+	public function test_get_schema_types_has_course(): void {
+		$types = MM_Schema_Types::get_schema_types();
+		$this->assertArrayHasKey( 'Course', $types );
+	}
+
+	public function test_get_fields_by_type_has_course(): void {
+		$fields = MM_Schema_Types::get_fields_by_type();
+		$this->assertArrayHasKey( 'Course', $fields );
+		$keys = array_column( $fields['Course'], 'key' );
+		$this->assertContains( 'course_credential', $keys );
+		$this->assertContains( 'course_mode', $keys );
+		$this->assertContains( 'course_price', $keys );
+	}
+
+	public function test_build_node_additions_course_with_credential(): void {
+		$fields = [
+			'course_credential' => 'CPR Certification',
+			'course_mode'       => 'In-person',
+			'course_duration'   => 'PT4H',
+			'course_code'       => 'CPR-101',
+			'course_provider'   => 'Express Training Services',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'Course' );
+
+		$this->assertSame( 'CPR Certification', $result['educationalCredentialAwarded'] );
+		$this->assertSame( 'In-person', $result['courseMode'] );
+		$this->assertSame( 'PT4H', $result['timeToComplete'] );
+		$this->assertSame( 'CPR-101', $result['courseCode'] );
+		$this->assertSame( 'Express Training Services', $result['provider']['name'] );
+	}
+
+	public function test_build_node_additions_course_with_price(): void {
+		$fields = [
+			'course_credential'    => 'CPR',
+			'course_price'         => '75',
+			'course_currency'      => 'USD',
+			'course_enrollment_url'=> 'https://example.com/enroll/',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'Course' );
+
+		$this->assertArrayHasKey( 'offers', $result );
+		$this->assertSame( '75', $result['offers']['price'] );
+		$this->assertSame( 'https://example.com/enroll/', $result['offers']['url'] );
+	}
 }
