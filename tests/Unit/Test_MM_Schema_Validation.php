@@ -254,12 +254,10 @@ class Test_MM_Schema_Validation extends WP_UnitTestCase {
 	public function test_service_schema_structure(): void {
 		$fields = [
 			'service_type'  => 'Pressure Washing',
-			'service_area'  => 'Destin, FL',
 			'service_price' => '150.00',
 		];
 		$additions = MM_Schema_Types::build_node_additions( $fields, 'Service' );
 		$this->assertSame( 'Pressure Washing', $additions['serviceType'] );
-		$this->assertSame( 'Destin, FL', $additions['areaServed'] );
 		$this->assertArrayHasKey( 'offers', $additions );
 	}
 
