@@ -110,7 +110,6 @@ class MM_Post_Meta_Panel {
 			'noarchive'      => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noarchive'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			'nosnippet'      => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_nosnippet'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			'noimageindex'   => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noimageindex'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			'schema_type'    => sanitize_key( wp_unslash( $_POST['mm_meta_schema_type'] ?? '' ) ),
 			'breadcrumb_label' => sanitize_text_field( wp_unslash( $_POST['mm_meta_breadcrumb_label'] ?? '' ) ),
 			'exclude_sitemap'  => ! empty( $_POST['mm_meta_exclude_sitemap'] ),
 		];

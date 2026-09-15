@@ -65,7 +65,6 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 		$service_fields = array_column( $fields['Service'], 'key' );
 		$this->assertContains( 'service_provider_name', $service_fields );
 		$this->assertContains( 'service_type', $service_fields );
-		$this->assertContains( 'service_area', $service_fields );
 	}
 
 	public function test_howto_type_has_time_and_cost_fields(): void {
@@ -163,13 +162,11 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 	public function test_build_node_additions_service(): void {
 		$fields = [
 			'service_type' => 'Plumbing',
-			'service_area' => 'Greater Portland',
 			'service_price' => '75.00',
 		];
 		$result = MM_Schema_Types::build_node_additions( $fields, 'Service' );
 
 		$this->assertSame( 'Plumbing', $result['serviceType'] );
-		$this->assertSame( 'Greater Portland', $result['areaServed'] );
 		$this->assertArrayHasKey( 'offers', $result );
 	}
 

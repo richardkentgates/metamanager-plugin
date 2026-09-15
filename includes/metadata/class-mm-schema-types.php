@@ -260,15 +260,6 @@ class MM_Schema_Types {
 					'description' => '',
 				],
 				[
-					'key'         => 'service_area',
-					'label'       => 'Area Served',
-					'type'        => 'text',
-					'required'    => false,
-					'auto_label'  => null,
-					'placeholder' => 'e.g. Destin, Fort Walton Beach, FL',
-					'description' => '',
-				],
-				[
 					'key'         => 'service_price',
 					'label'       => 'Price / Range',
 					'type'        => 'text',
@@ -879,9 +870,6 @@ class MM_Schema_Types {
 		if ( 'Service' === $type ) {
 			if ( $str( 'service_type' ) ) {
 				$out['serviceType'] = $str( 'service_type' );
-			}
-			if ( $str( 'service_area' ) ) {
-				$out['areaServed'] = $str( 'service_area' );
 			}
 			$offer = $make_offer( 'service_price', 'service_currency' );
 			if ( $offer ) {
