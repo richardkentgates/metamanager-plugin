@@ -145,16 +145,10 @@ class MM_Mod_Schema extends MM_Mod_Base {
 					// Page templates use their schema type directly.
 					$template = MM_Schema_Post_Types::get_post_template( $post );
 					if ( $template ) {
-						$schema_type = MM_Schema_Post_Types::template_to_type( $template );
-						$type        = $schema_type ?? 'WebPage';
+						$type = MM_Schema_Post_Types::template_to_type( $template ) ?? 'WebPage';
 					} else {
-						$meta = $settings->get_post_meta( $post->ID );
-						$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
-						$type = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
-						// Map content types to their WebPage counterpart.
-						if ( in_array( $type, [ 'BlogPosting', 'Article', 'HowTo', 'Product', 'Event', 'Service', 'TouristTrip', 'Vehicle', 'Course' ], true ) ) {
-							$type = 'WebPage';
-						}
+						// Regular posts = BlogPosting, pages = WebPage.
+						$type = ( 'post' === $post->post_type ) ? 'WebPage' : 'WebPage';
 					}
 				}
 			}
@@ -407,9 +401,8 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 		}
 		if ( ! $type ) {
-			$meta         = $settings->get_post_meta( $post->ID );
-			$default_type = $settings->get( "schema.post_type_types.{$post->post_type}", 'WebPage' );
-			$type         = ! empty( $meta['schema_type'] ) ? $meta['schema_type'] : $default_type;
+			// Regular posts = BlogPosting, pages = WebPage.
+			$type = ( 'post' === $post->post_type ) ? 'BlogPosting' : 'WebPage';
 		}
 
 		// WebPage and its subtypes (AboutPage, ContactPage, Calendar) are already on the WebPage node; skip.
@@ -462,7 +455,8 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 		}
 		if ( empty( $schema_fields ) ) {
-			$schema_fields = $meta['schema_fields'] ?? [];
+			$post_meta = $settings->get_post_meta( $post->ID );
+			$schema_fields = $post_meta['schema_fields'] ?? [];
 		}
 		if ( 'Product' === $type && $this->is_woocommerce_active() ) {
 			$wc_data = $this->get_woocommerce_product_data( $post->ID );
@@ -483,6 +477,14 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			$additions = MM_Schema_Types::build_node_additions( $schema_fields, $type );
 			if ( ! empty( $additions ) ) {
 				$node = array_merge( $node, $additions );
+			}
+		}
+
+		// Service: add areaServed from business profile (not per-service).
+		if ( 'Service' === $type ) {
+			$service_areas = $settings->get_business( 'service_areas', [] );
+			if ( ! empty( $service_areas ) && is_array( $service_areas ) ) {
+				$node['areaServed'] = count( $service_areas ) === 1 ? $service_areas[0] : array_values( $service_areas );
 			}
 		}
 

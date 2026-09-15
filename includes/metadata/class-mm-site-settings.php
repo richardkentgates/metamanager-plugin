@@ -408,19 +408,14 @@ class MM_Site_Settings {
 				'pinterest_verify'      => '',
 			],
 
-			'schema' => [
+		'schema' => [
 			'knowledge_entity'      => 'LocalBusiness',
 			'website_searchaction'  => true,
 			'breadcrumbs'           => true,
 			'archive_itemlist'      => true,
 			'archive_media'         => false,
-				'post_type_types'       => [
-					'post'    => 'BlogPosting',
-					'page'    => 'WebPage',
-					'product' => 'Product',
-				],
-				'custom_json_ld'        => '',
-			],
+			'custom_json_ld'        => '',
+		],
 
 			'media' => [
 				'featured_image_citation' => false,

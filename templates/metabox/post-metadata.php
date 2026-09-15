@@ -15,15 +15,19 @@ $nofollow         = $meta['nofollow']        ?? null;
 $noarchive        = $meta['noarchive']       ?? null;
 $nosnippet        = $meta['nosnippet']       ?? null;
 $noimageindex     = $meta['noimageindex']    ?? null;
-$schema_type      = $meta['schema_type']    ?? '';
 $breadcrumb_label = $meta['breadcrumb_label'] ?? '';
 $exclude_sitemap  = ! empty( $meta['exclude_sitemap'] );
 
 $pt_slug          = $post->post_type;
 $default_noindex  = (bool) $settings->get( "titles.post_types.{$pt_slug}.noindex", false );
 
-// Schema types for the override selector.
-$schema_types = MM_Schema_Types::get_schema_types( true );
+// Schema type is determined by post type — no override.
+if ( MM_Schema_Post_Types::is_schema_cpt( $pt_slug ) ) {
+	$resolved_schema_type = MM_Schema_Post_Types::slug_to_type( $pt_slug );
+} else {
+	$template = MM_Schema_Post_Types::get_post_template( $post );
+	$resolved_schema_type = $template ? MM_Schema_Post_Types::template_to_type( $template ) : ( 'post' === $pt_slug ? 'BlogPosting' : 'WebPage' );
+}
 
 // Field definitions for expandable panels (types that need extra structured data).
 $wc_active = class_exists( 'WooCommerce' ) || function_exists( 'WC' );
@@ -129,25 +133,15 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 		</button>
 		<div class="gcm-collapsible" id="gcm-schema-section" style="display:none">
 			<div class="gcm-metabox-row">
-				<label class="gcm-field-label" for="mm_meta_schema_type">Schema Type</label>
-				<?php if ( 'post' === $pt_slug ) : ?>
-					<input type="hidden" name="mm_meta_schema_type" value="">
-					<span class="gcm-schema-auto-note">BlogPosting (locked for posts)</span>
-				<?php else : ?>
-					<select id="mm_meta_schema_type" name="mm_meta_schema_type">
-						<?php foreach ( $schema_types as $st_val => $st_label ) : ?>
-							<?php if ( 'BlogPosting' === $st_val ) continue; ?>
-							<option value="<?php echo esc_attr($st_val); ?>" <?php selected($schema_type,$st_val); ?>><?php echo esc_html($st_label); ?></option>
-						<?php endforeach; ?>
-					</select>
-				<?php endif; ?>
+				<label class="gcm-field-label">Schema Type</label>
+				<span class="gcm-schema-auto-note"><?php echo esc_html( $resolved_schema_type ); ?> (auto)</span>
 			</div>
 
 			<?php /* ── Per-type field panels ──────────────────────────────────── */ ?>
 			<?php foreach ( $schema_field_defs as $panel_type => $panel_fields ) : ?>
 				<div class="gcm-schema-fields-panel"
 					 data-schema-type="<?php echo esc_attr( $panel_type ); ?>"
-					 style="<?php echo ( $schema_type === $panel_type ) ? '' : 'display:none'; ?>">
+					 style="<?php echo ( $resolved_schema_type === $panel_type ) ? '' : 'display:none'; ?>">
 					<p class="gcm-schema-panel-heading"><?php echo esc_html( $panel_type ); ?> fields</p>
 					<?php foreach ( $panel_fields as $field ) :
 						$fk  = $field['key'];
