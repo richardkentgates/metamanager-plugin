@@ -81,10 +81,6 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 		if ( $context->is_tax() || $context->is_category() || $context->is_tag() ) {
 			$term = $context->get_term();
 			if ( $term ) {
-				$meta = $settings->get_term_meta( $term->term_id );
-				if ( ! empty( $meta['title'] ) ) {
-					return $settings->resolve( $meta['title'], null, $term );
-				}
 				$tpl = $settings->get( "titles.taxonomies.{$term->taxonomy}.archive_title", '%%term_title%% %%sep%% %%sitetitle%%' );
 				$resolved = $settings->resolve( $tpl, null, $term );
 				return $this->maybe_append_page( $resolved, $page, $settings );
@@ -95,10 +91,6 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 		if ( $context->is_author() ) {
 			$author = $context->get_author();
 			if ( $author ) {
-				$meta = $settings->get_user_meta( $author->ID );
-				if ( ! empty( $meta['title'] ) ) {
-					return $settings->resolve( $meta['title'], null, null, $author );
-				}
 				$tpl = $settings->get( 'authors.title_template', 'Articles by %%author_name%% %%sep%% %%sitetitle%%' );
 				$resolved = $settings->resolve( $tpl, null, null, $author );
 				return $this->maybe_append_page( $resolved, $page, $settings );
@@ -165,10 +157,6 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 		if ( $context->is_tax() || $context->is_category() || $context->is_tag() ) {
 			$term = $context->get_term();
 			if ( $term ) {
-				$meta = $settings->get_term_meta( $term->term_id );
-				if ( ! empty( $meta['description'] ) ) {
-					return $settings->resolve( $meta['description'], null, $term );
-				}
 				$source = $settings->get( "titles.taxonomies.{$term->taxonomy}.description_source", 'term_description' );
 				if ( 'term_description' === $source && $term->description ) {
 					return wp_strip_all_tags( $term->description );
@@ -179,16 +167,9 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 		if ( $context->is_author() ) {
 			$author = $context->get_author();
 			if ( $author ) {
-				$meta = $settings->get_user_meta( $author->ID );
-				if ( ! empty( $meta['description'] ) ) {
-					return $settings->resolve( $meta['description'], null, null, $author );
+				if ( $author->description ) {
+					return wp_strip_all_tags( $author->description );
 				}
-				$tpl = $settings->get( 'authors.description_template', '%%author_bio%%' );
-				$resolved = $settings->resolve( $tpl, null, null, $author );
-				if ( $resolved ) {
-					return $resolved;
-				}
-				// Fallback: use site description when author bio is empty.
 				return get_bloginfo( 'description' );
 			}
 		}

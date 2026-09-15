@@ -1,6 +1,6 @@
 # Metamanager Roadmap
 
-Last updated 2026-09-09.
+Last updated 2026-09-15.
 
 ---
 
@@ -399,6 +399,63 @@ main ──push──> release.yml (tag + GitHub release + apt server deploy)
 ---
 
 ## What's Left
+
+### Author Settings Simplification
+
+**Current state:** User profile has SEO Title Override, Meta Description textarea, and noindex radio buttons (Default/Force noindex/Force index). These overrides are not saving correctly and are unnecessary — WordPress already has titles and the author bio field for description.
+
+**Changes:**
+- Remove SEO Title Override field from user profile
+- Remove Meta Description textarea from user profile
+- Replace noindex radio buttons with a single "Allow search indexing" checkbox
+- Add a per-author "Show Person schema" checkbox (currently only a global setting)
+- Fix: author archive description uses `$author->description` (bio) directly, no separate override
+- Fix: author archive title uses global template only, no per-author override
+- Fix: settings save issue — investigate why existing settings say they saved but didn't persist
+
+**Files:**
+- `templates/metabox/user-metadata.php` — simplify fields
+- `includes/metadata/admin/class-mm-user-meta-panel.php` — update save logic
+- `includes/metadata/modules/class-mm-mod-head-meta.php` — remove per-author title/description override resolution
+- `includes/metadata/modules/class-mm-mod-author.php` — check per-author person_schema toggle
+
+### CPT Submenu with Dashboard
+
+**Current state:** 8 CPTs (Event, Service, HowTo, FAQPage, TouristTrip, TouristDestination, Vehicle, Course) each register as top-level admin menu items. Takes up a lot of space. TouristDestination is a long label.
+
+**Changes:**
+- Add a "Schema" parent menu item with a dashboard page showing all schema types, post counts, and create links
+- Move all CPTs under the "Schema" submenu using `'show_in_menu' => 'schema-types.php'`
+- Shorten menu labels: TouristDestination → Destinations, TouristTrip → Trips, Vehicle → Vehicles
+- Dashboard page: table of schema types, post counts per type, "Add New" links
+
+**Files:**
+- `includes/metadata/class-mm-schema-post-types.php` — change `show_in_menu`, register parent menu
+- New: `includes/metadata/admin/class-mm-schema-dashboard.php` — dashboard page
+
+### Remove Title Alternatives
+
+**Current state:** Per-post metabox uses template system with `%%post_title%%` (the WordPress title). Per-term and per-author have title override fields.
+
+**Changes:**
+- Remove title override from user profile (covered in Author Settings Simplification)
+- Check term metadata template for title override and remove if present
+- No change needed for posts — template system already uses WordPress titles
+
+**Files:**
+- `templates/metabox/user-metadata.php` — covered above
+- `templates/metabox/term-metadata.php` — check and remove title override if present
+
+### Remove Author MetaDescription Override
+
+**Current state:** User profile has a Meta Description textarea that overrides the author bio.
+
+**Changes:**
+- Remove Meta Description textarea from user profile (covered in Author Settings Simplification)
+- Author archive description falls back to `$author->description` (bio) → site description
+
+**Files:**
+- Covered in Author Settings Simplification above
 
 ### HIGH — Event as WooCommerce Product (S-4)
 
