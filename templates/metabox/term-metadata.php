@@ -9,8 +9,6 @@
  *   @var MM_Site_Settings $settings
  */
 defined( 'ABSPATH' ) || exit;
-$title          = $meta['title']           ?? '';
-$description    = $meta['description']     ?? '';
 $noindex        = $meta['noindex']         ?? null;
 $nofollow       = $meta['nofollow']        ?? null;
 $og_title       = $meta['og_title']        ?? '';
@@ -24,29 +22,6 @@ $exclude_sitemap  = ! empty( $meta['exclude_sitemap'] );
 	<th scope="row" colspan="2">
 		<h3 style="margin:12px 0 4px;padding:0">Metamanager</h3>
 	</th>
-</tr>
-
-<tr class="form-field">
-	<th scope="row"><label for="mm_meta_title">SEO Title</label></th>
-	<td>
-		<input type="text" id="mm_meta_title" name="mm_meta_title"
-			   value="<?php echo esc_attr($title); ?>" class="large-text"
-			   placeholder="Leave blank to auto-generate">
-		<p class="description">Template vars: <code>%%term_title%% %%sep%% %%sitetitle%%</code></p>
-	</td>
-</tr>
-
-<tr class="form-field">
-	<th scope="row"><label for="mm_meta_description">Meta Description</label></th>
-	<td>
-		<textarea id="mm_meta_description" name="mm_meta_description"
-				  rows="3" class="large-text gcm-desc-textarea"
-				  placeholder="Leave blank to use term description"><?php echo esc_textarea($description); ?></textarea>
-		<div class="gcm-char-bar">
-			<span class="gcm-char-count" id="gcm-term-desc-count">0</span>
-			<span>/160</span>
-		</div>
-	</td>
 </tr>
 
 <tr class="form-field">

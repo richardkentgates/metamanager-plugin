@@ -69,13 +69,13 @@ class MM_User_Meta_Panel {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		$clean = [];
 
-		$title = sanitize_text_field( wp_unslash( $_POST['mm_meta_title'] ?? '' ) );
-		$desc  = sanitize_textarea_field( wp_unslash( $_POST['mm_meta_description'] ?? '' ) );
-		$noindex = $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noindex'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_tristate() is a custom sanitizer
+		// Noindex checkbox — checked = hide from search.
+		$noindex = ! empty( $_POST['mm_meta_noindex'] );
+		$clean['noindex'] = $noindex;
 
-		if ( $title )           { $clean['title']       = $title; }
-		if ( $desc )            { $clean['description']  = $desc; }
-		if ( null !== $noindex ) { $clean['noindex']     = $noindex; }
+		// Person schema checkbox — checked = show Person schema.
+		$person_schema = ! empty( $_POST['mm_meta_person_schema'] );
+		$clean['person_schema'] = $person_schema;
 
 		// Social profiles.
 		foreach ( array_keys( self::SOCIAL_FIELDS ) as $field ) {
@@ -89,17 +89,7 @@ class MM_User_Meta_Panel {
 		}
 		// phpcs:enable
 
-		if ( empty( $clean ) ) {
-			delete_user_meta( $user_id, MM_META_KEY );
-		} else {
-			update_user_meta( $user_id, MM_META_KEY, wp_json_encode( $clean ) );
-		}
+		update_user_meta( $user_id, MM_META_KEY, wp_json_encode( $clean ) );
 	}
 
-	private function sanitize_tristate( $value ): ?bool {
-		if ( $value === '' || $value === null ) {
-			return null;
-		}
-		return (bool) (int) $value;
-	}
 }
