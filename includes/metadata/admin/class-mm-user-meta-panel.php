@@ -73,10 +73,6 @@ class MM_User_Meta_Panel {
 		$noindex = ! empty( $_POST['mm_meta_noindex'] );
 		$clean['noindex'] = $noindex;
 
-		// Person schema checkbox — checked = show Person schema.
-		$person_schema = ! empty( $_POST['mm_meta_person_schema'] );
-		$clean['person_schema'] = $person_schema;
-
 		// Social profiles.
 		foreach ( array_keys( self::SOCIAL_FIELDS ) as $field ) {
 			$val = sanitize_text_field( wp_unslash( $_POST[ 'mm_meta_social_' . $field ] ?? '' ) );
@@ -90,6 +86,13 @@ class MM_User_Meta_Panel {
 		// phpcs:enable
 
 		update_user_meta( $user_id, MM_META_KEY, wp_json_encode( $clean ) );
+
+		// Upload receipt preference.
+		if ( isset( $_POST['mm_upload_receipt_nonce'] ) ) {
+			check_admin_referer( 'mm_upload_receipt_' . $user_id, 'mm_upload_receipt_nonce' );
+			$wants = isset( $_POST['mm_upload_receipt'] ) && '1' === $_POST['mm_upload_receipt'];
+			update_user_meta( $user_id, MM_Upload_Notify::META_USER_RECEIPT, $wants ? '1' : '0' );
+		}
 	}
 
 }
