@@ -19,7 +19,7 @@ class MM_Mod_Author extends MM_Mod_Base {
 		// Build Person node on author archive pages.
 		if ( $context->is_author() ) {
 			$author = $context->get_author();
-			if ( $author && $this->author_wants_schema( $author, $settings ) ) {
+			if ( $author ) {
 				$this->add_node( $data, $this->build_person_node( $author, $settings ) );
 			}
 		}
@@ -29,29 +29,11 @@ class MM_Mod_Author extends MM_Mod_Base {
 			$post = $context->get_post();
 			if ( $post ) {
 				$author = get_userdata( (int) $post->post_author );
-				if ( $author && $this->author_wants_schema( $author, $settings ) ) {
+				if ( $author ) {
 					$this->add_node( $data, $this->build_person_node( $author, $settings ) );
 				}
 			}
 		}
-	}
-
-	/**
-	 * Check if an author wants Person schema output.
-	 *
-	 * Per-author override (user meta) takes precedence over global setting.
-	 * Default: enabled (global setting applies).
-	 */
-	private function author_wants_schema( \WP_User $author, MM_Site_Settings $settings ): bool {
-		$meta = $settings->get_user_meta( $author->ID );
-
-		// Per-author override: if explicitly set to false, skip.
-		if ( array_key_exists( 'person_schema', $meta ) && $meta['person_schema'] === false ) {
-			return false;
-		}
-
-		// Global setting.
-		return (bool) $settings->get( 'authors.person_schema', true );
 	}
 
 	private function build_person_node( \WP_User $author, MM_Site_Settings $settings ): array {

@@ -9,11 +9,10 @@
  */
 defined( 'ABSPATH' ) || exit;
 $noindex        = $meta['noindex']        ?? null;
-$person_schema  = $meta['person_schema']  ?? null;
-
-$social_fields = MM_User_Meta_Panel::SOCIAL_FIELDS;
+$social_fields  = MM_User_Meta_Panel::SOCIAL_FIELDS;
+$upload_receipt = MM_Upload_Notify::user_wants_receipt( $user->ID );
 ?>
-<h2>Metamanager — Author Profile</h2>
+<h2>Metamanager</h2>
 
 <table class="form-table">
 	<tr>
@@ -27,14 +26,15 @@ $social_fields = MM_User_Meta_Panel::SOCIAL_FIELDS;
 		</td>
 	</tr>
 	<tr>
-		<th>Person Schema</th>
+		<th>Upload Receipts</th>
 		<td>
 			<label>
-				<input type="checkbox" id="mm_meta_person_schema" name="mm_meta_person_schema" value="1"
-					<?php checked( $person_schema !== false, true ); ?>>
-				Show Person schema for this author
+				<input type="checkbox" name="mm_upload_receipt" value="1"
+					<?php checked( $upload_receipt ); ?>>
+				Send me an email receipt when I upload images to the Media Library
 			</label>
-			<p class="description">Adds a Person node to author archive and post pages. SameAs links use the social profiles below.</p>
+			<p class="description">Multiple files uploaded within 60 seconds are batched into one email.</p>
+			<?php wp_nonce_field( 'mm_upload_receipt_' . $user->ID, 'mm_upload_receipt_nonce' ); ?>
 		</td>
 	</tr>
 

@@ -53,11 +53,8 @@ class MM_Upload_Notify {
 		// AJAX: dismiss (delete without retry) a failed notification entry.
 		add_action( 'wp_ajax_mm_dismiss_upload_notice', [ __CLASS__, 'ajax_dismiss_notice' ] );
 
-		// Per-user receipt preference on the user profile page.
-		add_action( 'show_user_profile',        [ __CLASS__, 'render_profile_field' ] );
-		add_action( 'edit_user_profile',        [ __CLASS__, 'render_profile_field' ] );
-		add_action( 'personal_options_update',  [ __CLASS__, 'save_profile_field' ] );
-		add_action( 'edit_user_profile_update', [ __CLASS__, 'save_profile_field' ] );
+		// Per-user receipt preference is rendered by MM_User_Meta_Panel (user-metadata.php).
+		// No separate profile field needed here.
 	}
 
 	// -----------------------------------------------------------------------
@@ -532,50 +529,6 @@ class MM_Upload_Notify {
 			return true;
 		}
 		return (bool) $value;
-	}
-
-	/**
-	 * Render the opt-in/out checkbox on the user profile edit page.
-	 *
-	 * @param \WP_User $user The user being edited.
-	 */
-	public static function render_profile_field( \WP_User $user ): void {
-		$checked = self::user_wants_receipt( $user->ID );
-		?>
-		<h2><?php esc_html_e( 'Metamanager', 'metamanager' ); ?></h2>
-		<table class="form-table" role="presentation">
-			<tr>
-				<th scope="row"><?php esc_html_e( 'Upload receipts', 'metamanager' ); ?></th>
-				<td>
-					<label>
-						<input type="checkbox" name="mm_upload_receipt" value="1"<?php checked( $checked ); ?>>
-						<?php esc_html_e( 'Send me an email receipt when I upload images to the Media Library', 'metamanager' ); ?>
-					</label>
-					<p class="description"><?php esc_html_e( 'Multiple files uploaded within 60 seconds are batched into one email.', 'metamanager' ); ?></p>
-					<?php wp_nonce_field( 'mm_upload_receipt_' . $user->ID, 'mm_upload_receipt_nonce' ); ?>
-				</td>
-			</tr>
-		</table>
-		<?php
-	}
-
-	/**
-	 * Save the per-user receipt preference submitted from the profile page.
-	 *
-	 * @param int $user_id The user being updated.
-	 */
-	public static function save_profile_field( int $user_id ): void {
-		if ( ! isset( $_POST['mm_upload_receipt_nonce'] ) ) {
-			return;
-		}
-		check_admin_referer( 'mm_upload_receipt_' . $user_id, 'mm_upload_receipt_nonce' );
-
-		if ( ! current_user_can( 'edit_user', $user_id ) ) {
-			return;
-		}
-
-		$wants = isset( $_POST['mm_upload_receipt'] ) && '1' === $_POST['mm_upload_receipt'];
-		update_user_meta( $user_id, self::META_USER_RECEIPT, $wants ? '1' : '0' );
 	}
 
 	// -----------------------------------------------------------------------
