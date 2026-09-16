@@ -64,7 +64,6 @@ public function register_menu(): void {
 add_submenu_page( 'metamanager', 'Business Profile — Metamanager', 'Business Profile', 'manage_options', 'metamanager-business', [ $this, 'render_business' ] );
 add_submenu_page( 'metamanager', 'Titles — Metamanager',     'Titles',     'manage_options', 'mm-meta-titles',   fn() => $this->render( 'mm-meta-titles' ) );
 add_submenu_page( 'metamanager', 'Social — Metamanager',     'Social',     'manage_options', 'mm-meta-social',   fn() => $this->render( 'mm-meta-social' ) );
-add_submenu_page( 'metamanager', 'Schema — Metamanager',     'Schema',     'manage_options', 'mm-meta-schema',   fn() => $this->render( 'mm-meta-schema' ) );
 add_submenu_page( 'metamanager', 'Sitemaps — Metamanager',   'Sitemaps',   'manage_options', 'mm-meta-sitemaps', fn() => $this->render( 'mm-meta-sitemaps' ) );
 add_submenu_page( 'metamanager', 'Robots.txt — Metamanager', 'Robots.txt', 'manage_options', 'mm-meta-robots',   fn() => $this->render( 'mm-meta-robots' ) );
 add_submenu_page( 'metamanager', 'Authors — Metamanager',    'Authors',    'manage_options', 'mm-meta-authors',  fn() => $this->render( 'mm-meta-authors' ) );

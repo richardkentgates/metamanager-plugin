@@ -8,9 +8,8 @@
  *   @var MM_Site_Settings $settings
  */
 defined( 'ABSPATH' ) || exit;
-$title   = $meta['title']       ?? '';
-$desc    = $meta['description'] ?? '';
-$noindex = $meta['noindex']     ?? null;
+$noindex        = $meta['noindex']        ?? null;
+$person_schema  = $meta['person_schema']  ?? null;
 
 $social_fields = MM_User_Meta_Panel::SOCIAL_FIELDS;
 ?>
@@ -18,33 +17,24 @@ $social_fields = MM_User_Meta_Panel::SOCIAL_FIELDS;
 
 <table class="form-table">
 	<tr>
-		<th><label for="mm_meta_title">SEO Title Override</label></th>
+		<th>Search Indexing</th>
 		<td>
-			<input type="text" id="mm_meta_title" name="mm_meta_title"
-				   value="<?php echo esc_attr($title); ?>" class="regular-text"
-				   placeholder="Leave blank for the global author archive template">
-			<p class="description">Template vars: <code>%%author_name%% %%sep%% %%sitetitle%%</code></p>
+			<label>
+				<input type="checkbox" id="mm_meta_noindex" name="mm_meta_noindex" value="1"
+					<?php checked( $noindex, true ); ?>>
+				Hide author archive from search engines
+			</label>
 		</td>
 	</tr>
 	<tr>
-		<th><label for="mm_meta_description">Meta Description</label></th>
+		<th>Person Schema</th>
 		<td>
-			<textarea id="mm_meta_description" name="mm_meta_description"
-					  rows="3" class="regular-text gcm-desc-textarea"
-					  placeholder="Leave blank to use author bio"><?php echo esc_textarea($desc); ?></textarea>
-			<div class="gcm-char-bar">
-				<span class="gcm-char-count" id="gcm-user-desc-count">0</span> / 160
-			</div>
-		</td>
-	</tr>
-	<tr>
-		<th>noindex</th>
-		<td>
-			<fieldset>
-				<label><input type="radio" name="mm_meta_noindex" value="" <?php checked($noindex,null); ?>> Default (inherit site setting)</label><br>
-				<label><input type="radio" name="mm_meta_noindex" value="1" <?php checked($noindex,true); ?>> Force noindex (hide author archive from search)</label><br>
-				<label><input type="radio" name="mm_meta_noindex" value="0" <?php checked($noindex,false); ?>> Force index (override even if site default is noindex)</label>
-			</fieldset>
+			<label>
+				<input type="checkbox" id="mm_meta_person_schema" name="mm_meta_person_schema" value="1"
+					<?php checked( $person_schema !== false, true ); ?>>
+				Show Person schema for this author
+			</label>
+			<p class="description">Adds a Person node to author archive and post pages. SameAs links use the social profiles below.</p>
 		</td>
 	</tr>
 

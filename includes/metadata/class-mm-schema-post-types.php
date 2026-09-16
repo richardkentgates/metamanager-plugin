@@ -12,16 +12,16 @@ defined( 'ABSPATH' ) || exit;
 
 class MM_Schema_Post_Types {
 
-	/** Map of post type slug => [schema_type_label, supports, icon]. */
+	/** Map of post type slug => [schema_type_label, short_label, supports, icon]. */
 	private const TYPES = [
-		'mm_event'       => [ 'Event',              [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'calendar-alt' ],
-		'mm_service'     => [ 'Service',            [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'hammer' ],
-		'mm_how_to'      => [ 'HowTo',              [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'list-view' ],
-		'mm_faq_page'    => [ 'FAQPage',            [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'editor' ],
-		'mm_trip'        => [ 'TouristTrip',        [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'location-alt' ],
-		'mm_destination' => [ 'TouristDestination',  [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'location' ],
-		'mm_vessel'      => [ 'Vehicle',             [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'car' ],
-		'mm_course'      => [ 'Course',              [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'welcome-learn-more' ],
+		'mm_event'       => [ 'Event',              'Events',              [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'calendar-alt' ],
+		'mm_service'     => [ 'Service',            'Services',            [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'hammer' ],
+		'mm_how_to'      => [ 'HowTo',              'How-To',              [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'list-view' ],
+		'mm_faq_page'    => [ 'FAQPage',            'FAQ',                 [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'editor' ],
+		'mm_trip'        => [ 'TouristTrip',        'Trips',               [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'location-alt' ],
+		'mm_destination' => [ 'TouristDestination',  'Destinations',       [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'location' ],
+		'mm_vessel'      => [ 'Vehicle',             'Vehicles',           [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'car' ],
+		'mm_course'      => [ 'Course',              'Courses',            [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'welcome-learn-more' ],
 		// AboutPage, ContactPage, Calendar are WordPress Page Templates — not CPTs.
 		// WebPage maps to default `page` type — not a separate CPT.
 		// BlogPosting maps to default `post` type — not a separate CPT.
@@ -41,6 +41,7 @@ class MM_Schema_Post_Types {
 	 * Register hooks.
 	 */
 	public static function init(): void {
+		add_action( 'admin_menu', [ __CLASS__, 'register_schema_menu' ] );
 		add_action( 'init', [ __CLASS__, 'register_post_types' ] );
 		add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
 		add_action( 'save_post', [ __CLASS__, 'save_meta' ], 10, 2 );
@@ -50,24 +51,99 @@ class MM_Schema_Post_Types {
 	}
 
 	/**
+	 * Register the Schema parent menu and move CPTs under it.
+	 */
+	public static function register_schema_menu(): void {
+		add_menu_page(
+			'Schema Types',
+			'Schema',
+			'edit_posts',
+			'mm-schema-dashboard',
+			[ __CLASS__, 'render_schema_dashboard' ],
+			'dashicons-editor-table',
+			30
+		);
+	}
+
+	/**
+	 * Render the Schema dashboard page.
+	 */
+	public static function render_schema_dashboard(): void {
+		$types = self::TYPES;
+		echo '<div class="wrap">';
+		echo '<h1>Schema Types</h1>';
+		echo '<p>Manage your structured data content types. Each type has its own editor and schema output.</p>';
+		echo '<table class="widefat striped"><thead><tr>';
+		echo '<th>Schema Type</th><th>Menu Label</th><th>Posts</th><th>Actions</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $types as $slug => $config ) {
+			$schema_type = $config[0];
+			$short_label = $config[1];
+			$count       = wp_count_posts( $slug );
+			$published   = $count->publish ?? 0;
+			$edit_link   = admin_url( 'edit.php?post_type=' . $slug );
+			$new_link    = admin_url( 'post-new.php?post_type=' . $slug );
+
+			printf(
+				'<tr><td><strong>%s</strong></td><td>%s</td><td>%d</td><td><a href="%s" class="button button-small">View All</a> <a href="%s" class="button button-small button-primary">Add New</a></td></tr>',
+				esc_html( $schema_type ),
+				esc_html( $short_label ),
+				(int) $published,
+				esc_url( $edit_link ),
+				esc_url( $new_link )
+			);
+		}
+
+		echo '</tbody></table>';
+
+		// Page templates section.
+		echo '<h2 style="margin-top:24px">Page Templates</h2>';
+		echo '<p>These are WordPress page templates that output schema. Assign them to a page in the Page Attributes panel.</p>';
+		echo '<table class="widefat striped"><thead><tr>';
+		echo '<th>Template</th><th>Schema Type</th><th>Pages Using</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( self::TEMPLATES as $template_slug => $schema_type ) {
+			$pages = get_pages( [
+				'meta_key'   => '_wp_page_template',
+				'meta_value' => $template_slug,
+			] );
+			$count = count( $pages );
+			$label = ucwords( str_replace( [ 'mm-', '-' ], [ '', ' ' ], $template_slug ) );
+
+			printf(
+				'<tr><td>%s</td><td>%s</td><td>%d</td></tr>',
+				esc_html( $label ),
+				esc_html( $schema_type ),
+				(int) $count
+			);
+		}
+
+		echo '</tbody></table>';
+		echo '</div>';
+	}
+
+	/**
 	 * Register all schema custom post types.
 	 */
 	public static function register_post_types(): void {
 		foreach ( self::TYPES as $slug => $config ) {
 			$schema_type = $config[0];
-			$supports    = $config[1];
-			$icon        = $config[2];
+			$short_label = $config[1];
+			$supports    = $config[2];
+			$icon        = $config[3];
 
 			register_post_type( $slug, [
 				'labels'       => [
-					'name'               => $schema_type . 's',
+					'name'               => $short_label,
 					'singular_name'      => $schema_type,
 					'add_new_item'       => 'Add New ' . $schema_type,
 					'edit_item'          => 'Edit ' . $schema_type,
 					'view_item'          => 'View ' . $schema_type,
-					'search_items'       => 'Search ' . $schema_type . 's',
-					'not_found'          => 'No ' . $schema_type . 's found',
-					'not_found_in_trash' => 'No ' . $schema_type . 's found in Trash',
+					'search_items'       => 'Search ' . $short_label,
+					'not_found'          => 'No ' . $short_label . ' found',
+					'not_found_in_trash' => 'No ' . $short_label . ' found in Trash',
 				],
 				'public'       => true,
 				'has_archive'  => true,
@@ -75,6 +151,7 @@ class MM_Schema_Post_Types {
 				'supports'     => $supports,
 				'menu_icon'    => 'dashicons-' . $icon,
 				'show_in_rest' => true,
+				'show_in_menu' => 'mm-schema-dashboard',
 			] );
 		}
 	}
