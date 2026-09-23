@@ -143,7 +143,7 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 				if ( ! empty( $meta['description'] ) ) {
 					return $settings->resolve( $meta['description'], $post );
 				}
-				// Fallback chain per config: excerpt | content | site description.
+				// Per-post meta, else configured source (default: excerpt only).
 				$source = $settings->get( "titles.post_types.{$post->post_type}.description_source", 'excerpt' );
 				$desc = $this->auto_description( $post, $source );
 				return $desc ?: get_bloginfo( 'description' );
@@ -321,9 +321,10 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 			if ( $post->post_excerpt ) {
 				return wp_trim_words( wp_strip_all_tags( $post->post_excerpt ), 25, '' );
 			}
-			// Fall through to content trim.
+			// Excerpt-only: never fall back to post content.
+			return '';
 		}
-		if ( 'content' === $source || ( 'excerpt' === $source && ! $post->post_excerpt ) ) {
+		if ( 'content' === $source ) {
 			return wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 25, '' );
 		}
 		return '';

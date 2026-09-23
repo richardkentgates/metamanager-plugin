@@ -278,6 +278,26 @@ class Test_MM_Fixes extends WP_UnitTestCase {
 		$this->assertSame( 'This is the excerpt.', $result );
 	}
 
+	/** auto_description never uses post_content when source is excerpt. */
+	public function test_auto_description_excerpt_ignores_content(): void {
+		$post = self::factory()->post->create_and_get( [
+			'post_title'   => 'Post Content Only',
+			'post_status'  => 'publish',
+			'post_type'    => 'post',
+			'post_content' => 'Body text with [shortcode] that must not leak.',
+			'post_excerpt' => '',
+		] );
+
+		$settings = MM_Site_Settings::get_instance();
+		$mod = new MM_Mod_Head_Meta( $settings );
+		$reflection = new ReflectionClass( $mod );
+		$method = $reflection->getMethod( 'auto_description' );
+		$method->setAccessible( true );
+
+		$result = $method->invoke( $mod, $post, 'excerpt' );
+		$this->assertSame( '', $result );
+	}
+
 	/** resolve_description falls back to site description when auto_description returns empty. */
 	public function test_resolve_description_falls_back_to_site_description(): void {
 		update_option( 'blogdescription', 'Site Description Fallback' );
