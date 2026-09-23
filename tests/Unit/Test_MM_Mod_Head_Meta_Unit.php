@@ -184,9 +184,11 @@ class Test_MM_Mod_Head_Meta_Unit extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'This is the excerpt text.', $desc['content'] );
 	}
 
-	public function test_description_singular_post_fallback_to_content(): void {
+	public function test_description_singular_post_no_content_fallback(): void {
+		update_option( 'blogdescription', 'Site tagline fallback.' );
 		$post_id = $this->factory->post->create( [
-			'post_content'  => 'Long content body text that should be trimmed.',
+			'post_content'  => 'Long content body text that should not be used.',
+			'post_excerpt'  => '',
 			'post_status'   => 'publish',
 		] );
 
@@ -199,7 +201,7 @@ class Test_MM_Mod_Head_Meta_Unit extends WP_UnitTestCase {
 
 		$desc = $this->find_meta_by_name( $data, 'description' );
 		$this->assertNotNull( $desc );
-		$this->assertNotEmpty( $desc['content'] );
+		$this->assertSame( 'Site tagline fallback.', $desc['content'] );
 	}
 
 	public function test_description_home(): void {

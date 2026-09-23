@@ -590,10 +590,7 @@ class MM_Site_Settings {
 	}
 
 	private function get_excerpt( \WP_Post $post ): string {
-		if ( $post->post_excerpt ) {
-			return wp_strip_all_tags( $post->post_excerpt );
-		}
-		return wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 30, '' );
+		return $post->post_excerpt ? wp_strip_all_tags( $post->post_excerpt ) : '';
 	}
 
 	private function get_post_type_label( string $pt ): string {

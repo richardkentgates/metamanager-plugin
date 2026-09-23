@@ -8,6 +8,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ---
 
 
+## [2.3.190] - 2026-09-23
+
+### Changed
+- Auto-incremented version from 2.3.189 to 2.3.190
+## [Unreleased]
+
+### Changed
+- Meta description source `excerpt` is now excerpt-only — never falls back to `post_content` (previously "Excerpt first, then content").
+- Editor SERP preview uses only the post excerpt; empty excerpt shows blank instead of raw content/shortcodes.
+- `%%post_excerpt%%` token resolves from the excerpt only (no content fallback).
+- Description Source dropdown label: "Excerpt only".
+
+
 
 
 

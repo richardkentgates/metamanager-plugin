@@ -44,7 +44,7 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 			</div>
 			<div class="gcm-serp-url"><?php echo esc_html( get_permalink( $post ) ); ?></div>
 			<div class="gcm-serp-desc" id="gcm-serp-desc-text">
-				<?php echo esc_html( wp_trim_words( wp_strip_all_tags( $post->post_excerpt ?: $post->post_content ), 25, '…' ) ); ?>
+				<?php echo esc_html( $post->post_excerpt ? wp_trim_words( wp_strip_all_tags( $post->post_excerpt ), 25, '…' ) : '' ); ?>
 			</div>
 		</div>
 	</div>
