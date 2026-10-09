@@ -507,13 +507,16 @@ Routes are registered under `metamanager/v1`:
 | `POST` | `/attachment/{id}/compress` | Queue compression for one attachment | `edit_others_posts` |
 | `POST` | `/attachment/{id}/embed` | Queue metadata embedding for one attachment | `edit_others_posts` |
 | `POST` | `/compression-status` | Batch compression status (Media Library column polling) | `upload_files` |
+| `GET` | `/status` | System status (daemons, queues, tools) — external access via WordPress Application Passwords | `manage_options` (logged-in) |
 
-Access control runs before capability checks:
+Access control for the routes above (everything except `/status`) runs before capability checks:
 1. If `mm_api_disabled` is set → `403` immediately.
 2. If `mm_api_allowed_ips` is non-empty and the request IP is not in the list → `403`.
 3. Standard capability check (see table above) for each endpoint.
 
 Logged-in requests (valid nonce or cookie) bypass the IP allowlist entirely.
+
+`/status` does not use the allowlist or `mm_api_disabled`. It requires an authenticated user with `manage_options` — external callers authenticate with Application Passwords (`Authorization: Basic`), which WordPress validates before the route callback runs. Internal admin features use AJAX handlers with nonce auth instead.
 
 ---
 

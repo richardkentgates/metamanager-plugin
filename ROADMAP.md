@@ -777,15 +777,11 @@ Compression support:
 | T-3 | `MM_Mod_Html_Sitemap` | No unit or integration tests | MEDIUM | ✅ Fixed |
 | T-4 | `MM_Mod_Media_Display` | No unit or integration tests | MEDIUM | ✅ Fixed |
 
-### REST API — Application Passwords Migration
+### REST API — Application Passwords Migration — RESOLVED (verified 2026-10-09)
 
-Replace IP allowlist authentication on `metamanager/v1/status` with WordPress Application Passwords.
+`metamanager/v1/status` already requires an authenticated user with `manage_options` — the Application Passwords behavior this item called for. The permission callback rejects unauthenticated requests with 401 (`includes/class-mm-admin.php:1415-1435`, comment: "Protected by WordPress Application Passwords"). WordPress core validates `Authorization: Basic` Application Password credentials before the callback runs.
 
-**Current:** `rest_get_status()` uses `MM_Settings::get_api_disabled()` + `MM_Settings::get_api_allowed_ips()` for external callers.
-
-**New:** External callers authenticate via `Authorization: Basic base64(username:app-password)`. WordPress validates Application Passwords automatically. Remove IP allowlist logic from the permission callback.
-
-**File:** `includes/class-mm-admin.php` — `register_rest_routes()` permission callback for `metamanager/v1/status`
+The IP allowlist (`mm_api_allowed_ips`) was NOT removed: it remains correct and live for the internal polling routes (`/compression-status`, `/jobs`, `/stats`, etc.) via `$api_check` (`class-mm-admin.php:1289-1304`). See ARCHITECTURE.md "REST API" for the per-route access model.
 
 ---
 
