@@ -75,7 +75,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 		// raw CREATE TABLE IF NOT EXISTS as a fallback — it's idempotent and
 		// avoids information_schema queries that can return stale results inside
 		// WP test suite transactions.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL fallback; table identifier is prefix-derived, not user input.
 		$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
 			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			url         TEXT            NOT NULL,
@@ -93,6 +93,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 			KEY is_broken (is_broken),
 			KEY last_checked (last_checked)
 		) {$charset};" );
+		// phpcs:enable
 	}
 
 	public static function table_name(): string {
@@ -464,6 +465,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 		// Fetch next batch in stable ID order.
 		$post_ids = array_map( 'intval', (array) $wpdb->get_col(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->posts is the core table property; the IN list is built %s placeholders and all values pass through prepare().
 				"SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$types_ph}) ORDER BY ID ASC LIMIT %d OFFSET %d",
 				...[...$monitored_types, $batch_size, $offset]
 			)

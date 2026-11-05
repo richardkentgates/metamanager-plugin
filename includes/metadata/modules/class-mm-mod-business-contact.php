@@ -837,8 +837,10 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 	 */
 	public function render_calendar(): string {
 		// Determine the month/year to display.
-		$month = isset( $_GET['cal_month'] ) ? absint( $_GET['cal_month'] ) : (int) current_time( 'n' );
-		$year  = isset( $_GET['cal_year'] )  ? absint( $_GET['cal_year'] )  : (int) current_time( 'Y' );
+		// phpcs:ignore WordPress.Security.NonceVerification -- read-only calendar display; no state change.
+		$month = isset( $_GET['cal_month'] ) ? absint( wp_unslash( $_GET['cal_month'] ) ) : (int) current_time( 'n' );
+		// phpcs:ignore WordPress.Security.NonceVerification -- read-only calendar display; no state change.
+		$year  = isset( $_GET['cal_year'] )  ? absint( wp_unslash( $_GET['cal_year'] ) )  : (int) current_time( 'Y' );
 
 		// Clamp values.
 		if ( $month < 1 || $month > 12 ) {
@@ -925,7 +927,8 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 									$class .= ' gcm-calendar__cell--has-events';
 								}
 								printf( '<td class="%s">', esc_attr( $class ) );
-								printf( '<span class="gcm-calendar__day-num">%d</span>', $day );
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %d placeholder receives the loop day integer.
+						printf( '<span class="gcm-calendar__day-num">%d</span>', $day );
 								if ( $has_events ) {
 									echo '<div class="gcm-calendar__events">';
 									foreach ( $day_events[ $day ] as $ev ) {

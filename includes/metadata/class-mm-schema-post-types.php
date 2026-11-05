@@ -186,7 +186,8 @@ class MM_Schema_Post_Types {
 			return;
 		}
 
-		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification -- read-only metabox rendering; no state change.
+		$post_id = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0;
 		$template = $post_id ? get_page_template_slug( $post_id ) : '';
 
 		if ( ! isset( self::TEMPLATES[ $template ] ) ) {
@@ -320,6 +321,7 @@ class MM_Schema_Post_Types {
 					esc_attr( $key ),
 					esc_attr( $value ),
 					esc_attr( $placeholder ),
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $biz_attr holds only esc_attr()-built fragments (see builders above).
 					$biz_attr
 				);
 			}
@@ -700,6 +702,7 @@ class MM_Schema_Post_Types {
 				'<input type="text" name="mm_schema_fields[howto_supply_%d]" value="%s" class="regular-text" placeholder="e.g. 2 cups flour" style="flex:1;">' .
 				'<button type="button" class="button mm-remove-howto-supply">&times;</button>' .
 				'</div>',
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %d placeholder receives the loop integer $i.
 				$i,
 				esc_attr( $val )
 			);
@@ -729,6 +732,7 @@ class MM_Schema_Post_Types {
 				'<input type="text" name="mm_schema_fields[howto_tool_%d]" value="%s" class="regular-text" placeholder="e.g. Screwdriver" style="flex:1;">' .
 				'<button type="button" class="button mm-remove-howto-tool">&times;</button>' .
 				'</div>',
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %d placeholder receives the loop integer $i.
 				$i,
 				esc_attr( $val )
 			);
@@ -1112,7 +1116,7 @@ class MM_Schema_Post_Types {
 		if ( ! $is_schema_cpt && ! $is_schema_page ) {
 			return;
 		}
-		if ( ! isset( $_POST['mm_schema_nonce'] ) || ! wp_verify_nonce( $_POST['mm_schema_nonce'], 'mm_schema_meta' ) ) {
+		if ( ! isset( $_POST['mm_schema_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['mm_schema_nonce'] ) ), 'mm_schema_meta' ) ) {
 			return;
 		}
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
@@ -1125,13 +1129,14 @@ class MM_Schema_Post_Types {
 			return;
 		}
 
-		$raw_fields = (array) ( $_POST['mm_schema_fields'] ?? [] );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- array read; every element is sanitized in the loop below.
+		$raw_fields = (array) wp_unslash( $_POST['mm_schema_fields'] ?? [] );
 		$fields     = [];
 		foreach ( $raw_fields as $key => $value ) {
 			if ( is_array( $value ) ) {
 				continue;
 			}
-			$fields[ sanitize_key( (string) $key ) ] = sanitize_text_field( wp_unslash( $value ) );
+			$fields[ sanitize_key( (string) $key ) ] = sanitize_text_field( $value );
 		}
 		update_post_meta( $post_id, 'mm_schema_fields', $fields );
 

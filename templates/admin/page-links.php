@@ -14,7 +14,7 @@ $stats = $wpdb->get_row( "SELECT
 	SUM(is_broken = 1 AND is_ignored = 0) AS broken,
 	SUM(is_ignored = 1) AS ignored,
 	SUM(is_broken = 0 AND http_code > 0) AS ok
-	FROM {$table}", ARRAY_A );
+	FROM {$table}", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifier is prefix-derived; no user input in this aggregate.
 $next_run = wp_next_scheduled('mm_meta_check_links');
 ?>
 <div class="mm-meta-panel" id="page-links">

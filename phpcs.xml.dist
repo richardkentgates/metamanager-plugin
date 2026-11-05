@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<ruleset name="MetaManager">
+	<description>PHPCS ruleset for MetaManager plugin (WordPress standard).</description>
+
+	<rule ref="WordPress" />
+
+	<config name="minimum_wp_version" value="6.2" />
+	<config name="testVersion" value="8.0-" />
+</ruleset>

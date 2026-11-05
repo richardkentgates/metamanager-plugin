@@ -60,7 +60,8 @@ class MM_Post_Meta_Panel {
 	 * Remove the legacy Metamanager panel from pages that use schema templates.
 	 */
 	public function maybe_remove_legacy_panel(): void {
-		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification -- read-only panel removal check; no state change.
+		$post_id = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0;
 		if ( ! $post_id ) {
 			return;
 		}
@@ -102,7 +103,7 @@ class MM_Post_Meta_Panel {
 
 		$existing = $this->settings->get_post_meta( $post_id );
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified above.
+		// phpcs:disable WordPress.Security.NonceVerification -- verified above.
 		$new = [
 			'canonical'      => esc_url_raw( wp_unslash( $_POST['mm_meta_canonical'] ?? '' ) ),
 			'noindex'        => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noindex'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_tristate() is a custom sanitizer

@@ -60,7 +60,7 @@ class MM_Term_Meta_Panel {
 			return;
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		// phpcs:disable WordPress.Security.NonceVerification
 		$clean = [];
 		$og_t  = sanitize_text_field( wp_unslash( $_POST['mm_meta_og_title'] ?? '' ) );
 		$og_d  = sanitize_textarea_field( wp_unslash( $_POST['mm_meta_og_description'] ?? '' ) );
