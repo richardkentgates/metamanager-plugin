@@ -522,7 +522,7 @@ class MM_Admin {
 				<?php foreach ( $tools as $t ) : ?>
 				<tr>
 					<td><?php echo esc_html( $t[0] ); ?></td>
-					<td><?php echo $tool_icon( $t[1], $t[2], $t[3] ); ?> <?php echo esc_html( $t[1] ? $t[2] : $t[3] ); ?></td>
+					<td><?php echo $tool_icon( $t[1], $t[2], $t[3] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- closure returns a fixed inline-style HTML icon. ?> <?php echo esc_html( $t[1] ? $t[2] : $t[3] ); ?></td>
 				</tr>
 				<?php endforeach; ?>
 				<?php if ( $queue_row ) : ?>
@@ -547,7 +547,7 @@ class MM_Admin {
 				</tr>
 			<tr data-row="daemon-status">
 				<td><?php esc_html_e( 'Status', 'metamanager' ); ?></td>
-				<td><?php echo $daemon_icon . ' ' . $daemon_status; ?></td>
+				<td><?php echo $daemon_icon . ' ' . $daemon_status; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- icon/status are fixed inline-style HTML fragments. ?></td>
 			</tr>
 			<?php if ( $updater ) : ?>
 				<tr data-row="updater">
@@ -1248,7 +1248,9 @@ class MM_Admin {
 		}
 
 		// Attachment edit screen — enqueue Leaflet for GPS map preview.
+		// phpcs:ignore WordPress.Security.NonceVerification -- read-only asset loading for the GPS preview; no state change.
 		if ( 'post.php' === $hook && ! empty( $_GET['post'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification -- read-only asset loading for the GPS preview; no state change.
 			$post_id = absint( wp_unslash( $_GET['post'] ) );
 			if ( $post_id && 'attachment' === get_post_type( $post_id ) ) {
 				$lat = (string) get_post_meta( $post_id, MM_Metadata::META_GPS_LAT, true );

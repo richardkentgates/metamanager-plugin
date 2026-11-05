@@ -61,7 +61,7 @@ class MM_Nav_Menu_Admin {
 	 */
 	public function save_checkbox( int $menu_id, ?int $menu_id_from_db, array $menu_data ): void {
 		if ( ! isset( $_POST['_mm_nav_menu_primary_nonce'] ) ||
-			! wp_verify_nonce( $_POST['_mm_nav_menu_primary_nonce'], 'mm_nav_menu_primary_' . $menu_id ) ) {
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_mm_nav_menu_primary_nonce'] ) ), 'mm_nav_menu_primary_' . $menu_id ) ) {
 			return;
 		}
 

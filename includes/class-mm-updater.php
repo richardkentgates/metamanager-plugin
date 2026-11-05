@@ -317,18 +317,18 @@ class MM_Updater {
 		if ( $metadata ) {
 			$remote_version = $metadata->version;
 			if ( version_compare( $remote_version, MM_VERSION, '>' ) ) {
-				$notice = urlencode( sprintf(
+				$notice = rawurlencode( sprintf(
 					/* translators: %s = new version number */
 					__( 'Metamanager %s is available. Check the Updates page to install.', 'metamanager' ),
 					$remote_version
 				) );
 				$type = 'updated';
 			} else {
-				$notice = urlencode( __( 'Metamanager is up to date.', 'metamanager' ) );
+				$notice = rawurlencode( __( 'Metamanager is up to date.', 'metamanager' ) );
 				$type   = 'updated';
 			}
 		} else {
-			$notice = urlencode( __( 'Could not contact the update server to check for updates.', 'metamanager' ) );
+			$notice = rawurlencode( __( 'Could not contact the update server to check for updates.', 'metamanager' ) );
 			$type   = 'error';
 		}
 

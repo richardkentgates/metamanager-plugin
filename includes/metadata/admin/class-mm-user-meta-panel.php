@@ -66,7 +66,7 @@ class MM_User_Meta_Panel {
 			return;
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		// phpcs:disable WordPress.Security.NonceVerification
 		$clean = [];
 
 		// Noindex checkbox — checked = hide from search.

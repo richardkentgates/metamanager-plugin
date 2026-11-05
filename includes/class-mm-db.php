@@ -83,7 +83,7 @@ class MM_DB {
 		// raw CREATE TABLE IF NOT EXISTS as a fallback — it's idempotent and
 		// avoids information_schema queries that can return stale results inside
 		// WP test suite transactions.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL fallback; table identifier is prefix-derived, not user input.
 		$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			attachment_id BIGINT(20) UNSIGNED NOT NULL,
@@ -105,6 +105,7 @@ class MM_DB {
 			KEY idx_job_type (job_type),
 			KEY idx_status (status)
 		) {$charset_collate};" );
+		// phpcs:enable
 	}
 
 	/**

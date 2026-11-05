@@ -365,6 +365,7 @@ class MM_Memory_Manager {
 			'<div class="notice notice-warning is-dismissible"><p><strong>%s</strong> %s %s</p></div>',
 			esc_html__( 'Metamanager:', 'metamanager' ),
 			esc_html__( 'Batch processing paused — system under memory pressure.', 'metamanager' ),
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $parts holds only esc_html()-built fragments.
 			implode( ' | ', $parts )
 		);
 	}

@@ -100,7 +100,7 @@ class MM_Metadata_History {
 		dbDelta( $sql );
 
 		// Fallback for environments where dbDelta silently fails.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL fallback; table identifier is prefix-derived, not user input.
 		$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			attachment_id BIGINT(20) UNSIGNED NOT NULL,
@@ -114,6 +114,7 @@ class MM_Metadata_History {
 			KEY idx_attachment (attachment_id),
 			KEY idx_created (created_at)
 		) {$charset_collate};" );
+		// phpcs:enable
 	}
 
 	/**
@@ -420,6 +421,7 @@ class MM_Metadata_History {
 			. sprintf(
 				/* translators: %d: number of saved versions */
 				esc_html( _n( '%d version saved', '%d versions saved', $count, 'metamanager' ) ),
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %d placeholder receives the count integer.
 				$count
 			)
 			. '</p>';
@@ -533,6 +535,7 @@ class MM_Metadata_History {
 		$js_msg_same = esc_js( __( 'Select two different versions to compare.', 'metamanager' ) );
 		$js_nonce    = esc_js( $nonce );
 		$js_post_id  = absint( $post_id );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- all interpolated values pass through esc_js()/absint() above.
 		echo "<script>
 		jQuery(function(\$){
 			\$('#mm-meta-diff-btn').on('click', function(){
@@ -571,15 +574,15 @@ class MM_Metadata_History {
 	 * AJAX handler for computing and returning a diff between two versions.
 	 */
 	public static function ajax_diff(): void {
-		check_ajax_referer( 'mm_meta_diff_' . (int) $_POST['post_id'], 'nonce' );
+		$post_id     = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+		$old_version = isset( $_POST['old_version'] ) ? absint( wp_unslash( $_POST['old_version'] ) ) : 0;
+		$new_version = isset( $_POST['new_version'] ) ? absint( wp_unslash( $_POST['new_version'] ) ) : 0;
 
-		if ( ! current_user_can( 'edit_post', (int) $_POST['post_id'] ) ) {
+		check_ajax_referer( 'mm_meta_diff_' . $post_id, 'nonce' );
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			wp_send_json_error( __( 'Permission denied.', 'metamanager' ) );
 		}
-
-		$post_id     = (int) $_POST['post_id'];
-		$old_version = (int) ( $_POST['old_version'] ?? 0 );
-		$new_version = (int) ( $_POST['new_version'] ?? 0 );
 
 		if ( 0 === $old_version ) {
 			$old_values = array_fill_keys( self::TRACKED_KEYS, '' );
