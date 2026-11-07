@@ -3,7 +3,7 @@
  * Plugin Name:  Metamanager
  * Plugin URI:   https://github.com/richardkentgates/metamanager-plugin
  * Description:  Lossless image compression and standards-compliant metadata embedding (EXIF, IPTC, XMP) via OS-level daemons. Expands the WordPress Media Library with native metadata editing, bulk operations, and a real-time job dashboard.
- * Version:      2.3.195
+ * Version:      2.3.197
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author:       Richard Kent Gates
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.195' );
+define( 'MM_VERSION',     '2.3.197' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
 define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
@@ -115,6 +115,16 @@ require_once MM_META_DIR . 'includes/metadata/admin/class-mm-term-meta-panel.php
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-user-meta-panel.php';
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-nav-menu-admin.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-loader.php';
+
+// AI surface — abilities must be hooked at file load. The Abilities API
+// initializes early (third-party abilities register at file scope); an
+// attachment made inside plugins_loaded silently never fires, so the
+// registrations never reached wp_register_ability (verified on PEO,
+// 2026-11-07). Same for the MCP server wrapper.
+if ( class_exists( 'MM_Abilities' ) ) {
+	( new MM_Abilities() )->register_hooks();
+	( new MM_MCP_Server() )->register_hooks();
+}
 
 // Boot the metadata subsystem after all plugins are loaded so hooks fire in
 // the correct order.
