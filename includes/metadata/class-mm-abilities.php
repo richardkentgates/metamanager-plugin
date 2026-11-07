@@ -10,6 +10,38 @@ defined( 'ABSPATH' ) || exit;
 
 class MM_Abilities {
 
+	/**
+	 * Default permission: SEO/meta tools are for editorial users.
+	 *
+	 * @return bool|WP_Error
+	 */
+	public function can_use() {
+		if ( current_user_can( 'edit_posts' ) ) {
+			return true;
+		}
+		return new WP_Error(
+			'mm_cannot_use_ability',
+			__( 'You are not allowed to use this ability.', 'metamanager' )
+		);
+	}
+
+	/**
+	 * Permission for the post-meta write: edit rights on the target post.
+	 *
+	 * @param array $input Ability input.
+	 * @return bool|WP_Error
+	 */
+	public function can_edit_meta( array $input ) {
+		$post_id = isset( $input['post_id'] ) ? (int) $input['post_id'] : 0;
+		if ( $post_id > 0 && current_user_can( 'edit_post', $post_id ) ) {
+			return true;
+		}
+		return new WP_Error(
+			'mm_cannot_edit_meta',
+			__( 'You are not allowed to edit metadata for this post.', 'metamanager' )
+		);
+	}
+
 	public function register_hooks(): void {
 		if ( ! function_exists( 'wp_register_ability' ) ) {
 			return; // Abilities API not available (pre-6.9).
@@ -63,7 +95,8 @@ class MM_Abilities {
 					'schema_fields' => [ 'type' => 'object', 'description' => 'Per-type schema field overrides.' ],
 				],
 			],
-			'callback'    => [ $this, 'ability_get_post_meta' ],
+			'execute_callback'    => [ $this, 'ability_get_post_meta' ],
+			'permission_callback' => [ $this, 'can_use' ],
 			'meta'        => [ 'mcp.public' => true ],
 		] );
 	}
@@ -117,7 +150,8 @@ class MM_Abilities {
 					'post_id' => [ 'type' => 'integer' ],
 				],
 			],
-			'callback'    => [ $this, 'ability_update_post_meta' ],
+			'execute_callback'    => [ $this, 'ability_update_post_meta' ],
+			'permission_callback' => [ $this, 'can_edit_meta' ],
 			'meta'        => [ 'mcp.public' => true ],
 		] );
 	}
@@ -181,7 +215,8 @@ class MM_Abilities {
 					'schema' => [ 'type' => 'object', 'description' => 'The JSON-LD output with @context and @graph.' ],
 				],
 			],
-			'callback'    => [ $this, 'ability_get_schema' ],
+			'execute_callback'    => [ $this, 'ability_get_schema' ],
+			'permission_callback' => [ $this, 'can_use' ],
 			'meta'        => [ 'mcp.public' => true ],
 		] );
 	}
@@ -259,7 +294,8 @@ class MM_Abilities {
 					'same_as'      => [ 'type' => 'array', 'description' => 'Social profile URLs.' ],
 				],
 			],
-			'callback'    => [ $this, 'ability_get_business_profile' ],
+			'execute_callback'    => [ $this, 'ability_get_business_profile' ],
+			'permission_callback' => [ $this, 'can_use' ],
 			'meta'        => [ 'mcp.public' => true ],
 		] );
 	}
@@ -332,7 +368,8 @@ class MM_Abilities {
 					],
 				],
 			],
-			'callback'    => [ $this, 'ability_get_navigation' ],
+			'execute_callback'    => [ $this, 'ability_get_navigation' ],
+			'permission_callback' => [ $this, 'can_use' ],
 			'meta'        => [ 'mcp.public' => true ],
 		] );
 	}
@@ -379,7 +416,8 @@ class MM_Abilities {
 					'og_image_url' => [ 'type' => 'string' ],
 				],
 			],
-			'callback'    => [ $this, 'ability_get_term_meta' ],
+			'execute_callback'    => [ $this, 'ability_get_term_meta' ],
+			'permission_callback' => [ $this, 'can_use' ],
 			'meta'        => [ 'mcp.public' => true ],
 		] );
 	}
