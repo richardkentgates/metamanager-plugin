@@ -116,6 +116,16 @@ require_once MM_META_DIR . 'includes/metadata/admin/class-mm-user-meta-panel.php
 require_once MM_META_DIR . 'includes/metadata/admin/class-mm-nav-menu-admin.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-loader.php';
 
+// AI surface — abilities must be hooked at file load. The Abilities API
+// initializes early (third-party abilities register at file scope); an
+// attachment made inside plugins_loaded silently never fires, so the
+// registrations never reached wp_register_ability (verified on PEO,
+// 2026-11-07). Same for the MCP server wrapper.
+if ( class_exists( 'MM_Abilities' ) ) {
+	( new MM_Abilities() )->register_hooks();
+	( new MM_MCP_Server() )->register_hooks();
+}
+
 // Boot the metadata subsystem after all plugins are loaded so hooks fire in
 // the correct order.
 add_action( 'plugins_loaded', function (): void {

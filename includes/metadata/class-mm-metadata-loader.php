@@ -45,9 +45,9 @@ class MM_Metadata_Loader {
 		( new MM_Mod_Discovery( $this->settings ) )->register_hooks();
 		( new MM_Mod_Media_Display() )->register_hooks();
 
-		// --- AI integration (Abilities API + MCP) ------------------------------
-		( new MM_Abilities() )->register_hooks();
-		( new MM_MCP_Server() )->register_hooks();
+		// AI integration (Abilities API + MCP) is hooked at file load in
+		// metamanager.php — registering it here (plugins_loaded) is too
+		// late for the Abilities API init and silently never fires.
 
 		// --- Admin ---------------------------------------------------------------
 		if ( is_admin() ) {
