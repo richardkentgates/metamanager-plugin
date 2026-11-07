@@ -102,7 +102,7 @@ The plugin's `MM_Daemon_Updater` reads the VERSION file for dashboard display on
 - Branch protection on `test` and `main`: PRs required, no direct pushes
 - Promotion = workflow_dispatch triggers direct git merge (no PRs)
 - Shell scripts/daemons update via apt; plugin updates via WordPress native update
-- Daemon updates are handled by OS apt (gcm-upgrade timer), not the plugin.
+- Daemon updates are handled by OS apt (gcm-maintenance timer), not the plugin.
 - PHP 8.4 for WP-CLI (`php8.4 /usr/local/bin/wp --path=/srv/www/wordpress`)
 - CI auto-bumps `MM_VERSION` on every dev push — do not manually edit version numbers
 - **Test channel**: Used for development verification before production deployment
