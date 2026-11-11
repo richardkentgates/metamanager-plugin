@@ -113,6 +113,7 @@ class MM_Post_Meta_Panel {
 			'noimageindex'   => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noimageindex'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			'breadcrumb_label' => sanitize_text_field( wp_unslash( $_POST['mm_meta_breadcrumb_label'] ?? '' ) ),
 			'exclude_sitemap'  => ! empty( $_POST['mm_meta_exclude_sitemap'] ),
+			'schema_type'      => sanitize_key( wp_unslash( $_POST['mm_meta_schema_type'] ?? '' ) ),
 		];
 
 		// Schema field overrides.

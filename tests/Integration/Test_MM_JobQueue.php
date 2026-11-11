@@ -224,6 +224,10 @@ class Test_MM_JobQueue extends WP_UnitTestCase {
 			'completed_at'  => current_time( 'mysql' ),
 		] );
 
+		// The product's regeneration signal is the META_SYNCED flag: an
+		// already-synced attachment being re-uploaded is a regeneration
+		// (compression only — metadata must not clobber user edits).
+		update_post_meta( $attachment_id, MM_Metadata::META_SYNCED, '1' );
 		MM_Job_Queue::on_upload( [], $attachment_id );
 
 		$this->assertSame( 1, $this->count_jobs( MM_JOB_COMPRESS ),

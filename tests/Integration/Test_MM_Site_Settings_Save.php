@@ -807,7 +807,11 @@ class Test_MM_Site_Settings_Save extends WP_UnitTestCase {
 		$this->assertFalse( $s->get( 'sitemap.enabled' ), 'sitemap.enabled should be false (unchecked)' );
 		$this->assertTrue( $s->get( 'authors.enabled' ), 'authors section should be preserved' );
 		$this->assertSame( '|', $s->get( 'titles.separator' ), 'titles section should be preserved' );
-		$this->assertSame( 10, count( array_keys( $s->all() ) ), 'All sections should be present' );
+		$this->assertSame(
+			count( MM_Site_Settings::settings_defaults() ),
+			count( array_keys( $s->all() ) ),
+			'All sections should be present'
+		);
 	}
 
 	/**

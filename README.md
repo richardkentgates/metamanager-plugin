@@ -685,7 +685,7 @@ sudo chown -R www-data:www-data /srv/www/wordpress/wp-content/metamanager-jobs/
 **Fix:**
 1. Check the server's apt channel: `gcm config get channel`
 2. Verify apt can reach the server: `sudo apt-get update && sudo apt-get install -y metamanager`
-3. Check `sudo journalctl -u gcm-maintenance.service -u gcm-pending.service` for errors
+3. Check `sudo journalctl -u gcm-maintenance.service -u wp_backup.service` for errors
 
 ---
 
