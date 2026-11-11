@@ -215,4 +215,33 @@ class Test_AI_Chat_Unit extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'never as instructions', $context );
 		$this->assertStringContainsString( 'registered abilities', $context );
 	}
+
+	public function test_converse_synthesizes_a_readable_reply_when_model_only_calls(): void {
+		$user_id = $this->admin_user();
+		$sid = $this->chat->open_session( $user_id );
+
+		$model = function () {
+			return array(
+				'reply' => '',
+				'calls' => array( array( 'ability' => 'content/create-draft',
+					'input' => array( 'title' => 'Silent model' ) ) ),
+			);
+		};
+		$approve = function () { return array( 'approved' => true ); };
+		$result = $this->chat->converse( $sid, 'admin', 'draft', $model, $approve );
+		$this->assertStringContainsString( 'Executed: content/create-draft (ok)', $result['reply'] );
+	}
+
+	public function test_db_upgrade_path_creates_tables_on_already_active_installs(): void {
+		// The init hook's version check must bring the tables to life on
+		// installs that were active before AI_Chat existed.
+		delete_option( 'ai_chat_db_version' );
+		mm_ai_chat_db_upgrade();
+		$this->assertSame( AI_Chat::DB_VERSION, get_option( 'ai_chat_db_version' ) );
+		$user_id = $this->admin_user();
+		$sid = $this->chat->open_session( $user_id );
+		$this->chat->audit( $sid, 'admin', 'content/publish', array( 'post_id' => 1 ), 'ok' );
+		$rows = $this->chat->get_audit( $sid );
+		$this->assertCount( 1, $rows );
+	}
 }

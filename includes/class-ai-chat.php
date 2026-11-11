@@ -293,6 +293,17 @@ class AI_Chat {
 			);
 		}
 
+		if ( '' === $reply && ! empty( $executed ) ) {
+			// The model acted through function calls with no text — say
+			// what happened so the conversation is readable.
+			$bits = array();
+			foreach ( $executed as $call ) {
+				$outcome = isset( $call['result']['error'] )
+					? $call['result']['error'] : 'ok';
+				$bits[] = $call['ability'] . ' (' . $outcome . ')';
+			}
+			$reply = 'Executed: ' . implode( ', ', $bits ) . '.';
+		}
 		$this->append_turn( $session_id, array(
 			'prompt' => $user_text,
 			'reply'  => $reply,
