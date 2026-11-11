@@ -14,9 +14,21 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 		parent::set_up();
 		MM_Site_Settings::reset_instance();
 		$this->admin = new MM_Metadata_Admin( MM_Site_Settings::get_instance() );
+
+		// Route ajax semantics through wp_die and trap EVERY die branch.
+		// wp_send_json_* ends in a raw `die` (exit 0) outside ajax context,
+		// and the ajax/json wp_die branches use their own handler filters —
+		// untrapped, the suite hard-exited mid-run and phpunit reported
+		// success. The tests below catch WPDieException.
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', array( $this, 'get_wp_die_handler' ) );
+		add_filter( 'wp_die_json_handler', array( $this, 'get_wp_die_handler' ) );
 	}
 
 	public function tear_down(): void {
+		remove_filter( 'wp_doing_ajax', '__return_true' );
+		remove_filter( 'wp_die_ajax_handler', array( $this, 'get_wp_die_handler' ) );
+		remove_filter( 'wp_die_json_handler', array( $this, 'get_wp_die_handler' ) );
 		MM_Site_Settings::reset_instance();
 		parent::tear_down();
 	}
@@ -54,17 +66,22 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 		$this->assertSame( 'test@example.com', $result['email'] );
 	}
 
-	public function test_sanitize_business_strips_unknown_keys(): void {
+	public function test_sanitize_business_preserves_and_sanitizes_unknown_keys(): void {
+		// Unknown keys are preserved BY DESIGN — deep_sanitize_section
+		// keeps dynamically-generated fields (custom post types, custom
+		// taxonomies, repeater rows) that are absent from static
+		// defaults. They are sanitized like any other value.
 		$input = [
 			'name'        => 'Test',
-			'unknown_key' => 'should be removed',
+			'unknown_key' => '<b>kept but sanitized</b>',
 			'address'     => [],
 		];
 
 		$result = $this->admin->sanitize_business( $input );
 
 		$this->assertArrayHasKey( 'name', $result );
-		$this->assertArrayNotHasKey( 'unknown_key', $result );
+		$this->assertArrayHasKey( 'unknown_key', $result );
+		$this->assertStringNotContainsString( '<b>', $result['unknown_key'] );
 	}
 
 	// ------------------------------------------------------------------
@@ -163,6 +180,7 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 		wp_set_current_user( $user_id );
 
 		$_POST = [ 'tools_action' => 'reset_settings' ];
+		$_REQUEST = $_POST;
 
 		try {
 			$this->admin->ajax_tools_action();
@@ -182,12 +200,24 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
 			'tools_action'  => 'reset_settings',
 		];
+		$_REQUEST = $_POST;
 
+		ob_start();
 		try {
 			$this->admin->ajax_tools_action();
+			$this->fail( 'Expected the ajax response to end in wp_die.' );
 		} catch ( \WPDieException $e ) {
-			$this->assertStringContainsString( '403', $e->getMessage() );
+			// Expected — wp_send_json_error ends the request.
 		}
+		$out = ob_get_clean();
+
+		$this->assertStringContainsString( '"success":false', $out );
+		$this->assertStringContainsString( 'Unauthorized', $out );
+		$this->assertNotSame(
+			MM_Site_Settings::settings_defaults(),
+			get_option( MM_META_OPT_SETTINGS ),
+			'the rejected request must not have executed reset_settings'
+		);
 
 		unset( $_POST );
 	}
@@ -204,12 +234,16 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
 			'tools_action'  => 'reset_settings',
 		];
+		$_REQUEST = $_POST;
 
+		ob_start();
 		try {
 			$this->admin->ajax_tools_action();
+			$this->fail( 'Expected the ajax response to end in wp_die.' );
 		} catch ( \WPDieException $e ) {
 			// wp_send_json_success calls wp_die.
 		}
+		ob_end_clean();
 
 		$settings = get_option( MM_META_OPT_SETTINGS, [] );
 		$this->assertNotEmpty( $settings );
@@ -230,6 +264,7 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
 			'tools_action'  => 'flush_rewrite',
 		];
+		$_REQUEST = $_POST;
 
 		try {
 			$this->admin->ajax_tools_action();
@@ -249,6 +284,7 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
 			'tools_action'  => 'ping_sitemap',
 		];
+		$_REQUEST = $_POST;
 
 		try {
 			$this->admin->ajax_tools_action();
@@ -268,6 +304,7 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 			'_nonce'        => wp_create_nonce( 'mm_meta_tools_nonce' ),
 			'tools_action'  => 'nonexistent_action',
 		];
+		$_REQUEST = $_POST;
 
 		try {
 			$this->admin->ajax_tools_action();
@@ -284,28 +321,15 @@ class Test_MM_Metadata_Admin extends WP_UnitTestCase {
 	// ------------------------------------------------------------------
 
 	public function test_add_help_tabs_registers_on_known_screen(): void {
-		$screen = new \stdClass();
-		$screen->id = 'metamanager_page_mm-meta-titles';
-
-		$mock = $this->getMockBuilder( \WP_Screen::class )
-			->disableOriginalConstructor()
-			->onlyMethods( [] )
-			->getMock();
-		$mock->id = 'metamanager_page_mm-meta-titles';
-
-		// add_help_tab and set_help_sidebar should not throw.
-		$this->admin->add_help_tabs( $mock );
-		$this->assertTrue( true );
+		// WP_Screen is final in current WP — use a real screen object.
+		$screen = \WP_Screen::get( 'metamanager_page_mm-meta-titles' );
+		$this->admin->add_help_tabs( $screen );
+		$this->assertNotEmpty( $screen->get_help_tabs() );
 	}
 
 	public function test_add_help_tabs_skips_unknown_screen(): void {
-		$mock = $this->getMockBuilder( \WP_Screen::class )
-			->disableOriginalConstructor()
-			->onlyMethods( [] )
-			->getMock();
-		$mock->id = 'unknown_screen_id';
-
-		$this->admin->add_help_tabs( $mock );
-		$this->assertTrue( true );
+		$screen = \WP_Screen::get( 'unknown_screen_id' );
+		$this->admin->add_help_tabs( $screen );
+		$this->assertEmpty( $screen->get_help_tabs() );
 	}
 }
