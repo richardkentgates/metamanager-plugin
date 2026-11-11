@@ -67,7 +67,7 @@ class AI_Chat {
 	public function open_session( int $user_id ): int {
 		global $wpdb;
 		$now = current_time( 'mysql' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 		$wpdb->insert( $wpdb->prefix . self::SESSION_TABLE, array(
 			'user_id'    => $user_id,
 			'created_at' => $now,
@@ -86,14 +86,14 @@ class AI_Chat {
 	public function append_turn( int $session_id, array $turn ): void {
 		global $wpdb;
 		$table = $wpdb->prefix . self::SESSION_TABLE;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 		$raw = $wpdb->get_var( $wpdb->prepare(
 			"SELECT turns FROM {$table} WHERE id = %d", $session_id
 		) );
 		$turns   = json_decode( (string) $raw, true );
 		$turns   = is_array( $turns ) ? $turns : array();
 		$turns[] = $turn;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 		$wpdb->update(
 			$table,
 			array(
@@ -110,7 +110,7 @@ class AI_Chat {
 	public function get_turns( int $session_id ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . self::SESSION_TABLE;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 		$raw = $wpdb->get_var( $wpdb->prepare(
 			"SELECT turns FROM {$table} WHERE id = %d", $session_id
 		) );
@@ -124,7 +124,7 @@ class AI_Chat {
 
 	public function audit( int $session_id, string $actor, string $ability, array $input, string $outcome ): void {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 		$wpdb->insert( $wpdb->prefix . self::AUDIT_TABLE, array(
 			'session_id' => $session_id,
 			'at'         => current_time( 'mysql' ),
@@ -141,7 +141,7 @@ class AI_Chat {
 	public function get_audit( int $session_id ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . self::AUDIT_TABLE;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 		return $wpdb->get_results( $wpdb->prepare(
 			"SELECT at, actor, ability, input, outcome FROM {$table}
 			 WHERE session_id = %d ORDER BY id ASC", $session_id
