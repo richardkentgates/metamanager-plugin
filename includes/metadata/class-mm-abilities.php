@@ -240,7 +240,7 @@ class MM_Abilities {
 			),
 			'execute_callback'    => array( $this, 'ability_get_status' ),
 			'permission_callback' => array( $this, 'can_use' ),
-			'meta'                => array( 'mcp.public' => true ),
+			'meta'                => array( 'mcp.public' => true, 'tier' => 'read' ),
 		) );
 
 		wp_register_ability( 'reports/get-os-update', array(
@@ -259,7 +259,7 @@ class MM_Abilities {
 			),
 			'execute_callback'    => array( $this, 'ability_get_os_update' ),
 			'permission_callback' => array( $this, 'can_use' ),
-			'meta'                => array( 'mcp.public' => true ),
+			'meta'                => array( 'mcp.public' => true, 'tier' => 'read' ),
 		) );
 
 		wp_register_ability( 'reports/get-security-scan', array(
@@ -270,7 +270,7 @@ class MM_Abilities {
 			'output_schema' => array( 'type' => 'object' ),
 			'execute_callback'    => array( $this, 'ability_get_security_scan' ),
 			'permission_callback' => array( $this, 'can_use' ),
-			'meta'                => array( 'mcp.public' => true ),
+			'meta'                => array( 'mcp.public' => true, 'tier' => 'read' ),
 		) );
 
 		wp_register_ability( 'reports/get-daemon-status', array(
@@ -292,7 +292,7 @@ class MM_Abilities {
 			),
 			'execute_callback'    => array( $this, 'ability_get_daemon_status' ),
 			'permission_callback' => array( $this, 'can_use' ),
-			'meta'                => array( 'mcp.public' => true ),
+			'meta'                => array( 'mcp.public' => true, 'tier' => 'read' ),
 		) );
 
 		wp_register_ability( 'reports/get-mail-status', array(
@@ -314,7 +314,7 @@ class MM_Abilities {
 			),
 			'execute_callback'    => array( $this, 'ability_get_mail_status' ),
 			'permission_callback' => array( $this, 'can_use' ),
-			'meta'                => array( 'mcp.public' => true ),
+			'meta'                => array( 'mcp.public' => true, 'tier' => 'read' ),
 		) );
 	}
 
@@ -401,7 +401,7 @@ class MM_Abilities {
 			],
 			'execute_callback'    => [ $this, 'ability_get_post_meta' ],
 			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true ],
+			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
 		] );
 	}
 
@@ -521,7 +521,7 @@ class MM_Abilities {
 			],
 			'execute_callback'    => [ $this, 'ability_get_schema' ],
 			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true ],
+			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
 		] );
 	}
 
@@ -600,7 +600,7 @@ class MM_Abilities {
 			],
 			'execute_callback'    => [ $this, 'ability_get_business_profile' ],
 			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true ],
+			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
 		] );
 	}
 
@@ -674,7 +674,7 @@ class MM_Abilities {
 			],
 			'execute_callback'    => [ $this, 'ability_get_navigation' ],
 			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true ],
+			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
 		] );
 	}
 
@@ -722,7 +722,7 @@ class MM_Abilities {
 			],
 			'execute_callback'    => [ $this, 'ability_get_term_meta' ],
 			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true ],
+			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
 		] );
 	}
 
@@ -771,6 +771,7 @@ class MM_Abilities {
 				'name'        => 'content/list-posts',
 				'label'       => 'List Posts',
 				'description' => 'List posts with title, status, date, and link.',
+				'tier'        => 'read',
 				'input'       => array(
 					'type'       => 'object',
 					'properties' => array(
@@ -787,6 +788,7 @@ class MM_Abilities {
 				'name'        => 'content/get-post',
 				'label'       => 'Get Post',
 				'description' => 'Read one post in full: title, content, excerpt, status, date, author.',
+				'tier'        => 'read',
 				'input'       => array(
 					'type'       => 'object',
 					'properties' => array(
@@ -898,6 +900,7 @@ class MM_Abilities {
 				'name'        => 'content/list-media',
 				'label'       => 'List Media',
 				'description' => 'List media library items with url and mime type.',
+				'tier'        => 'read',
 				'input'       => array(
 					'type'       => 'object',
 					'properties' => array( 'number' => array( 'type' => 'integer' ) ),
@@ -939,6 +942,7 @@ class MM_Abilities {
 				'name'        => 'content/list-terms',
 				'label'       => 'List Terms',
 				'description' => 'List the terms of a taxonomy.',
+				'tier'        => 'read',
 				'input'       => array(
 					'type'       => 'object',
 					'properties' => array( 'taxonomy' => array( 'type' => 'string' ) ),
@@ -973,6 +977,7 @@ class MM_Abilities {
 				'name'        => 'comments/list',
 				'label'       => 'List Comments',
 				'description' => 'List comments, optionally for one post.',
+				'tier'        => 'read',
 				'input'       => array(
 					'type'       => 'object',
 					'properties' => array( 'post_id' => array( 'type' => 'integer' ) ),
@@ -1011,7 +1016,10 @@ class MM_Abilities {
 				'input_schema'       => $def['input'],
 				'execute_callback'   => $def['execute'],
 				'permission_callback' => $def['permission'],
-				'meta'               => array( 'mcp.public' => true ),
+				'meta'               => array(
+					'mcp.public' => true,
+					'tier'       => $def['tier'] ?? 'write',
+				),
 			);
 			if ( ! empty( $def['destructive'] ) ) {
 				$args['meta']['destructive'] = true;

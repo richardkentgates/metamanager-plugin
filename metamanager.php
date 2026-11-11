@@ -93,6 +93,7 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-page-generator.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-biz-card-css.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-cli.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-abilities.php';
+require_once MM_META_DIR . 'includes/class-ai-chat.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-mcp-server.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-head-meta.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-social.php';
