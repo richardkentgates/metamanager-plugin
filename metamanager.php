@@ -94,6 +94,8 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-biz-card-css.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-cli.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-abilities.php';
 require_once MM_META_DIR . 'includes/class-ai-chat.php';
+require_once MM_META_DIR . 'includes/class-mm-ai-rest.php';
+require_once MM_META_DIR . 'includes/class-mm-ai-page.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-mcp-server.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-head-meta.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-social.php';
@@ -495,6 +497,8 @@ function mm_ai_chat_db_upgrade(): void {
 	}
 }
 add_action( 'init', 'mm_ai_chat_db_upgrade' );
+add_action( 'rest_api_init', [ 'MM_AI_Rest', 'register_routes' ] );
+add_action( 'admin_menu', [ 'MM_AI_Page', 'add_menu' ] );
 
 // Enable excerpt field for pages (WordPress only supports excerpts for posts by default).
 add_action( 'init', function (): void {
