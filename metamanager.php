@@ -175,6 +175,7 @@ function mm_activate_single_site(): void {
 	MM_DB::create_or_update_table();
 	MM_Metadata_History::create_or_update_table();
 	MM_Mod_Links::create_table();
+	AI_Chat::create_tables();
 	MM_Job_Queue::ensure_dirs();
 
 	if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {
@@ -483,6 +484,17 @@ function mm_import_completed_jobs(): void {
 
 // Register custom attachment post meta — type safety, sanitisation, REST API.
 add_action( 'init', [ 'MM_Metadata', 'register_meta' ] );
+
+// AI chat session/audit tables — activation creates them; this one-time
+// version check covers installs that were already active (no silent
+// no-op writes against missing tables).
+function mm_ai_chat_db_upgrade(): void {
+	if ( get_option( 'ai_chat_db_version' ) !== AI_Chat::DB_VERSION ) {
+		AI_Chat::create_tables();
+		update_option( 'ai_chat_db_version', AI_Chat::DB_VERSION, false );
+	}
+}
+add_action( 'init', 'mm_ai_chat_db_upgrade' );
 
 // Enable excerpt field for pages (WordPress only supports excerpts for posts by default).
 add_action( 'init', function (): void {
