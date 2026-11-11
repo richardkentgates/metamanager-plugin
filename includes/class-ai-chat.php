@@ -345,12 +345,18 @@ class AI_Chat {
 				$fc = $part->getFunctionCall();
 				if ( null !== $fc ) {
 					// Ability function calls return namespaced; map back to
-					// the ability name with core's own converter.
+					// the ability name. Core's converter when the class is
+					// loaded (ai-client.php does not require it); otherwise
+					// the identical conversion inline — no fatal either way.
+					$fn = (string) $fc->getName();
+					if ( class_exists( 'WP_AI_Client_Ability_Function_Resolver' ) ) {
+						$ability_name = WP_AI_Client_Ability_Function_Resolver::function_name_to_ability_name( $fn );
+					} else {
+						$ability_name = str_replace( '__', '/', substr( $fn, 6 ) );
+					}
 					$calls[] = array(
-						'ability' => WP_AI_Client_Ability_Function_Resolver::function_name_to_ability_name(
-							(string) $fc->getName()
-						),
-						'input' => (array) $fc->getArgs(),
+						'ability' => $ability_name,
+						'input'   => (array) $fc->getArgs(),
 					);
 				}
 			}

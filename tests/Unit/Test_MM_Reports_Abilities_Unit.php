@@ -203,3 +203,21 @@ class Test_MM_Reports_Abilities_Unit extends WP_UnitTestCase {
 		$this->assertSame( 'report_unreadable', $result->get_error_code() );
 	}
 }
+
+class Test_MM_Reports_Degrade_Unit extends WP_UnitTestCase {
+
+	public function test_mail_report_degrades_when_mxroute_absent(): void {
+		// MXRoute Mailer may not be installed — the mail report must
+		// return an explicit error, never break or guess.
+		add_filter( 'mm_report_path', function ( $path, $which ) {
+			if ( 'mail' === $which ) {
+				return '/nonexistent/mxroute-status.json';
+			}
+			return $path;
+		}, 10, 2 );
+
+		$result = MM_Abilities::read_report( 'mail' );
+		$this->assertInstanceOf( 'WP_Error', $result );
+		$this->assertSame( 'report_unavailable', $result->get_error_code() );
+	}
+}
