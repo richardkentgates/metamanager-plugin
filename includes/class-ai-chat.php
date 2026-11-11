@@ -159,6 +159,10 @@ class AI_Chat {
 	 */
 	public static function tier_for( $ability ): string {
 		if ( is_string( $ability ) ) {
+			// Pre-6.9: no Abilities API — nothing is free.
+			if ( ! function_exists( 'wp_get_ability' ) ) {
+				return 'destructive';
+			}
 			$ability = wp_get_ability( $ability );
 		}
 		if ( ! $ability ) {
@@ -186,6 +190,9 @@ class AI_Chat {
 	 * @return mixed Result or WP_Error.
 	 */
 	public function execute( int $session_id, string $actor, string $ability_name, array $input, bool $approved = false, bool $typed_ok = false ) {
+		if ( ! function_exists( 'wp_get_ability' ) ) {
+			return new WP_Error( 'unknown_ability', 'Abilities API unavailable (requires WordPress 6.9+).' );
+		}
 		$ability = wp_get_ability( $ability_name );
 		if ( ! $ability ) {
 			return new WP_Error( 'unknown_ability', 'Unknown ability.' );
