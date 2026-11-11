@@ -79,6 +79,8 @@ class MM_Abilities {
 		$this->register_get_navigation();
 		$this->register_get_term_meta();
 		$this->register_report_abilities();
+		$this->register_content_abilities();
+		$this->register_comment_abilities();
 	}
 
 	// -------------------------------------------------------------------------
@@ -139,6 +141,73 @@ class MM_Abilities {
 			);
 		}
 		return $data;
+	}
+
+	/**
+	 * Write on one post: edit rights on that post (the can_edit_meta
+	 * pattern, generalized).
+	 *
+	 * @param array $input Ability input.
+	 * @return bool|WP_Error
+	 */
+	public function can_edit_post( array $input ) {
+		$post_id = isset( $input['post_id'] ) ? (int) $input['post_id'] : 0;
+		if ( $post_id > 0 && current_user_can( 'edit_post', $post_id ) ) {
+			return true;
+		}
+		return new WP_Error(
+			'mxroute_cannot_edit_post',
+			__( 'You are not allowed to edit this post.', 'metamanager' )
+		);
+	}
+
+	/**
+	 * Publishing: edit rights on the post plus the publish capability.
+	 */
+	public function can_publish_post( array $input ) {
+		$post_id = isset( $input['post_id'] ) ? (int) $input['post_id'] : 0;
+		if ( $post_id > 0 && current_user_can( 'edit_post', $post_id )
+			&& current_user_can( 'publish_posts' ) ) {
+			return true;
+		}
+		return new WP_Error(
+			'mxroute_cannot_publish',
+			__( 'You are not allowed to publish this post.', 'metamanager' )
+		);
+	}
+
+	/**
+	 * Destructive: delete rights on the post.
+	 */
+	public function can_trash_post( array $input ) {
+		$post_id = isset( $input['post_id'] ) ? (int) $input['post_id'] : 0;
+		if ( $post_id > 0 && current_user_can( 'delete_post', $post_id ) ) {
+			return true;
+		}
+		return new WP_Error(
+			'mxroute_cannot_trash',
+			__( 'You are not allowed to trash this post.', 'metamanager' )
+		);
+	}
+
+	public function can_upload() {
+		if ( current_user_can( 'upload_files' ) ) {
+			return true;
+		}
+		return new WP_Error(
+			'mxroute_cannot_upload',
+			__( 'You are not allowed to upload media.', 'metamanager' )
+		);
+	}
+
+	public function can_moderate() {
+		if ( current_user_can( 'moderate_comments' ) ) {
+			return true;
+		}
+		return new WP_Error(
+			'mxroute_cannot_moderate',
+			__( 'You are not allowed to moderate comments.', 'metamanager' )
+		);
 	}
 
 	private function register_report_abilities(): void {
@@ -682,4 +751,616 @@ class MM_Abilities {
 			'taxonomy' => $taxonomy,
 		], $meta );
 	}
+
+	// -------------------------------------------------------------------------
+	// content/* and comments/* — AI phase A3. Native codex wrappers: the
+	// AI gets exactly the powers wp_insert_post / wp_update_post /
+	// wp_trash_post / media_handle_sideload / wp_set_post_terms /
+	// wp_update_comment give a developer — nothing improvised. Reads are
+	// free; writes are gated per target; trash/restore are marked
+	// destructive for the chat's typed-confirmation tier.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Table-driven registration — the sixteen abilities share one
+	 * contract shape (A0: execute_callback + permission_callback).
+	 */
+	private function register_content_abilities(): void {
+		$defs = array(
+			array(
+				'name'        => 'content/list-posts',
+				'label'       => 'List Posts',
+				'description' => 'List posts with title, status, date, and link.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'post_type'   => array( 'type' => 'string', 'description' => 'Post type slug, default post.' ),
+						'post_status' => array( 'type' => 'string', 'description' => 'Post status filter, default publish.' ),
+						'number'      => array( 'type' => 'integer', 'description' => 'How many to return, default 10.' ),
+						'offset'      => array( 'type' => 'integer' ),
+					),
+				),
+				'execute'     => array( $this, 'ability_list_posts' ),
+				'permission'  => array( $this, 'can_use' ),
+			),
+			array(
+				'name'        => 'content/get-post',
+				'label'       => 'Get Post',
+				'description' => 'Read one post in full: title, content, excerpt, status, date, author.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'post_id' => array( 'type' => 'integer' ),
+					),
+					'required'   => array( 'post_id' ),
+				),
+				'execute'     => array( $this, 'ability_get_post' ),
+				'permission'  => array( $this, 'can_use' ),
+			),
+			array(
+				'name'        => 'content/create-draft',
+				'label'       => 'Create Draft',
+				'description' => 'Create a new post in draft status.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'title'   => array( 'type' => 'string' ),
+						'content' => array( 'type' => 'string' ),
+						'excerpt' => array( 'type' => 'string' ),
+					),
+					'required'   => array( 'title' ),
+				),
+				'execute'     => array( $this, 'ability_create_draft' ),
+				'permission'  => array( $this, 'can_use' ),
+			),
+			array(
+				'name'        => 'content/update-post',
+				'label'       => 'Update Post',
+				'description' => 'Update title, content, or excerpt of a post. Only provided fields change.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'post_id' => array( 'type' => 'integer' ),
+						'title'   => array( 'type' => 'string' ),
+						'content' => array( 'type' => 'string' ),
+						'excerpt' => array( 'type' => 'string' ),
+					),
+					'required'   => array( 'post_id' ),
+				),
+				'execute'     => array( $this, 'ability_update_post' ),
+				'permission'  => array( $this, 'can_edit_post' ),
+			),
+			array(
+				'name'        => 'content/schedule-publish',
+				'label'       => 'Schedule Publish',
+				'description' => 'Schedule a post for future publication.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'post_id'   => array( 'type' => 'integer' ),
+						'post_date' => array( 'type' => 'string', 'description' => 'Local site time, Y-m-d H:i:s.' ),
+					),
+					'required'   => array( 'post_id', 'post_date' ),
+				),
+				'execute'     => array( $this, 'ability_schedule_publish' ),
+				'permission'  => array( $this, 'can_publish_post' ),
+			),
+			array(
+				'name'        => 'content/publish',
+				'label'       => 'Publish Post',
+				'description' => 'Publish a post now.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array( 'post_id' => array( 'type' => 'integer' ) ),
+					'required'   => array( 'post_id' ),
+				),
+				'execute'     => array( $this, 'ability_publish' ),
+				'permission'  => array( $this, 'can_publish_post' ),
+			),
+			array(
+				'name'        => 'content/unpublish',
+				'label'       => 'Unpublish Post',
+				'description' => 'Return a published post to draft status.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array( 'post_id' => array( 'type' => 'integer' ) ),
+					'required'   => array( 'post_id' ),
+				),
+				'execute'     => array( $this, 'ability_unpublish' ),
+				'permission'  => array( $this, 'can_publish_post' ),
+			),
+			array(
+				'name'        => 'content/trash',
+				'label'       => 'Trash Post',
+				'description' => 'Move a post to trash. Destructive: requires typed confirmation in the chat.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array( 'post_id' => array( 'type' => 'integer' ) ),
+					'required'   => array( 'post_id' ),
+				),
+				'execute'     => array( $this, 'ability_trash' ),
+				'permission'  => array( $this, 'can_trash_post' ),
+				'destructive' => true,
+			),
+			array(
+				'name'        => 'content/restore',
+				'label'       => 'Restore Post',
+				'description' => 'Restore a post from trash.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array( 'post_id' => array( 'type' => 'integer' ) ),
+					'required'   => array( 'post_id' ),
+				),
+				'execute'     => array( $this, 'ability_restore' ),
+				'permission'  => array( $this, 'can_trash_post' ),
+			),
+			array(
+				'name'        => 'content/list-media',
+				'label'       => 'List Media',
+				'description' => 'List media library items with url and mime type.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array( 'number' => array( 'type' => 'integer' ) ),
+				),
+				'execute'     => array( $this, 'ability_list_media' ),
+				'permission'  => array( $this, 'can_use' ),
+			),
+			array(
+				'name'        => 'content/upload-media',
+				'label'       => 'Upload Media',
+				'description' => 'Sideload an image from a URL into the media library.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'url'   => array( 'type' => 'string' ),
+						'title' => array( 'type' => 'string' ),
+					),
+					'required'   => array( 'url' ),
+				),
+				'execute'     => array( $this, 'ability_upload_media' ),
+				'permission'  => array( $this, 'can_upload' ),
+			),
+			array(
+				'name'        => 'content/set-featured-image',
+				'label'       => 'Set Featured Image',
+				'description' => 'Attach a media item as the post thumbnail.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'post_id'  => array( 'type' => 'integer' ),
+						'media_id' => array( 'type' => 'integer' ),
+					),
+					'required'   => array( 'post_id', 'media_id' ),
+				),
+				'execute'     => array( $this, 'ability_set_featured_image' ),
+				'permission'  => array( $this, 'can_edit_post' ),
+			),
+			array(
+				'name'        => 'content/list-terms',
+				'label'       => 'List Terms',
+				'description' => 'List the terms of a taxonomy.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array( 'taxonomy' => array( 'type' => 'string' ) ),
+					'required'   => array( 'taxonomy' ),
+				),
+				'execute'     => array( $this, 'ability_list_terms' ),
+				'permission'  => array( $this, 'can_use' ),
+			),
+			array(
+				'name'        => 'content/assign-term',
+				'label'       => 'Assign Term',
+				'description' => 'Set the terms of a taxonomy on a post.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'post_id'  => array( 'type' => 'integer' ),
+						'taxonomy' => array( 'type' => 'string' ),
+						'term_ids' => array( 'type' => 'array', 'items' => array( 'type' => 'integer' ) ),
+					),
+					'required'   => array( 'post_id', 'taxonomy', 'term_ids' ),
+				),
+				'execute'     => array( $this, 'ability_assign_term' ),
+				'permission'  => array( $this, 'can_edit_post' ),
+			),
+		);
+		$this->register_ability_table( $defs );
+	}
+
+	private function register_comment_abilities(): void {
+		$defs = array(
+			array(
+				'name'        => 'comments/list',
+				'label'       => 'List Comments',
+				'description' => 'List comments, optionally for one post.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array( 'post_id' => array( 'type' => 'integer' ) ),
+				),
+				'execute'     => array( $this, 'ability_list_comments' ),
+				'permission'  => array( $this, 'can_use' ),
+			),
+			array(
+				'name'        => 'comments/moderate',
+				'label'       => 'Moderate Comment',
+				'description' => 'Approve, unapprove, spam, or trash a comment.',
+				'input'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'comment_id' => array( 'type' => 'integer' ),
+						'status'     => array( 'type' => 'string', 'description' => 'approve | unapprove | spam | trash' ),
+					),
+					'required'   => array( 'comment_id', 'status' ),
+				),
+				'execute'     => array( $this, 'ability_moderate_comment' ),
+				'permission'  => array( $this, 'can_moderate' ),
+			),
+		);
+		$this->register_ability_table( $defs );
+	}
+
+	/**
+	 * @param array[] $defs Ability definitions.
+	 */
+	private function register_ability_table( array $defs ) {
+		foreach ( $defs as $def ) {
+			$args = array(
+				'label'              => $def['label'],
+				'description'        => $def['description'],
+				'category'           => 'site',
+				'input_schema'       => $def['input'],
+				'execute_callback'   => $def['execute'],
+				'permission_callback' => $def['permission'],
+				'meta'               => array( 'mcp.public' => true ),
+			);
+			if ( ! empty( $def['destructive'] ) ) {
+				$args['meta']['destructive'] = true;
+			}
+			wp_register_ability( $def['name'], $args );
+		}
+	}
+
+	// ---- content executors (native codex wrappers) ----
+
+	/**
+	 * @return array
+	 */
+	public function ability_list_posts( array $input = array() ) {
+		$query = new WP_Query( array(
+			'post_type'      => sanitize_key( $input['post_type'] ?? 'post' ),
+			'post_status'    => sanitize_key( $input['post_status'] ?? 'publish' ),
+			'posts_per_page' => isset( $input['number'] ) ? max( 1, min( 50, (int) $input['number'] ) ) : 10,
+			'offset'         => isset( $input['offset'] ) ? max( 0, (int) $input['offset'] ) : 0,
+			'no_found_rows'  => false,
+		) );
+		$posts = array();
+		foreach ( $query->posts as $post ) {
+			$posts[] = array(
+				'id'     => (int) $post->ID,
+				'title'  => get_the_title( $post ),
+				'status' => $post->post_status,
+				'date'   => $post->post_date,
+				'link'   => get_permalink( $post ),
+			);
+		}
+		return array( 'posts' => $posts, 'total' => (int) $query->found_posts );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_get_post( array $input ) {
+		$post = get_post( (int) ( $input['post_id'] ?? 0 ) );
+		if ( ! $post ) {
+			return new WP_Error( 'invalid_post', 'Post not found.' );
+		}
+		return array(
+			'id'      => (int) $post->ID,
+			'title'   => get_the_title( $post ),
+			'status'  => $post->post_status,
+			'date'    => $post->post_date,
+			'link'    => get_permalink( $post ),
+			'author'  => (int) $post->post_author,
+			'content' => $post->post_content,
+			'excerpt' => $post->post_excerpt,
+		);
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_create_draft( array $input ) {
+		$post_id = wp_insert_post( array(
+			'post_title'   => sanitize_text_field( $input['title'] ?? '' ),
+			'post_content' => wp_kses_post( $input['content'] ?? '' ),
+			'post_excerpt' => sanitize_text_field( $input['excerpt'] ?? '' ),
+			'post_status'  => 'draft',
+			'post_author'  => get_current_user_id(),
+		), true );
+		if ( is_wp_error( $post_id ) ) {
+			return $post_id;
+		}
+		if ( ! $post_id ) {
+			return new WP_Error( 'insert_failed', 'The draft could not be created.' );
+		}
+		return array( 'id' => (int) $post_id, 'status' => 'draft', 'link' => get_permalink( (int) $post_id ) );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_update_post( array $input ) {
+		$post = get_post( (int) ( $input['post_id'] ?? 0 ) );
+		if ( ! $post ) {
+			return new WP_Error( 'invalid_post', 'Post not found.' );
+		}
+		$update = array( 'ID' => (int) $post->ID );
+		if ( isset( $input['title'] ) ) {
+			$update['post_title'] = sanitize_text_field( $input['title'] );
+		}
+		if ( isset( $input['content'] ) ) {
+			$update['post_content'] = wp_kses_post( $input['content'] );
+		}
+		if ( isset( $input['excerpt'] ) ) {
+			$update['post_excerpt'] = sanitize_text_field( $input['excerpt'] );
+		}
+		$result = wp_update_post( $update, true );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return array( 'id' => (int) $post->ID, 'status' => get_post_status( (int) $post->ID ) );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_schedule_publish( array $input ) {
+		$post_id   = (int) ( $input['post_id'] ?? 0 );
+		$post_date = (string) ( $input['post_date'] ?? '' );
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $post_date ) ) {
+			return new WP_Error( 'invalid_date', 'post_date must be Y-m-d H:i:s (site local time).' );
+		}
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return new WP_Error( 'invalid_post', 'Post not found.' );
+		}
+		// edit_date is required for wp_update_post to accept date fields —
+		// without it the dates are silently dropped and the post publishes
+		// immediately (verified against core).
+		$result = wp_update_post( array(
+			'ID'            => $post_id,
+			'post_status'   => 'future',
+			'edit_date'     => true,
+			'post_date'     => $post_date,
+			'post_date_gmt' => get_gmt_from_date( $post_date ),
+		), true );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return array(
+			'id'     => $post_id,
+			'status' => get_post_status( $post_id ),
+			'date'   => $post_date,
+		);
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_publish( array $input ) {
+		return $this->flip_status( (int) ( $input['post_id'] ?? 0 ), 'publish' );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_unpublish( array $input ) {
+		return $this->flip_status( (int) ( $input['post_id'] ?? 0 ), 'draft' );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	private function flip_status( int $post_id, string $status ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return new WP_Error( 'invalid_post', 'Post not found.' );
+		}
+		$result = wp_update_post( array( 'ID' => $post_id, 'post_status' => $status ), true );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return array( 'id' => $post_id, 'status' => $status );
+	}
+
+	/**
+	 * Destructive.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function ability_trash( array $input ) {
+		$post_id = (int) ( $input['post_id'] ?? 0 );
+		if ( ! wp_trash_post( $post_id ) ) {
+			return new WP_Error( 'trash_failed', 'The post could not be trashed.' );
+		}
+		return array( 'id' => $post_id, 'status' => 'trash' );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_restore( array $input ) {
+		$post_id = (int) ( $input['post_id'] ?? 0 );
+		if ( ! wp_untrash_post( $post_id ) ) {
+			return new WP_Error( 'restore_failed', 'The post could not be restored.' );
+		}
+		return array( 'id' => $post_id, 'status' => get_post_status( $post_id ) );
+	}
+
+	/**
+	 * @return array
+	 */
+	public function ability_list_media( array $input = array() ) {
+		$items = get_posts( array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'posts_per_page' => isset( $input['number'] ) ? max( 1, min( 50, (int) $input['number'] ) ) : 10,
+		) );
+		$media = array();
+		foreach ( $items as $item ) {
+			$media[] = array(
+				'id'    => (int) $item->ID,
+				'title' => get_the_title( $item ),
+				'url'   => wp_get_attachment_url( (int) $item->ID ),
+				'mime'  => get_post_mime_type( (int) $item->ID ),
+			);
+		}
+		return array( 'media' => $media );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_upload_media( array $input ) {
+		$url = esc_url_raw( $input['url'] ?? '' );
+		if ( '' === $url ) {
+			return new WP_Error( 'invalid_input', 'A source url is required.' );
+		}
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$tmp = download_url( $url );
+		if ( is_wp_error( $tmp ) ) {
+			return $tmp;
+		}
+		$name = sanitize_file_name( basename( wp_parse_url( $url, PHP_URL_PATH ) ?: 'upload' ) );
+		$media_id = media_handle_sideload( array( 'name' => $name, 'tmp_name' => $tmp ), 0,
+			sanitize_text_field( $input['title'] ?? '' ) );
+		if ( is_wp_error( $media_id ) ) {
+			return $media_id;
+		}
+		return array(
+			'id'    => (int) $media_id,
+			'title' => get_the_title( (int) $media_id ),
+			'url'   => wp_get_attachment_url( (int) $media_id ),
+			'mime'  => get_post_mime_type( (int) $media_id ),
+		);
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_set_featured_image( array $input ) {
+		$post_id  = (int) ( $input['post_id'] ?? 0 );
+		$media_id = (int) ( $input['media_id'] ?? 0 );
+		if ( ! get_post( $post_id ) ) {
+			return new WP_Error( 'invalid_post', 'Post not found.' );
+		}
+		if ( ! get_post( $media_id ) ) {
+			return new WP_Error( 'invalid_media', 'Media not found.' );
+		}
+		if ( ! set_post_thumbnail( $post_id, $media_id ) ) {
+			return new WP_Error( 'thumbnail_failed', 'The featured image could not be set.' );
+		}
+		return array( 'post_id' => $post_id, 'media_id' => $media_id );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_list_terms( array $input ) {
+		$taxonomy = sanitize_key( $input['taxonomy'] ?? '' );
+		if ( '' === $taxonomy || ! taxonomy_exists( $taxonomy ) ) {
+			return new WP_Error( 'invalid_taxonomy', 'Taxonomy not found.' );
+		}
+		$terms = get_terms( array( 'taxonomy' => $taxonomy, 'hide_empty' => false ) );
+		if ( is_wp_error( $terms ) ) {
+			return $terms;
+		}
+		$out = array();
+		foreach ( $terms as $term ) {
+			$out[] = array(
+				'id'   => (int) $term->term_id,
+				'name' => $term->name,
+				'slug' => $term->slug,
+			);
+		}
+		return array( 'terms' => $out );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_assign_term( array $input ) {
+		$post_id  = (int) ( $input['post_id'] ?? 0 );
+		$taxonomy = sanitize_key( $input['taxonomy'] ?? '' );
+		$term_ids = array_map( 'intval', (array) ( $input['term_ids'] ?? array() ) );
+		if ( ! get_post( $post_id ) ) {
+			return new WP_Error( 'invalid_post', 'Post not found.' );
+		}
+		if ( '' === $taxonomy || ! taxonomy_exists( $taxonomy ) ) {
+			return new WP_Error( 'invalid_taxonomy', 'Taxonomy not found.' );
+		}
+		$result = wp_set_post_terms( $post_id, $term_ids, $taxonomy );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return array( 'post_id' => $post_id, 'taxonomy' => $taxonomy, 'term_ids' => $term_ids );
+	}
+
+	// ---- comment executors ----
+
+	/**
+	 * @return array
+	 */
+	public function ability_list_comments( array $input = array() ) {
+		$args = array( 'number' => 20 );
+		if ( ! empty( $input['post_id'] ) ) {
+			$args['post_id'] = (int) $input['post_id'];
+		}
+		$comments = get_comments( $args );
+		$out      = array();
+		foreach ( $comments as $c ) {
+			$out[] = array(
+				'comment_id' => (int) $c->comment_ID,
+				'post_id'    => (int) $c->comment_post_ID,
+				'author'     => $c->comment_author,
+				'content'    => $c->comment_content,
+				'status'     => ( '1' === $c->comment_approved ) ? 'approved'
+					: ( '0' === $c->comment_approved ? 'unapproved' : $c->comment_approved ),
+				'date'       => $c->comment_date,
+			);
+		}
+		return array( 'comments' => $out );
+	}
+
+	/**
+	 * @return array|WP_Error
+	 */
+	public function ability_moderate_comment( array $input ) {
+		$comment_id = (int) ( $input['comment_id'] ?? 0 );
+		$status     = sanitize_key( $input['status'] ?? '' );
+		$map        = array(
+			'approve'   => '1',
+			'unapprove' => '0',
+			'spam'      => 'spam',
+			'trash'     => 'trash',
+		);
+		if ( ! isset( $map[ $status ] ) ) {
+			return new WP_Error( 'invalid_status', 'status must be approve, unapprove, spam, or trash.' );
+		}
+		$comment = get_comment( $comment_id );
+		if ( ! $comment ) {
+			return new WP_Error( 'invalid_comment', 'Comment not found.' );
+		}
+		$result = wp_update_comment( array(
+			'comment_ID'       => $comment_id,
+			'comment_approved' => $map[ $status ],
+		) );
+		if ( ! $result ) {
+			return new WP_Error( 'moderate_failed', 'The comment could not be updated.' );
+		}
+		return array( 'comment_id' => $comment_id, 'status' => $status );
+	}
+
 }
