@@ -88,6 +88,7 @@ class AI_Chat {
 		$table = $wpdb->prefix . self::SESSION_TABLE;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 		$raw = $wpdb->get_var( $wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 			"SELECT turns FROM {$table} WHERE id = %d", $session_id
 		) );
 		$turns   = json_decode( (string) $raw, true );
@@ -112,6 +113,7 @@ class AI_Chat {
 		$table = $wpdb->prefix . self::SESSION_TABLE;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 		$raw = $wpdb->get_var( $wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 			"SELECT turns FROM {$table} WHERE id = %d", $session_id
 		) );
 		$turns = json_decode( (string) $raw, true );
@@ -143,6 +145,7 @@ class AI_Chat {
 		$table = $wpdb->prefix . self::AUDIT_TABLE;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 		return $wpdb->get_results( $wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
 			"SELECT at, actor, ability, input, outcome FROM {$table}
 			 WHERE session_id = %d ORDER BY id ASC", $session_id
 		), ARRAY_A ) ?: array();
