@@ -318,13 +318,44 @@ class AI_Chat {
 		foreach ( wp_get_abilities() as $ability ) {
 			$abilities[] = $ability->get_name();
 		}
-		$response = wp_ai_client_prompt( $context . "\n\nUser: " . $text )
+		// Documented WordPress AI Client API (developer.wordpress.org):
+		// with_text → generate_text_result → GenerativeAiResult DTO.
+		$builder = wp_ai_client_prompt()
 			->using_abilities( ...$abilities )
-			->generate_text();
-		return array(
-			'reply' => is_wp_error( $response ) ? $response->get_error_message() : (string) $response,
-			'calls' => array(),
-		);
+			->with_text( $context . "\n\nUser: " . $text );
+		if ( ! $builder->is_supported_for_text_generation() ) {
+			return array(
+				'reply' => 'No configured AI provider supports text generation (Settings > Connections).',
+				'calls' => array(),
+			);
+		}
+		$result = $builder->generate_text_result();
+		if ( is_wp_error( $result ) ) {
+			return array( 'reply' => $result->get_error_message(), 'calls' => array() );
+		}
+
+		$reply = '';
+		$calls = array();
+		foreach ( $result->getCandidates() as $candidate ) {
+			foreach ( $candidate->getMessage()->getParts() as $part ) {
+				$part_text = $part->getText();
+				if ( null !== $part_text ) {
+					$reply .= $part_text;
+				}
+				$fc = $part->getFunctionCall();
+				if ( null !== $fc ) {
+					// Ability function calls return namespaced; map back to
+					// the ability name with core's own converter.
+					$calls[] = array(
+						'ability' => WP_AI_Client_Ability_Function_Resolver::function_name_to_ability_name(
+							(string) $fc->getName()
+						),
+						'input' => (array) $fc->getArgs(),
+					);
+				}
+			}
+		}
+		return array( 'reply' => $reply, 'calls' => $calls );
 	}
 
 }
