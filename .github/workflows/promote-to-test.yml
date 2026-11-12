@@ -25,25 +25,65 @@ jobs:
   check-ci:
     name: Verify CI Passed
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
     steps:
-      - name: Check CI status on dev
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check CI status for the dev tree
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Checking CI status for workflow 'ci.yml' on branch 'dev'..."
+          set -e
+          git fetch origin dev
+          DEV_SHA=$(git rev-parse origin/dev)
+          echo "dev HEAD: $DEV_SHA"
 
           LATEST_RUN=$(gh run list --repo ${{ github.repository }} \
             --workflow "ci.yml" \
             --branch "dev" \
             --limit 1 \
-            --json status,conclusion,name \
+            --json status,conclusion,headSha \
             --jq '.[0]')
 
           STATUS=$(echo "$LATEST_RUN" | jq -r '.status')
           CONCLUSION=$(echo "$LATEST_RUN" | jq -r '.conclusion')
-          NAME=$(echo "$LATEST_RUN" | jq -r '.name')
+          HEAD_SHA=$(echo "$LATEST_RUN" | jq -r '.headSha')
+          echo "latest dev CI: status=${STATUS} conclusion=${CONCLUSION} head=${HEAD_SHA}"
 
-          echo "Latest run: name=${NAME}, status=${STATUS}, conclusion=${CONCLUSION}"
+          # Push events have wedged in GitHub's queue before; if the tree
+          # lacks a green pinned run, CAUSE one and wait. Tests are never
+          # skipped — they are created on demand.
+          PARENT_SHA=$(git rev-parse "$DEV_SHA^1" 2>/dev/null || echo none)
+          needs_ci=false
+          [[ "$STATUS" != "completed" || "$STATUS" == "null" || -z "$STATUS" ]] && needs_ci=true
+          if [[ "$HEAD_SHA" != "$DEV_SHA" && "$HEAD_SHA" != "$PARENT_SHA" ]]; then
+            needs_ci=true
+          fi
+          if [[ "$needs_ci" == "true" ]]; then
+            echo "No green CI run for the dev tree ($DEV_SHA) — dispatching CI and waiting..."
+            gh workflow run "Quality and Security Checks" --ref dev
+            for i in $(seq 1 40); do
+              sleep 15
+              LATEST_RUN=$(gh run list --repo ${{ github.repository }} \
+                --workflow "ci.yml" \
+                --branch "dev" \
+                --limit 1 \
+                --json status,conclusion,headSha \
+                --jq '.[0]')
+              STATUS=$(echo "$LATEST_RUN" | jq -r '.status')
+              CONCLUSION=$(echo "$LATEST_RUN" | jq -r '.conclusion')
+              HEAD_SHA=$(echo "$LATEST_RUN" | jq -r '.headSha')
+              echo "  wait $i: status=${STATUS} head=${HEAD_SHA}"
+              if [[ "$STATUS" == "completed" ]] \
+                 && { [[ "$HEAD_SHA" == "$DEV_SHA" ]] || [[ "$HEAD_SHA" == "$PARENT_SHA" ]]; }; then
+                break
+              fi
+            done
+          fi
 
           if [[ "$STATUS" != "completed" ]]; then
             echo "::error::CI is still running (status=${STATUS}). Wait for it to complete before promoting."
@@ -55,7 +95,12 @@ jobs:
             exit 1
           fi
 
-          echo "CI passed. Proceeding with promotion."
+          if [[ "$HEAD_SHA" != "$DEV_SHA" && "$HEAD_SHA" != "$PARENT_SHA" ]]; then
+            echo "::error::Latest CI ran on ${HEAD_SHA} but dev is at ${DEV_SHA} — untested commits on dev."
+            exit 1
+          fi
+
+          echo "CI green for the dev tree (${HEAD_SHA}). Proceeding with promotion."
 
   promote:
     name: Merge, Build & Deploy to Apt
