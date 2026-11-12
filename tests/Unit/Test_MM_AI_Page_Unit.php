@@ -37,4 +37,17 @@ class Test_MM_AI_Page_Unit extends WP_UnitTestCase {
 		}
 		$this->assertTrue( $found, 'Site Assistant must register under the Metamanager menu' );
 	}
+
+	public function test_site_assistant_help_tab_instructs_the_model(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$screen = WP_Screen::get( 'metamanager_page_mm-site-assistant' );
+		MM_Admin::add_help_tabs( $screen );
+		$tabs = $screen->get_help_tabs();
+		$ids  = wp_list_pluck( $tabs, 'id' );
+		$this->assertContains( 'mm-ai-overview', $ids );
+		$this->assertContains( 'mm-ai-provider', $ids );
+		$joined = wp_list_pluck( $tabs, 'content' );
+		$this->assertStringContainsString( 'approval cards', implode( ' ', $joined ) );
+		$this->assertStringContainsString( 'connectors_ai_google_api_key', implode( ' ', $joined ) );
+	}
 }
