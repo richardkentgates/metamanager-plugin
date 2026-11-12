@@ -269,6 +269,21 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 		}
 
+		// CPT types rendered on the WebPage node itself (add_content_node()
+		// skips them — TouristDestination today) never get a content node,
+		// so their metabox schema fields merge here instead.
+		if ( $context->is_singular() && $context->get_post()
+			&& MM_Schema_Post_Types::is_schema_cpt( $context->get_post()->post_type )
+			&& in_array( $type, [ 'TouristDestination' ], true ) ) {
+			$cpt_fields = get_post_meta( $context->get_post()->ID, 'mm_schema_fields', true );
+			if ( is_array( $cpt_fields ) && ! empty( $cpt_fields ) ) {
+				$additions = MM_Schema_Types::build_node_additions( $cpt_fields, $type );
+				if ( ! empty( $additions ) ) {
+					$node = array_merge( $node, $additions );
+				}
+			}
+		}
+
 		// Description from meta.
 		foreach ( $data['meta'] as $mt ) {
 			if ( ( $mt['name'] ?? '' ) === 'description' ) {

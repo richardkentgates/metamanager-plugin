@@ -142,6 +142,42 @@ class Test_MM_Mod_Schema_Integration extends WP_UnitTestCase {
 		$this->assertContains( 'WebPage', $types );
 	}
 
+	public function test_tourist_destination_fields_merge_into_its_node(): void {
+		MM_Schema_Post_Types::register_post_types();
+		$post_id = $this->factory->post->create( [
+			'post_type'   => 'mm_destination',
+			'post_title'  => 'Destination Fields Test',
+			'post_status' => 'publish',
+		] );
+		update_post_meta( $post_id, 'mm_schema_fields', [
+			'destination_address'     => '820 Kiroli Road, West Monroe, LA 71291',
+			'destination_lat'         => '32.5',
+			'destination_lng'         => '-92.1',
+			'destination_attractions' => 'Sunken Gardens, Suspension Bridge',
+		] );
+
+		// Core query vars (post_type + p) resolve without rewrite rules or
+		// mid-test query-var registration, so the test does not depend on
+		// suite order or the state of the rules option.
+		$this->go_to( add_query_arg( [ 'post_type' => 'mm_destination', 'p' => $post_id ], home_url( '/' ) ) );
+		$output  = $this->render_head();
+		$json_ld = $this->extract_json_ld( $output );
+
+		$node = null;
+		foreach ( $json_ld as $doc ) {
+			foreach ( ( $doc['@graph'] ?? [] ) as $n ) {
+				if ( ( $n['@type'] ?? '' ) === 'TouristDestination' ) {
+					$node = $n;
+					break 2;
+				}
+			}
+		}
+		$this->assertNotNull( $node, 'TouristDestination node should be emitted' );
+		$this->assertSame( '820 Kiroli Road, West Monroe, LA 71291', $node['address'] ?? '' );
+		$this->assertArrayHasKey( 'geo', $node );
+		$this->assertCount( 2, $node['includesAttraction'] ?? [] );
+	}
+
 	// ------------------------------------------------------------------
 	// Content-type node (BlogPosting)
 	// ------------------------------------------------------------------
