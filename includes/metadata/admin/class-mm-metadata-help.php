@@ -135,12 +135,18 @@ class MM_Metadata_Help {
 				'id'      => 'mm_meta_schema_cpts',
 				'title'   => __( 'Custom Post Types', 'metamanager' ),
 				'content' =>
-					'<p>' . esc_html__( 'Metamanager registers four custom post types with dedicated meta panels for Schema.org fields:', 'metamanager' ) . '</p>' .
+					'<p>' . esc_html__( 'Metamanager registers custom post types with dedicated meta panels for Schema.org fields:', 'metamanager' ) . '</p>' .
 					'<ul>' .
 					'<li><strong>mm_event</strong> — ' . esc_html__( 'Event schema. Fields: start/end date, location, organizer, price, currency, ticket URL, status (Scheduled/Cancelled/Postponed), attendance mode, event type (16 subtypes). Generates Calendar page template.', 'metamanager' ) . '</li>' .
 					'<li><strong>mm_service</strong> — ' . esc_html__( 'Service schema. Fields: type, area, price, currency, booking URL, duration, includes, provider name.', 'metamanager' ) . '</li>' .
 					'<li><strong>mm_how_to</strong> — ' . esc_html__( 'HowTo schema. Fields: total time, cost, up to 20 supply items, up to 20 tools, up to 20 steps with name/text/image.', 'metamanager' ) . '</li>' .
 					'<li><strong>mm_faq_page</strong> — ' . esc_html__( 'FAQPage schema. Fields: up to 20 dynamic Question/Answer pairs.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_trip</strong> — ' . esc_html__( 'TouristTrip schema. Fields: departure/destination name and address, tourist type, duration, price, itinerary and vessel references.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_destination</strong> — ' . esc_html__( 'TouristDestination schema. Fields: address, geo coordinates, tourist type, map URL, attractions, booking URL.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_vessel</strong> — ' . esc_html__( 'Vehicle schema. Fields: vehicle type, model, capacity, and boat details for listings.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_course</strong> — ' . esc_html__( 'Course schema. Fields: credential awarded, delivery mode, duration, prerequisites, price, enrollment URL, provider, course code.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_business</strong> — ' . esc_html__( 'LocalBusiness schema for directory listings. Fields: business type (LocalBusiness subtypes from the Business Profile taxonomy), address, geo coordinates, telephone, website, price range, opening hours.', 'metamanager' ) . '</li>' .
+					'<li><strong>mm_organization</strong> — ' . esc_html__( 'Organization schema for nonprofits and public organizations. Fields: organization type (NGO, Government Organization, Educational, Medical), address, telephone, website, area served.', 'metamanager' ) . '</li>' .
 					'</ul>' .
 					'<p>' . esc_html__( 'Page templates (mm-about, mm-contact, mm-calendar) auto-generate content from your business profile and events. Pages regenerate automatically when you save settings.', 'metamanager' ) . '</p>',
 			];
