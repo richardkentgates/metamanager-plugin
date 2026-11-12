@@ -889,3 +889,45 @@ GPLv3 or later. See [LICENSE](LICENSE).
 
 Copyright © Richard Kent Gates
 
+
+## AI — Site Assistant and abilities (2026-11-11)
+
+**Site Assistant** (wp-admin → Metamanager → Site Assistant,
+manage_options) is a conversation over this site's WordPress abilities:
+the model proposes, humans approve, everything is audited.
+
+**Enabling the AI (per site):**
+1. Settings → **Connections** → install/activate the provider plugin
+   (`ai-provider-for-google` for Gemini — the same as
+   `wp plugin install ai-provider-for-google --activate`).
+2. Add the API key on the Connections page (or store it in the option
+   **`connectors_ai_google_api_key`** — the name the registry reads).
+3. Check: the chat answers; `wp eval 'var_export(wp_supports_ai(), true);'`.
+
+**How a conversation works:**
+- Reads (reports/*, content/list-*, comments/list) execute immediately.
+- Writes (create-draft, update-post, publish, assign-term, …) come back
+  as **approval cards**: Approve, Decline, or edit the input first.
+- Destructive actions (`content/trash`) additionally require typing
+  CONFIRM. A refused gate keeps the card pending — nothing runs twice.
+- Rate caps: 50 turns per session, 200 per user per day (loud
+  `rate_limited` errors).
+- Every execution lands in the **audit trail** (actor, ability, input,
+  outcome) — append-only.
+
+**The ability surface** (registered on the WordPress Abilities API, so
+the MCP Adapter and external agents see the same contract):
+reports/get-status, get-os-update, get-security-scan,
+get-daemon-status, get-mail-status; mxroute/queue-status,
+requeue-failed, send-test; content list/get/create-draft/update/
+schedule-publish/publish/unpublish/trash/restore/list-media/upload-media/
+set-featured-image/list-terms/assign-term; comments list/moderate.
+
+**Descriptions derive ONLY from the native excerpt field** (enabled for
+pages and posts by this plugin; `description_source => 'excerpt'` is
+the default) — the SEO abilities extend that pipeline, never a parallel
+one.
+
+**Degrades cleanly:** without the Abilities API (pre-6.9), without an
+AI provider, or without MXRoute Mailer installed, every path returns
+explicit errors — nothing breaks, nothing guesses.

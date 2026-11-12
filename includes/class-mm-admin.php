@@ -125,6 +125,22 @@ class MM_Admin {
 	// -----------------------------------------------------------------------
 
 	public static function add_help_tabs( \WP_Screen $screen ): void {
+		if ( 'metamanager_page_mm-site-assistant' === $screen->id ) {
+			$screen->add_help_tab( [
+				'id'      => 'mm-ai-overview',
+				'title'   => __( 'Site Assistant', 'metamanager' ),
+				'content' => '<p>' . esc_html__( 'The assistant acts only through this site\'s registered abilities. Reads (reports, listings) execute immediately. Writes appear as approval cards: Approve, Decline, or edit the input first. Destructive actions require typing CONFIRM. Every execution is written to the audit trail with actor, ability, input and outcome.', 'metamanager' ) . '</p>'
+					. '<p>' . esc_html__( 'Rate caps: 50 turns per session, 200 per user per day.', 'metamanager' ) . '</p>',
+			] );
+			$screen->add_help_tab( [
+				'id'      => 'mm-ai-provider',
+				'title'   => __( 'AI provider', 'metamanager' ),
+				'content' => '<p>' . esc_html__( 'The model runs through the WordPress AI Client: Settings > Connections holds the providers (Gemini = the google connector; install its provider plugin, ai-provider-for-google) and the API key (option connectors_ai_google_api_key). No provider configured? The assistant says so instead of guessing.', 'metamanager' ) . '</p>'
+					. '<p>' . esc_html__( 'Descriptions derive only from the native excerpt field (enabled for pages and posts).', 'metamanager' ) . '</p>',
+			] );
+			return;
+		}
+
 		// Jobs dashboard help.
 		if ( 'toplevel_page_metamanager' === $screen->id ) {
 			$screen->add_help_tab( [
