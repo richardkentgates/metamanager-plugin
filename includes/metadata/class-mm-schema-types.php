@@ -46,6 +46,9 @@ class MM_Schema_Types {
 			'Vehicle'            => 'Vehicle — Boat, car, or other vehicle',
 			// ── Education ───────────────────────────────────────────────────
 			'Course'             => 'Course — Educational course or certification',
+			// ── Directory ────────────────────────────────────────────────────
+			'LocalBusiness'      => 'LocalBusiness — Business listing',
+			'Organization'       => 'Organization — Nonprofit/public org',
 		];
 
 		if ( $include_empty ) {
@@ -78,6 +81,15 @@ class MM_Schema_Types {
 	 * @return array<string, array>
 	 */
 	public static function get_fields_by_type( bool $wc_active = false ): array {
+		// LocalBusiness subtype options — same taxonomy the Business Profile
+		// uses (MM_Mod_Local::get_business_types()), flattened for the metabox.
+		$business_type_options = [ '' => '— LocalBusiness (general) —' ];
+		foreach ( MM_Mod_Local::get_business_types() as $group => $members ) {
+			foreach ( $members as $subtype_slug => $subtype_label ) {
+				$business_type_options[ $subtype_slug ] = $subtype_label;
+			}
+		}
+
 		return [
 			// ── Event ─────────────────────────────────────────────────────────
 			'Event' => [
@@ -760,6 +772,146 @@ class MM_Schema_Types {
 					'description' => 'Internal course code/ID.',
 				],
 			],
+
+			// ── LocalBusiness (directory listings) ───────────────────────────
+			'LocalBusiness' => [
+				[
+					'key'         => 'business_type',
+					'label'       => 'Business Type',
+					'type'        => 'select',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'The most specific Schema.org LocalBusiness subtype.',
+					'options'     => $business_type_options,
+				],
+				[
+					'key'         => 'business_address',
+					'label'       => 'Address',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 820 Kiroli Road, West Monroe, LA 71291',
+					'description' => '',
+				],
+				[
+					'key'         => 'business_lat',
+					'label'       => 'Latitude',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '32.5093',
+					'description' => '',
+				],
+				[
+					'key'         => 'business_lng',
+					'label'       => 'Longitude',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '-92.1193',
+					'description' => '',
+				],
+				[
+					'key'         => 'business_telephone',
+					'label'       => 'Telephone',
+					'type'        => 'tel',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 318-555-0100',
+					'description' => '',
+				],
+				[
+					'key'         => 'business_url',
+					'label'       => 'Website',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+				],
+				[
+					'key'         => 'business_price_range',
+					'label'       => 'Price Range',
+					'type'        => 'select',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+					'options'     => [
+						''    => '— Not specified —',
+						'$'   => '$ — Inexpensive',
+						'$$'  => '$$ — Moderate',
+						'$$$' => '$$$ — Upscale',
+						'$$$$' => '$$$$ — Premium',
+					],
+				],
+				[
+					'key'         => 'business_hours',
+					'label'       => 'Opening Hours',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Mo-Fr 09:00-17:00; Sa 10:00-14:00',
+					'description' => 'Schema.org openingHours syntax.',
+				],
+			],
+
+			// ── Organization (nonprofits, public assistance) ─────────────────
+			'Organization' => [
+				[
+					'key'         => 'org_type',
+					'label'       => 'Organization Type',
+					'type'        => 'select',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => 'The most specific Schema.org Organization subtype.',
+					'options'     => [
+						''                      => '— Organization —',
+						'NGO'                   => 'NGO — Non-governmental organization',
+						'GovernmentOrganization' => 'Government Organization',
+						'EducationalOrganization' => 'Educational Organization',
+						'MedicalOrganization'   => 'Medical Organization',
+					],
+				],
+				[
+					'key'         => 'org_address',
+					'label'       => 'Address',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 1201 Hudson Lane, Monroe, LA 71201',
+					'description' => '',
+				],
+				[
+					'key'         => 'org_telephone',
+					'label'       => 'Telephone',
+					'type'        => 'tel',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. 318-555-0100',
+					'description' => '',
+				],
+				[
+					'key'         => 'org_url',
+					'label'       => 'Website',
+					'type'        => 'url',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => '',
+					'description' => '',
+				],
+				[
+					'key'         => 'org_area_served',
+					'label'       => 'Area Served',
+					'type'        => 'text',
+					'required'    => false,
+					'auto_label'  => null,
+					'placeholder' => 'e.g. Ouachita Parish LA',
+					'description' => 'Comma-separated areas.',
+				],
+			],
 		];
 	}
 
@@ -1130,6 +1282,64 @@ class MM_Schema_Types {
 					$offer['url'] = $enroll;
 				}
 				$out['offers'] = $offer;
+			}
+		}
+
+		// ── LocalBusiness ────────────────────────────────────────────────────
+		if ( 'LocalBusiness' === $type ) {
+			// Subtype override (LocalBusiness hierarchy). The generic node's
+			// @type is LocalBusiness; a selected subtype replaces it while the
+			// @id stays '#localbusiness' so cross-references remain stable.
+			$subtype = $str( 'business_type' );
+			if ( $subtype ) {
+				$out['@type'] = $subtype;
+			}
+			if ( $str( 'business_address' ) ) {
+				$out['address'] = $str( 'business_address' );
+			}
+			if ( $str( 'business_telephone' ) ) {
+				$out['telephone'] = $str( 'business_telephone' );
+			}
+			$biz_url = esc_url_raw( $str( 'business_url' ) );
+			if ( $biz_url ) {
+				$out['url'] = $biz_url;
+			}
+			if ( $str( 'business_price_range' ) ) {
+				$out['priceRange'] = $str( 'business_price_range' );
+			}
+			if ( $str( 'business_hours' ) ) {
+				$out['openingHours'] = $str( 'business_hours' );
+			}
+			$lat = $str( 'business_lat' );
+			$lng = $str( 'business_lng' );
+			if ( $lat && $lng && is_numeric( $lat ) && is_numeric( $lng ) ) {
+				$out['geo'] = [ '@type' => 'GeoCoordinates', 'latitude' => (float) $lat, 'longitude' => (float) $lng ];
+			}
+		}
+
+		// ── Organization ─────────────────────────────────────────────────────
+		if ( 'Organization' === $type ) {
+			// Subtype override (NGO, GovernmentOrganization, …). @id stays
+			// '#organization' — careful: the site-level Business Profile node
+			// also uses #organization; per-post @ids use the post URL, so the
+			// fragment only collides on the site root. Acceptable and stable.
+			$subtype = $str( 'org_type' );
+			if ( $subtype ) {
+				$out['@type'] = $subtype;
+			}
+			if ( $str( 'org_address' ) ) {
+				$out['address'] = $str( 'org_address' );
+			}
+			if ( $str( 'org_telephone' ) ) {
+				$out['telephone'] = $str( 'org_telephone' );
+			}
+			$org_url = esc_url_raw( $str( 'org_url' ) );
+			if ( $org_url ) {
+				$out['url'] = $org_url;
+			}
+			if ( $str( 'org_area_served' ) ) {
+				$areas = array_map( 'trim', explode( ',', $str( 'org_area_served' ) ) );
+				$out['areaServed'] = count( $areas ) === 1 ? $areas[0] : array_values( $areas );
 			}
 		}
 

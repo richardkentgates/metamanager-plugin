@@ -450,4 +450,118 @@ class Test_MM_Schema_Types_Unit extends WP_UnitTestCase {
 		$this->assertSame( '75', $result['offers']['price'] );
 		$this->assertSame( 'https://example.com/enroll/', $result['offers']['url'] );
 	}
+
+	// ------------------------------------------------------------------
+	// LocalBusiness (directory listings)
+	// ------------------------------------------------------------------
+
+	public function test_schema_types_include_directory_types(): void {
+		$types = MM_Schema_Types::get_schema_types();
+		$this->assertArrayHasKey( 'LocalBusiness', $types );
+		$this->assertArrayHasKey( 'Organization', $types );
+	}
+
+	public function test_localbusiness_type_has_directory_fields(): void {
+		$fields = MM_Schema_Types::get_fields_by_type();
+		$this->assertArrayHasKey( 'LocalBusiness', $fields );
+		$keys = array_column( $fields['LocalBusiness'], 'key' );
+		foreach ( [ 'business_type', 'business_address', 'business_lat', 'business_lng',
+			'business_telephone', 'business_url', 'business_price_range', 'business_hours' ] as $key ) {
+			$this->assertContains( $key, $keys, "LocalBusiness should have {$key}" );
+		}
+	}
+
+	public function test_localbusiness_type_options_reuse_business_profile_taxonomy(): void {
+		$fields = MM_Schema_Types::get_fields_by_type();
+		$type_field = null;
+		foreach ( $fields['LocalBusiness'] as $field ) {
+			if ( 'business_type' === $field['key'] ) {
+				$type_field = $field;
+			}
+		}
+		$this->assertNotNull( $type_field );
+		$this->assertSame( 'select', $type_field['type'] );
+		// Subtypes from MM_Mod_Local::get_business_types() must appear.
+		$this->assertArrayHasKey( 'BeautySalon', $type_field['options'] );
+		$this->assertArrayHasKey( '', $type_field['options'] );
+	}
+
+	public function test_build_node_additions_localbusiness(): void {
+		$fields = [
+			'business_type'      => 'BeautySalon',
+			'business_address'   => '123 Main St, Monroe, LA 71201',
+			'business_telephone' => '318-555-0100',
+			'business_url'       => 'https://example.com',
+			'business_price_range' => '$$',
+			'business_hours'     => 'Mo-Fr 09:00-17:00',
+			'business_lat'       => '32.5093',
+			'business_lng'       => '-92.1193',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'LocalBusiness' );
+
+		$this->assertSame( 'BeautySalon', $result['@type'] );
+		$this->assertSame( '123 Main St, Monroe, LA 71201', $result['address'] );
+		$this->assertSame( '318-555-0100', $result['telephone'] );
+		$this->assertSame( 'https://example.com', $result['url'] );
+		$this->assertSame( '$$', $result['priceRange'] );
+		$this->assertSame( 'Mo-Fr 09:00-17:00', $result['openingHours'] );
+		$this->assertSame( 32.5093, $result['geo']['latitude'] );
+		$this->assertSame( -92.1193, $result['geo']['longitude'] );
+	}
+
+	public function test_build_node_additions_localbusiness_default_type(): void {
+		$result = MM_Schema_Types::build_node_additions( [], 'LocalBusiness' );
+		$this->assertArrayNotHasKey( '@type', $result );
+		$this->assertSame( [], $result );
+	}
+
+	public function test_build_node_additions_localbusiness_ignores_bad_geo(): void {
+		$result = MM_Schema_Types::build_node_additions( [
+			'business_lat' => 'not-a-number',
+			'business_lng' => '-92.1193',
+		], 'LocalBusiness' );
+		$this->assertArrayNotHasKey( 'geo', $result );
+	}
+
+	// ------------------------------------------------------------------
+	// Organization (nonprofits, public assistance)
+	// ------------------------------------------------------------------
+
+	public function test_organization_type_has_directory_fields(): void {
+		$fields = MM_Schema_Types::get_fields_by_type();
+		$this->assertArrayHasKey( 'Organization', $fields );
+		$keys = array_column( $fields['Organization'], 'key' );
+		foreach ( [ 'org_type', 'org_address', 'org_telephone', 'org_url', 'org_area_served' ] as $key ) {
+			$this->assertContains( $key, $keys, "Organization should have {$key}" );
+		}
+	}
+
+	public function test_build_node_additions_organization(): void {
+		$fields = [
+			'org_type'        => 'NGO',
+			'org_address'     => '1201 Hudson Lane, Monroe, LA 71201',
+			'org_telephone'   => '318-555-0200',
+			'org_url'         => 'https://example.org',
+			'org_area_served' => 'Ouachita Parish LA',
+		];
+		$result = MM_Schema_Types::build_node_additions( $fields, 'Organization' );
+
+		$this->assertSame( 'NGO', $result['@type'] );
+		$this->assertSame( '1201 Hudson Lane, Monroe, LA 71201', $result['address'] );
+		$this->assertSame( '318-555-0200', $result['telephone'] );
+		$this->assertSame( 'https://example.org', $result['url'] );
+		$this->assertSame( 'Ouachita Parish LA', $result['areaServed'] );
+	}
+
+	public function test_build_node_additions_organization_multiple_areas(): void {
+		$result = MM_Schema_Types::build_node_additions( [
+			'org_area_served' => 'Ouachita Parish LA, Union Parish LA',
+		], 'Organization' );
+		$this->assertSame( [ 'Ouachita Parish LA', 'Union Parish LA' ], $result['areaServed'] );
+	}
+
+	public function test_build_node_additions_organization_default_type(): void {
+		$result = MM_Schema_Types::build_node_additions( [], 'Organization' );
+		$this->assertArrayNotHasKey( '@type', $result );
+	}
 }

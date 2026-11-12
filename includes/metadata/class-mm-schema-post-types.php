@@ -22,6 +22,8 @@ class MM_Schema_Post_Types {
 		'mm_destination' => [ 'TouristDestination',  'Destinations',       [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'location' ],
 		'mm_vessel'      => [ 'Vehicle',             'Vehicles',           [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'car' ],
 		'mm_course'      => [ 'Course',              'Courses',            [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'welcome-learn-more' ],
+		'mm_business'     => [ 'LocalBusiness',      'Businesses',         [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'store' ],
+		'mm_organization' => [ 'Organization',       'Organizations',      [ 'title', 'editor', 'thumbnail', 'excerpt' ], 'groups' ],
 		// AboutPage, ContactPage, Calendar are WordPress Page Templates — not CPTs.
 		// WebPage maps to default `page` type — not a separate CPT.
 		// BlogPosting maps to default `post` type — not a separate CPT.

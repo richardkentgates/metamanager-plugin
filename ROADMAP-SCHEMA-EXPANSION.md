@@ -455,6 +455,43 @@ if ( in_array( $type, [
 
 ---
 
+### 3.6 LocalBusiness — Directory listings (`mm_business`)
+
+**Status:** Implemented (2026-11-12). Driven by the Ouachita Online
+project (ouachita.online) — its Directory needs per-listing business
+pages (the dedicated-page product), each emitting its own LocalBusiness
+node. The site-level Business Profile node describes the site owner;
+`mm_business` describes the listed businesses.
+
+| Field key | Schema property | Type | Notes |
+|---|---|---|---|
+| `business_type` | `@type` override | select | Full LocalBusiness subtype taxonomy, reuses `MM_Mod_Local::get_business_types()` |
+| `business_address` | `address` | text | Matches the codebase text-address convention |
+| `business_lat` / `business_lng` | `geo` > GeoCoordinates | text | Ignored unless both numeric |
+| `business_telephone` | `telephone` | tel | |
+| `business_url` | `url` | url | |
+| `business_price_range` | `priceRange` | select | $ / $$ / $$$ / $$$$ |
+| `business_hours` | `openingHours` | text | Schema.org openingHours syntax |
+
+`@id` stays `#localbusiness` regardless of subtype so cross-references
+remain stable.
+
+### 3.7 Organization — Nonprofits & public orgs (`mm_organization`)
+
+**Status:** Implemented (2026-11-12). Also Ouachita Online–driven — its
+free-listings lane (public assistance, nonprofits, civic orgs) needs
+Organization/NGO/GovernmentOrganization markup, not LocalBusiness.
+
+| Field key | Schema property | Type | Notes |
+|---|---|---|---|
+| `org_type` | `@type` override | select | Organization / NGO / GovernmentOrganization / EducationalOrganization / MedicalOrganization |
+| `org_address` | `address` | text | |
+| `org_telephone` | `telephone` | tel | |
+| `org_url` | `url` | url | |
+| `org_area_served` | `areaServed` | text | Comma-separated → array |
+
+---
+
 ## 4. Business Profile Additions
 
 ### TourismBusiness Subtypes
