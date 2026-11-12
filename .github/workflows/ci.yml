@@ -1,6 +1,7 @@
 name: Quality and Security Checks
 
 on:
+  workflow_dispatch:
   push:
     branches: [dev]
 

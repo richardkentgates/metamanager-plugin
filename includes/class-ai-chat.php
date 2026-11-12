@@ -24,6 +24,10 @@ class AI_Chat {
 	const AUDIT_TABLE   = 'ai_chat_audit';
 	const DB_VERSION    = '1.0';
 
+	// Rate caps (roadmap §8): per session and per user per day.
+	const RATE_LIMIT_SESSION = 50;
+	const RATE_LIMIT_DAILY   = 200;
+
 	/**
 	 * Create the session and audit tables (activation/upgrade path).
 	 */
@@ -311,6 +315,155 @@ class AI_Chat {
 		) );
 
 		return array( 'reply' => $reply, 'calls' => $executed );
+	}
+
+	// ------------------------------------------------------------------
+	// The approval-card flow (roadmap §5): propose returns pending cards
+	// for writes/destructive actions; settle records the human's
+	// decision and executes. Reads run immediately.
+	// ------------------------------------------------------------------
+
+	/**
+	 * Enforce the per-session and per-day caps. Returns WP_Error when
+	 * the caller is over budget — never a silent drop.
+	 */
+	public function rate_check( int $session_id, string $actor ) {
+		if ( count( $this->get_turns( $session_id ) ) >= self::RATE_LIMIT_SESSION ) {
+			return new WP_Error(
+				'rate_limited',
+				'Session turn limit reached (' . self::RATE_LIMIT_SESSION . ').'
+			);
+		}
+		$day_key   = 'ai_chat_rate_' . md5( $actor ) . '_' . gmdate( 'Y-m-d' );
+		$used      = (int) get_option( $day_key, 0 );
+		if ( $used >= self::RATE_LIMIT_DAILY ) {
+			return new WP_Error(
+				'rate_limited',
+				'Daily limit reached (' . self::RATE_LIMIT_DAILY . ' turns).'
+			);
+		}
+		update_option( $day_key, $used + 1, false );
+		return true;
+	}
+
+	/**
+	 * One proposal turn: the model replies and/or proposes ability
+	 * calls. Reads execute immediately (audited); writes and destructive
+	 * actions come back as PENDING cards for settle().
+	 *
+	 * @return array{session_id:int, reply:string, calls:array}|WP_Error
+	 */
+	public function propose( int $session_id, string $actor, string $user_text, ?callable $model = null ) {
+		$rate = $this->rate_check( $session_id, $actor );
+		if ( is_wp_error( $rate ) ) {
+			return $rate;
+		}
+		$model   = $model ?? array( $this, 'core_model_turn' );
+		$proposal = call_user_func( $model, $this->build_context(), $user_text, $this->get_turns( $session_id ) );
+		$reply    = (string) ( $proposal['reply'] ?? '' );
+		$calls    = array();
+
+		foreach ( (array) ( $proposal['calls'] ?? array() ) as $call ) {
+			$name  = (string) ( $call['ability'] ?? '' );
+			$input = (array) ( $call['input'] ?? array() );
+			$tier  = self::tier_for( $name );
+			if ( 'read' === $tier ) {
+				$result = $this->execute( $session_id, $actor, $name, $input, true, true );
+				$calls[] = array(
+					'ability' => $name,
+					'input'   => $input,
+					'tier'    => $tier,
+					'status'  => is_wp_error( $result ) ? 'failed' : 'executed',
+					'result'  => is_wp_error( $result )
+						? array( 'error' => $result->get_error_code() ) : $result,
+				);
+			} else {
+				// A card for the human: nothing runs without approval.
+				$calls[] = array(
+					'ability' => $name,
+					'input'   => $input,
+					'tier'    => $tier,
+					'status'  => 'pending',
+				);
+			}
+		}
+
+		if ( '' === $reply && ! empty( $calls ) ) {
+			$bits = array();
+			foreach ( $calls as $call ) {
+				$bits[] = $call['ability'] . ' (' . $call['status'] . ')';
+			}
+			$reply = 'Proposed: ' . implode( ', ', $bits ) . '.';
+		}
+
+		$this->append_turn( $session_id, array(
+			'prompt' => $user_text,
+			'reply'  => $reply,
+			'calls'  => $calls,
+		) );
+		return array( 'session_id' => $session_id, 'reply' => $reply, 'calls' => $calls );
+	}
+
+	/**
+	 * Settle one pending call from the latest turn: approve or decline,
+	 * with optional edited input and the typed confirmation destructive
+	 * actions require. Every decision is audited.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function settle( int $session_id, string $actor, int $call_index, bool $approved, bool $typed_ok = false, ?array $edited_input = null ) {
+		$turns = $this->get_turns( $session_id );
+		$ti    = count( $turns ) - 1;
+		if ( $ti < 0 || ! isset( $turns[ $ti ]['calls'][ $call_index ] ) ) {
+			return new WP_Error( 'unknown_call', 'No such pending call.' );
+		}
+		$call = $turns[ $ti ]['calls'][ $call_index ];
+		if ( ( $call['status'] ?? '' ) !== 'pending' ) {
+			return new WP_Error( 'not_pending', 'That call is not pending.' );
+		}
+		$input = is_array( $edited_input ) ? $edited_input : (array) $call['input'];
+
+		if ( ! $approved ) {
+			$this->audit( $session_id, $actor, (string) $call['ability'], $input, 'declined' );
+			$turns[ $ti ]['calls'][ $call_index ]['status'] = 'declined';
+			$this->replace_turns( $session_id, $turns );
+			return array( 'status' => 'declined', 'ability' => $call['ability'] );
+		}
+
+		$result = $this->execute( $session_id, $actor, (string) $call['ability'], $input, true, $typed_ok );
+		if ( is_wp_error( $result ) ) {
+			if ( 'typed_confirmation_required' === $result->get_error_code() ) {
+				// A refused gate is not an execution: the card stays
+				// pending so the human can retry with the confirmation.
+				return $result;
+			}
+			$turns[ $ti ]['calls'][ $call_index ]['status'] = 'failed';
+			$turns[ $ti ]['calls'][ $call_index ]['result'] = array( 'error' => $result->get_error_code() );
+			$this->replace_turns( $session_id, $turns );
+			return $result;
+		}
+		$turns[ $ti ]['calls'][ $call_index ]['status'] = 'executed';
+		$turns[ $ti ]['calls'][ $call_index ]['result'] = $result;
+		$this->replace_turns( $session_id, $turns );
+		return array( 'status' => 'executed', 'ability' => $call['ability'], 'result' => $result );
+	}
+
+	/**
+	 * Replace the turn history (status transitions on pending cards).
+	 * The AUDIT stays append-only; turns are the working transcript.
+	 */
+	private function replace_turns( int $session_id, array $turns ): void {
+		global $wpdb;
+		$table = $wpdb->prefix . self::SESSION_TABLE;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
+		$wpdb->update(
+			$table,
+			array(
+				'turns'      => wp_json_encode( $turns ),
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $session_id )
+		);
 	}
 
 	/**
