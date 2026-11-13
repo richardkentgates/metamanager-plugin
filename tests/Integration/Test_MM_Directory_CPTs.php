@@ -43,4 +43,63 @@ class Test_MM_Directory_CPTs extends WP_UnitTestCase {
 		$this->assertSame( 'BeautySalon', $additions['@type'] );
 		$this->assertSame( '318-555-0100', $additions['telephone'] );
 	}
+
+	public function test_details_table_renders_filled_fields_with_labels(): void {
+		MM_Schema_Post_Types::register_post_types();
+		$post_id = self::factory()->post->create( [
+			'post_type'   => 'mm_destination',
+			'post_title'  => 'Details Test',
+			'post_status' => 'publish',
+		] );
+		update_post_meta( $post_id, 'mm_schema_fields', [
+			'destination_address'   => '820 Kiroli Road, West Monroe, LA 71291',
+			'destination_map_url'   => 'https://example.com/map',
+			'destination_attractions' => 'Sunken Gardens',
+			'destination_booking_url' => '',
+		] );
+		ob_start();
+		MM_Schema_Post_Types::render_details_table( $post_id );
+		$out = ob_get_clean();
+
+		$this->assertStringContainsString( 'mm-schema-details', $out );
+		$this->assertStringContainsString( 'Address', $out );
+		$this->assertStringContainsString( '820 Kiroli Road, West Monroe, LA 71291', $out );
+		$this->assertStringContainsString( 'Map URL', $out );
+		$this->assertStringContainsString( 'https://example.com/map', $out );
+		// Empty fields are skipped.
+		$this->assertStringNotContainsString( 'Booking URL', $out );
+	}
+
+	public function test_details_table_renders_dynamic_keys_and_links_urls(): void {
+		MM_Schema_Post_Types::register_post_types();
+		$post_id = self::factory()->post->create( [
+			'post_type'   => 'mm_faq_page',
+			'post_title'  => 'FAQ Test',
+			'post_status' => 'publish',
+		] );
+		update_post_meta( $post_id, 'mm_schema_fields', [
+			'faq_question_1' => 'What are the hours?',
+			'faq_answer_1'   => 'Open daily.',
+		] );
+		ob_start();
+		MM_Schema_Post_Types::render_details_table( $post_id );
+		$out = ob_get_clean();
+
+		$this->assertStringContainsString( 'What are the hours?', $out );
+		$this->assertStringContainsString( 'Open daily.', $out );
+		$this->assertStringContainsString( 'Faq Question 1', $out );
+	}
+
+	public function test_details_table_renders_nothing_without_fields(): void {
+		MM_Schema_Post_Types::register_post_types();
+		$post_id = self::factory()->post->create( [
+			'post_type'   => 'mm_service',
+			'post_title'  => 'No Fields',
+			'post_status' => 'publish',
+		] );
+		ob_start();
+		MM_Schema_Post_Types::render_details_table( $post_id );
+		$out = ob_get_clean();
+		$this->assertSame( '', $out );
+	}
 }

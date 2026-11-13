@@ -26,27 +26,8 @@ while ( have_posts() ) {
 
 		<div class="entry-content">
 			<?php
-			$saved = get_post_meta( get_the_ID(), 'mm_schema_fields', true );
-			if ( is_array( $saved ) && ! empty( $saved ) ) {
-				echo '<div class="mm-destination-details">';
-				if ( ! empty( $saved['destination_address'] ) ) {
-					echo '<p><strong>Location:</strong> ' . esc_html( $saved['destination_address'] ) . '</p>';
-				}
-				if ( ! empty( $saved['destination_tourist_type'] ) ) {
-					echo '<p><strong>Type:</strong> ' . esc_html( $saved['destination_tourist_type'] ) . '</p>';
-				}
-				if ( ! empty( $saved['destination_attractions'] ) ) {
-					echo '<p><strong>Attractions:</strong> ' . esc_html( $saved['destination_attractions'] ) . '</p>';
-				}
-				if ( ! empty( $saved['destination_booking_url'] ) ) {
-					echo '<p><a href="' . esc_url( $saved['destination_booking_url'] ) . '" class="button">Book Tours</a></p>';
-				}
-				if ( ! empty( $saved['destination_map_url'] ) ) {
-					echo '<p><a href="' . esc_url( $saved['destination_map_url'] ) . '" target="_blank">View Map</a></p>';
-				}
-				echo '</div>';
-			}
 			the_content();
+			MM_Schema_Post_Types::render_details_table( get_the_ID() );
 			?>
 		</div>
 	</article>

@@ -26,24 +26,8 @@ while ( have_posts() ) {
 
 		<div class="entry-content">
 			<?php
-			$saved = get_post_meta( get_the_ID(), 'mm_schema_fields', true );
-			if ( is_array( $saved ) && ! empty( $saved ) ) {
-				echo '<div class="mm-organization-details">';
-				if ( ! empty( $saved['org_address'] ) ) {
-					echo '<p><strong>Address:</strong> ' . esc_html( $saved['org_address'] ) . '</p>';
-				}
-				if ( ! empty( $saved['org_telephone'] ) ) {
-					echo '<p><strong>Phone:</strong> ' . esc_html( $saved['org_telephone'] ) . '</p>';
-				}
-				if ( ! empty( $saved['org_area_served'] ) ) {
-					echo '<p><strong>Area Served:</strong> ' . esc_html( $saved['org_area_served'] ) . '</p>';
-				}
-				if ( ! empty( $saved['org_url'] ) ) {
-					echo '<p><a href="' . esc_url( $saved['org_url'] ) . '" class="button">Visit Website</a></p>';
-				}
-				echo '</div>';
-			}
 			the_content();
+			MM_Schema_Post_Types::render_details_table( get_the_ID() );
 			?>
 		</div>
 	</article>
