@@ -631,9 +631,9 @@ class MM_Abilities {
 				'latitude'  => $local['latitude'] ?? '',
 				'longitude' => $local['longitude'] ?? '',
 			],
-			'hours'       => $local['hours'] ?? [],
+			'hours'       => array_values( (array) ( $local['hours'] ?? [] ) ),
 			'price_range' => $local['price_range'] ?? '',
-			'same_as'     => $social['accounts'] ?? [],
+			'same_as'     => array_values( (array) ( $social['accounts'] ?? [] ) ),
 		];
 
 		// Remove empty values.
