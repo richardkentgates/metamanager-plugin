@@ -22,6 +22,7 @@ $schema_types = MM_Schema_Types::get_schema_types();
 				<select name="<?php echo esc_attr($opt); ?>[schema][knowledge_entity]">
 					<option value="Organization" <?php selected($s->get('schema.knowledge_entity','LocalBusiness'), 'Organization'); ?>>Organization</option>
 					<option value="LocalBusiness" <?php selected($s->get('schema.knowledge_entity','LocalBusiness'), 'LocalBusiness'); ?>>LocalBusiness (use Business tab for subtype)</option>
+					<option value="WebSite" <?php selected($s->get('schema.knowledge_entity','LocalBusiness'), 'WebSite'); ?>>WebSite (a publication or content site)</option>
 				</select>
 				<p class="description">Used as the publisher and graph root. If you have a physical location, choose LocalBusiness.</p>
 			</td>

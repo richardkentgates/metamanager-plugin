@@ -149,6 +149,15 @@ abstract class MM_Mod_Base {
 
 	/** Build a schema @id string for the site. */
 	protected function site_id( string $fragment = '' ): string {
+		// A publication/content site (knowledge entity = WebSite) has no
+		// separate organization node: the WebSite node is the graph root, so
+		// every reference to #organization resolves to #website instead.
+		if ( 'organization' === $fragment && class_exists( 'MM_Site_Settings' ) ) {
+			$entity = MM_Site_Settings::get_instance()->get( 'schema.knowledge_entity', 'LocalBusiness' );
+			if ( 'WebSite' === $entity ) {
+				$fragment = 'website';
+			}
+		}
 		return $this->site_url() . ( $fragment ? '#' . $fragment : '' );
 	}
 

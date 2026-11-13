@@ -14,6 +14,13 @@ defined( 'ABSPATH' ) || exit;
 class MM_Mod_Local extends MM_Mod_Base {
 
 	public function populate( array &$data, MM_Page_Context $context, MM_Site_Settings $settings ): void {
+		// A publication/content site (knowledge entity = WebSite) has no
+		// organization node: the WebSite node is the graph root and every
+		// #organization reference resolves to #website (see MM_Mod_Base).
+		if ( 'WebSite' === $settings->get( 'schema.knowledge_entity', 'LocalBusiness' ) ) {
+			return;
+		}
+
 		$biz = $settings->all_business();
 
 		if ( empty( $biz['name'] ) ) {

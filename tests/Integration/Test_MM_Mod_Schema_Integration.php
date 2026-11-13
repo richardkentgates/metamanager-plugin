@@ -142,6 +142,35 @@ class Test_MM_Mod_Schema_Integration extends WP_UnitTestCase {
 		$this->assertContains( 'WebPage', $types );
 	}
 
+	public function test_website_knowledge_entity_roots_graph_on_website_node(): void {
+		update_option( MM_META_OPT_SETTINGS, [ 'schema' => [ 'knowledge_entity' => 'WebSite' ] ] );
+		MM_Site_Settings::reset_instance();
+
+		$post_id = $this->factory->post->create( [
+			'post_title'  => 'Entity Test',
+			'post_status' => 'publish',
+		] );
+		$this->go_to( get_permalink( $post_id ) );
+		$output  = $this->render_head();
+		$json_ld = $this->extract_json_ld( $output );
+
+		$ids = array();
+		foreach ( $json_ld as $doc ) {
+			foreach ( ( $doc['@graph'] ?? array() ) as $n ) {
+				if ( isset( $n['@id'] ) ) {
+					$ids[] = $n['@id'];
+				}
+			}
+		}
+		$website = trailingslashit( home_url() ) . '#website';
+		$org     = trailingslashit( home_url() ) . '#organization';
+
+		$this->assertContains( $website, $ids, 'WebSite node must be the graph root' );
+		$this->assertNotContains( $org, $ids, 'No organization node for a WebSite knowledge entity' );
+		// References to #organization resolve to #website instead.
+		$this->assertContains( $website, $ids );
+	}
+
 	public function test_tourist_destination_fields_merge_into_its_node(): void {
 		MM_Schema_Post_Types::register_post_types();
 		$post_id = $this->factory->post->create( [
