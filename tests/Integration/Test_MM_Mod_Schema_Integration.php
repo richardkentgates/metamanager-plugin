@@ -240,6 +240,52 @@ class Test_MM_Mod_Schema_Integration extends WP_UnitTestCase {
 	// Content-type node (BlogPosting)
 	// ------------------------------------------------------------------
 
+	public function test_non_creativework_types_use_thing_base(): void {
+		MM_Schema_Post_Types::register_post_types();
+		$cases = [
+			'mm_event'       => 'Event',
+			'mm_service'     => 'Service',
+			'mm_trip'        => 'TouristTrip',
+			'mm_vessel'      => 'Vehicle',
+			'mm_business'    => 'LocalBusiness',
+			'mm_organization'=> 'Organization',
+		];
+		foreach ( $cases as $post_type => $schema_type ) {
+			$post_id = $this->factory->post->create( [
+				'post_type'   => $post_type,
+				'post_title'  => 'Vocabulary Probe ' . $post_type,
+				'post_status' => 'publish',
+			] );
+			$this->context = new MM_Page_Context();
+			$this->emitter = new MM_Head_Emitter( $this->context, $this->settings );
+			$this->emitter->add_module( new MM_Mod_Schema( $this->settings ) );
+			$this->go_to( add_query_arg( [ 'post_type' => $post_type, 'p' => $post_id ], home_url( '/' ) ) );
+			$output  = $this->render_head();
+			$json_ld = $this->extract_json_ld( $output );
+
+			$node = null;
+			foreach ( $json_ld as $doc ) {
+				foreach ( ( $doc['@graph'] ?? [] ) as $n ) {
+					if ( ( $n['@id'] ?? '' ) === get_permalink( $post_id ) . '#' . strtolower( $schema_type ) ) {
+						$node = $n;
+						break 2;
+					}
+				}
+			}
+			$this->assertNotNull( $node, "$schema_type content node should be emitted for $post_type" );
+			foreach ( [ 'isPartOf', 'breadcrumb', 'datePublished', 'dateModified', 'primaryImageOfPage', 'headline' ] as $field ) {
+				$this->assertArrayNotHasKey( $field, $node, "$field is not valid on $schema_type" );
+			}
+			$this->assertSame( get_the_title( $post_id ), $node['name'] ?? '', "$schema_type uses name, not headline" );
+			$this->assertSame(
+				get_permalink( $post_id ) . '#webpage',
+				$node['mainEntityOfPage']['@id'] ?? '',
+				"$schema_type links back to the WebPage node"
+			);
+		}
+	}
+
+
 	public function test_blog_posting_emitted_for_posts(): void {
 		$post_id = $this->factory->post->create( [
 			'post_title'  => 'Blog Post Test',

@@ -11,6 +11,25 @@ defined( 'ABSPATH' ) || exit;
 
 class MM_Mod_Schema extends MM_Mod_Base {
 
+	/**
+	 * Schema types outside the CreativeWork family (verified against the
+	 * schema.org validator: Place/Intangible lineages reject headline,
+	 * datePublished, dateModified, isPartOf, breadcrumb, primaryImageOfPage).
+	 * These render as content nodes with the Thing-level base (name +
+	 * mainEntityOfPage) while the WebPage node carries the page fields.
+	 */
+	private const NON_CREATIVEWORK_TYPES = [
+		'TouristDestination',
+		'Place',
+		'Event',
+		'Service',
+		'TouristTrip',
+		'Vehicle',
+		'Product',
+		'LocalBusiness',
+		'Organization',
+	];
+
 	public function populate( array &$data, MM_Page_Context $context, MM_Site_Settings $settings ): void {
 		// Media schema: scan content for actual media on singular pages.
 		if ( $context->is_singular() ) {
@@ -160,14 +179,14 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			$type = 'SearchResultsPage';
 		}
 
-		// TouristDestination is a Place, not a CreativeWork: the WebPage node
-		// stays the container and the Place is emitted as a content node, so
-		// WebPage-only fields (dates, breadcrumb, primaryImageOfPage) never
-		// land on the Place.
-		$place_split = false;
-		if ( 'TouristDestination' === $type ) {
+		// Non-CreativeWork types (TouristDestination, Event, Service, …) are
+		// Places/Intangibles: the WebPage node stays the container and the
+		// entity is emitted as a content node, so WebPage-only fields (dates,
+		// breadcrumb, primaryImageOfPage) never land on the entity.
+		$entity_type = null;
+		if ( in_array( $type, self::NON_CREATIVEWORK_TYPES, true ) ) {
+			$entity_type = $type;
 			$type        = 'WebPage';
-			$place_split = true;
 		}
 
 		$node = [
@@ -178,8 +197,8 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			'isPartOf'    => [ '@id' => $this->site_id( 'website' ) ],
 		];
 
-		if ( $place_split ) {
-			$node['mainEntity'] = [ '@id' => $url . '#touristdestination' ];
+		if ( $entity_type ) {
+			$node['mainEntity'] = [ '@id' => $url . '#' . strtolower( $entity_type ) ];
 		}
 
 		// ContactPage: add business info data from settings.
@@ -432,9 +451,9 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			'url'   => $url,
 		];
 
-		if ( 'TouristDestination' === $type ) {
-			// Place, not CreativeWork: name instead of headline, and no
-			// date/isPartOf fields (they are not in the Place vocabulary).
+		if ( in_array( $type, self::NON_CREATIVEWORK_TYPES, true ) ) {
+			// Place/Intangible, not CreativeWork: name instead of headline,
+			// and no date/isPartOf fields (not in their vocabulary).
 			$node['name']            = get_the_title( $post );
 			$node['mainEntityOfPage'] = [ '@id' => $url . '#webpage' ];
 		} else {
