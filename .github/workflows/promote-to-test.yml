@@ -150,19 +150,14 @@ jobs:
           mkdir -p ~/.ssh
           echo "${SSH_PRIVATE_KEY}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${APT_HOST}" >> ~/.ssh/known_hosts 2>/dev/null
-
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            "${APT_USER}@${APT_HOST}" \
-            "sudo mkdir -p /var/www/html/metamanager-test && sudo chown -R ${APT_USER}:${APT_USER} /var/www/html/metamanager-test"
 
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             metamanager-${{ steps.version.outputs.version }}.zip \
-            "${APT_USER}@${APT_HOST}:/var/www/html/metamanager-test/metamanager-latest.zip"
+            "${APT_USER}@${APT_HOST}:/tmp/metamanager-latest.zip"
 
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${APT_USER}@${APT_HOST}" \
-            "printf '%s\n' '{\"version\":\"${{ steps.version.outputs.version }}\",\"requires\":{\"php\":\"8.0\",\"wordpress\":\"6.2\"},\"download_url\":\"https://apt.richardkentgates.com/metamanager-test/metamanager-latest.zip\"}' > /var/www/html/metamanager-test/metadata.json"
+            "sudo mkdir -p /var/www/html/metamanager-test && sudo chown -R ${APT_USER}:${APT_USER} /var/www/html/metamanager-test && mv /tmp/metamanager-latest.zip /var/www/html/metamanager-test/metamanager-latest.zip && printf '%s\n' '{\"version\":\"${{ steps.version.outputs.version }}\",\"requires\":{\"php\":\"8.0\",\"wordpress\":\"6.2\"},\"download_url\":\"https://apt.richardkentgates.com/metamanager-test/metamanager-latest.zip\"}' > /var/www/html/metamanager-test/metadata.json"
 
           echo "Deployed plugin v${{ steps.version.outputs.version }} to apt server (test channel)"
 
