@@ -26,27 +26,8 @@ while ( have_posts() ) {
 
 		<div class="entry-content">
 			<?php
-			$saved = get_post_meta( get_the_ID(), 'mm_schema_fields', true );
-			if ( is_array( $saved ) && ! empty( $saved ) ) {
-				echo '<div class="mm-business-details">';
-				if ( ! empty( $saved['business_address'] ) ) {
-					echo '<p><strong>Address:</strong> ' . esc_html( $saved['business_address'] ) . '</p>';
-				}
-				if ( ! empty( $saved['business_telephone'] ) ) {
-					echo '<p><strong>Phone:</strong> ' . esc_html( $saved['business_telephone'] ) . '</p>';
-				}
-				if ( ! empty( $saved['business_hours'] ) ) {
-					echo '<p><strong>Hours:</strong> ' . esc_html( $saved['business_hours'] ) . '</p>';
-				}
-				if ( ! empty( $saved['business_price_range'] ) ) {
-					echo '<p><strong>Price Range:</strong> ' . esc_html( $saved['business_price_range'] ) . '</p>';
-				}
-				if ( ! empty( $saved['business_url'] ) ) {
-					echo '<p><a href="' . esc_url( $saved['business_url'] ) . '" class="button">Visit Website</a></p>';
-				}
-				echo '</div>';
-			}
 			the_content();
+			MM_Schema_Post_Types::render_details_table( get_the_ID() );
 			?>
 		</div>
 	</article>

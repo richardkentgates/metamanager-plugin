@@ -1333,4 +1333,68 @@ class MM_Schema_Post_Types {
 	public static function is_schema_cpt( string $post_type ): bool {
 		return isset( self::TYPES[ $post_type ] );
 	}
+
+	/**
+	 * Render the schema fields as a consistent details table at the foot of
+	 * a singular CPT page. Google expects schema.org metadata to be visible
+	 * on the page it describes; this block is the built-in, uniform display
+	 * for every schema CPT. The layout is deliberately plain — a definition
+	 * list of the filled fields in field-definition order — because these
+	 * are details, not decoration. URL fields render as links.
+	 */
+	public static function render_details_table( int $post_id ): void {
+		$post = get_post( $post_id );
+		if ( ! $post || ! self::is_schema_cpt( $post->post_type ) ) {
+			return;
+		}
+		$type = self::slug_to_type( $post->post_type );
+		if ( ! $type ) {
+			return;
+		}
+		$saved = get_post_meta( $post_id, 'mm_schema_fields', true );
+		if ( ! is_array( $saved ) || empty( $saved ) ) {
+			return;
+		}
+		$fields = MM_Schema_Types::get_fields_by_type()[ $type ] ?? array();
+		$rows = '';
+		$seen = array();
+		foreach ( $fields as $field ) {
+			$key   = $field['key'] ?? '';
+			$value = trim( (string) ( $saved[ $key ] ?? '' ) );
+			$seen[ $key ] = true;
+			if ( '' === $value ) {
+				continue;
+			}
+			$label = $field['label'] ?? $key;
+			if ( ( $field['type'] ?? '' ) === 'url' && filter_var( $value, FILTER_VALIDATE_URL ) ) {
+				$display = '<a href="' . esc_url( $value ) . '" target="_blank" rel="noopener">' . esc_html( $value ) . '</a>';
+			} else {
+				$display = esc_html( $value );
+			}
+			$rows .= '<div class="mm-detail-row"><dt>' . esc_html( $label ) . '</dt><dd>' . $display . '</dd></div>';
+		}
+		// Dynamic keys (FAQ question/answer pairs, HowTo supplies, tools,
+		// steps) have no static definitions; display them too so every
+		// piece of schema data the post carries is visible on the page.
+		foreach ( $saved as $key => $value ) {
+			if ( isset( $seen[ $key ] ) ) {
+				continue;
+			}
+			$value = trim( (string) $value );
+			if ( '' === $value ) {
+				continue;
+			}
+			$label = ucwords( str_replace( '_', ' ', (string) $key ) );
+			$rows .= '<div class="mm-detail-row"><dt>' . esc_html( $label ) . '</dt><dd>' . esc_html( $value ) . '</dd></div>';
+		}
+		if ( '' === $rows ) {
+			return;
+		}
+		echo '<style>.mm-schema-details{margin:48px 0 24px 0}.mm-schema-details h2{font-size:20px;border-bottom:1px solid #ccc;padding-bottom:6px;margin:0 0 8px 0}.mm-details-list{margin:0}.mm-detail-row{display:flex;border-bottom:1px solid #eee;padding:8px 0}.mm-detail-row dt{flex:0 0 220px;font-weight:700}.mm-detail-row dd{margin:0}</style>';
+		echo '<section class="mm-schema-details">';
+		echo '<h2>' . esc_html__( 'Details', 'metamanager' ) . '</h2>';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $rows is assembled from esc_html()/esc_url() parts above.
+		echo '<dl class="mm-details-list">' . $rows . '</dl>';
+		echo '</section>';
+	}
 }
