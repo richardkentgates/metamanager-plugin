@@ -1393,6 +1393,7 @@ class MM_Schema_Post_Types {
 		echo '<style>.mm-schema-details{margin:48px 0 24px 0}.mm-schema-details h2{font-size:20px;border-bottom:1px solid #ccc;padding-bottom:6px;margin:0 0 8px 0}.mm-details-list{margin:0}.mm-detail-row{display:flex;border-bottom:1px solid #eee;padding:8px 0}.mm-detail-row dt{flex:0 0 220px;font-weight:700}.mm-detail-row dd{margin:0}</style>';
 		echo '<section class="mm-schema-details">';
 		echo '<h2>' . esc_html__( 'Details', 'metamanager' ) . '</h2>';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $rows is assembled from esc_html()/esc_url() parts above.
 		echo '<dl class="mm-details-list">' . $rows . '</dl>';
 		echo '</section>';
 	}
