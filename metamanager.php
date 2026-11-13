@@ -93,9 +93,6 @@ require_once MM_META_DIR . 'includes/metadata/class-mm-page-generator.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-biz-card-css.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-metadata-cli.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-abilities.php';
-require_once MM_META_DIR . 'includes/class-ai-chat.php';
-require_once MM_META_DIR . 'includes/class-mm-ai-rest.php';
-require_once MM_META_DIR . 'includes/class-mm-ai-page.php';
 require_once MM_META_DIR . 'includes/metadata/class-mm-mcp-server.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-head-meta.php';
 require_once MM_META_DIR . 'includes/metadata/modules/class-mm-mod-social.php';
@@ -177,7 +174,6 @@ function mm_activate_single_site(): void {
 	MM_DB::create_or_update_table();
 	MM_Metadata_History::create_or_update_table();
 	MM_Mod_Links::create_table();
-	AI_Chat::create_tables();
 	MM_Job_Queue::ensure_dirs();
 
 	if ( ! wp_next_scheduled( 'mm_import_completed_jobs' ) ) {
@@ -486,19 +482,6 @@ function mm_import_completed_jobs(): void {
 
 // Register custom attachment post meta — type safety, sanitisation, REST API.
 add_action( 'init', [ 'MM_Metadata', 'register_meta' ] );
-
-// AI chat session/audit tables — activation creates them; this one-time
-// version check covers installs that were already active (no silent
-// no-op writes against missing tables).
-function mm_ai_chat_db_upgrade(): void {
-	if ( get_option( 'ai_chat_db_version' ) !== AI_Chat::DB_VERSION ) {
-		AI_Chat::create_tables();
-		update_option( 'ai_chat_db_version', AI_Chat::DB_VERSION, false );
-	}
-}
-add_action( 'init', 'mm_ai_chat_db_upgrade' );
-add_action( 'rest_api_init', [ 'MM_AI_Rest', 'register_routes' ] );
-add_action( 'admin_menu', [ 'MM_AI_Page', 'add_menu' ] );
 
 // Enable excerpt field for pages (WordPress only supports excerpts for posts by default).
 add_action( 'init', function (): void {
