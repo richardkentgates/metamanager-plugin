@@ -160,6 +160,16 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			$type = 'SearchResultsPage';
 		}
 
+		// TouristDestination is a Place, not a CreativeWork: the WebPage node
+		// stays the container and the Place is emitted as a content node, so
+		// WebPage-only fields (dates, breadcrumb, primaryImageOfPage) never
+		// land on the Place.
+		$place_split = false;
+		if ( 'TouristDestination' === $type ) {
+			$type        = 'WebPage';
+			$place_split = true;
+		}
+
 		$node = [
 			'@type'       => $type,
 			'@id'         => $url . '#webpage',
@@ -167,6 +177,10 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			'name'        => $title,
 			'isPartOf'    => [ '@id' => $this->site_id( 'website' ) ],
 		];
+
+		if ( $place_split ) {
+			$node['mainEntity'] = [ '@id' => $url . '#touristdestination' ];
+		}
 
 		// ContactPage: add business info data from settings.
 		if ( 'ContactPage' === $type && $context->is_singular() ) {
@@ -266,21 +280,6 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 			if ( $contact_points ) {
 				$node['contactPoint'] = ( 1 === count( $contact_points ) ) ? $contact_points[0] : $contact_points;
-			}
-		}
-
-		// CPT types rendered on the WebPage node itself (add_content_node()
-		// skips them — TouristDestination today) never get a content node,
-		// so their metabox schema fields merge here instead.
-		if ( $context->is_singular() && $context->get_post()
-			&& MM_Schema_Post_Types::is_schema_cpt( $context->get_post()->post_type )
-			&& in_array( $type, [ 'TouristDestination' ], true ) ) {
-			$cpt_fields = get_post_meta( $context->get_post()->ID, 'mm_schema_fields', true );
-			if ( is_array( $cpt_fields ) && ! empty( $cpt_fields ) ) {
-				$additions = MM_Schema_Types::build_node_additions( $cpt_fields, $type );
-				if ( ! empty( $additions ) ) {
-					$node = array_merge( $node, $additions );
-				}
 			}
 		}
 
@@ -421,21 +420,29 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		// WebPage and its subtypes (AboutPage, ContactPage, Calendar) are already on the WebPage node; skip.
-		if ( in_array( $type, [ 'WebPage', 'WebSite', 'AboutPage', 'ContactPage', 'Calendar', 'TouristDestination' ], true ) ) {
+		if ( in_array( $type, [ 'WebPage', 'WebSite', 'AboutPage', 'ContactPage', 'Calendar' ], true ) ) {
 			return;
 		}
 
 		$url = get_permalink( $post );
 
 		$node = [
-			'@type'         => $type,
-			'@id'           => $url . '#' . strtolower( $type ),
-			'headline'      => get_the_title( $post ),
-			'url'           => $url,
-			'datePublished' => get_the_date( 'c', $post ),
-			'dateModified'  => get_the_modified_date( 'c', $post ),
-			'isPartOf'      => [ '@id' => $url . '#webpage' ],
+			'@type' => $type,
+			'@id'   => $url . '#' . strtolower( $type ),
+			'url'   => $url,
 		];
+
+		if ( 'TouristDestination' === $type ) {
+			// Place, not CreativeWork: name instead of headline, and no
+			// date/isPartOf fields (they are not in the Place vocabulary).
+			$node['name']            = get_the_title( $post );
+			$node['mainEntityOfPage'] = [ '@id' => $url . '#webpage' ];
+		} else {
+			$node['headline']      = get_the_title( $post );
+			$node['datePublished'] = get_the_date( 'c', $post );
+			$node['dateModified']  = get_the_modified_date( 'c', $post );
+			$node['isPartOf']      = [ '@id' => $url . '#webpage' ];
+		}
 
 		// Description.
 		foreach ( $data['meta'] as $mt ) {
@@ -577,6 +584,15 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	}
 
 	private function current_url(): string {
+		// Canonical URL for singular content: REQUEST_URI carries query
+		// strings (?utm=...) that would make @ids unstable and dangle the
+		// cross-references built from get_permalink().
+		if ( is_singular() ) {
+			$post = get_queried_object();
+			if ( $post instanceof WP_Post ) {
+				return get_permalink( $post );
+			}
+		}
 		return home_url( ( isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/' ) );
 	}
 

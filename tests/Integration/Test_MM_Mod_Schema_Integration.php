@@ -205,6 +205,35 @@ class Test_MM_Mod_Schema_Integration extends WP_UnitTestCase {
 		$this->assertSame( '820 Kiroli Road, West Monroe, LA 71291', $node['address'] ?? '' );
 		$this->assertArrayHasKey( 'geo', $node );
 		$this->assertCount( 2, $node['includesAttraction'] ?? [] );
+
+		// Place vocabulary compliance: CreativeWork/WebPage-only fields must
+		// not land on the TouristDestination node.
+		foreach ( [ 'isPartOf', 'breadcrumb', 'datePublished', 'dateModified', 'primaryImageOfPage', 'headline' ] as $field ) {
+			$this->assertArrayNotHasKey( $field, $node, "$field is not valid on TouristDestination" );
+		}
+
+		// Canonical, stable @id for the Place node.
+		$this->assertSame( get_permalink( $post_id ) . '#touristdestination', $node['@id'] ?? '' );
+
+		// The WebPage container links to the Place and back (link-based
+		// selection: the suite renders duplicate graphs and only the
+		// correctly-typed one carries the link).
+		$webpage = null;
+		foreach ( $json_ld as $doc ) {
+			foreach ( ( $doc['@graph'] ?? [] ) as $n ) {
+				if ( ( $n['@type'] ?? '' ) === 'WebPage'
+					&& ( $n['mainEntity']['@id'] ?? '' ) === $node['@id'] ) {
+					$webpage = $n;
+					break 2;
+				}
+			}
+		}
+		$this->assertNotNull( $webpage, 'WebPage container node links to the TouristDestination node' );
+		$this->assertSame(
+			$webpage['@id'] ?? '',
+			$node['mainEntityOfPage']['@id'] ?? '',
+			'TouristDestination.mainEntityOfPage points back at the WebPage node'
+		);
 	}
 
 	// ------------------------------------------------------------------
