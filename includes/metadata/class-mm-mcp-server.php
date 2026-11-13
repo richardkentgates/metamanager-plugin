@@ -54,6 +54,7 @@ class MM_MCP_Server {
 			'1.0.0',
 			[ \WP\MCP\Transport\HttpTransport::class ],
 			\WP\MCP\Infrastructure\ErrorHandling\ErrorLogMcpErrorHandler::class,
+			null,
 			self::ABILITIES
 		);
 	}
