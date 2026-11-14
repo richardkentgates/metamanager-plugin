@@ -151,6 +151,18 @@ class Test_MM_Content_Abilities_Unit extends WP_UnitTestCase {
 		$this->assertSame( 'draft', get_post_status( $id ) );
 	}
 
+	public function test_publish_clears_a_future_schedule(): void {
+		$this->admin_user();
+		$id = self::factory()->post->create( array( 'post_status' => 'draft' ) );
+		$this->mm->ability_schedule_publish( array( 'post_id' => $id, 'post_date' => '2030-01-01 00:00:00' ) );
+		$this->assertSame( 'future', get_post_status( $id ) );
+
+		// "publish" must mean publish now: a scheduled post goes live.
+		$pub = $this->mm->ability_publish( array( 'post_id' => $id ) );
+		$this->assertSame( 'publish', $pub['status'] );
+		$this->assertSame( 'publish', get_post_status( $id ) );
+	}
+
 	public function test_schedule_publish_validates_date(): void {
 		$this->admin_user();
 		$id = self::factory()->post->create();
