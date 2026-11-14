@@ -1156,7 +1156,21 @@ class MM_Abilities {
 	 * @return array|WP_Error
 	 */
 	public function ability_publish( array $input ) {
-		return $this->flip_status( (int) ( $input['post_id'] ?? 0 ), 'publish' );
+		$post_id = (int) ( $input['post_id'] ?? 0 );
+		$post    = get_post( $post_id );
+		if ( ! $post ) {
+			return new WP_Error( 'invalid_post', 'Post not found.' );
+		}
+		// Native publish-now: wp_update_post leaves a future-dated post in
+		// 'future' (WordPress honours the date), so a scheduled post never
+		// went live. wp_publish_post() is core's publish transition and
+		// clears the schedule.
+		wp_publish_post( $post_id );
+		$status = get_post_status( $post_id );
+		if ( 'publish' !== $status ) {
+			return new WP_Error( 'publish_failed', 'The post could not be published.' );
+		}
+		return array( 'id' => $post_id, 'status' => $status );
 	}
 
 	/**
