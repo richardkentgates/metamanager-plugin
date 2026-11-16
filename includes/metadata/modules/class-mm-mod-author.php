@@ -44,39 +44,39 @@ class MM_Mod_Author extends MM_Mod_Base {
 	}
 
 	private function build_person_node( \WP_User $author, MM_Site_Settings $settings ): array {
-		$meta        = $settings->get_user_meta( $author->ID );
-		$author_url  = get_author_posts_url( $author->ID );
+		$meta       = $settings->get_user_meta( $author->ID );
+		$author_url = get_author_posts_url( $author->ID );
 
-		$node = [
-			'@type'       => 'Person',
-			'@id'         => $author_url . '#person',
-			'name'        => $author->display_name,
-			'url'         => $author_url,
-		];
+		$node = array(
+			'@type' => 'Person',
+			'@id'   => $author_url . '#person',
+			'name'  => $author->display_name,
+			'url'   => $author_url,
+		);
 
 		if ( $author->description ) {
 			$node['description'] = $author->description;
 		}
 
 		// Avatar / profile picture.
-		$avatar_url = get_avatar_url( $author->ID, [ 'size' => 256 ] );
+		$avatar_url = get_avatar_url( $author->ID, array( 'size' => 256 ) );
 		if ( $avatar_url ) {
-			$node['image'] = [
+			$node['image'] = array(
 				'@type' => 'ImageObject',
 				'url'   => $avatar_url,
-			];
+			);
 		}
 
 		// Social profiles — from user meta social fields.
-		$social   = $meta['social'] ?? [];
-		$same_as  = [];
-		$profiles = [
+		$social   = $meta['social'] ?? array();
+		$same_as  = array();
+		$profiles = array(
 			'twitter'   => 'https://twitter.com/',
 			'linkedin'  => 'https://www.linkedin.com/in/',
 			'instagram' => 'https://www.instagram.com/',
 			'bluesky'   => 'https://bsky.app/profile/',
 			'website'   => '',
-		];
+		);
 		foreach ( $profiles as $key => $prefix ) {
 			$value = trim( $social[ $key ] ?? '' );
 			if ( $value ) {

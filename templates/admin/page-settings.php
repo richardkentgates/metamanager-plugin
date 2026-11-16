@@ -3,6 +3,7 @@
  * Admin page shell wrapper.
  *
  * Injected variables (from MM_Metadata_Admin::render()):
+ *
  *   @var MM_Metadata_Admin $this
  *   @var MM_Site_Settings   $settings
  *   @var array              $pages
@@ -28,14 +29,14 @@ $label    = $page_cfg['label'];
 
 <?php if ( $has_inner_form ) : ?>
 
-<?php include MM_META_DIR . 'templates/admin/page-' . $template . '.php'; ?>
+	<?php include MM_META_DIR . 'templates/admin/page-' . $template . '.php'; ?>
 
 <?php else : ?>
 
 <form method="post" action="options.php" class="mm-meta-settings-form">
-<?php settings_fields( $opt_group ); ?>
-<?php include MM_META_DIR . 'templates/admin/page-' . $template . '.php'; ?>
-<?php submit_button( 'Save Settings' ); ?>
+	<?php settings_fields( $opt_group ); ?>
+	<?php include MM_META_DIR . 'templates/admin/page-' . $template . '.php'; ?>
+	<?php submit_button( 'Save Settings' ); ?>
 </form>
 
 <?php endif; ?>

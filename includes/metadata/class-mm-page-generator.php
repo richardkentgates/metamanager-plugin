@@ -18,15 +18,15 @@ class MM_Page_Generator {
 	 */
 	public static function init(): void {
 		// Auto-regenerate when business profile is saved.
-		add_action( 'mm_business_profile_saved', [ __CLASS__, 'regenerate_about_and_contact' ] );
+		add_action( 'mm_business_profile_saved', array( __CLASS__, 'regenerate_about_and_contact' ) );
 
 		// Auto-regenerate Calendar when events are created, updated, or deleted.
-		add_action( 'save_post_mm_event', [ __CLASS__, 'regenerate_calendar' ] );
-		add_action( 'before_delete_post', [ __CLASS__, 'on_before_delete_post' ] );
-		add_action( 'transition_post_status', [ __CLASS__, 'on_transition_post_status' ], 10, 3 );
+		add_action( 'save_post_mm_event', array( __CLASS__, 'regenerate_calendar' ) );
+		add_action( 'before_delete_post', array( __CLASS__, 'on_before_delete_post' ) );
+		add_action( 'transition_post_status', array( __CLASS__, 'on_transition_post_status' ), 10, 3 );
 
 		// Admin AJAX for manual regeneration.
-		add_action( 'wp_ajax_mm_regenerate_page', [ __CLASS__, 'ajax_regenerate' ] );
+		add_action( 'wp_ajax_mm_regenerate_page', array( __CLASS__, 'ajax_regenerate' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -63,34 +63,36 @@ class MM_Page_Generator {
 		}
 
 		// Temporarily remove this hook to prevent infinite loop on wp_update_post.
-		remove_action( 'save_post', [ 'MM_Schema_Post_Types', 'save_meta' ], 10 );
+		remove_action( 'save_post', array( 'MM_Schema_Post_Types', 'save_meta' ), 10 );
 
 		// Preserve page template — wp_update_post resets _wp_page_template to 'default'.
 		$saved_template = get_page_template_slug( $page_id );
 
-		wp_update_post( [
-			'ID'           => $page_id,
-			'post_content' => $html,
-		] );
+		wp_update_post(
+			array(
+				'ID'           => $page_id,
+				'post_content' => $html,
+			)
+		);
 
 		if ( $saved_template ) {
 			update_post_meta( $page_id, '_wp_page_template', $saved_template );
 		}
 
-		add_action( 'save_post', [ 'MM_Schema_Post_Types', 'save_meta' ], 10, 2 );
+		add_action( 'save_post', array( 'MM_Schema_Post_Types', 'save_meta' ), 10, 2 );
 
 		// Apply noindex if the templates setting says so.
-		$settings = MM_Site_Settings::get_instance();
-		$noindex_map = [
+		$settings    = MM_Site_Settings::get_instance();
+		$noindex_map = array(
 			'mm-about'    => 'templates.noindex_about',
 			'mm-contact'  => 'templates.noindex_contact',
 			'mm-calendar' => 'templates.noindex_calendar',
-		];
+		);
 		if ( isset( $noindex_map[ $template ] ) ) {
 			$noindex = (bool) $settings->get( $noindex_map[ $template ], false );
-			$fields = get_post_meta( $page_id, 'mm_schema_fields', true );
+			$fields  = get_post_meta( $page_id, 'mm_schema_fields', true );
 			if ( ! is_array( $fields ) ) {
-				$fields = [];
+				$fields = array();
 			}
 			if ( $noindex ) {
 				$fields['noindex'] = true;
@@ -162,13 +164,15 @@ class MM_Page_Generator {
 	 * @return int|null Page ID, or null if not found.
 	 */
 	public static function find_page_by_template( string $template ): ?int {
-		$pages = get_posts( [
-			'post_type'   => 'page',
-			'meta_key'    => '_wp_page_template',
-			'meta_value'  => $template,
-			'numberposts' => 1,
-			'post_status' => 'publish',
-		] );
+		$pages = get_posts(
+			array(
+				'post_type'   => 'page',
+				'meta_key'    => '_wp_page_template',
+				'meta_value'  => $template,
+				'numberposts' => 1,
+				'post_status' => 'publish',
+			)
+		);
 
 		return ! empty( $pages ) ? $pages[0]->ID : null;
 	}
@@ -183,7 +187,7 @@ class MM_Page_Generator {
 	public static function on_before_delete_post( int $post_id ): void {
 		if ( 'mm_event' === get_post_type( $post_id ) ) {
 			// Defer regeneration to after the delete completes.
-			add_action( 'deleted_post', [ __CLASS__, 'deferred_calendar_regenerate' ] );
+			add_action( 'deleted_post', array( __CLASS__, 'deferred_calendar_regenerate' ) );
 		}
 	}
 
@@ -191,7 +195,7 @@ class MM_Page_Generator {
 	 * Deferred Calendar regeneration after event deletion.
 	 */
 	public static function deferred_calendar_regenerate(): void {
-		remove_action( 'deleted_post', [ __CLASS__, 'deferred_calendar_regenerate' ] );
+		remove_action( 'deleted_post', array( __CLASS__, 'deferred_calendar_regenerate' ) );
 		self::regenerate_calendar();
 	}
 
@@ -222,25 +226,27 @@ class MM_Page_Generator {
 		check_ajax_referer( 'mm_regenerate_page', 'nonce' );
 
 		if ( ! current_user_can( 'edit_pages' ) ) {
-			wp_send_json_error( [ 'message' => 'Insufficient permissions.' ] );
+			wp_send_json_error( array( 'message' => 'Insufficient permissions.' ) );
 		}
 
 		$template = sanitize_text_field( wp_unslash( $_POST['template'] ?? '' ) );
 		if ( ! isset( MM_Schema_Post_Types::TEMPLATES[ $template ] ) ) {
-			wp_send_json_error( [ 'message' => 'Invalid template.' ] );
+			wp_send_json_error( array( 'message' => 'Invalid template.' ) );
 		}
 
 		$page_id = self::find_page_by_template( $template );
 		if ( ! $page_id ) {
-			wp_send_json_error( [ 'message' => 'Page not found. Create a page and assign the "' . $template . '" template first.' ] );
+			wp_send_json_error( array( 'message' => 'Page not found. Create a page and assign the "' . $template . '" template first.' ) );
 		}
 
 		self::regenerate_page( $template );
 
-		wp_send_json_success( [
-			'message' => 'Page content regenerated.',
-			'edit_url' => get_edit_post_link( $page_id, 'raw' ),
-			'view_url' => get_permalink( $page_id ),
-		] );
+		wp_send_json_success(
+			array(
+				'message'  => 'Page content regenerated.',
+				'edit_url' => get_edit_post_link( $page_id, 'raw' ),
+				'view_url' => get_permalink( $page_id ),
+			)
+		);
 	}
 }

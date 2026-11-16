@@ -38,16 +38,16 @@ defined( 'ABSPATH' ) || exit;
  */
 class MM_Settings {
 
-	const OPTION_COMPRESS_LEVEL         = 'mm_compress_level';
-	const OPTION_NOTIFY_ENABLED         = 'mm_notify_enabled';
-	const OPTION_NOTIFY_EMAIL           = 'mm_notify_email';
-	const OPTION_DELETE_DATA            = 'mm_delete_data_on_uninstall';
-	const OPTION_API_DISABLED           = 'mm_api_disabled';
-	const OPTION_API_ALLOWED_IPS        = 'mm_api_allowed_ips';
-	const OPTION_UPLOAD_NOTIFY_EXTRA    = 'mm_upload_notify_extra_email';
-	const OPTION_AUTO_PROVENANCE        = 'mm_auto_provenance';
-	const OPTION_BATCH_SIZE             = 'mm_batch_size';
-	const OPTION_MAX_REVISIONS          = 'mm_max_revisions';
+	const OPTION_COMPRESS_LEVEL      = 'mm_compress_level';
+	const OPTION_NOTIFY_ENABLED      = 'mm_notify_enabled';
+	const OPTION_NOTIFY_EMAIL        = 'mm_notify_email';
+	const OPTION_DELETE_DATA         = 'mm_delete_data_on_uninstall';
+	const OPTION_API_DISABLED        = 'mm_api_disabled';
+	const OPTION_API_ALLOWED_IPS     = 'mm_api_allowed_ips';
+	const OPTION_UPLOAD_NOTIFY_EXTRA = 'mm_upload_notify_extra_email';
+	const OPTION_AUTO_PROVENANCE     = 'mm_auto_provenance';
+	const OPTION_BATCH_SIZE          = 'mm_batch_size';
+	const OPTION_MAX_REVISIONS       = 'mm_max_revisions';
 
 	// -----------------------------------------------------------------------
 	// Boot
@@ -57,8 +57,8 @@ class MM_Settings {
 		// Priority 50 ensures this submenu is registered after all other
 		// Metamanager submenus (which use default priority 10), so
 		// Preferences appears at the bottom of the sub-nav stack.
-		add_action( 'admin_menu', [ __CLASS__, 'add_menu' ], 50 );
-		add_action( 'admin_init',  [ __CLASS__, 'register_settings' ] );
+		add_action( 'admin_menu', array( __CLASS__, 'add_menu' ), 50 );
+		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -72,7 +72,7 @@ class MM_Settings {
 			esc_html__( 'Preferences', 'metamanager' ),
 			'manage_options',
 			'metamanager-settings',
-			[ __CLASS__, 'render_page' ]
+			array( __CLASS__, 'render_page' )
 		);
 	}
 
@@ -84,41 +84,41 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_COMPRESS_LEVEL,
-			[
+			array(
 				'type'              => 'integer',
 				'sanitize_callback' => fn( $v ) => max( 1, min( 7, (int) $v ) ),
 				'default'           => 2,
-			]
+			)
 		);
 
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_NOTIFY_ENABLED,
-			[
+			array(
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => false,
-			]
+			)
 		);
 
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_NOTIFY_EMAIL,
-			[
+			array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_email',
 				'default'           => '',
-			]
+			)
 		);
 
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_DELETE_DATA,
-			[
+			array(
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => false,
-			]
+			)
 		);
 
 		// ---- Sections & fields ----
@@ -133,7 +133,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_compress_level',
 			esc_html__( 'Optimisation level', 'metamanager' ),
-			[ __CLASS__, 'field_compress_level' ],
+			array( __CLASS__, 'field_compress_level' ),
 			'metamanager-settings',
 			'mm_section_compression'
 		);
@@ -141,11 +141,11 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_BATCH_SIZE,
-			[
+			array(
 				'type'              => 'integer',
 				'sanitize_callback' => fn( $v ) => max( 10, min( 500, (int) $v ) ),
 				'default'           => 50,
-			]
+			)
 		);
 
 		add_settings_section(
@@ -158,7 +158,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_batch_size',
 			esc_html__( 'Max batch size', 'metamanager' ),
-			[ __CLASS__, 'field_batch_size' ],
+			array( __CLASS__, 'field_batch_size' ),
 			'metamanager-settings',
 			'mm_section_memory'
 		);
@@ -168,11 +168,11 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_MAX_REVISIONS,
-			[
+			array(
 				'type'              => 'integer',
 				'sanitize_callback' => fn( $v ) => max( 0, (int) $v ),
 				'default'           => 36,
-			]
+			)
 		);
 
 		add_settings_section(
@@ -185,7 +185,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_max_revisions',
 			esc_html__( 'Max revisions', 'metamanager' ),
-			[ __CLASS__, 'field_max_revisions' ],
+			array( __CLASS__, 'field_max_revisions' ),
 			'metamanager-settings',
 			'mm_section_revisions'
 		);
@@ -200,7 +200,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_notify_enabled',
 			esc_html__( 'Enable notifications', 'metamanager' ),
-			[ __CLASS__, 'field_notify_enabled' ],
+			array( __CLASS__, 'field_notify_enabled' ),
 			'metamanager-settings',
 			'mm_section_notifications'
 		);
@@ -208,7 +208,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_notify_email',
 			esc_html__( 'Notification email', 'metamanager' ),
-			[ __CLASS__, 'field_notify_email' ],
+			array( __CLASS__, 'field_notify_email' ),
 			'metamanager-settings',
 			'mm_section_notifications'
 		);
@@ -218,21 +218,21 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_API_DISABLED,
-			[
+			array(
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => false,
-			]
+			)
 		);
 
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_API_ALLOWED_IPS,
-			[
+			array(
 				'type'              => 'string',
 				'sanitize_callback' => fn( $v ) => sanitize_textarea_field( (string) $v ),
 				'default'           => '',
-			]
+			)
 		);
 
 		// --- Upload receipts ---
@@ -240,11 +240,11 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_UPLOAD_NOTIFY_EXTRA,
-			[
+			array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 				'default'           => '',
-			]
+			)
 		);
 
 		// --- Metadata embedding ---
@@ -252,11 +252,11 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_AUTO_PROVENANCE,
-			[
+			array(
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => true,
-			]
+			)
 		);
 
 		// --- Uninstall ---
@@ -271,7 +271,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_api_disabled',
 			esc_html__( 'Disable REST API', 'metamanager' ),
-			[ __CLASS__, 'field_api_disabled' ],
+			array( __CLASS__, 'field_api_disabled' ),
 			'metamanager-settings',
 			'mm_section_api'
 		);
@@ -279,7 +279,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_api_allowed_ips',
 			esc_html__( 'IP allowlist', 'metamanager' ),
-			[ __CLASS__, 'field_api_allowed_ips' ],
+			array( __CLASS__, 'field_api_allowed_ips' ),
 			'metamanager-settings',
 			'mm_section_api'
 		);
@@ -294,7 +294,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_upload_notify_extra_email',
 			esc_html__( 'Additional recipients', 'metamanager' ),
-			[ __CLASS__, 'field_upload_notify_extra' ],
+			array( __CLASS__, 'field_upload_notify_extra' ),
 			'metamanager-settings',
 			'mm_section_upload_notify'
 		);
@@ -309,7 +309,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_auto_provenance',
 			esc_html__( 'Auto-embed site provenance', 'metamanager' ),
-			[ __CLASS__, 'field_auto_provenance' ],
+			array( __CLASS__, 'field_auto_provenance' ),
 			'metamanager-settings',
 			'mm_section_metadata'
 		);
@@ -324,7 +324,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_delete_data_on_uninstall',
 			esc_html__( 'Remove all data on uninstall', 'metamanager' ),
-			[ __CLASS__, 'field_delete_data' ],
+			array( __CLASS__, 'field_delete_data' ),
 			'metamanager-settings',
 			'mm_section_uninstall'
 		);
@@ -544,11 +544,11 @@ class MM_Settings {
 	public static function get_api_allowed_ips(): array {
 		$raw = (string) get_option( self::OPTION_API_ALLOWED_IPS, '' );
 		if ( '' === trim( $raw ) ) {
-			return [];
+			return array();
 		}
 		// Split on newlines or commas, trim each entry.
 		$items = preg_split( '/[\r\n,]+/', $raw );
-		$items = array_map( 'trim', $items ?: [] );
+		$items = array_map( 'trim', $items ?: array() );
 		$items = array_filter( $items );
 		return array_values( $items );
 	}
@@ -561,7 +561,7 @@ class MM_Settings {
 	public static function get_upload_notify_extra_emails(): array {
 		$raw = (string) get_option( self::OPTION_UPLOAD_NOTIFY_EXTRA, '' );
 		if ( '' === trim( $raw ) ) {
-			return [];
+			return array();
 		}
 		$items = explode( ',', $raw );
 		$items = array_map( 'trim', $items );

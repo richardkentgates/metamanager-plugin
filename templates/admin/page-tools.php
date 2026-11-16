@@ -1,6 +1,7 @@
 <?php
 /**
  * Admin tab — Tools.
+ *
  * @var MM_Site_Settings $settings
  */
 defined( 'ABSPATH' ) || exit;
@@ -45,14 +46,14 @@ defined( 'ABSPATH' ) || exit;
 
 	<h2>System Info</h2>
 	<table class="form-table gcm-form-table">
-		<tr><th>Plugin Version</th><td><?php echo esc_html(MM_META_VERSION); ?></td></tr>
+		<tr><th>Plugin Version</th><td><?php echo esc_html( MM_META_VERSION ); ?></td></tr>
 		<?php
-		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
+		$job_root    = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
 		$status_file = $job_root . '/metamanager-status.json';
 		$status_json = is_readable( $status_file ) ? @file_get_contents( $status_file ) : false;
 		$status_data = $status_json ? json_decode( $status_json, true ) : null;
-		$daemon_ver = $status_data['daemon_version'] ?? null;
-		$plugin_ver = $status_data['plugin_version'] ?? ( defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown' );
+		$daemon_ver  = $status_data['daemon_version'] ?? null;
+		$plugin_ver  = $status_data['plugin_version'] ?? ( defined( 'MM_VERSION' ) ? MM_VERSION : 'unknown' );
 
 		if ( null !== $daemon_ver ) {
 			printf( '<tr><th>Daemon Version</th><td><span style="color:green">✓ %s</span></td></tr>', esc_html( $daemon_ver ) );
@@ -60,32 +61,32 @@ defined( 'ABSPATH' ) || exit;
 			printf( '<tr><th>Daemon Version</th><td><span style="color:red">✗ Daemon not installed</span></td></tr>' );
 		}
 		?>
-		<tr><th>WordPress Version</th><td><?php echo esc_html(get_bloginfo('version')); ?></td></tr>
-		<tr><th>PHP Version</th><td><?php echo esc_html(PHP_VERSION); ?></td></tr>
-		<tr><th>Home URL</th><td><code><?php echo esc_html(home_url()); ?></code></td></tr>
+		<tr><th>WordPress Version</th><td><?php echo esc_html( get_bloginfo( 'version' ) ); ?></td></tr>
+		<tr><th>PHP Version</th><td><?php echo esc_html( PHP_VERSION ); ?></td></tr>
+		<tr><th>Home URL</th><td><code><?php echo esc_html( home_url() ); ?></code></td></tr>
 		<tr>
 			<th>Active Theme</th>
 			<?php $theme = wp_get_theme(); ?>
-			<td><?php echo esc_html($theme->get('Name')); ?> <?php echo esc_html($theme->get('Version')); ?></td>
+			<td><?php echo esc_html( $theme->get( 'Name' ) ); ?> <?php echo esc_html( $theme->get( 'Version' ) ); ?></td>
 		</tr>
 		<tr>
 			<th>Title Tag Support</th>
-			<td><?php echo current_theme_supports('title-tag') ? '<span style="color:green">✓ yes</span>' : '<span style="color:orange">✗ no (Metamanager outputs &lt;title&gt; directly)</span>'; ?></td>
+			<td><?php echo current_theme_supports( 'title-tag' ) ? '<span style="color:green">✓ yes</span>' : '<span style="color:orange">✗ no (Metamanager outputs &lt;title&gt; directly)</span>'; ?></td>
 		</tr>
 		<tr>
 			<th>Sitemap URL</th>
-			<td><a href="<?php echo esc_url(home_url('/sitemap.xml')); ?>" target="_blank"><?php echo esc_html(home_url('/sitemap.xml')); ?></a></td>
+			<td><a href="<?php echo esc_url( home_url( '/sitemap.xml' ) ); ?>" target="_blank"><?php echo esc_html( home_url( '/sitemap.xml' ) ); ?></a></td>
 		</tr>
 		<tr>
 			<th>Robots.txt URL</th>
-			<td><a href="<?php echo esc_url(home_url('/robots.txt')); ?>" target="_blank"><?php echo esc_html(home_url('/robots.txt')); ?></a></td>
+			<td><a href="<?php echo esc_url( home_url( '/robots.txt' ) ); ?>" target="_blank"><?php echo esc_html( home_url( '/robots.txt' ) ); ?></a></td>
 		</tr>
 	</table>
 
 	<script>
 	(function($) {
-		var nonce = '<?php echo esc_js( wp_create_nonce('mm_meta_tools_nonce') ); ?>';
-		var ajax  = '<?php echo esc_js( admin_url('admin-ajax.php') ); ?>';
+		var nonce = '<?php echo esc_js( wp_create_nonce( 'mm_meta_tools_nonce' ) ); ?>';
+		var ajax  = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
 
 		$('.gcm-tool-btn').on('click', function() {
 			var $btn     = $(this);

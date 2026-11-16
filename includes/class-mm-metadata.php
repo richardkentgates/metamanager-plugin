@@ -49,22 +49,22 @@ class MM_Metadata {
 	public const META_KEYWORDS = 'mm_keywords';
 
 	/** Date originally created, stored as YYYY-MM-DD. */
-	public const META_DATE    = 'mm_date_created';
+	public const META_DATE = 'mm_date_created';
 
 	public const META_CITY    = 'mm_location_city';
 	public const META_STATE   = 'mm_location_state';
 	public const META_COUNTRY = 'mm_location_country';
 
 	/** Star rating 0 (unrated) to 5 — XMP:Rating convention. */
-	public const META_RATING   = 'mm_rating';
+	public const META_RATING = 'mm_rating';
 
 	// GPS — read-only, imported from EXIF, never written back or shown in edit UI.
 	/** Signed decimal latitude  (e.g. 40.7128). */
-	public const META_GPS_LAT  = 'mm_gps_lat';
+	public const META_GPS_LAT = 'mm_gps_lat';
 	/** Signed decimal longitude (e.g. -74.0060). */
-	public const META_GPS_LON  = 'mm_gps_lon';
+	public const META_GPS_LON = 'mm_gps_lon';
 	/** Altitude in metres above sea level (may be negative). */
-	public const META_GPS_ALT  = 'mm_gps_alt';
+	public const META_GPS_ALT = 'mm_gps_alt';
 
 	/**
 	 * Media duration in seconds — written by the metadata daemon after an ffprobe
@@ -97,7 +97,7 @@ class MM_Metadata {
 	// -----------------------------------------------------------------------
 
 	/** Video MIME types Metamanager can import metadata from. */
-	public const VIDEO_MIME_TYPES = [
+	public const VIDEO_MIME_TYPES = array(
 		'video/mp4',
 		'video/quicktime',
 		'video/x-msvideo',
@@ -107,10 +107,10 @@ class MM_Metadata {
 		'video/ogg',
 		'video/3gpp',
 		'video/3gpp2',
-	];
+	);
 
 	/** Audio MIME types Metamanager can import metadata from. */
-	public const AUDIO_MIME_TYPES = [
+	public const AUDIO_MIME_TYPES = array(
 		'audio/mpeg',
 		'audio/mp4',
 		'audio/ogg',
@@ -119,10 +119,10 @@ class MM_Metadata {
 		'audio/x-ms-wma',
 		'audio/aiff',
 		'audio/x-aiff',
-	];
+	);
 
 	/** PDF MIME type. ExifTool reads and writes embedded XMP in PDF files. */
-	public const PDF_MIME_TYPES = [ 'application/pdf' ];
+	public const PDF_MIME_TYPES = array( 'application/pdf' );
 
 	/**
 	 * Metadata write-back capability per MIME type.
@@ -133,7 +133,7 @@ class MM_Metadata {
 	 * 'vorbis_only' — Vorbis comment tags only (OGG/OGA containers).
 	 * 'read_only'   — ExifTool can read but not write to this format.
 	 */
-	public const WRITE_CAPABILITY = [
+	public const WRITE_CAPABILITY = array(
 		// Images — full tag support.
 		'image/jpeg'       => 'full',
 		'image/png'        => 'full',
@@ -162,7 +162,7 @@ class MM_Metadata {
 		'audio/x-ms-wma'   => 'xmp_only',
 		// PDF — ExifTool reads and writes embedded XMP natively.
 		'application/pdf'  => 'xmp_only',
-	];
+	);
 
 	// -----------------------------------------------------------------------
 	// MIME type helpers
@@ -222,81 +222,132 @@ class MM_Metadata {
 	 * @return array<string, string[]>
 	 */
 	public static function field_map(): array {
-		return [
+		return array(
 			// WordPress native.
-			'Title'       => [
-				'XMP:Title', 'IPTC:ObjectName', 'XMP-dc:Title',
-				'QuickTime:Title', 'ID3:Title', 'Vorbis:Title',
-				'ASF:Title', 'RIFF:Title', 'Matroska:Title',
-				'PDF:Title', 'EXIF:ImageDescription',
-			],
-			'Description' => [
-				'XMP:Description', 'IPTC:Caption-Abstract', 'EXIF:ImageDescription',
+			'Title'        => array(
+				'XMP:Title',
+				'IPTC:ObjectName',
+				'XMP-dc:Title',
+				'QuickTime:Title',
+				'ID3:Title',
+				'Vorbis:Title',
+				'ASF:Title',
+				'RIFF:Title',
+				'Matroska:Title',
+				'PDF:Title',
+				'EXIF:ImageDescription',
+			),
+			'Description'  => array(
+				'XMP:Description',
+				'IPTC:Caption-Abstract',
+				'EXIF:ImageDescription',
 				'XMP-dc:Description',
-			],
-			'Caption'     => [ 'IPTC:Caption-Abstract', 'XMP:Caption' ],
-			'AltText'     => [ 'XMP:AltTextAccessibility' ],
+			),
+			'Caption'      => array( 'IPTC:Caption-Abstract', 'XMP:Caption' ),
+			'AltText'      => array( 'XMP:AltTextAccessibility' ),
 
 			// Per-image attribution.
-			'Creator'     => [
-				'IPTC:By-line', 'XMP:Creator', 'EXIF:Artist', 'IFD0:Artist',
-				'QuickTime:Author', 'QuickTime:Artist',
-				'ID3:Artist', 'Vorbis:Artist', 'ASF:Author', 'RIFF:Artist',
-				'PDF:Author', 'XMP:Author', 'XMP-dc:Creator',
-			],
-			'Copyright'   => [
-				'IPTC:CopyrightNotice', 'XMP:Rights', 'EXIF:Copyright', 'IFD0:Copyright',
-				'QuickTime:Copyright', 'ID3:Copyright', 'Vorbis:Copyright', 'ASF:Copyright',
+			'Creator'      => array(
+				'IPTC:By-line',
+				'XMP:Creator',
+				'EXIF:Artist',
+				'IFD0:Artist',
+				'QuickTime:Author',
+				'QuickTime:Artist',
+				'ID3:Artist',
+				'Vorbis:Artist',
+				'ASF:Author',
+				'RIFF:Artist',
+				'PDF:Author',
+				'XMP:Author',
+				'XMP-dc:Creator',
+			),
+			'Copyright'    => array(
+				'IPTC:CopyrightNotice',
+				'XMP:Rights',
+				'EXIF:Copyright',
+				'IFD0:Copyright',
+				'QuickTime:Copyright',
+				'ID3:Copyright',
+				'Vorbis:Copyright',
+				'ASF:Copyright',
 				'XMP-dc:Rights',
-			],
-			'Owner'       => [ 'XMP:Owner', 'EXIF:OwnerName', 'IFD0:OwnerName' ],
+			),
+			'Owner'        => array( 'XMP:Owner', 'EXIF:OwnerName', 'IFD0:OwnerName' ),
 
 			// Site provenance.
-			'Publisher'   => [ 'IPTC:Source', 'XMP:Publisher' ],
-			'Website'     => [ 'XMP:WebStatement', 'IPTC:Source' ],
+			'Publisher'    => array( 'IPTC:Source', 'XMP:Publisher' ),
+			'Website'      => array( 'XMP:WebStatement', 'IPTC:Source' ),
 
 			// Editorial.
-			'Headline'    => [
-				'IPTC:Headline', 'XMP:Headline',
-				'QuickTime:Title', 'ID3:Title', 'Vorbis:Title',
-				'ASF:Title', 'RIFF:Title', 'Matroska:Title',
-				'PDF:Title', 'XMP:Title', 'XMP-dc:Title',
-			],
-			'Credit'      => [
-				'IPTC:Credit', 'XMP:Credit',
-				'QuickTime:Producer', 'ID3:Band', 'Vorbis:Organization',
-			],
+			'Headline'     => array(
+				'IPTC:Headline',
+				'XMP:Headline',
+				'QuickTime:Title',
+				'ID3:Title',
+				'Vorbis:Title',
+				'ASF:Title',
+				'RIFF:Title',
+				'Matroska:Title',
+				'PDF:Title',
+				'XMP:Title',
+				'XMP-dc:Title',
+			),
+			'Credit'       => array(
+				'IPTC:Credit',
+				'XMP:Credit',
+				'QuickTime:Producer',
+				'ID3:Band',
+				'Vorbis:Organization',
+			),
 
 			// Classification.
-			'Keywords'    => [
-				'IPTC:Keywords', 'XMP:Subject',
-				'QuickTime:Keywords', 'ID3:ContentType', 'Vorbis:Genre', 'ASF:Genre',
-				'PDF:Keywords', 'XMP-dc:Subject',
-			],
-			'DateCreated' => [
-				'EXIF:DateTimeOriginal', 'IPTC:DateCreated', 'XMP:DateCreated', 'IFD0:DateTime',
-				'QuickTime:CreateDate', 'QuickTime:MediaCreateDate',
-				'ID3:Year', 'Vorbis:Date', 'ASF:CreationDate', 'Matroska:DateTimeOriginal',
-				'PDF:CreateDate', 'XMP-xmp:CreateDate',
-			],
-			'Rating'      => [ 'XMP:Rating' ],
+			'Keywords'     => array(
+				'IPTC:Keywords',
+				'XMP:Subject',
+				'QuickTime:Keywords',
+				'ID3:ContentType',
+				'Vorbis:Genre',
+				'ASF:Genre',
+				'PDF:Keywords',
+				'XMP-dc:Subject',
+			),
+			'DateCreated'  => array(
+				'EXIF:DateTimeOriginal',
+				'IPTC:DateCreated',
+				'XMP:DateCreated',
+				'IFD0:DateTime',
+				'QuickTime:CreateDate',
+				'QuickTime:MediaCreateDate',
+				'ID3:Year',
+				'Vorbis:Date',
+				'ASF:CreationDate',
+				'Matroska:DateTimeOriginal',
+				'PDF:CreateDate',
+				'XMP-xmp:CreateDate',
+			),
+			'Rating'       => array( 'XMP:Rating' ),
 
 			// Location (IPTC Photo Metadata Standard).
-			'City'        => [
-				'IPTC:City', 'XMP:City',
-				'QuickTime:LocationName', 'Keys:LocationName',
-			],
-			'State'       => [ 'IPTC:Province-State', 'XMP:State' ],
-			'Country'     => [
-				'IPTC:Country-PrimaryLocationName', 'XMP:Country',
-				'QuickTime:LocationCountryCode', 'Keys:LocationCountryCode',
-			],
+			'City'         => array(
+				'IPTC:City',
+				'XMP:City',
+				'QuickTime:LocationName',
+				'Keys:LocationName',
+			),
+			'State'        => array( 'IPTC:Province-State', 'XMP:State' ),
+			'Country'      => array(
+				'IPTC:Country-PrimaryLocationName',
+				'XMP:Country',
+				'QuickTime:LocationCountryCode',
+				'Keys:LocationCountryCode',
+			),
 
 			// GPS — images and AV.
-			'GPSLatitude'  => [ 'Composite:GPSLatitude', 'GPS:GPSLatitude', 'QuickTime:GPSCoordinates' ],
-			'GPSLongitude' => [ 'Composite:GPSLongitude', 'GPS:GPSLongitude' ],
-			'GPSAltitude'  => [ 'Composite:GPSAltitude', 'GPS:GPSAltitude', 'Keys:GPSAltitude' ],
-		];
+			'GPSLatitude'  => array( 'Composite:GPSLatitude', 'GPS:GPSLatitude', 'QuickTime:GPSCoordinates' ),
+			'GPSLongitude' => array( 'Composite:GPSLongitude', 'GPS:GPSLongitude' ),
+			'GPSAltitude'  => array( 'Composite:GPSAltitude', 'GPS:GPSAltitude', 'Keys:GPSAltitude' ),
+		);
 	}
 
 	/**
@@ -308,22 +359,22 @@ class MM_Metadata {
 	 * @return array<string, string>
 	 */
 	private static function field_to_meta_map(): array {
-		return [
-			'Creator'       => self::META_CREATOR,
-			'Copyright'     => self::META_COPYRIGHT,
-			'Owner'         => self::META_OWNER,
-			'Headline'      => self::META_HEADLINE,
-			'Credit'        => self::META_CREDIT,
-			'Keywords'      => self::META_KEYWORDS,
-			'DateCreated'   => self::META_DATE,
-			'City'          => self::META_CITY,
-			'State'         => self::META_STATE,
-			'Country'       => self::META_COUNTRY,
-			'Rating'        => self::META_RATING,
-			'GPSLatitude'   => self::META_GPS_LAT,
-			'GPSLongitude'  => self::META_GPS_LON,
-			'GPSAltitude'   => self::META_GPS_ALT,
-		];
+		return array(
+			'Creator'      => self::META_CREATOR,
+			'Copyright'    => self::META_COPYRIGHT,
+			'Owner'        => self::META_OWNER,
+			'Headline'     => self::META_HEADLINE,
+			'Credit'       => self::META_CREDIT,
+			'Keywords'     => self::META_KEYWORDS,
+			'DateCreated'  => self::META_DATE,
+			'City'         => self::META_CITY,
+			'State'        => self::META_STATE,
+			'Country'      => self::META_COUNTRY,
+			'Rating'       => self::META_RATING,
+			'GPSLatitude'  => self::META_GPS_LAT,
+			'GPSLongitude' => self::META_GPS_LON,
+			'GPSAltitude'  => self::META_GPS_ALT,
+		);
 	}
 
 	// -----------------------------------------------------------------------
@@ -344,16 +395,16 @@ class MM_Metadata {
 	 * Must be called on the 'init' action.
 	 */
 	public static function register_meta(): void {
-		$base = [
+		$base = array(
 			'object_subtype'    => 'attachment',
 			'type'              => 'string',
 			'single'            => true,
 			'sanitize_callback' => 'sanitize_text_field',
 			'auth_callback'     => fn() => current_user_can( 'upload_files' ),
 			'show_in_rest'      => true,
-		];
+		);
 
-		$string_fields = [
+		$string_fields = array(
 			self::META_CREATOR   => __( 'Original creator or photographer.', 'metamanager' ),
 			self::META_COPYRIGHT => __( 'Copyright notice.', 'metamanager' ),
 			self::META_OWNER     => __( 'Current rights holder or asset owner.', 'metamanager' ),
@@ -364,69 +415,105 @@ class MM_Metadata {
 			self::META_CITY      => __( 'City where the image was created.', 'metamanager' ),
 			self::META_STATE     => __( 'State or province where the image was created.', 'metamanager' ),
 			self::META_COUNTRY   => __( 'Country where the image was created.', 'metamanager' ),
-		];
+		);
 
 		foreach ( $string_fields as $key => $description ) {
-			register_post_meta( 'attachment', $key, array_merge( $base, [ 'description' => $description ] ) );
+			register_post_meta( 'attachment', $key, array_merge( $base, array( 'description' => $description ) ) );
 		}
 
 		// Duration — integer seconds, populated by the meta daemon via ffprobe.
-		register_post_meta( 'attachment', self::META_DURATION, [
-			'object_subtype'    => 'attachment',
-			'type'              => 'integer',
-			'description'       => __( 'Media duration in whole seconds (video/audio).', 'metamanager' ),
-			'single'            => true,
-			'sanitize_callback' => fn( $v ) => max( 0, (int) $v ),
-			'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
-			'show_in_rest'      => true,
-		] );
+		register_post_meta(
+			'attachment',
+			self::META_DURATION,
+			array(
+				'object_subtype'    => 'attachment',
+				'type'              => 'integer',
+				'description'       => __( 'Media duration in whole seconds (video/audio).', 'metamanager' ),
+				'single'            => true,
+				'sanitize_callback' => fn( $v ) => max( 0, (int) $v ),
+				'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
+				'show_in_rest'      => true,
+			)
+		);
 
 		// Rating is an integer (0 = unrated, 1-5 = stars).
-		register_post_meta( 'attachment', self::META_RATING, [
-			'object_subtype'    => 'attachment',
-			'type'              => 'integer',
-			'description'       => __( 'Star rating 0–5.', 'metamanager' ),
-			'single'            => true,
-			'sanitize_callback' => fn( $v ) => min( 5, max( 0, (int) $v ) ),
-			'auth_callback'     => fn() => current_user_can( 'upload_files' ),
-			'show_in_rest'      => true,
-		] );
+		register_post_meta(
+			'attachment',
+			self::META_RATING,
+			array(
+				'object_subtype'    => 'attachment',
+				'type'              => 'integer',
+				'description'       => __( 'Star rating 0–5.', 'metamanager' ),
+				'single'            => true,
+				'sanitize_callback' => fn( $v ) => min( 5, max( 0, (int) $v ) ),
+				'auth_callback'     => fn() => current_user_can( 'upload_files' ),
+				'show_in_rest'      => true,
+			)
+		);
 
 		// GPS fields — read-only, imported from EXIF Composite group, never user-edited.
-		$gps_fields = [
+		$gps_fields = array(
 			self::META_GPS_LAT => __( 'GPS latitude (signed decimal degrees).', 'metamanager' ),
 			self::META_GPS_LON => __( 'GPS longitude (signed decimal degrees).', 'metamanager' ),
 			self::META_GPS_ALT => __( 'GPS altitude in metres above sea level.', 'metamanager' ),
-		];
+		);
 		foreach ( $gps_fields as $key => $description ) {
-			register_post_meta( 'attachment', $key, array_merge( $base, [
-				'description'       => $description,
-				// GPS values look like "-74.0060" — restrict write to editors+ only.
-				'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
-			] ) );
+			register_post_meta(
+				'attachment',
+				$key,
+				array_merge(
+					$base,
+					array(
+						'description'   => $description,
+						// GPS values look like "-74.0060" — restrict write to editors+ only.
+						'auth_callback' => fn() => current_user_can( 'edit_posts' ),
+					)
+				)
+			);
 		}
 
 		// Verification results — written by the plugin after a verify import completes.
-		register_post_meta( 'attachment', self::META_VERIFY_DISCREPANCIES, array_merge( $base, [
-			'description'       => __( 'JSON-encoded verification discrepancies from last write-back check.', 'metamanager' ),
-			'sanitize_callback' => 'wp_kses_post',
-			'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
-			'show_in_rest'      => false,
-		] ) );
-		register_post_meta( 'attachment', self::META_VERIFIED_AT, array_merge( $base, [
-			'description'       => __( 'Datetime of last write-back verification (MySQL format).', 'metamanager' ),
-			'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
-			'show_in_rest'      => false,
-		] ) );
+		register_post_meta(
+			'attachment',
+			self::META_VERIFY_DISCREPANCIES,
+			array_merge(
+				$base,
+				array(
+					'description'       => __( 'JSON-encoded verification discrepancies from last write-back check.', 'metamanager' ),
+					'sanitize_callback' => 'wp_kses_post',
+					'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
+					'show_in_rest'      => false,
+				)
+			)
+		);
+		register_post_meta(
+			'attachment',
+			self::META_VERIFIED_AT,
+			array_merge(
+				$base,
+				array(
+					'description'   => __( 'Datetime of last write-back verification (MySQL format).', 'metamanager' ),
+					'auth_callback' => fn() => current_user_can( 'edit_posts' ),
+					'show_in_rest'  => false,
+				)
+			)
+		);
 
 		// META_SYNCED — flag set to '1' after first successful import.
-		register_post_meta( 'attachment', self::META_SYNCED, array_merge( $base, [
-			'description'       => __( 'Whether metadata has been imported from the file (1 = yes).', 'metamanager' ),
-			'type'              => 'string',
-			'sanitize_callback' => 'sanitize_text_field',
-			'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
-			'show_in_rest'      => false,
-		] ) );
+		register_post_meta(
+			'attachment',
+			self::META_SYNCED,
+			array_merge(
+				$base,
+				array(
+					'description'       => __( 'Whether metadata has been imported from the file (1 = yes).', 'metamanager' ),
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
+					'show_in_rest'      => false,
+				)
+			)
+		);
 	}
 
 	// -----------------------------------------------------------------------
@@ -445,40 +532,42 @@ class MM_Metadata {
 	public static function get_fields_for_job( int $attachment_id ): array {
 		$post = get_post( $attachment_id );
 		if ( ! $post ) {
-			return [];
+			return array();
 		}
 
 		$meta = static fn( string $key ): string =>
 			(string) get_post_meta( $attachment_id, $key, true );
 
-		return array_filter( [
-			// WordPress native.
-			'Title'       => $post->post_title,
-			'Description' => $post->post_content,
-			'Caption'     => $post->post_excerpt,
-			'AltText'     => $meta( '_wp_attachment_image_alt' ),
-			// Per-image attribution.
-			'Creator'     => $meta( self::META_CREATOR ),
-			'Copyright'   => $meta( self::META_COPYRIGHT ),
-			'Owner'       => $meta( self::META_OWNER ),
-			// Site provenance — neutral, never asserts authorship or copyright.
-			// Only embedded when the auto-provenance setting is enabled (default: on).
-			...( get_option( MM_Settings::OPTION_AUTO_PROVENANCE, true ) ? [
-				'Publisher' => get_bloginfo( 'name' ),
-				'Website'   => home_url(),
-			] : [] ),
-			// Editorial.
-			'Headline'    => $meta( self::META_HEADLINE ),
-			'Credit'      => $meta( self::META_CREDIT ),
-			// Classification.
-			'Keywords'    => $meta( self::META_KEYWORDS ),
-			'DateCreated' => $meta( self::META_DATE ),
-			'Rating'      => $meta( self::META_RATING ),
-			// Location.
-			'City'        => $meta( self::META_CITY ),
-			'State'       => $meta( self::META_STATE ),
-			'Country'     => $meta( self::META_COUNTRY ),
-		] );
+		return array_filter(
+			array(
+				// WordPress native.
+				'Title'       => $post->post_title,
+				'Description' => $post->post_content,
+				'Caption'     => $post->post_excerpt,
+				'AltText'     => $meta( '_wp_attachment_image_alt' ),
+				// Per-image attribution.
+				'Creator'     => $meta( self::META_CREATOR ),
+				'Copyright'   => $meta( self::META_COPYRIGHT ),
+				'Owner'       => $meta( self::META_OWNER ),
+				// Site provenance — neutral, never asserts authorship or copyright.
+				// Only embedded when the auto-provenance setting is enabled (default: on).
+				...( get_option( MM_Settings::OPTION_AUTO_PROVENANCE, true ) ? array(
+					'Publisher' => get_bloginfo( 'name' ),
+					'Website'   => home_url(),
+				) : array() ),
+				// Editorial.
+				'Headline'    => $meta( self::META_HEADLINE ),
+				'Credit'      => $meta( self::META_CREDIT ),
+				// Classification.
+				'Keywords'    => $meta( self::META_KEYWORDS ),
+				'DateCreated' => $meta( self::META_DATE ),
+				'Rating'      => $meta( self::META_RATING ),
+				// Location.
+				'City'        => $meta( self::META_CITY ),
+				'State'       => $meta( self::META_STATE ),
+				'Country'     => $meta( self::META_COUNTRY ),
+			)
+		);
 	}
 
 	// -----------------------------------------------------------------------
@@ -503,23 +592,35 @@ class MM_Metadata {
 		$capability = self::write_capability( $mime );
 
 		if ( 'read_only' === $capability ) {
-			$form_fields['mm_capability_notice'] = [ 'label' => '', 'input' => 'html', 'html' =>
-				'<div style="background:#fff3cd;border:1px solid #ffc107;padding:8px 12px;border-radius:3px;margin-bottom:8px;">'
-				. '<strong>' . esc_html__( 'Read-only format', 'metamanager' ) . '</strong> — '
-				. esc_html__( 'Metamanager can import metadata from this file but cannot write back to it. Fields are shown for reference only.', 'metamanager' )
-				. '</div>' ];
+			$form_fields['mm_capability_notice'] = array(
+				'label' => '',
+				'input' => 'html',
+				'html'  =>
+									'<div style="background:#fff3cd;border:1px solid #ffc107;padding:8px 12px;border-radius:3px;margin-bottom:8px;">'
+									. '<strong>' . esc_html__( 'Read-only format', 'metamanager' ) . '</strong> — '
+									. esc_html__( 'Metamanager can import metadata from this file but cannot write back to it. Fields are shown for reference only.', 'metamanager' )
+									. '</div>',
+			);
 		} elseif ( 'xmp_only' === $capability ) {
-			$form_fields['mm_capability_notice'] = [ 'label' => '', 'input' => 'html', 'html' =>
-				'<div style="background:#e8f4fd;border:1px solid #2196f3;padding:8px 12px;border-radius:3px;margin-bottom:8px;">'
-				. '<strong>' . esc_html__( 'Limited write support', 'metamanager' ) . '</strong> — '
-				. esc_html__( 'Metamanager will write XMP tags only for this format. Native container tags cannot be updated.', 'metamanager' )
-				. '</div>' ];
+			$form_fields['mm_capability_notice'] = array(
+				'label' => '',
+				'input' => 'html',
+				'html'  =>
+									'<div style="background:#e8f4fd;border:1px solid #2196f3;padding:8px 12px;border-radius:3px;margin-bottom:8px;">'
+									. '<strong>' . esc_html__( 'Limited write support', 'metamanager' ) . '</strong> — '
+									. esc_html__( 'Metamanager will write XMP tags only for this format. Native container tags cannot be updated.', 'metamanager' )
+									. '</div>',
+			);
 		} elseif ( 'vorbis_only' === $capability ) {
-			$form_fields['mm_capability_notice'] = [ 'label' => '', 'input' => 'html', 'html' =>
-				'<div style="background:#e8f4fd;border:1px solid #2196f3;padding:8px 12px;border-radius:3px;margin-bottom:8px;">'
-				. '<strong>' . esc_html__( 'Limited write support', 'metamanager' ) . '</strong> — '
-				. esc_html__( 'Metamanager will write Vorbis comment tags only for this format.', 'metamanager' )
-				. '</div>' ];
+			$form_fields['mm_capability_notice'] = array(
+				'label' => '',
+				'input' => 'html',
+				'html'  =>
+									'<div style="background:#e8f4fd;border:1px solid #2196f3;padding:8px 12px;border-radius:3px;margin-bottom:8px;">'
+									. '<strong>' . esc_html__( 'Limited write support', 'metamanager' ) . '</strong> — '
+									. esc_html__( 'Metamanager will write Vorbis comment tags only for this format.', 'metamanager' )
+									. '</div>',
+			);
 		}
 		$h4 = static fn( string $label, string $sub = '' ): string =>
 			'<h4 style="margin:1.2em 0 .3em;padding-bottom:4px;border-bottom:1px solid #c3c4c7;color:#1d2327;">'
@@ -528,67 +629,79 @@ class MM_Metadata {
 			. '</h4>';
 
 		// --- Attribution & Rights ---
-		$form_fields['mm_section_attribution'] = [ 'label' => '', 'input' => 'html', 'html' =>
-			$h4( __( 'Attribution & Rights', 'metamanager' ), __( '(per-image only — never set in bulk)', 'metamanager' ) ) ];
+		$form_fields['mm_section_attribution'] = array(
+			'label' => '',
+			'input' => 'html',
+			'html'  =>
+							$h4( __( 'Attribution & Rights', 'metamanager' ), __( '(per-image only — never set in bulk)', 'metamanager' ) ),
+		);
 
-		$form_fields[ self::META_CREATOR ] = [
+		$form_fields[ self::META_CREATOR ] = array(
 			'label' => esc_html__( 'Creator', 'metamanager' ),
 			'input' => 'text',
 			'value' => (string) get_post_meta( $id, self::META_CREATOR, true ),
 			'helps' => esc_html__( 'Original creator/photographer. → EXIF:Artist, IPTC:By-line, XMP:Creator', 'metamanager' ),
-		];
+		);
 
-		$form_fields[ self::META_COPYRIGHT ] = [
+		$form_fields[ self::META_COPYRIGHT ] = array(
 			'label' => esc_html__( 'Copyright', 'metamanager' ),
 			'input' => 'text',
 			'value' => (string) get_post_meta( $id, self::META_COPYRIGHT, true ),
 			'helps' => esc_html__( 'Copyright notice (e.g. © 2026 Jane Doe). → EXIF:Copyright, IPTC:CopyrightNotice, XMP:Rights', 'metamanager' ),
-		];
+		);
 
-		$form_fields[ self::META_OWNER ] = [
+		$form_fields[ self::META_OWNER ] = array(
 			'label' => esc_html__( 'Owner', 'metamanager' ),
 			'input' => 'text',
 			'value' => (string) get_post_meta( $id, self::META_OWNER, true ),
 			'helps' => esc_html__( 'Current rights holder or asset owner. → EXIF:OwnerName, XMP:Owner', 'metamanager' ),
-		];
+		);
 
 		// --- Editorial ---
-		$form_fields['mm_section_editorial'] = [ 'label' => '', 'input' => 'html', 'html' =>
-			$h4( __( 'Editorial', 'metamanager' ) ) ];
+		$form_fields['mm_section_editorial'] = array(
+			'label' => '',
+			'input' => 'html',
+			'html'  =>
+							$h4( __( 'Editorial', 'metamanager' ) ),
+		);
 
-		$form_fields[ self::META_HEADLINE ] = [
+		$form_fields[ self::META_HEADLINE ] = array(
 			'label' => esc_html__( 'Headline', 'metamanager' ),
 			'input' => 'text',
 			'value' => (string) get_post_meta( $id, self::META_HEADLINE, true ),
 			'helps' => esc_html__( 'Short editorial headline. → IPTC:Headline, XMP:Headline', 'metamanager' ),
-		];
+		);
 
-		$form_fields[ self::META_CREDIT ] = [
+		$form_fields[ self::META_CREDIT ] = array(
 			'label' => esc_html__( 'Credit', 'metamanager' ),
 			'input' => 'text',
 			'value' => (string) get_post_meta( $id, self::META_CREDIT, true ),
 			'helps' => esc_html__( 'Credit line (e.g. agency). → IPTC:Credit, XMP:Credit', 'metamanager' ),
-		];
+		);
 
 		// --- Classification ---
-		$form_fields['mm_section_classify'] = [ 'label' => '', 'input' => 'html', 'html' =>
-			$h4( __( 'Classification', 'metamanager' ) ) ];
+		$form_fields['mm_section_classify'] = array(
+			'label' => '',
+			'input' => 'html',
+			'html'  =>
+							$h4( __( 'Classification', 'metamanager' ) ),
+		);
 
-		$form_fields[ self::META_KEYWORDS ] = [
+		$form_fields[ self::META_KEYWORDS ] = array(
 			'label' => esc_html__( 'Keywords', 'metamanager' ),
 			'input' => 'text',
 			'value' => (string) get_post_meta( $id, self::META_KEYWORDS, true ),
 			'helps' => esc_html__( 'Separate with semicolons (e.g. nature; landscape). → IPTC:Keywords, XMP:Subject', 'metamanager' ),
-		];
+		);
 
-		$form_fields[ self::META_RATING ] = [
+		$form_fields[ self::META_RATING ] = array(
 			'label' => esc_html__( 'Rating', 'metamanager' ),
 			'input' => 'html',
 			'html'  => self::rating_field_html( $id, (string) get_post_meta( $id, self::META_RATING, true ) ),
 			'helps' => esc_html__( '0 = unrated, 1–5 stars. → XMP:Rating', 'metamanager' ),
-		];
+		);
 
-		$form_fields[ self::META_DATE ] = [
+		$form_fields[ self::META_DATE ] = array(
 			'label' => esc_html__( 'Date Created', 'metamanager' ),
 			'input' => 'html',
 			'html'  => sprintf(
@@ -597,46 +710,54 @@ class MM_Metadata {
 				esc_attr( (string) get_post_meta( $id, self::META_DATE, true ) )
 			),
 			'helps' => esc_html__( 'Date originally created/captured. → EXIF:DateTimeOriginal, IPTC:DateCreated, XMP:DateCreated', 'metamanager' ),
-		];
+		);
 
 		// --- Location ---
-		$form_fields['mm_section_location'] = [ 'label' => '', 'input' => 'html', 'html' =>
-			$h4( __( 'Location', 'metamanager' ), __( '(IPTC Photo Metadata Standard)', 'metamanager' ) ) ];
+		$form_fields['mm_section_location'] = array(
+			'label' => '',
+			'input' => 'html',
+			'html'  =>
+							$h4( __( 'Location', 'metamanager' ), __( '(IPTC Photo Metadata Standard)', 'metamanager' ) ),
+		);
 
-		$form_fields[ self::META_CITY ] = [
+		$form_fields[ self::META_CITY ] = array(
 			'label' => esc_html__( 'City', 'metamanager' ),
 			'input' => 'text',
 			'value' => (string) get_post_meta( $id, self::META_CITY, true ),
 			'helps' => esc_html__( '→ IPTC:City, XMP:City', 'metamanager' ),
-		];
+		);
 
-		$form_fields[ self::META_STATE ] = [
+		$form_fields[ self::META_STATE ] = array(
 			'label' => esc_html__( 'State / Province', 'metamanager' ),
 			'input' => 'text',
 			'value' => (string) get_post_meta( $id, self::META_STATE, true ),
 			'helps' => esc_html__( '→ IPTC:Province-State, XMP:State', 'metamanager' ),
-		];
+		);
 
-		$form_fields[ self::META_COUNTRY ] = [
+		$form_fields[ self::META_COUNTRY ] = array(
 			'label' => esc_html__( 'Country', 'metamanager' ),
 			'input' => 'text',
 			'value' => (string) get_post_meta( $id, self::META_COUNTRY, true ),
 			'helps' => esc_html__( '→ IPTC:Country-PrimaryLocationName, XMP:Country', 'metamanager' ),
-		];
+		);
 
 		// --- GPS (read-only) ---
 		$gps_lat = (string) get_post_meta( $id, self::META_GPS_LAT, true );
 		$gps_lon = (string) get_post_meta( $id, self::META_GPS_LON, true );
 		$gps_alt = (string) get_post_meta( $id, self::META_GPS_ALT, true );
 		if ( '' !== $gps_lat && '' !== $gps_lon ) {
-			$form_fields['mm_section_gps'] = [ 'label' => '', 'input' => 'html', 'html' =>
-				$h4( __( 'GPS Coordinates', 'metamanager' ), __( '(read-only — from file)', 'metamanager' ) ) ];
+			$form_fields['mm_section_gps'] = array(
+				'label' => '',
+				'input' => 'html',
+				'html'  =>
+									$h4( __( 'GPS Coordinates', 'metamanager' ), __( '(read-only — from file)', 'metamanager' ) ),
+			);
 
 			$coord_str = esc_html( $gps_lat ) . ', ' . esc_html( $gps_lon );
 			if ( '' !== $gps_alt ) {
 				$coord_str .= ' — alt ' . esc_html( $gps_alt ) . 'm';
 			}
-			$form_fields[ self::META_GPS_LAT ] = [
+			$form_fields[ self::META_GPS_LAT ] = array(
 				'label' => esc_html__( 'Coordinates', 'metamanager' ),
 				'input' => 'html',
 				'html'  => '<div id="mm-gps-map" style="margin-bottom:8px;"></div>'
@@ -644,7 +765,7 @@ class MM_Metadata {
 					. '<input type="hidden" name="attachments[' . absint( $id ) . '][mm_gps_lat]" value="' . esc_attr( $gps_lat ) . '">'
 					. '<input type="hidden" name="attachments[' . absint( $id ) . '][mm_gps_lon]" value="' . esc_attr( $gps_lon ) . '">',
 				'helps' => esc_html__( 'Extracted from EXIF:GPSLatitude + GPSLongitude.', 'metamanager' ),
-			];
+			);
 		}
 
 		return $form_fields;
@@ -680,11 +801,18 @@ class MM_Metadata {
 
 		$id = (int) $post['ID'];
 
-		$string_fields = [
-			self::META_CREATOR, self::META_COPYRIGHT, self::META_OWNER,
-			self::META_HEADLINE, self::META_CREDIT, self::META_KEYWORDS,
-			self::META_DATE, self::META_CITY, self::META_STATE, self::META_COUNTRY,
-		];
+		$string_fields = array(
+			self::META_CREATOR,
+			self::META_COPYRIGHT,
+			self::META_OWNER,
+			self::META_HEADLINE,
+			self::META_CREDIT,
+			self::META_KEYWORDS,
+			self::META_DATE,
+			self::META_CITY,
+			self::META_STATE,
+			self::META_COUNTRY,
+		);
 
 		foreach ( $string_fields as $key ) {
 			if ( array_key_exists( $key, $attachment ) ) {
@@ -701,7 +829,7 @@ class MM_Metadata {
 		}
 
 		// Enqueue metadata embedding jobs — do NOT compress on edit.
-		MM_Job_Queue::enqueue_all_sizes( $id, [], 'metadata', [ 'trigger' => 'edit' ] );
+		MM_Job_Queue::enqueue_all_sizes( $id, array(), 'metadata', array( 'trigger' => 'edit' ) );
 
 		return $post;
 	}
@@ -740,12 +868,19 @@ class MM_Metadata {
 
 		// Check if any native metadata fields are present in the request.
 		// REST API sends these as post meta; WP-CLI sets them via wp_postmeta.
-		$native_keys = [
-			self::META_CREATOR, self::META_COPYRIGHT, self::META_OWNER,
-			self::META_HEADLINE, self::META_CREDIT, self::META_KEYWORDS,
-			self::META_DATE, self::META_CITY, self::META_STATE, self::META_COUNTRY,
+		$native_keys = array(
+			self::META_CREATOR,
+			self::META_COPYRIGHT,
+			self::META_OWNER,
+			self::META_HEADLINE,
+			self::META_CREDIT,
+			self::META_KEYWORDS,
+			self::META_DATE,
+			self::META_CITY,
+			self::META_STATE,
+			self::META_COUNTRY,
 			self::META_RATING,
-		];
+		);
 
 		$changed = false;
 		foreach ( $native_keys as $key ) {
@@ -757,7 +892,7 @@ class MM_Metadata {
 		}
 
 		if ( $changed ) {
-			MM_Job_Queue::enqueue_all_sizes( $post_id, [], 'metadata', [ 'trigger' => 'edit' ] );
+			MM_Job_Queue::enqueue_all_sizes( $post_id, array(), 'metadata', array( 'trigger' => 'edit' ) );
 		}
 	}
 
@@ -786,7 +921,7 @@ class MM_Metadata {
 			return;
 		}
 
-		MM_Job_Queue::write_job( 'import', $attachment_id, $file, 'full', [ 'trigger' => 'import' ] );
+		MM_Job_Queue::write_job( 'import', $attachment_id, $file, 'full', array( 'trigger' => 'import' ) );
 	}
 
 	/**
@@ -817,23 +952,23 @@ class MM_Metadata {
 	 *
 	 * Existing user-set values are never overwritten.
 	 *
-	 * @param int                  $attachment_id WordPress attachment ID.
-	 * @param array<string,mixed>  $embedded      Flat "Group:Tag" => value map
-	 *                                             as returned by ExifTool -G1 -j.
+	 * @param int                 $attachment_id WordPress attachment ID.
+	 * @param array<string,mixed> $embedded      Flat "Group:Tag" => value map
+	 *                                            as returned by ExifTool -G1 -j.
 	 */
 	public static function apply_import_result( int $attachment_id, array $embedded ): void {
 		if ( empty( $embedded ) ) {
 			return;
 		}
 
-		$file         = get_attached_file( $attachment_id );
-		$field_map    = self::field_map();
-		$meta_map     = self::field_to_meta_map();
-		$gps_keys     = [ self::META_GPS_LAT, self::META_GPS_LON, self::META_GPS_ALT ];
+		$file      = get_attached_file( $attachment_id );
+		$field_map = self::field_map();
+		$meta_map  = self::field_to_meta_map();
+		$gps_keys  = array( self::META_GPS_LAT, self::META_GPS_LON, self::META_GPS_ALT );
 
 		// Import custom post meta fields from field_map().
 		foreach ( $meta_map as $field => $meta_key ) {
-			$candidates = $field_map[ $field ] ?? [];
+			$candidates = $field_map[ $field ] ?? array();
 			if ( empty( $candidates ) ) {
 				continue;
 			}
@@ -860,7 +995,7 @@ class MM_Metadata {
 				if ( preg_match( '/^(-?\d+(?:\.\d+)?)/', $value, $coord_m ) ) {
 					$coord = (float) $coord_m[1];
 					$valid = match ( $meta_key ) {
-						self::META_GPS_LAT => $coord >= -90.0  && $coord <= 90.0  && 0.0 !== $coord,
+						self::META_GPS_LAT => $coord >= -90.0 && $coord <= 90.0 && 0.0 !== $coord,
 						self::META_GPS_LON => $coord >= -180.0 && $coord <= 180.0 && 0.0 !== $coord,
 						default            => $coord >= -9000.0 && $coord <= 9000.0,
 					};
@@ -879,12 +1014,12 @@ class MM_Metadata {
 			return;
 		}
 
-		$native_updates = [];
+		$native_updates = array();
 
-		$embedded_title = self::pick_embedded_value( $embedded, $field_map['Title'] ?? [] );
+		$embedded_title = self::pick_embedded_value( $embedded, $field_map['Title'] ?? array() );
 		if ( '' !== $embedded_title ) {
 			$auto_title = $file
-				? str_replace( [ '-', '_' ], ' ', preg_replace( '/\.[^.]+$/', '', basename( $file ) ) )
+				? str_replace( array( '-', '_' ), ' ', preg_replace( '/\.[^.]+$/', '', basename( $file ) ) )
 				: '';
 			if ( '' === trim( $post->post_title )
 				|| ( '' !== $auto_title && strtolower( trim( $post->post_title ) ) === strtolower( trim( $auto_title ) ) ) ) {
@@ -893,14 +1028,14 @@ class MM_Metadata {
 		}
 
 		if ( '' === trim( $post->post_content ) ) {
-			$v = self::pick_embedded_value( $embedded, $field_map['Description'] ?? [] );
+			$v = self::pick_embedded_value( $embedded, $field_map['Description'] ?? array() );
 			if ( '' !== $v ) {
 				$native_updates['post_content'] = sanitize_textarea_field( $v );
 			}
 		}
 
 		if ( '' === trim( $post->post_excerpt ) ) {
-			$v = self::pick_embedded_value( $embedded, $field_map['Caption'] ?? [] );
+			$v = self::pick_embedded_value( $embedded, $field_map['Caption'] ?? array() );
 			if ( '' !== $v && $v !== ( $native_updates['post_content'] ?? '' ) ) {
 				$native_updates['post_excerpt'] = sanitize_text_field( $v );
 			}
@@ -912,7 +1047,7 @@ class MM_Metadata {
 		}
 
 		if ( '' === (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ) {
-			$v = self::pick_embedded_value( $embedded, [ 'XMP:AltTextAccessibility' ] );
+			$v = self::pick_embedded_value( $embedded, array( 'XMP:AltTextAccessibility' ) );
 			if ( '' !== $v ) {
 				update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $v ) );
 			}
@@ -949,23 +1084,23 @@ class MM_Metadata {
 		// GPS, rating, duration and keywords are excluded from verification
 		// because their round-trip formats vary and are not always writable
 		// by every ExifTool flavour.
-		$excluded = [
+		$excluded = array(
 			self::META_RATING,
 			self::META_GPS_LAT,
 			self::META_GPS_LON,
 			self::META_GPS_ALT,
 			self::META_KEYWORDS,
-		];
+		);
 
-		$checks = [];
+		$checks = array();
 		foreach ( $meta_map as $field => $meta_key ) {
 			if ( in_array( $meta_key, $excluded, true ) ) {
 				continue;
 			}
-			$checks[ $meta_key ] = $field_map[ $field ] ?? [];
+			$checks[ $meta_key ] = $field_map[ $field ] ?? array();
 		}
 
-		$discrepancies = [];
+		$discrepancies = array();
 
 		foreach ( $checks as $meta_key => $candidates ) {
 			$wp_value = trim( (string) get_post_meta( $attachment_id, $meta_key, true ) );
@@ -978,10 +1113,10 @@ class MM_Metadata {
 				$file_value = self::normalise_date( $file_value );
 			}
 			if ( strtolower( $wp_value ) !== strtolower( $file_value ) ) {
-				$discrepancies[ $meta_key ] = [
+				$discrepancies[ $meta_key ] = array(
 					'expected' => $wp_value,
 					'found'    => $file_value,
-				];
+				);
 			}
 		}
 
@@ -1002,15 +1137,15 @@ class MM_Metadata {
 	 * @return string HTML
 	 */
 	private static function rating_field_html( int $attachment_id, string $current_value ): string {
-		$options = [
+		$options = array(
 			0 => __( '0 — Unrated', 'metamanager' ),
 			1 => '★',
 			2 => '★★',
 			3 => '★★★',
 			4 => '★★★★',
 			5 => '★★★★★',
-		];
-		$html = sprintf(
+		);
+		$html    = sprintf(
 			'<select id="attachments-%1$d-mm_rating" name="attachments[%1$d][mm_rating]">',
 			absint( $attachment_id )
 		);

@@ -16,11 +16,11 @@ class MM_Mod_Person extends MM_Mod_Base {
 	/**
 	 * Image position options.
 	 */
-	public const POSITIONS = [
+	public const POSITIONS = array(
 		'top'   => 'Top (stacked)',
 		'left'  => 'Left (image + text side by side)',
 		'right' => 'Right (text + image side by side)',
-	];
+	);
 
 	/**
 	 * No-op — Person cards render inline via widget/block, not in the head.
@@ -31,10 +31,10 @@ class MM_Mod_Person extends MM_Mod_Base {
 	 * Register hooks.
 	 */
 	public function register_hooks(): void {
-		add_action( 'init', [ $this, 'register_block' ] );
-		add_action( 'widgets_init', [ $this, 'register_widget' ] );
-		add_shortcode( 'mm_person', [ $this, 'render_shortcode' ] );
-		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'init', array( $this, 'register_block' ) );
+		add_action( 'widgets_init', array( $this, 'register_widget' ) );
+		add_shortcode( 'mm_person', array( $this, 'render_shortcode' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -49,26 +49,56 @@ class MM_Mod_Person extends MM_Mod_Base {
 		wp_register_script(
 			'mm-meta-block-person',
 			MM_META_URL . 'assets/js/block-person.js',
-			[ 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-block-editor', 'wp-components', 'wp-server-side-render' ],
+			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-block-editor', 'wp-components', 'wp-server-side-render' ),
 			MM_META_VERSION,
 			true
 		);
 
-		register_block_type( 'metamanager/person', [
-			'editor_script'   => 'mm-meta-block-person',
-			'render_callback' => [ $this, 'render_person' ],
-			'attributes'      => [
-				'name'         => [ 'type' => 'string', 'default' => '' ],
-				'jobTitle'     => [ 'type' => 'string', 'default' => '' ],
-				'description'  => [ 'type' => 'string', 'default' => '' ],
-				'imageId'      => [ 'type' => 'number', 'default' => 0 ],
-				'imagePosition'=> [ 'type' => 'string', 'default' => 'top' ],
-				'schemaType'   => [ 'type' => 'string', 'default' => 'Person' ],
-				'sameAs'       => [ 'type' => 'string', 'default' => '' ],
-				'phone'        => [ 'type' => 'string', 'default' => '' ],
-				'email'        => [ 'type' => 'string', 'default' => '' ],
-			],
-		] );
+		register_block_type(
+			'metamanager/person',
+			array(
+				'editor_script'   => 'mm-meta-block-person',
+				'render_callback' => array( $this, 'render_person' ),
+				'attributes'      => array(
+					'name'          => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+					'jobTitle'      => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+					'description'   => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+					'imageId'       => array(
+						'type'    => 'number',
+						'default' => 0,
+					),
+					'imagePosition' => array(
+						'type'    => 'string',
+						'default' => 'top',
+					),
+					'schemaType'    => array(
+						'type'    => 'string',
+						'default' => 'Person',
+					),
+					'sameAs'        => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+					'phone'         => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+					'email'         => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+				),
+			)
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -84,29 +114,35 @@ class MM_Mod_Person extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	public function render_shortcode( $atts ): string {
-		$atts = shortcode_atts( [
-			'name'         => '',
-			'job_title'    => '',
-			'description'  => '',
-			'image_id'     => 0,
-			'image_position' => 'top',
-			'schema_type'  => 'Person',
-			'same_as'      => '',
-			'phone'        => '',
-			'email'        => '',
-		], $atts, 'mm_person' );
+		$atts = shortcode_atts(
+			array(
+				'name'           => '',
+				'job_title'      => '',
+				'description'    => '',
+				'image_id'       => 0,
+				'image_position' => 'top',
+				'schema_type'    => 'Person',
+				'same_as'        => '',
+				'phone'          => '',
+				'email'          => '',
+			),
+			$atts,
+			'mm_person'
+		);
 
-		return $this->render_person( [
-			'name'         => $atts['name'],
-			'jobTitle'     => $atts['job_title'],
-			'description'  => $atts['description'],
-			'imageId'      => (int) $atts['image_id'],
-			'imagePosition'=> $atts['image_position'],
-			'schemaType'   => $atts['schema_type'],
-			'sameAs'       => $atts['same_as'],
-			'phone'        => $atts['phone'],
-			'email'        => $atts['email'],
-		] );
+		return $this->render_person(
+			array(
+				'name'          => $atts['name'],
+				'jobTitle'      => $atts['job_title'],
+				'description'   => $atts['description'],
+				'imageId'       => (int) $atts['image_id'],
+				'imagePosition' => $atts['image_position'],
+				'schemaType'    => $atts['schema_type'],
+				'sameAs'        => $atts['same_as'],
+				'phone'         => $atts['phone'],
+				'email'         => $atts['email'],
+			)
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -117,20 +153,20 @@ class MM_Mod_Person extends MM_Mod_Base {
 		wp_enqueue_style(
 			'mm-meta-person',
 			MM_META_URL . 'assets/css/person-card.css',
-			[],
+			array(),
 			MM_META_VERSION
 		);
 
 		// Inject Button Styles from settings so Person buttons match sitewide styles.
-		$s = MM_Site_Settings::get_instance();
-		$btn = $s->get( 'listing', [] );
-		$bg = esc_attr( $btn['btn_bg'] ?? '#0073aa' );
-		$color = esc_attr( $btn['btn_text_color'] ?? '#ffffff' );
-		$radius = esc_attr( $btn['btn_radius'] ?? '4px' );
-		$padding = esc_attr( $btn['btn_padding'] ?? '10px 16px' );
-		$font_size = esc_attr( $btn['btn_font_size'] ?? '14px' );
+		$s           = MM_Site_Settings::get_instance();
+		$btn         = $s->get( 'listing', array() );
+		$bg          = esc_attr( $btn['btn_bg'] ?? '#0073aa' );
+		$color       = esc_attr( $btn['btn_text_color'] ?? '#ffffff' );
+		$radius      = esc_attr( $btn['btn_radius'] ?? '4px' );
+		$padding     = esc_attr( $btn['btn_padding'] ?? '10px 16px' );
+		$font_size   = esc_attr( $btn['btn_font_size'] ?? '14px' );
 		$font_weight = esc_attr( $btn['btn_font_weight'] ?? '500' );
-		$css = ".mm-person__phone-btn,.mm-person__email-btn{background:{$bg};color:{$color} !important;border-radius:{$radius};padding:{$padding};font-size:{$font_size};font-weight:{$font_weight};}";
+		$css         = ".mm-person__phone-btn,.mm-person__email-btn{background:{$bg};color:{$color} !important;border-radius:{$radius};padding:{$padding};font-size:{$font_size};font-weight:{$font_weight};}";
 		wp_add_inline_style( 'mm-meta-person', $css );
 	}
 
@@ -144,7 +180,7 @@ class MM_Mod_Person extends MM_Mod_Base {
 	 * @param array $attributes Card data.
 	 * @return string HTML.
 	 */
-	public function render_person( array $attributes = [] ): string {
+	public function render_person( array $attributes = array() ): string {
 		$name        = sanitize_text_field( $attributes['name'] ?? '' );
 		$job_title   = sanitize_text_field( $attributes['jobTitle'] ?? $attributes['job_title'] ?? '' );
 		$description = wp_kses_post( $attributes['description'] ?? '' );
@@ -160,13 +196,13 @@ class MM_Mod_Person extends MM_Mod_Base {
 		}
 
 		$position = isset( self::POSITIONS[ $position ] ) ? $position : 'top';
-		$image    = $image_id ? wp_get_attachment_image( $image_id, 'medium', false, [ 'class' => 'mm-person__img' ] ) : '';
+		$image    = $image_id ? wp_get_attachment_image( $image_id, 'medium', false, array( 'class' => 'mm-person__img' ) ) : '';
 
 		// Schema node.
-		$node = [
+		$node = array(
 			'@type' => $schema_type,
 			'name'  => $name,
-		];
+		);
 		if ( $job_title ) {
 			$node['jobTitle'] = $job_title;
 		}
@@ -192,13 +228,16 @@ class MM_Mod_Person extends MM_Mod_Base {
 		// Organisation reference if set in business profile.
 		$s = MM_Site_Settings::get_instance();
 		if ( $s->get_business( 'name' ) ) {
-			$node['worksFor'] = [ '@id' => $this->site_id( 'organization' ) ];
+			$node['worksFor'] = array( '@id' => $this->site_id( 'organization' ) );
 		}
 
-		$schema_json = wp_json_encode( [
-			'@context' => 'https://schema.org',
-			'@graph'   => [ $node ],
-		], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$schema_json = wp_json_encode(
+			array(
+				'@context' => 'https://schema.org',
+				'@graph'   => array( $node ),
+			),
+			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+		);
 
 		ob_start();
 		?>
@@ -249,10 +288,10 @@ class MM_Person_Widget extends WP_Widget {
 		parent::__construct(
 			'mm_meta_person',
 			__( 'GCM Person Card', 'metamanager' ),
-			[
+			array(
 				'classname'   => 'mm-person-widget',
 				'description' => __( 'Displays a person/professional card with schema markup. For staff who are not WordPress users.', 'metamanager' ),
-			]
+			)
 		);
 	}
 
@@ -282,31 +321,31 @@ class MM_Person_Widget extends WP_Widget {
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'name' ) ); ?>">Name *</label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'name' ) ); ?>"
-			       name="<?php echo esc_attr( $this->get_field_name( 'name' ) ); ?>"
-			       type="text" value="<?php echo esc_attr( $name ); ?>">
+					name="<?php echo esc_attr( $this->get_field_name( 'name' ) ); ?>"
+					type="text" value="<?php echo esc_attr( $name ); ?>">
 		</p>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'jobTitle' ) ); ?>">Job Title</label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'jobTitle' ) ); ?>"
-			       name="<?php echo esc_attr( $this->get_field_name( 'jobTitle' ) ); ?>"
-			       type="text" value="<?php echo esc_attr( $job_title ); ?>">
+					name="<?php echo esc_attr( $this->get_field_name( 'jobTitle' ) ); ?>"
+					type="text" value="<?php echo esc_attr( $job_title ); ?>">
 		</p>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'description' ) ); ?>">Bio / Description</label>
 			<textarea class="widefat" rows="3"
-			          id="<?php echo esc_attr( $this->get_field_id( 'description' ) ); ?>"
-			          name="<?php echo esc_attr( $this->get_field_name( 'description' ) ); ?>"><?php echo esc_textarea( $description ); ?></textarea>
+						id="<?php echo esc_attr( $this->get_field_id( 'description' ) ); ?>"
+						name="<?php echo esc_attr( $this->get_field_name( 'description' ) ); ?>"><?php echo esc_textarea( $description ); ?></textarea>
 		</p>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'imageId' ) ); ?>">Image ID</label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'imageId' ) ); ?>"
-			       name="<?php echo esc_attr( $this->get_field_name( 'imageId' ) ); ?>"
-			       type="number" value="<?php echo esc_attr( (string) $image_id ); ?>">
+					name="<?php echo esc_attr( $this->get_field_name( 'imageId' ) ); ?>"
+					type="number" value="<?php echo esc_attr( (string) $image_id ); ?>">
 		</p>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'imagePosition' ) ); ?>">Image Position</label>
 			<select class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'imagePosition' ) ); ?>"
-			        name="<?php echo esc_attr( $this->get_field_name( 'imagePosition' ) ); ?>">
+					name="<?php echo esc_attr( $this->get_field_name( 'imagePosition' ) ); ?>">
 				<?php foreach ( MM_Mod_Person::POSITIONS as $key => $label ) : ?>
 				<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $position, $key ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
@@ -315,8 +354,8 @@ class MM_Person_Widget extends WP_Widget {
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'schemaType' ) ); ?>">Schema Type</label>
 			<select class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'schemaType' ) ); ?>"
-			        name="<?php echo esc_attr( $this->get_field_name( 'schemaType' ) ); ?>">
-				<?php foreach ( [ 'Person', 'Physician', 'Dentist', 'Attorney', 'Accountant' ] as $t ) : ?>
+					name="<?php echo esc_attr( $this->get_field_name( 'schemaType' ) ); ?>">
+				<?php foreach ( array( 'Person', 'Physician', 'Dentist', 'Attorney', 'Accountant' ) as $t ) : ?>
 				<option value="<?php echo esc_attr( $t ); ?>" <?php selected( $schema_type, $t ); ?>><?php echo esc_html( $t ); ?></option>
 				<?php endforeach; ?>
 			</select>
@@ -324,35 +363,35 @@ class MM_Person_Widget extends WP_Widget {
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'phone' ) ); ?>">Phone</label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'phone' ) ); ?>"
-			       name="<?php echo esc_attr( $this->get_field_name( 'phone' ) ); ?>"
-			       type="text" value="<?php echo esc_attr( $phone ); ?>">
+					name="<?php echo esc_attr( $this->get_field_name( 'phone' ) ); ?>"
+					type="text" value="<?php echo esc_attr( $phone ); ?>">
 		</p>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'email' ) ); ?>">Email</label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'email' ) ); ?>"
-			       name="<?php echo esc_attr( $this->get_field_name( 'email' ) ); ?>"
-			       type="text" value="<?php echo esc_attr( $email ); ?>">
+					name="<?php echo esc_attr( $this->get_field_name( 'email' ) ); ?>"
+					type="text" value="<?php echo esc_attr( $email ); ?>">
 		</p>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'sameAs' ) ); ?>">Social URLs (one per line)</label>
 			<textarea class="widefat" rows="3"
-			          id="<?php echo esc_attr( $this->get_field_id( 'sameAs' ) ); ?>"
-			          name="<?php echo esc_attr( $this->get_field_name( 'sameAs' ) ); ?>"><?php echo esc_textarea( $same_as ); ?></textarea>
+						id="<?php echo esc_attr( $this->get_field_id( 'sameAs' ) ); ?>"
+						name="<?php echo esc_attr( $this->get_field_name( 'sameAs' ) ); ?>"><?php echo esc_textarea( $same_as ); ?></textarea>
 		</p>
 		<?php
 	}
 
 	public function update( $new_instance, $old_instance ): array {
-		return [
-			'name'         => sanitize_text_field( $new_instance['name'] ?? '' ),
-			'jobTitle'     => sanitize_text_field( $new_instance['jobTitle'] ?? '' ),
-			'description'  => wp_kses_post( $new_instance['description'] ?? '' ),
-			'imageId'      => (int) ( $new_instance['imageId'] ?? 0 ),
-			'imagePosition'=> sanitize_key( $new_instance['imagePosition'] ?? 'top' ),
-			'schemaType'   => sanitize_text_field( $new_instance['schemaType'] ?? 'Person' ),
-			'sameAs'       => esc_url_raw( $new_instance['sameAs'] ?? '' ),
-			'phone'        => sanitize_text_field( $new_instance['phone'] ?? '' ),
-			'email'        => sanitize_email( $new_instance['email'] ?? '' ),
-		];
+		return array(
+			'name'          => sanitize_text_field( $new_instance['name'] ?? '' ),
+			'jobTitle'      => sanitize_text_field( $new_instance['jobTitle'] ?? '' ),
+			'description'   => wp_kses_post( $new_instance['description'] ?? '' ),
+			'imageId'       => (int) ( $new_instance['imageId'] ?? 0 ),
+			'imagePosition' => sanitize_key( $new_instance['imagePosition'] ?? 'top' ),
+			'schemaType'    => sanitize_text_field( $new_instance['schemaType'] ?? 'Person' ),
+			'sameAs'        => esc_url_raw( $new_instance['sameAs'] ?? '' ),
+			'phone'         => sanitize_text_field( $new_instance['phone'] ?? '' ),
+			'email'         => sanitize_email( $new_instance['email'] ?? '' ),
+		);
 	}
 }

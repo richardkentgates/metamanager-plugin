@@ -11,14 +11,14 @@ defined( 'ABSPATH' ) || exit;
 
 class MM_MCP_Server {
 
-	private const ABILITIES = [
+	private const ABILITIES = array(
 		'metamanager/get-post-meta',
 		'metamanager/update-post-meta',
 		'metamanager/get-schema',
 		'metamanager/get-business-profile',
 		'metamanager/get-navigation',
 		'metamanager/get-term-meta',
-	];
+	);
 
 	public function register_hooks(): void {
 		// Only hook if MCP Adapter is available.
@@ -26,7 +26,7 @@ class MM_MCP_Server {
 			return;
 		}
 
-		add_action( 'mcp_adapter_init', [ $this, 'create_server' ] );
+		add_action( 'mcp_adapter_init', array( $this, 'create_server' ) );
 	}
 
 	/**
@@ -52,7 +52,7 @@ class MM_MCP_Server {
 			'Metamanager',
 			'SEO metadata, schema, and business info for this WordPress site.',
 			'1.0.0',
-			[ \WP\MCP\Transport\HttpTransport::class ],
+			array( \WP\MCP\Transport\HttpTransport::class ),
 			\WP\MCP\Infrastructure\ErrorHandling\ErrorLogMcpErrorHandler::class,
 			null,
 			self::ABILITIES

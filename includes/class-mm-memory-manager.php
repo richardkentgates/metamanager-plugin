@@ -343,7 +343,7 @@ class MM_Memory_Manager {
 		$php_limit    = self::get_memory_limit();
 		$php_used     = memory_get_usage( true );
 
-		$parts = [];
+		$parts = array();
 		if ( $system_total > 0 ) {
 			$parts[] = sprintf(
 				/* translators: 1: used system memory, 2: total system memory */

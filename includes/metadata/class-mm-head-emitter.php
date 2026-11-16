@@ -20,9 +20,9 @@ defined( 'ABSPATH' ) || exit;
 class MM_Head_Emitter {
 
 	/** @var MM_Mod_Base[] */
-	private array $modules = [];
+	private array $modules = array();
 
-	private MM_Page_Context  $context;
+	private MM_Page_Context $context;
 	private MM_Site_Settings $settings;
 
 	public function __construct( MM_Page_Context $context, MM_Site_Settings $settings ) {
@@ -39,12 +39,12 @@ class MM_Head_Emitter {
 	// -------------------------------------------------------------------------
 
 	public function render(): void {
-		$data = [
+		$data = array(
 			'title'  => '',
-			'meta'   => [],
-			'links'  => [],
-			'schema' => [],
-		];
+			'meta'   => array(),
+			'links'  => array(),
+			'schema' => array(),
+		);
 
 		foreach ( $this->modules as $module ) {
 			$module->populate( $data, $this->context, $this->settings );
@@ -82,7 +82,7 @@ class MM_Head_Emitter {
 
 		// <link> tags.
 		foreach ( $data['links'] as $link ) {
-			$link = array_map( 'esc_attr', $link );
+			$link  = array_map( 'esc_attr', $link );
 			$attrs = '';
 			foreach ( $link as $attr => $val ) {
 				$attrs .= sprintf( ' %s="%s"', esc_attr( $attr ), $val );
@@ -92,10 +92,10 @@ class MM_Head_Emitter {
 
 		// JSON-LD @graph.
 		if ( ! empty( $data['schema'] ) ) {
-			$graph = [
+			$graph = array(
 				'@context' => 'https://schema.org',
 				'@graph'   => array_values( $data['schema'] ),
-			];
+			);
 			echo '<script type="application/ld+json">'
 				. wp_json_encode( $graph, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT )
 				. '</script>' . "\n";

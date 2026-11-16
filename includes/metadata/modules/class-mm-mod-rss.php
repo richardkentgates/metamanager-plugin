@@ -37,12 +37,12 @@ class MM_Mod_Rss extends MM_Mod_Base {
 
 		// Remove the WordPress version disclosure generator tag from all feeds.
 		if ( $this->settings->get( 'feed.remove_generator', true ) ) {
-			add_filter( 'the_generator', [ $this, 'filter_generator' ], 10, 2 );
+			add_filter( 'the_generator', array( $this, 'filter_generator' ), 10, 2 );
 		}
 
 		// Strip wfw: / slash: elements and namespace declarations via output buffer.
 		if ( $this->settings->get( 'feed.remove_comments_elements', true ) ) {
-			add_action( 'template_redirect', [ $this, 'start_rss_buffer' ], 1 );
+			add_action( 'template_redirect', array( $this, 'start_rss_buffer' ), 1 );
 		}
 
 		// Use excerpt only — suppress <content:encoded> full-content element.
@@ -81,7 +81,7 @@ class MM_Mod_Rss extends MM_Mod_Base {
 	 * @return string Empty string for feed types; unchanged for HTML <head>.
 	 */
 	public function filter_generator( string $gen, string $type ): string {
-		$feed_types = [ 'rss2', 'rss', 'atom', 'rdf', 'comment', 'export', 'opml' ];
+		$feed_types = array( 'rss2', 'rss', 'atom', 'rdf', 'comment', 'export', 'opml' );
 		return in_array( $type, $feed_types, true ) ? '' : $gen;
 	}
 
@@ -92,7 +92,7 @@ class MM_Mod_Rss extends MM_Mod_Base {
 	/** Start buffering the feed template output on feed requests. */
 	public function start_rss_buffer(): void {
 		if ( is_feed() ) {
-			ob_start( [ $this, 'clean_rss_output' ] );
+			ob_start( array( $this, 'clean_rss_output' ) );
 		}
 	}
 

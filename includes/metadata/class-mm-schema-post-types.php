@@ -13,42 +13,42 @@ defined( 'ABSPATH' ) || exit;
 class MM_Schema_Post_Types {
 
 	/** Map of post type slug => [schema_type_label, short_label, supports, icon]. */
-	public const TYPES = [
-		'mm_event'       => [ 'Event',              'Events',              [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'calendar-alt' ],
-		'mm_service'     => [ 'Service',            'Services',            [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'hammer' ],
-		'mm_how_to'      => [ 'HowTo',              'How-To',              [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'list-view' ],
-		'mm_faq_page'    => [ 'FAQPage',            'FAQ',                 [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'editor' ],
-		'mm_trip'        => [ 'TouristTrip',        'Trips',               [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'location-alt' ],
-		'mm_destination' => [ 'TouristDestination',  'Destinations',       [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'location' ],
-		'mm_vessel'      => [ 'Vehicle',             'Vehicles',           [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'car' ],
-		'mm_course'      => [ 'Course',              'Courses',            [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'welcome-learn-more' ],
-		'mm_business'     => [ 'LocalBusiness',      'Businesses',         [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'store' ],
-		'mm_organization' => [ 'Organization',       'Organizations',      [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ], 'groups' ],
+	public const TYPES = array(
+		'mm_event'        => array( 'Event', 'Events', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'calendar-alt' ),
+		'mm_service'      => array( 'Service', 'Services', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'hammer' ),
+		'mm_how_to'       => array( 'HowTo', 'How-To', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'list-view' ),
+		'mm_faq_page'     => array( 'FAQPage', 'FAQ', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'editor' ),
+		'mm_trip'         => array( 'TouristTrip', 'Trips', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'location-alt' ),
+		'mm_destination'  => array( 'TouristDestination', 'Destinations', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'location' ),
+		'mm_vessel'       => array( 'Vehicle', 'Vehicles', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'car' ),
+		'mm_course'       => array( 'Course', 'Courses', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'welcome-learn-more' ),
+		'mm_business'     => array( 'LocalBusiness', 'Businesses', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'store' ),
+		'mm_organization' => array( 'Organization', 'Organizations', array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ), 'groups' ),
 		// AboutPage, ContactPage, Calendar are WordPress Page Templates — not CPTs.
 		// WebPage maps to default `page` type — not a separate CPT.
 		// BlogPosting maps to default `post` type — not a separate CPT.
 		// ProfilePage maps to author archive pages — not a separate CPT.
-	];
+	);
 
 	/** Map of page template slug => schema type. */
-	public const TEMPLATES = [
+	public const TEMPLATES = array(
 		'mm-about'    => 'AboutPage',
 		'mm-contact'  => 'ContactPage',
 		'mm-calendar' => 'CollectionPage',
-	];
+	);
 
 	/**
 	 * Register hooks.
 	 */
 	public static function init(): void {
-		add_action( 'admin_menu', [ __CLASS__, 'register_schema_menu' ] );
-		add_action( 'init', [ __CLASS__, 'register_post_types' ] );
-		add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
-		add_action( 'save_post', [ __CLASS__, 'save_meta' ], 10, 2 );
-		add_filter( 'template_include', [ __CLASS__, 'load_page_template' ] );
-		add_action( 'pre_get_posts', [ __CLASS__, 'order_archives_by_menu_order' ] );
-		add_action( 'wp_ajax_mm_search_vessels', [ __CLASS__, 'ajax_search_vessels' ] );
-		add_action( 'wp_ajax_mm_search_destinations', [ __CLASS__, 'ajax_search_destinations' ] );
+		add_action( 'admin_menu', array( __CLASS__, 'register_schema_menu' ) );
+		add_action( 'init', array( __CLASS__, 'register_post_types' ) );
+		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ) );
+		add_action( 'save_post', array( __CLASS__, 'save_meta' ), 10, 2 );
+		add_filter( 'template_include', array( __CLASS__, 'load_page_template' ) );
+		add_action( 'pre_get_posts', array( __CLASS__, 'order_archives_by_menu_order' ) );
+		add_action( 'wp_ajax_mm_search_vessels', array( __CLASS__, 'ajax_search_vessels' ) );
+		add_action( 'wp_ajax_mm_search_destinations', array( __CLASS__, 'ajax_search_destinations' ) );
 	}
 
 	/**
@@ -67,7 +67,13 @@ class MM_Schema_Post_Types {
 		if ( ! is_string( $pt ) || ! isset( self::TYPES[ $pt ] ) ) {
 			return;
 		}
-		$query->set( 'orderby', array( 'menu_order' => 'ASC', 'title' => 'ASC' ) );
+		$query->set(
+			'orderby',
+			array(
+				'menu_order' => 'ASC',
+				'title'      => 'ASC',
+			)
+		);
 		return;
 	}
 
@@ -80,7 +86,7 @@ class MM_Schema_Post_Types {
 			'Schema',
 			'edit_posts',
 			'mm-schema-dashboard',
-			[ __CLASS__, 'render_schema_dashboard' ],
+			array( __CLASS__, 'render_schema_dashboard' ),
 			'dashicons-editor-table',
 			30
 		);
@@ -126,12 +132,14 @@ class MM_Schema_Post_Types {
 		echo '</tr></thead><tbody>';
 
 		foreach ( self::TEMPLATES as $template_slug => $schema_type ) {
-			$pages = get_pages( [
-				'meta_key'   => '_wp_page_template',
-				'meta_value' => $template_slug,
-			] );
+			$pages = get_pages(
+				array(
+					'meta_key'   => '_wp_page_template',
+					'meta_value' => $template_slug,
+				)
+			);
 			$count = count( $pages );
-			$label = ucwords( str_replace( [ 'mm-', '-' ], [ '', ' ' ], $template_slug ) );
+			$label = ucwords( str_replace( array( 'mm-', '-' ), array( '', ' ' ), $template_slug ) );
 
 			printf(
 				'<tr><td>%s</td><td>%s</td><td>%d</td></tr>',
@@ -155,25 +163,28 @@ class MM_Schema_Post_Types {
 			$supports    = $config[2];
 			$icon        = $config[3];
 
-			register_post_type( $slug, [
-				'labels'       => [
-					'name'               => $short_label,
-					'singular_name'      => $schema_type,
-					'add_new_item'       => 'Add New ' . $schema_type,
-					'edit_item'          => 'Edit ' . $schema_type,
-					'view_item'          => 'View ' . $schema_type,
-					'search_items'       => 'Search ' . $short_label,
-					'not_found'          => 'No ' . $short_label . ' found',
-					'not_found_in_trash' => 'No ' . $short_label . ' found in Trash',
-				],
-				'public'       => true,
-				'has_archive'  => true,
-				'rewrite'      => [ 'slug' => sanitize_title( strtolower( $short_label ) ) ],
-				'supports'     => $supports,
-				'menu_icon'    => 'dashicons-' . $icon,
-				'show_in_rest' => true,
-				'show_in_menu' => 'mm-schema-dashboard',
-			] );
+			register_post_type(
+				$slug,
+				array(
+					'labels'       => array(
+						'name'               => $short_label,
+						'singular_name'      => $schema_type,
+						'add_new_item'       => 'Add New ' . $schema_type,
+						'edit_item'          => 'Edit ' . $schema_type,
+						'view_item'          => 'View ' . $schema_type,
+						'search_items'       => 'Search ' . $short_label,
+						'not_found'          => 'No ' . $short_label . ' found',
+						'not_found_in_trash' => 'No ' . $short_label . ' found in Trash',
+					),
+					'public'       => true,
+					'has_archive'  => true,
+					'rewrite'      => array( 'slug' => sanitize_title( strtolower( $short_label ) ) ),
+					'supports'     => $supports,
+					'menu_icon'    => 'dashicons-' . $icon,
+					'show_in_rest' => true,
+					'show_in_menu' => 'mm-schema-dashboard',
+				)
+			);
 		}
 	}
 
@@ -186,7 +197,7 @@ class MM_Schema_Post_Types {
 			add_meta_box(
 				'mm_schema_fields',
 				$schema_type . ' Details',
-				[ __CLASS__, 'render_meta_box' ],
+				array( __CLASS__, 'render_meta_box' ),
 				$slug,
 				'normal',
 				'high'
@@ -194,8 +205,8 @@ class MM_Schema_Post_Types {
 		}
 
 		// Page template metaboxes — detect on the page screen.
-		add_action( 'load-post.php', [ __CLASS__, 'add_page_template_meta_boxes' ] );
-		add_action( 'load-post-new.php', [ __CLASS__, 'add_page_template_meta_boxes' ] );
+		add_action( 'load-post.php', array( __CLASS__, 'add_page_template_meta_boxes' ) );
+		add_action( 'load-post-new.php', array( __CLASS__, 'add_page_template_meta_boxes' ) );
 	}
 
 	/**
@@ -208,7 +219,7 @@ class MM_Schema_Post_Types {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification -- read-only metabox rendering; no state change.
-		$post_id = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0;
+		$post_id  = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0;
 		$template = $post_id ? get_page_template_slug( $post_id ) : '';
 
 		if ( ! isset( self::TEMPLATES[ $template ] ) ) {
@@ -219,7 +230,7 @@ class MM_Schema_Post_Types {
 		add_meta_box(
 			'mm_schema_fields',
 			$schema_type . ' Details',
-			[ __CLASS__, 'render_page_template_meta_box' ],
+			array( __CLASS__, 'render_page_template_meta_box' ),
 			'page',
 			'normal',
 			'high'
@@ -251,14 +262,14 @@ class MM_Schema_Post_Types {
 
 		$wc_active   = class_exists( 'WooCommerce' ) || function_exists( 'WC' );
 		$fields      = MM_Schema_Types::get_fields_by_type( $wc_active );
-		$type_fields = $fields[ $schema_type ] ?? [];
+		$type_fields = $fields[ $schema_type ] ?? array();
 		$saved       = get_post_meta( $post->ID, 'mm_schema_fields', true );
 		if ( ! is_array( $saved ) ) {
-			$saved = [];
+			$saved = array();
 		}
 
 		// WooCommerce product linking section for Event and Service.
-		if ( $wc_active && in_array( $slug, [ 'mm_event', 'mm_service' ], true ) ) {
+		if ( $wc_active && in_array( $slug, array( 'mm_event', 'mm_service' ), true ) ) {
 			self::render_wc_product_linking_section( $post, $slug );
 		}
 
@@ -276,8 +287,8 @@ class MM_Schema_Post_Types {
 		echo '<table class="form-table"><tbody>';
 
 		// Get business profile defaults for auto-population.
-		$biz = in_array( $slug, [ 'mm_event', 'mm_service', 'mm_trip', 'mm_course' ], true ) ? MM_Site_Settings::get_instance()->all_business() : [];
-		$biz_addr = $biz['address'] ?? [];
+		$biz      = in_array( $slug, array( 'mm_event', 'mm_service', 'mm_trip', 'mm_course' ), true ) ? MM_Site_Settings::get_instance()->all_business() : array();
+		$biz_addr = $biz['address'] ?? array();
 
 		foreach ( $type_fields as $field ) {
 			$key         = $field['key'];
@@ -287,7 +298,7 @@ class MM_Schema_Post_Types {
 			$required    = ! empty( $field['required'] );
 			$placeholder = $field['placeholder'] ?? '';
 			$desc        = $field['description'] ?? '';
-			$options     = $field['options'] ?? [];
+			$options     = $field['options'] ?? array();
 
 			// Build data attribute for auto-population from business profile.
 			$biz_attr = '';
@@ -297,13 +308,20 @@ class MM_Schema_Post_Types {
 						$biz_attr = ! empty( $biz['name'] ) ? sprintf( ' data-biz-default="%s"', esc_attr( $biz['name'] ) ) : '';
 						break;
 					case 'event_location_address':
-						$full_addr = trim( implode( ', ', array_filter( [
-							$biz_addr['street'] ?? '',
-							$biz_addr['city'] ?? '',
-							$biz_addr['state'] ?? '',
-							$biz_addr['zip'] ?? '',
-						] ) ) );
-						$biz_attr = $full_addr ? sprintf( ' data-biz-default="%s"', esc_attr( $full_addr ) ) : '';
+						$full_addr = trim(
+							implode(
+								', ',
+								array_filter(
+									array(
+										$biz_addr['street'] ?? '',
+										$biz_addr['city'] ?? '',
+										$biz_addr['state'] ?? '',
+										$biz_addr['zip'] ?? '',
+									)
+								)
+							)
+						);
+						$biz_attr  = $full_addr ? sprintf( ' data-biz-default="%s"', esc_attr( $full_addr ) ) : '';
 						break;
 					case 'event_organizer_name':
 						$biz_attr = ! empty( $biz['name'] ) ? sprintf( ' data-biz-default="%s"', esc_attr( $biz['name'] ) ) : '';
@@ -373,7 +391,7 @@ class MM_Schema_Post_Types {
 		}
 
 		// Event/Service/Trip/Course: add auto-populate JavaScript.
-		if ( in_array( $slug, [ 'mm_event', 'mm_service', 'mm_trip', 'mm_course' ], true ) ) {
+		if ( in_array( $slug, array( 'mm_event', 'mm_service', 'mm_trip', 'mm_course' ), true ) ) {
 			?>
 			<script>
 			(function(){
@@ -440,8 +458,8 @@ class MM_Schema_Post_Types {
 		$name     = $biz['name'] ?? '';
 		$phone    = $biz['phone'] ?? '';
 		$email    = $biz['email'] ?? '';
-		$addr     = $biz['address'] ?? [];
-		$hours    = $biz['hours'] ?? [];
+		$addr     = $biz['address'] ?? array();
+		$hours    = $biz['hours'] ?? array();
 		$lat      = $biz['lat'] ?? '';
 		$lng      = $biz['lng'] ?? '';
 
@@ -457,10 +475,10 @@ class MM_Schema_Post_Types {
 		printf( '<tr><th>Phone</th><td>%s</td></tr>', esc_html( $phone ?: '<em>Not set</em>' ) );
 		printf( '<tr><th>Email</th><td>%s</td></tr>', esc_html( $email ?: '<em>Not set</em>' ) );
 
-		$street   = $addr['street'] ?? '';
-		$city     = $addr['city'] ?? '';
-		$state    = $addr['state'] ?? '';
-		$zip      = $addr['zip'] ?? '';
+		$street    = $addr['street'] ?? '';
+		$city      = $addr['city'] ?? '';
+		$state     = $addr['state'] ?? '';
+		$zip       = $addr['zip'] ?? '';
 		$full_addr = trim( "$street, $city, $state $zip", ', ' );
 		printf( '<tr><th>Address</th><td>%s</td></tr>', esc_html( $full_addr ?: '<em>Not set</em>' ) );
 
@@ -491,10 +509,10 @@ class MM_Schema_Post_Types {
 		$desc      = $biz['description'] ?? '';
 		$phone     = $biz['phone'] ?? '';
 		$email     = $biz['email'] ?? '';
-		$addr      = $biz['address'] ?? [];
+		$addr      = $biz['address'] ?? array();
 		$founding  = $biz['founding_date'] ?? '';
 		$employees = $biz['number_of_employees'] ?? '';
-		$areas     = $biz['service_areas'] ?? [];
+		$areas     = $biz['service_areas'] ?? array();
 
 		echo '<div style="background:#f0f0f1;padding:16px;border-radius:4px;margin-bottom:16px;">';
 		echo '<p style="margin:0 0 8px 0;"><strong>About Page</strong> is auto-generated from your Business Info settings.</p>';
@@ -514,10 +532,10 @@ class MM_Schema_Post_Types {
 			printf( '<tr><th>Employees</th><td>%s</td></tr>', esc_html( $employees ) );
 		}
 
-		$street   = $addr['street'] ?? '';
-		$city     = $addr['city'] ?? '';
-		$state    = $addr['state'] ?? '';
-		$zip      = $addr['zip'] ?? '';
+		$street    = $addr['street'] ?? '';
+		$city      = $addr['city'] ?? '';
+		$state     = $addr['state'] ?? '';
+		$zip       = $addr['zip'] ?? '';
 		$full_addr = trim( "$street, $city, $state $zip", ', ' );
 		printf( '<tr><th>Address</th><td>%s</td></tr>', esc_html( $full_addr ?: '<em>Not set</em>' ) );
 
@@ -570,19 +588,21 @@ class MM_Schema_Post_Types {
 	 * Get upcoming events (sorted by start date).
 	 */
 	private static function get_upcoming_events(): array {
-		$query = new \WP_Query( [
-			'post_type'      => 'mm_event',
-			'posts_per_page' => 20,
-			'meta_key'       => 'mm_schema_fields',
-			'orderby'        => 'meta_value',
-			'order'          => 'ASC',
-			'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				[
-					'key'     => 'mm_schema_fields',
-					'compare' => 'EXISTS',
-				],
-			],
-		] );
+		$query = new \WP_Query(
+			array(
+				'post_type'      => 'mm_event',
+				'posts_per_page' => 20,
+				'meta_key'       => 'mm_schema_fields',
+				'orderby'        => 'meta_value',
+				'order'          => 'ASC',
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					array(
+						'key'     => 'mm_schema_fields',
+						'compare' => 'EXISTS',
+					),
+				),
+			)
+		);
 		return $query->posts;
 	}
 
@@ -592,7 +612,7 @@ class MM_Schema_Post_Types {
 	private static function render_faq_page_meta_box( \WP_Post $post ): void {
 		$saved = get_post_meta( $post->ID, 'mm_schema_fields', true );
 		if ( ! is_array( $saved ) ) {
-			$saved = [];
+			$saved = array();
 		}
 
 		// Count existing pairs.
@@ -675,7 +695,7 @@ class MM_Schema_Post_Types {
 	private static function render_how_to_meta_box( \WP_Post $post ): void {
 		$saved = get_post_meta( $post->ID, 'mm_schema_fields', true );
 		if ( ! is_array( $saved ) ) {
-			$saved = [];
+			$saved = array();
 		}
 
 		// HowTo-level fields (totalTime, estimatedCost).
@@ -690,7 +710,7 @@ class MM_Schema_Post_Types {
 			esc_attr( $total_time )
 		);
 
-		$cost_amount = $saved['howto_cost_amount'] ?? '';
+		$cost_amount   = $saved['howto_cost_amount'] ?? '';
 		$cost_currency = $saved['howto_cost_currency'] ?? '';
 		printf(
 			'<tr><th><label for="mm_howto_cost_amount">Estimated Cost</label></th><td>' .
@@ -1088,15 +1108,20 @@ class MM_Schema_Post_Types {
 		if ( ! $search ) {
 			wp_send_json_error( 'Empty search' );
 		}
-		$query = new \WP_Query( [
-			'post_type'      => 'mm_destination',
-			's'              => $search,
-			'posts_per_page' => 10,
-			'post_status'    => 'publish',
-		] );
-		$results = [];
+		$query   = new \WP_Query(
+			array(
+				'post_type'      => 'mm_destination',
+				's'              => $search,
+				'posts_per_page' => 10,
+				'post_status'    => 'publish',
+			)
+		);
+		$results = array();
 		foreach ( $query->posts as $dest ) {
-			$results[] = [ 'id' => $dest->ID, 'title' => get_the_title( $dest ) ];
+			$results[] = array(
+				'id'    => $dest->ID,
+				'title' => get_the_title( $dest ),
+			);
 		}
 		wp_send_json_success( $results );
 	}
@@ -1113,15 +1138,20 @@ class MM_Schema_Post_Types {
 		if ( ! $search ) {
 			wp_send_json_error( 'Empty search' );
 		}
-		$query = new \WP_Query( [
-			'post_type'      => 'mm_vessel',
-			's'              => $search,
-			'posts_per_page' => 10,
-			'post_status'    => 'publish',
-		] );
-		$results = [];
+		$query   = new \WP_Query(
+			array(
+				'post_type'      => 'mm_vessel',
+				's'              => $search,
+				'posts_per_page' => 10,
+				'post_status'    => 'publish',
+			)
+		);
+		$results = array();
 		foreach ( $query->posts as $vessel ) {
-			$results[] = [ 'id' => $vessel->ID, 'title' => get_the_title( $vessel ) ];
+			$results[] = array(
+				'id'    => $vessel->ID,
+				'title' => get_the_title( $vessel ),
+			);
 		}
 		wp_send_json_success( $results );
 	}
@@ -1130,8 +1160,8 @@ class MM_Schema_Post_Types {
 	 * Save meta box data.
 	 */
 	public static function save_meta( int $post_id, \WP_Post $post ): void {
-		$is_schema_cpt = isset( self::TYPES[ $post->post_type ] );
-		$template      = get_page_template_slug( $post_id );
+		$is_schema_cpt  = isset( self::TYPES[ $post->post_type ] );
+		$template       = get_page_template_slug( $post_id );
 		$is_schema_page = 'page' === $post->post_type && isset( self::TEMPLATES[ $template ] );
 
 		if ( ! $is_schema_cpt && ! $is_schema_page ) {
@@ -1151,8 +1181,8 @@ class MM_Schema_Post_Types {
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- array read; every element is sanitized in the loop below.
-		$raw_fields = (array) wp_unslash( $_POST['mm_schema_fields'] ?? [] );
-		$fields     = [];
+		$raw_fields = (array) wp_unslash( $_POST['mm_schema_fields'] ?? array() );
+		$fields     = array();
 		foreach ( $raw_fields as $key => $value ) {
 			if ( is_array( $value ) ) {
 				continue;
@@ -1203,11 +1233,14 @@ class MM_Schema_Post_Types {
 		?>
 		<div class="mm-archive mm-archive--<?php echo esc_attr( $layout ); ?>" data-cpt="<?php echo esc_attr( $slug ); ?>">
 		<?php if ( have_posts() ) : ?>
-			<?php while ( have_posts() ) : the_post(); ?>
+			<?php
+			while ( have_posts() ) :
+				the_post();
+				?>
 				<article id="post-<?php the_ID(); ?>" <?php post_class( 'mm-archive-card mm-archive-card--' . $layout ); ?>>
 					<?php if ( has_post_thumbnail() ) : ?>
 						<a class="mm-archive-card__image" href="<?php the_permalink(); ?>">
-							<?php the_post_thumbnail( 'medium_large', [ 'loading' => 'lazy' ] ); ?>
+							<?php the_post_thumbnail( 'medium_large', array( 'loading' => 'lazy' ) ); ?>
 						</a>
 					<?php endif; ?>
 					<div class="mm-archive-card__body">
@@ -1218,21 +1251,27 @@ class MM_Schema_Post_Types {
 						// Schema field details (price, etc.) after title.
 						$saved_fields = get_post_meta( get_the_ID(), 'mm_schema_fields', true );
 						if ( is_array( $saved_fields ) && ! empty( $saved_fields ) ) {
-							$detail_items = [];
-							$field_defs = MM_Schema_Types::get_fields_by_type()[ MM_Schema_Post_Types::slug_to_type( $slug ) ] ?? [];
-							$label_map = [];
+							$detail_items = array();
+							$field_defs   = MM_Schema_Types::get_fields_by_type()[ self::slug_to_type( $slug ) ] ?? array();
+							$label_map    = array();
 							foreach ( $field_defs as $fdef ) {
 								$label_map[ $fdef['key'] ?? '' ] = $fdef['label'] ?? ( $fdef['key'] ?? '' );
 							}
 							foreach ( $saved_fields as $fkey => $fval ) {
 								$fval = trim( (string) $fval );
-								if ( '' === $fval ) continue;
-								$flabel = $label_map[ $fkey ] ?? ucwords( str_replace( '_', ' ', (string) $fkey ) );
-								$detail_items[] = [ 'label' => $flabel, 'value' => $fval ];
+								if ( '' === $fval ) {
+									continue;
+								}
+								$flabel         = $label_map[ $fkey ] ?? ucwords( str_replace( '_', ' ', (string) $fkey ) );
+								$detail_items[] = array(
+									'label' => $flabel,
+									'value' => $fval,
+								);
 							}
-							if ( $detail_items ) : ?>
+							if ( $detail_items ) :
+								?>
 						<div class="mm-archive-card__details">
-							<?php foreach ( $detail_items as $d ) : ?>
+								<?php foreach ( $detail_items as $d ) : ?>
 							<div class="mm-archive-card__detail-row">
 								<span class="mm-archive-card__detail-label"><?php echo esc_html( $d['label'] ); ?>:</span>
 								<span class="mm-archive-card__detail-value"><?php echo esc_html( $d['value'] ); ?></span>
@@ -1373,7 +1412,7 @@ class MM_Schema_Post_Types {
 		}
 
 		// Don't migrate revisions or attachments.
-		if ( in_array( $post->post_type, [ 'revision', 'attachment', 'nav_menu_item', 'custom_css', 'customize_changeset' ], true ) ) {
+		if ( in_array( $post->post_type, array( 'revision', 'attachment', 'nav_menu_item', 'custom_css', 'customize_changeset' ), true ) ) {
 			return false;
 		}
 
@@ -1387,10 +1426,13 @@ class MM_Schema_Post_Types {
 		}
 
 		// Change post type.
-		$result = wp_update_post( [
-			'ID'        => $post_id,
-			'post_type' => $slug,
-		], true );
+		$result = wp_update_post(
+			array(
+				'ID'        => $post_id,
+				'post_type' => $slug,
+			),
+			true
+		);
 
 		return is_wp_error( $result ) ? false : $slug;
 	}
@@ -1450,11 +1492,11 @@ class MM_Schema_Post_Types {
 			return;
 		}
 		$fields = MM_Schema_Types::get_fields_by_type()[ $type ] ?? array();
-		$rows = '';
-		$seen = array();
+		$rows   = '';
+		$seen   = array();
 		foreach ( $fields as $field ) {
-			$key   = $field['key'] ?? '';
-			$value = trim( (string) ( $saved[ $key ] ?? '' ) );
+			$key          = $field['key'] ?? '';
+			$value        = trim( (string) ( $saved[ $key ] ?? '' ) );
 			$seen[ $key ] = true;
 			if ( '' === $value ) {
 				continue;
