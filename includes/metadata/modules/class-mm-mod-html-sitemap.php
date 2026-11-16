@@ -41,16 +41,31 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 			MM_META_VERSION,
 			true
 		);
-		register_block_type( 'metamanager/sitemap', [
-			'editor_script'   => 'mm-block-sitemap',
-			'render_callback' => [ $this, 'render_shortcode' ],
-			'attributes'      => [
-				'columns'   => [ 'type' => 'number', 'default' => 1 ],
-				'orderBy'   => [ 'type' => 'string', 'default' => 'menu_order' ],
-				'depth'     => [ 'type' => 'number', 'default' => 3 ],
-				'showDate'  => [ 'type' => 'boolean', 'default' => false ],
-			],
-		] );
+		register_block_type(
+			'metamanager/sitemap',
+			[
+				'editor_script'   => 'mm-block-sitemap',
+				'render_callback' => [ $this, 'render_shortcode' ],
+				'attributes'      => [
+					'columns'  => [
+						'type'    => 'number',
+						'default' => 1,
+					],
+					'orderBy'  => [
+						'type'    => 'string',
+						'default' => 'menu_order',
+					],
+					'depth'    => [
+						'type'    => 'number',
+						'default' => 3,
+					],
+					'showDate' => [
+						'type'    => 'boolean',
+						'default' => false,
+					],
+				],
+			]
+		);
 	}
 
 	public function register_widget(): void {
@@ -68,19 +83,26 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 
 		$flat_limit = max( 1, min( 5000, (int) ( $cfg['flat_limit'] ?? 500 ) ) );
 
-		$atts = shortcode_atts( [
-			'post_types' => implode( ',', array_merge(
-				[ 'page', 'post' ],
-				array_keys( MM_Schema_Post_Types::TYPES )
-			) ),
-			'taxonomies' => 'category,post_tag',
-			'depth'      => (int) ( $cfg['depth'] ?? 3 ),
-			'exclude'    => '',
-			'columns'    => (int) ( $cfg['columns'] ?? 1 ),
-			'show_date'  => 'no',
-			'order_by'   => $cfg['order_by'] ?? 'menu_order',
-			'limit'      => $flat_limit,
-		], $atts, 'mm_sitemap' );
+		$atts = shortcode_atts(
+			[
+				'post_types' => implode(
+					',',
+					array_merge(
+						[ 'page', 'post' ],
+						array_keys( MM_Schema_Post_Types::TYPES )
+					)
+				),
+				'taxonomies' => 'category,post_tag',
+				'depth'      => (int) ( $cfg['depth'] ?? 3 ),
+				'exclude'    => '',
+				'columns'    => (int) ( $cfg['columns'] ?? 1 ),
+				'show_date'  => 'no',
+				'order_by'   => $cfg['order_by'] ?? 'menu_order',
+				'limit'      => $flat_limit,
+			],
+			$atts,
+			'mm_sitemap'
+		);
 
 		$post_types = array_filter( array_map( 'trim', explode( ',', $atts['post_types'] ) ) );
 		$taxonomies = array_filter( array_map( 'trim', explode( ',', $atts['taxonomies'] ) ) );
@@ -98,10 +120,10 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 		// Section order: pages → CPTs → posts → categories → tags.
 		// Pages first (site structure), then custom post types, then core
 		// posts, then category taxonomy, then remaining taxonomies (tags).
-		$core_pts = array( 'page' );
-		$cpt_list = array_diff( $post_types, array( 'page', 'post' ) );
+		$core_pts  = array( 'page' );
+		$cpt_list  = array_diff( $post_types, array( 'page', 'post' ) );
 		$post_only = in_array( 'post', $post_types, true ) ? array( 'post' ) : array();
-		$core_tax = array( 'category' );
+		$core_tax  = array( 'category' );
 		$other_tax = array_diff( $taxonomies, $core_tax );
 
 		// 1. Pages
@@ -200,8 +222,8 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 			}
 			// Recurse into children.
 			$children = $this->render_hierarchical( $pt, $post->ID, $max_depth, $exclude, $show_date, $order_by, $current_depth + 1, $limit );
-			$out      .= $children;
-			$out      .= '</li>';
+			$out     .= $children;
+			$out     .= '</li>';
 		}
 		$out .= '</ul>';
 		return $out;
@@ -248,10 +270,12 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 			return '';
 		}
 
-		$terms = get_terms( [
-			'taxonomy'   => $taxonomy,
-			'hide_empty' => true,
-		] );
+		$terms = get_terms(
+			[
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => true,
+			]
+		);
 
 		if ( is_wp_error( $terms ) || ! $terms ) {
 			return '';
@@ -287,21 +311,24 @@ class MM_Mod_Html_Sitemap extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	private function filter_noindex( array $posts ): array {
-		return array_filter( $posts, function( $post ) {
-			// Exclude posts explicitly set to noindex or exclude_sitemap.
-			$meta = $this->settings->get_post_meta( $post->ID );
-			if ( ! empty( $meta['noindex'] ) ) {
-				return false;
+		return array_filter(
+			$posts,
+			function ( $post ) {
+				// Exclude posts explicitly set to noindex or exclude_sitemap.
+				$meta = $this->settings->get_post_meta( $post->ID );
+				if ( ! empty( $meta['noindex'] ) ) {
+					return false;
+				}
+				if ( ! empty( $meta['exclude_sitemap'] ) ) {
+					return false;
+				}
+				// Exclude password-protected.
+				if ( post_password_required( $post ) ) {
+					return false;
+				}
+				return true;
 			}
-			if ( ! empty( $meta['exclude_sitemap'] ) ) {
-				return false;
-			}
-			// Exclude password-protected.
-			if ( post_password_required( $post ) ) {
-				return false;
-			}
-			return true;
-		} );
+		);
 	}
 
 	private function apply_order( array $args, string $order_by ): array {
@@ -344,8 +371,8 @@ class MM_Sitemap_Widget extends WP_Widget {
 		echo $args['before_widget']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		if ( ! empty( $instance['title'] ) ) {
 			echo $args['before_title'] // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			     . esc_html( apply_filters( 'widget_title', $instance['title'] ) )
-			     . $args['after_title']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				. esc_html( apply_filters( 'widget_title', $instance['title'] ) )
+				. $args['after_title']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
 		echo $module->render_shortcode( [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo $args['after_widget']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -357,8 +384,8 @@ class MM_Sitemap_Widget extends WP_Widget {
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>">Title (optional):</label>
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"
-			       name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>"
-			       type="text" value="<?php echo esc_attr( $title ); ?>">
+					name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>"
+					type="text" value="<?php echo esc_attr( $title ); ?>">
 		</p>
 		<p class="description">Sitemap content is configured in Metamanager → Sitemaps settings.</p>
 		<?php

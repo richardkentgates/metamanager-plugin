@@ -63,13 +63,15 @@ class MM_CLI extends \WP_CLI_Command {
 				[ 'image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif', 'image/tiff' ],
 				MM_Metadata::VIDEO_MIME_TYPES
 			);
-			$ids = get_posts( [
-				'post_type'      => 'attachment',
-				'post_mime_type' => $compressible_mimes,
-				'post_status'    => 'inherit',
-				'numberposts'    => -1,
-				'fields'         => 'ids',
-			] );
+			$ids                = get_posts(
+				[
+					'post_type'      => 'attachment',
+					'post_mime_type' => $compressible_mimes,
+					'post_status'    => 'inherit',
+					'numberposts'    => -1,
+					'fields'         => 'ids',
+				]
+			);
 			if ( empty( $ids ) ) {
 				\WP_CLI::success( 'No compressible files found.' );
 				return;
@@ -157,13 +159,15 @@ class MM_CLI extends \WP_CLI_Command {
 				MM_Metadata::AUDIO_MIME_TYPES,
 				MM_Metadata::PDF_MIME_TYPES
 			);
-			$ids = get_posts( [
-				'post_type'      => 'attachment',
-				'post_mime_type' => $supported_mimes,
-				'post_status'    => 'inherit',
-				'numberposts'    => -1,
-				'fields'         => 'ids',
-			] );
+			$ids             = get_posts(
+				[
+					'post_type'      => 'attachment',
+					'post_mime_type' => $supported_mimes,
+					'post_status'    => 'inherit',
+					'numberposts'    => -1,
+					'fields'         => 'ids',
+				]
+			);
 			if ( empty( $ids ) ) {
 				\WP_CLI::success( 'No supported files found.' );
 				return;
@@ -222,9 +226,18 @@ class MM_CLI extends \WP_CLI_Command {
 			\WP_CLI\Utils\format_items(
 				'table',
 				[
-					[ 'Type' => 'Compression', 'Pending' => $comp ],
-					[ 'Type' => 'Metadata',    'Pending' => $meta ],
-					[ 'Type' => 'Total',       'Pending' => $total ],
+					[
+						'Type'    => 'Compression',
+						'Pending' => $comp,
+					],
+					[
+						'Type'    => 'Metadata',
+						'Pending' => $meta,
+					],
+					[
+						'Type'    => 'Total',
+						'Pending' => $total,
+					],
 				],
 				[ 'Type', 'Pending' ]
 			);
@@ -232,7 +245,7 @@ class MM_CLI extends \WP_CLI_Command {
 			$compress_running = MM_Status::compress_daemon_running();
 			$meta_running     = MM_Status::meta_daemon_running();
 			\WP_CLI::line( 'Compress daemon: ' . ( $compress_running ? "\033[0;32mrunning\033[0m" : "\033[0;31mstopped\033[0m" ) );
-			\WP_CLI::line( 'Metadata daemon: ' . ( $meta_running     ? "\033[0;32mrunning\033[0m" : "\033[0;31mstopped\033[0m" ) );
+			\WP_CLI::line( 'Metadata daemon: ' . ( $meta_running ? "\033[0;32mrunning\033[0m" : "\033[0;31mstopped\033[0m" ) );
 		} else {
 			\WP_CLI::error( "Unknown subcommand: {$sub}. Valid: status" );
 		}
@@ -264,15 +277,17 @@ class MM_CLI extends \WP_CLI_Command {
 			MM_Metadata::PDF_MIME_TYPES
 		);
 
-		$all_ids  = get_posts( [
-			'post_type'      => 'attachment',
-			'post_mime_type' => $supported_mimes,
-			'post_status'    => 'inherit',
-			'numberposts'    => -1,
-			'fields'         => 'ids',
-			'orderby'        => 'ID',
-			'order'          => 'ASC',
-		] );
+		$all_ids  = get_posts(
+			[
+				'post_type'      => 'attachment',
+				'post_mime_type' => $supported_mimes,
+				'post_status'    => 'inherit',
+				'numberposts'    => -1,
+				'fields'         => 'ids',
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+			]
+		);
 		$done_ids = MM_DB::get_ids_with_completed_job( 'metadata' );
 		$ids      = array_values( array_diff( array_map( 'intval', $all_ids ), $done_ids ) );
 
@@ -349,13 +364,15 @@ class MM_CLI extends \WP_CLI_Command {
 				MM_Metadata::AUDIO_MIME_TYPES,
 				MM_Metadata::PDF_MIME_TYPES
 			);
-			$ids = get_posts( [
-				'post_type'      => 'attachment',
-				'post_mime_type' => $supported_mimes,
-				'post_status'    => 'inherit',
-				'numberposts'    => -1,
-				'fields'         => 'ids',
-			] );
+			$ids             = get_posts(
+				[
+					'post_type'      => 'attachment',
+					'post_mime_type' => $supported_mimes,
+					'post_status'    => 'inherit',
+					'numberposts'    => -1,
+					'fields'         => 'ids',
+				]
+			);
 			if ( empty( $ids ) ) {
 				\WP_CLI::success( 'No supported files found.' );
 				return;
@@ -430,7 +447,7 @@ class MM_CLI extends \WP_CLI_Command {
 	public function stats( array $args ): void {
 		$stats = MM_DB::get_stats();
 
-		$bytes_saved    = (int) ( $stats['bytes_saved']    ?? 0 );
+		$bytes_saved    = (int) ( $stats['bytes_saved'] ?? 0 );
 		$bytes_original = (int) ( $stats['bytes_original'] ?? 0 );
 		$pct            = $bytes_original > 0
 			? round( $bytes_saved / $bytes_original * 100, 1 )
@@ -439,11 +456,26 @@ class MM_CLI extends \WP_CLI_Command {
 		\WP_CLI\Utils\format_items(
 			'table',
 			[
-				[ 'Metric' => 'Total jobs',          'Value' => number_format( (int) $stats['total_jobs'] ) ],
-				[ 'Metric' => 'Completed',           'Value' => number_format( (int) $stats['completed'] ) ],
-				[ 'Metric' => 'Failed',              'Value' => number_format( (int) $stats['failed'] ) ],
-				[ 'Metric' => 'Unique attachments',  'Value' => number_format( (int) $stats['unique_attachments'] ) ],
-				[ 'Metric' => 'Bytes saved',         'Value' => size_format( $bytes_saved ) . " ({$pct}%)" ],
+				[
+					'Metric' => 'Total jobs',
+					'Value'  => number_format( (int) $stats['total_jobs'] ),
+				],
+				[
+					'Metric' => 'Completed',
+					'Value'  => number_format( (int) $stats['completed'] ),
+				],
+				[
+					'Metric' => 'Failed',
+					'Value'  => number_format( (int) $stats['failed'] ),
+				],
+				[
+					'Metric' => 'Unique attachments',
+					'Value'  => number_format( (int) $stats['unique_attachments'] ),
+				],
+				[
+					'Metric' => 'Bytes saved',
+					'Value'  => size_format( $bytes_saved ) . " ({$pct}%)",
+				],
 			],
 			[ 'Metric', 'Value' ]
 		);

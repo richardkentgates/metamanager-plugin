@@ -22,7 +22,7 @@ class MM_Head_Emitter {
 	/** @var MM_Mod_Base[] */
 	private array $modules = [];
 
-	private MM_Page_Context  $context;
+	private MM_Page_Context $context;
 	private MM_Site_Settings $settings;
 
 	public function __construct( MM_Page_Context $context, MM_Site_Settings $settings ) {
@@ -82,7 +82,7 @@ class MM_Head_Emitter {
 
 		// <link> tags.
 		foreach ( $data['links'] as $link ) {
-			$link = array_map( 'esc_attr', $link );
+			$link  = array_map( 'esc_attr', $link );
 			$attrs = '';
 			foreach ( $link as $attr => $val ) {
 				$attrs .= sprintf( ' %s="%s"', esc_attr( $attr ), $val );

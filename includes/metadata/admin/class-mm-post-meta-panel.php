@@ -24,7 +24,7 @@ class MM_Post_Meta_Panel {
 
 	public function register_hooks(): void {
 		add_action( 'add_meta_boxes', [ $this, 'add_meta_boxes' ] );
-		add_action( 'save_post',      [ $this, 'save_meta' ], 5, 2 );
+		add_action( 'save_post', [ $this, 'save_meta' ], 5, 2 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 	}
 
@@ -105,12 +105,12 @@ class MM_Post_Meta_Panel {
 
 		// phpcs:disable WordPress.Security.NonceVerification -- verified above.
 		$new = [
-			'canonical'      => esc_url_raw( wp_unslash( $_POST['mm_meta_canonical'] ?? '' ) ),
-			'noindex'        => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noindex'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_tristate() is a custom sanitizer
-			'nofollow'       => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_nofollow'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			'noarchive'      => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noarchive'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			'nosnippet'      => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_nosnippet'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			'noimageindex'   => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noimageindex'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			'canonical'        => esc_url_raw( wp_unslash( $_POST['mm_meta_canonical'] ?? '' ) ),
+			'noindex'          => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noindex'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_tristate() is a custom sanitizer
+			'nofollow'         => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_nofollow'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			'noarchive'        => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noarchive'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			'nosnippet'        => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_nosnippet'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			'noimageindex'     => $this->sanitize_tristate( wp_unslash( $_POST['mm_meta_noimageindex'] ?? '' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			'breadcrumb_label' => sanitize_text_field( wp_unslash( $_POST['mm_meta_breadcrumb_label'] ?? '' ) ),
 			'exclude_sitemap'  => ! empty( $_POST['mm_meta_exclude_sitemap'] ),
 			'schema_type'      => sanitize_key( wp_unslash( $_POST['mm_meta_schema_type'] ?? '' ) ),
@@ -190,10 +190,14 @@ class MM_Post_Meta_Panel {
 			MM_META_VERSION,
 			true
 		);
-		wp_localize_script( 'mm-meta-admin-metabox', 'mmMetabox', [
-			'sep'       => esc_js( $this->settings->get( 'titles.separator', '|' ) ),
-			'sitetitle' => esc_js( get_bloginfo( 'name' ) ),
-		] );
+		wp_localize_script(
+			'mm-meta-admin-metabox',
+			'mmMetabox',
+			[
+				'sep'       => esc_js( $this->settings->get( 'titles.separator', '|' ) ),
+				'sitetitle' => esc_js( get_bloginfo( 'name' ) ),
+			]
+		);
 	}
 
 	// -------------------------------------------------------------------------

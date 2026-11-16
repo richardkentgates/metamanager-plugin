@@ -54,19 +54,27 @@ class MM_Nav_Menu_Admin {
 		if ( $blog_url ) {
 			$groups['blog'] = [
 				'label' => __( 'Blog', 'metamanager' ),
-				'items' => [ [ 'title' => __( 'Blog Archive', 'metamanager' ), 'url' => $blog_url ] ],
+				'items' => [
+					[
+						'title' => __( 'Blog Archive', 'metamanager' ),
+						'url'   => $blog_url,
+					],
+				],
 			];
 		}
 
 		// CPT archives
 		if ( class_exists( 'MM_Schema_Post_Types' ) ) {
-			$types = MM_Schema_Post_Types::TYPES;
+			$types     = MM_Schema_Post_Types::TYPES;
 			$cpt_items = [];
 			foreach ( $types as $slug => $config ) {
 				$label = $config[1];
 				$url   = get_post_type_archive_link( $slug );
 				if ( $url ) {
-					$cpt_items[] = [ 'title' => $label, 'url' => $url ];
+					$cpt_items[] = [
+						'title' => $label,
+						'url'   => $url,
+					];
 				}
 			}
 			if ( $cpt_items ) {
@@ -79,9 +87,15 @@ class MM_Nav_Menu_Admin {
 
 		// Taxonomy archives
 		$taxonomies = get_taxonomies( [ 'public' => true ], 'names' );
-		$tax_items = [];
+		$tax_items  = [];
 		foreach ( $taxonomies as $tax ) {
-			$terms = get_terms( [ 'taxonomy' => $tax, 'hide_empty' => false, 'number' => 50 ] );
+			$terms = get_terms(
+				[
+					'taxonomy'   => $tax,
+					'hide_empty' => false,
+					'number'     => 50,
+				]
+			);
 			if ( is_wp_error( $terms ) || empty( $terms ) ) {
 				continue;
 			}
@@ -89,7 +103,11 @@ class MM_Nav_Menu_Admin {
 			foreach ( $terms as $term ) {
 				$url = get_term_link( $term );
 				if ( ! is_wp_error( $url ) ) {
-					$tax_items[] = [ 'title' => $term->name, 'url' => $url, 'group' => $tax_obj->labels->name ?? $tax ];
+					$tax_items[] = [
+						'title' => $term->name,
+						'url'   => $url,
+						'group' => $tax_obj->labels->name ?? $tax,
+					];
 				}
 			}
 		}
@@ -113,7 +131,7 @@ class MM_Nav_Menu_Admin {
 				</p>
 				<ul class="categorychecklist form-no-clear" id="mm-archives-list">
 					<?php foreach ( $groups as $key => $group ) : ?>
-					<?php foreach ( $group['items'] as $item ) : ?>
+						<?php foreach ( $group['items'] as $item ) : ?>
 					<li data-group="<?php echo esc_attr( $key ); ?>">
 						<label class="menu-item-title">
 							<input type="checkbox" class="mm-archive-check"
@@ -170,9 +188,9 @@ class MM_Nav_Menu_Admin {
 
 	public function render_schema_box(): void {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display
-		$menu_param = isset( $_GET['menu'] ) ? sanitize_text_field( wp_unslash( $_GET['menu'] ) ) : '';
+		$menu_param   = isset( $_GET['menu'] ) ? sanitize_text_field( wp_unslash( $_GET['menu'] ) ) : '';
 		$current_menu = (int) $menu_param;
-		$checked = $current_menu ? get_term_meta( $current_menu, '_mm_nav_menu_primary', true ) : '';
+		$checked      = $current_menu ? get_term_meta( $current_menu, '_mm_nav_menu_primary', true ) : '';
 		?>
 		<div>
 			<label>
@@ -204,12 +222,19 @@ class MM_Nav_Menu_Admin {
 		$is_primary = isset( $_POST['_mm_nav_menu_primary'] ) && '1' === $_POST['_mm_nav_menu_primary'];
 
 		if ( $is_primary ) {
-			$old = get_terms( [
-				'taxonomy'   => 'nav-menus',
-				'meta_query' => [ [ 'key' => '_mm_nav_menu_primary', 'value' => '1' ] ],
-				'number'     => 0,
-				'hide_empty' => false,
-			] );
+			$old = get_terms(
+				[
+					'taxonomy'   => 'nav-menus',
+					'meta_query' => [
+						[
+							'key'   => '_mm_nav_menu_primary',
+							'value' => '1',
+						],
+					],
+					'number'     => 0,
+					'hide_empty' => false,
+				]
+			);
 			if ( ! is_wp_error( $old ) ) {
 				foreach ( $old as $term ) {
 					if ( (int) $term->term_id !== (int) $menu_id ) {

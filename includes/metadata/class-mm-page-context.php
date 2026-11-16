@@ -27,19 +27,32 @@ class MM_Page_Context {
 
 	// Convenience booleans -------------------------------------------------------
 
-	public function is_front_page(): bool    { return (bool) $this->prop( 'is_front_page' ); }
-	public function is_home(): bool          { return (bool) $this->prop( 'is_home' ); }
-	public function is_singular(): bool      { return (bool) $this->prop( 'is_singular' ); }
-	public function is_archive(): bool       { return (bool) $this->prop( 'is_archive' ); }
-	public function is_tax(): bool           { return (bool) $this->prop( 'is_tax' ); }
-	public function is_category(): bool      { return (bool) $this->prop( 'is_category' ); }
-	public function is_tag(): bool           { return (bool) $this->prop( 'is_tag' ); }
-	public function is_author(): bool        { return (bool) $this->prop( 'is_author' ); }
-	public function is_date(): bool          { return (bool) $this->prop( 'is_date' ); }
-	public function is_search(): bool        { return (bool) $this->prop( 'is_search' ); }
-	public function is_404(): bool           { return (bool) $this->prop( 'is_404' ); }
-	public function is_paged(): bool         { return get_query_var( 'paged' ) > 1 || get_query_var( 'page' ) > 1; }
-	public function is_post_type_archive(): bool { return (bool) $this->prop( 'is_post_type_archive' ); }
+	public function is_front_page(): bool {
+		return (bool) $this->prop( 'is_front_page' ); }
+	public function is_home(): bool {
+		return (bool) $this->prop( 'is_home' ); }
+	public function is_singular(): bool {
+		return (bool) $this->prop( 'is_singular' ); }
+	public function is_archive(): bool {
+		return (bool) $this->prop( 'is_archive' ); }
+	public function is_tax(): bool {
+		return (bool) $this->prop( 'is_tax' ); }
+	public function is_category(): bool {
+		return (bool) $this->prop( 'is_category' ); }
+	public function is_tag(): bool {
+		return (bool) $this->prop( 'is_tag' ); }
+	public function is_author(): bool {
+		return (bool) $this->prop( 'is_author' ); }
+	public function is_date(): bool {
+		return (bool) $this->prop( 'is_date' ); }
+	public function is_search(): bool {
+		return (bool) $this->prop( 'is_search' ); }
+	public function is_404(): bool {
+		return (bool) $this->prop( 'is_404' ); }
+	public function is_paged(): bool {
+		return get_query_var( 'paged' ) > 1 || get_query_var( 'page' ) > 1; }
+	public function is_post_type_archive(): bool {
+		return (bool) $this->prop( 'is_post_type_archive' ); }
 
 	/** Returns WP_Post when on a singular page, otherwise null. */
 	public function get_post(): ?\WP_Post {
@@ -82,22 +95,22 @@ class MM_Page_Context {
 
 	private function resolve(): array {
 		$ctx = [
-			'is_front_page'         => is_front_page(),
-			'is_home'               => is_home(),
-			'is_singular'           => is_singular(),
-			'is_archive'            => is_archive(),
-			'is_tax'                => is_tax(),
-			'is_category'           => is_category(),
-			'is_tag'                => is_tag(),
-			'is_author'             => is_author(),
-			'is_date'               => is_date(),
-			'is_search'             => is_search(),
-			'is_404'                => is_404(),
-			'is_post_type_archive'  => is_post_type_archive(),
-			'post'                  => null,
-			'term'                  => null,
-			'author'                => null,
-			'post_type'             => '',
+			'is_front_page'        => is_front_page(),
+			'is_home'              => is_home(),
+			'is_singular'          => is_singular(),
+			'is_archive'           => is_archive(),
+			'is_tax'               => is_tax(),
+			'is_category'          => is_category(),
+			'is_tag'               => is_tag(),
+			'is_author'            => is_author(),
+			'is_date'              => is_date(),
+			'is_search'            => is_search(),
+			'is_404'               => is_404(),
+			'is_post_type_archive' => is_post_type_archive(),
+			'post'                 => null,
+			'term'                 => null,
+			'author'               => null,
+			'post_type'            => '',
 		];
 
 		if ( $ctx['is_singular'] ) {
@@ -108,8 +121,8 @@ class MM_Page_Context {
 			$term        = get_queried_object();
 			$ctx['term'] = $term instanceof \WP_Term ? $term : null;
 		} elseif ( $ctx['is_author'] ) {
-			$author         = get_queried_object();
-			$ctx['author']  = $author instanceof \WP_User ? $author : null;
+			$author        = get_queried_object();
+			$ctx['author'] = $author instanceof \WP_User ? $author : null;
 		} elseif ( $ctx['is_post_type_archive'] ) {
 			$ctx['post_type'] = (string) get_query_var( 'post_type' );
 		}

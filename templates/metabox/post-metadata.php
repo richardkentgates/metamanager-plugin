@@ -3,35 +3,36 @@
  * Post SEO metabox template.
  *
  * Variables available:
+ *
  *   @var WP_Post         $post
  *   @var array           $meta     Current _mm_meta values (decoded JSON)
  *   @var MM_Site_Settings $settings
  */
 defined( 'ABSPATH' ) || exit;
 
-$canonical        = $meta['canonical']       ?? '';
-$noindex          = $meta['noindex']         ?? null;  // true|false|null
-$nofollow         = $meta['nofollow']        ?? null;
-$noarchive        = $meta['noarchive']       ?? null;
-$nosnippet        = $meta['nosnippet']       ?? null;
-$noimageindex     = $meta['noimageindex']    ?? null;
+$canonical        = $meta['canonical'] ?? '';
+$noindex          = $meta['noindex'] ?? null;  // true|false|null
+$nofollow         = $meta['nofollow'] ?? null;
+$noarchive        = $meta['noarchive'] ?? null;
+$nosnippet        = $meta['nosnippet'] ?? null;
+$noimageindex     = $meta['noimageindex'] ?? null;
 $breadcrumb_label = $meta['breadcrumb_label'] ?? '';
 $exclude_sitemap  = ! empty( $meta['exclude_sitemap'] );
 
-$pt_slug          = $post->post_type;
-$default_noindex  = (bool) $settings->get( "titles.post_types.{$pt_slug}.noindex", false );
+$pt_slug         = $post->post_type;
+$default_noindex = (bool) $settings->get( "titles.post_types.{$pt_slug}.noindex", false );
 
 // Schema type is determined by post type — no override.
 if ( MM_Schema_Post_Types::is_schema_cpt( $pt_slug ) ) {
 	$resolved_schema_type = MM_Schema_Post_Types::slug_to_type( $pt_slug );
 } else {
-	$template = MM_Schema_Post_Types::get_post_template( $post );
+	$template             = MM_Schema_Post_Types::get_post_template( $post );
 	$resolved_schema_type = $template ? MM_Schema_Post_Types::template_to_type( $template ) : ( 'post' === $pt_slug ? 'BlogPosting' : 'WebPage' );
 }
 
 // Field definitions for expandable panels (types that need extra structured data).
-$wc_active = class_exists( 'WooCommerce' ) || function_exists( 'WC' );
-$schema_field_defs  = MM_Schema_Types::get_fields_by_type( $wc_active );
+$wc_active            = class_exists( 'WooCommerce' ) || function_exists( 'WC' );
+$schema_field_defs    = MM_Schema_Types::get_fields_by_type( $wc_active );
 $stored_schema_fields = $meta['schema_fields'] ?? [];
 ?>
 <div class="gcm-metabox" id="mm-meta-metabox">
@@ -53,11 +54,11 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 	<div class="gcm-field-group">
 		<label class="gcm-field-label" for="mm_meta_canonical">Canonical URL</label>
 		<input type="url"
-			   id="mm_meta_canonical"
-			   name="mm_meta_canonical"
-			   value="<?php echo esc_attr( $canonical ); ?>"
-			   class="large-text"
-			   placeholder="Leave blank to use the auto-resolved canonical">
+				id="mm_meta_canonical"
+				name="mm_meta_canonical"
+				value="<?php echo esc_attr( $canonical ); ?>"
+				class="large-text"
+				placeholder="Leave blank to use the auto-resolved canonical">
 	</div>
 
 	<?php /* ── Robots directives ────────────────────────────────────── */ ?>
@@ -81,10 +82,10 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 			<tbody>
 				<?php
 				$directives = [
-					'noindex'      => [ 'Noindex',      'Don\'t add this page to the search index.' ],
-					'nofollow'     => [ 'Nofollow',     'Don\'t follow links on this page.' ],
-					'noarchive'    => [ 'Noarchive',    'Don\'t show a cached copy of this page.' ],
-					'nosnippet'    => [ 'Nosnippet',    'Don\'t show a description snippet in search results.' ],
+					'noindex'      => [ 'Noindex', 'Don\'t add this page to the search index.' ],
+					'nofollow'     => [ 'Nofollow', 'Don\'t follow links on this page.' ],
+					'noarchive'    => [ 'Noarchive', 'Don\'t show a cached copy of this page.' ],
+					'nosnippet'    => [ 'Nosnippet', 'Don\'t show a description snippet in search results.' ],
 					'noimageindex' => [ 'Noimageindex', 'Don\'t index images on this page.' ],
 				];
 				foreach ( $directives as $field => $info ) :
@@ -95,27 +96,27 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 						<td>
 							<label>
 								<input type="radio"
-									   name="mm_meta_<?php echo esc_attr($field); ?>"
-									   value=""
-									   <?php checked( $current === null ); ?>>
+										name="mm_meta_<?php echo esc_attr( $field ); ?>"
+										value=""
+										<?php checked( $current === null ); ?>>
 								Default
 							</label>
 						</td>
 						<td>
 							<label>
 								<input type="radio"
-									   name="mm_meta_<?php echo esc_attr($field); ?>"
-									   value="1"
-									   <?php checked( $current === true ); ?>>
+										name="mm_meta_<?php echo esc_attr( $field ); ?>"
+										value="1"
+										<?php checked( $current === true ); ?>>
 								On
 							</label>
 						</td>
 						<td>
 							<label>
 								<input type="radio"
-									   name="mm_meta_<?php echo esc_attr($field); ?>"
-									   value="0"
-									   <?php checked( $current === false ); ?>>
+										name="mm_meta_<?php echo esc_attr( $field ); ?>"
+										value="0"
+										<?php checked( $current === false ); ?>>
 								Off
 							</label>
 						</td>
@@ -140,24 +141,28 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 			<?php /* ── Per-type field panels ──────────────────────────────────── */ ?>
 			<?php foreach ( $schema_field_defs as $panel_type => $panel_fields ) : ?>
 				<div class="gcm-schema-fields-panel"
-					 data-schema-type="<?php echo esc_attr( $panel_type ); ?>"
-					 style="<?php echo ( $resolved_schema_type === $panel_type ) ? '' : 'display:none'; ?>">
+					data-schema-type="<?php echo esc_attr( $panel_type ); ?>"
+					style="<?php echo ( $resolved_schema_type === $panel_type ) ? '' : 'display:none'; ?>">
 					<p class="gcm-schema-panel-heading"><?php echo esc_html( $panel_type ); ?> fields</p>
-					<?php foreach ( $panel_fields as $field ) :
-						$fk  = $field['key'];
-						$fv  = $stored_schema_fields[ $fk ] ?? '';
-					?>
+					<?php
+					foreach ( $panel_fields as $field ) :
+						$fk = $field['key'];
+						$fv = $stored_schema_fields[ $fk ] ?? '';
+						?>
 					<div class="gcm-schema-field-row">
 						<label class="gcm-schema-field-label" for="gcm_sf_<?php echo esc_attr( $fk ); ?>">
 							<?php echo esc_html( $field['label'] ); ?>
-							<?php if ( ! empty( $field['required'] ) ) : ?><span class="gcm-required">*</span><?php endif; ?>
+							<?php
+							if ( ! empty( $field['required'] ) ) :
+								?>
+								<span class="gcm-required">*</span><?php endif; ?>
 						</label>
 						<?php if ( ! empty( $field['auto_label'] ) ) : ?>
 							<span class="gcm-schema-auto-note">Auto: <?php echo esc_html( $field['auto_label'] ); ?></span>
 						<?php endif; ?>
 						<?php if ( 'select' === $field['type'] ) : ?>
 							<select id="gcm_sf_<?php echo esc_attr( $fk ); ?>"
-								    name="mm_meta_schema_fields[<?php echo esc_attr( $fk ); ?>]">
+									name="mm_meta_schema_fields[<?php echo esc_attr( $fk ); ?>]">
 								<?php foreach ( $field['options'] as $opt_val => $opt_label ) : ?>
 									<option value="<?php echo esc_attr( $opt_val ); ?>" <?php selected( $fv, $opt_val ); ?>>
 										<?php echo esc_html( $opt_label ); ?>
@@ -166,11 +171,11 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 							</select>
 						<?php else : ?>
 							<input type="<?php echo esc_attr( $field['type'] ); ?>"
-								   id="gcm_sf_<?php echo esc_attr( $fk ); ?>"
-								   name="mm_meta_schema_fields[<?php echo esc_attr( $fk ); ?>]"
-								   value="<?php echo esc_attr( $fv ); ?>"
-								   placeholder="<?php echo esc_attr( $field['placeholder'] ?? '' ); ?>"
-								   class="<?php echo ( 'number' === $field['type'] ) ? 'small-text' : 'large-text'; ?>">
+									id="gcm_sf_<?php echo esc_attr( $fk ); ?>"
+									name="mm_meta_schema_fields[<?php echo esc_attr( $fk ); ?>]"
+									value="<?php echo esc_attr( $fv ); ?>"
+									placeholder="<?php echo esc_attr( $field['placeholder'] ?? '' ); ?>"
+									class="<?php echo ( 'number' === $field['type'] ) ? 'small-text' : 'large-text'; ?>">
 						<?php endif; ?>
 						<?php if ( ! empty( $field['description'] ) ) : ?>
 							<p class="description"><?php echo esc_html( $field['description'] ); ?></p>
@@ -183,8 +188,8 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 			<div class="gcm-metabox-row">
 				<label class="gcm-field-label" for="mm_meta_breadcrumb_label">Breadcrumb Label</label>
 				<input type="text" id="mm_meta_breadcrumb_label" name="mm_meta_breadcrumb_label"
-					   value="<?php echo esc_attr($breadcrumb_label); ?>" class="large-text"
-					   placeholder="Leave blank to use the post title">
+						value="<?php echo esc_attr( $breadcrumb_label ); ?>" class="large-text"
+						placeholder="Leave blank to use the post title">
 			</div>
 		</div>
 	</div>
@@ -192,7 +197,7 @@ $stored_schema_fields = $meta['schema_fields'] ?? [];
 	<?php /* ── Sitemap ──────────────────────────────────────────────── */ ?>
 	<div class="gcm-field-group">
 		<label>
-			<input type="checkbox" name="mm_meta_exclude_sitemap" value="1" <?php checked($exclude_sitemap); ?>>
+			<input type="checkbox" name="mm_meta_exclude_sitemap" value="1" <?php checked( $exclude_sitemap ); ?>>
 			Exclude this post from XML sitemap and HTML sitemap
 		</label>
 	</div>

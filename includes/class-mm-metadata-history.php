@@ -77,7 +77,7 @@ class MM_Metadata_History {
 	public static function create_or_update_table(): void {
 		global $wpdb;
 
-		$table          = self::table_name();
+		$table           = self::table_name();
 		$charset_collate = $wpdb->get_charset_collate();
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -101,7 +101,8 @@ class MM_Metadata_History {
 
 		// Fallback for environments where dbDelta silently fails.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL fallback; table identifier is prefix-derived, not user input.
-		$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
+		$wpdb->query(
+			"CREATE TABLE IF NOT EXISTS {$table} (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			attachment_id BIGINT(20) UNSIGNED NOT NULL,
 			version INT(10) UNSIGNED NOT NULL,
@@ -113,7 +114,8 @@ class MM_Metadata_History {
 			UNIQUE KEY uniq_version (attachment_id, version),
 			KEY idx_attachment (attachment_id),
 			KEY idx_created (created_at)
-		) {$charset_collate};" );
+		) {$charset_collate};"
+		);
 		// phpcs:enable
 	}
 
@@ -183,9 +185,9 @@ class MM_Metadata_History {
 	/**
 	 * Insert a new version snapshot.
 	 *
-	 * @param int                    $post_id Attachment ID.
-	 * @param array<string, string>  $values  Metadata values.
-	 * @param string                 $source  Change source (edit, import, bulk, cli, rest).
+	 * @param int                   $post_id Attachment ID.
+	 * @param array<string, string> $values  Metadata values.
+	 * @param string                $source  Change source (edit, import, bulk, cli, rest).
 	 */
 	private static function insert_snapshot( int $post_id, array $values, string $source = 'edit' ): void {
 		global $wpdb;
@@ -217,11 +219,13 @@ class MM_Metadata_History {
 		global $wpdb;
 		$table = self::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$max = (int) $wpdb->get_var( $wpdb->prepare(
-			'SELECT MAX(version) FROM %i WHERE attachment_id = %d',
-			$table,
-			$post_id
-		) );
+		$max = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT MAX(version) FROM %i WHERE attachment_id = %d',
+				$table,
+				$post_id
+			)
+		);
 		return $max + 1;
 	}
 
@@ -239,11 +243,13 @@ class MM_Metadata_History {
 		global $wpdb;
 		$table = self::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row = $wpdb->get_row( $wpdb->prepare(
-			'SELECT version, meta_values, created_at, user_id, change_source FROM %i WHERE attachment_id = %d ORDER BY version DESC LIMIT 1',
-			$table,
-			$post_id
-		) );
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT version, meta_values, created_at, user_id, change_source FROM %i WHERE attachment_id = %d ORDER BY version DESC LIMIT 1',
+				$table,
+				$post_id
+			)
+		);
 		if ( ! $row ) {
 			return null;
 		}
@@ -266,23 +272,28 @@ class MM_Metadata_History {
 		global $wpdb;
 		$table = self::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results( $wpdb->prepare(
-			'SELECT version, meta_values, created_at, user_id, change_source FROM %i WHERE attachment_id = %d ORDER BY version DESC',
-			$table,
-			$post_id
-		) );
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT version, meta_values, created_at, user_id, change_source FROM %i WHERE attachment_id = %d ORDER BY version DESC',
+				$table,
+				$post_id
+			)
+		);
 		if ( ! $rows ) {
 			return [];
 		}
-		return array_map( function ( $row ): array {
-			return [
-				'version'       => (int) $row->version,
-				'meta_values'   => (array) json_decode( $row->meta_values, true ),
-				'created_at'    => (string) $row->created_at,
-				'user_id'       => (int) $row->user_id,
-				'change_source' => (string) $row->change_source,
-			];
-		}, $rows );
+		return array_map(
+			function ( $row ): array {
+				return [
+					'version'       => (int) $row->version,
+					'meta_values'   => (array) json_decode( $row->meta_values, true ),
+					'created_at'    => (string) $row->created_at,
+					'user_id'       => (int) $row->user_id,
+					'change_source' => (string) $row->change_source,
+				];
+			},
+			$rows
+		);
 	}
 
 	/**
@@ -296,12 +307,14 @@ class MM_Metadata_History {
 		global $wpdb;
 		$table = self::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row = $wpdb->get_row( $wpdb->prepare(
-			'SELECT version, meta_values, created_at, user_id, change_source FROM %i WHERE attachment_id = %d AND version = %d',
-			$table,
-			$post_id,
-			$version
-		) );
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT version, meta_values, created_at, user_id, change_source FROM %i WHERE attachment_id = %d AND version = %d',
+				$table,
+				$post_id,
+				$version
+			)
+		);
 		if ( ! $row ) {
 			return null;
 		}
@@ -482,7 +495,7 @@ class MM_Metadata_History {
 				'cli'    => __( 'WP-CLI', 'metamanager' ),
 				'rest'   => __( 'REST API', 'metamanager' ),
 			];
-			$source_label = $source_labels[ $entry['change_source'] ] ?? $entry['change_source'];
+			$source_label  = $source_labels[ $entry['change_source'] ] ?? $entry['change_source'];
 
 			// Compute changed fields vs previous version (or empty for first).
 			if ( null !== $prev_values ) {
@@ -505,7 +518,7 @@ class MM_Metadata_History {
 			$changed_labels = array_column( $changed, 'label' );
 			$user_name      = '';
 			if ( $entry['user_id'] > 0 ) {
-				$user = get_user_by( 'id', $entry['user_id'] );
+				$user      = get_user_by( 'id', $entry['user_id'] );
 				$user_name = $user ? $user->display_name : (string) $entry['user_id'];
 			}
 
@@ -610,7 +623,7 @@ class MM_Metadata_History {
 			wp_send_json_success( '<p style="color:#00a32a;font-size:13px;">' . esc_html__( 'No differences between selected versions.', 'metamanager' ) . '</p>' );
 		}
 
-		$html = '<table class="widefat" style="font-size:13px;">';
+		$html  = '<table class="widefat" style="font-size:13px;">';
 		$html .= '<thead><tr>'
 			. '<th style="width:25%;">' . esc_html__( 'Field', 'metamanager' ) . '</th>'
 			. '<th style="width:37.5%;">' . esc_html__( 'Old Value', 'metamanager' ) . '</th>'

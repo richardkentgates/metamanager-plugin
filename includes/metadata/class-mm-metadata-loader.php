@@ -8,7 +8,7 @@ defined( 'ABSPATH' ) || exit;
 class MM_Metadata_Loader {
 
 	private MM_Site_Settings $settings;
-	private MM_Page_Context  $context;
+	private MM_Page_Context $context;
 	private MM_Head_Emitter $document;
 
 	public function run(): void {
@@ -69,7 +69,12 @@ class MM_Metadata_Loader {
 
 	public function filter_title( string $title ): string {
 		// Build a throw-away $data array just to run the Meta module's title logic.
-		$data = [ 'title' => '', 'meta' => [], 'links' => [], 'schema' => [] ];
+		$data = [
+			'title'  => '',
+			'meta'   => [],
+			'links'  => [],
+			'schema' => [],
+		];
 		( new MM_Mod_Head_Meta( $this->settings ) )->populate( $data, $this->context, $this->settings );
 		return $data['title'] ?: $title;
 	}

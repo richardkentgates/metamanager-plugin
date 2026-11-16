@@ -65,10 +65,13 @@ class MM_Abilities {
 		if ( $registry && method_exists( $registry, 'is_registered' ) && $registry->is_registered( 'site' ) ) {
 			return;
 		}
-		wp_register_ability_category( 'site', array(
-			'label'       => __( 'Site', 'metamanager' ),
-			'description' => 'Site content, SEO, and server status reports.',
-		) );
+		wp_register_ability_category(
+			'site',
+			array(
+				'label'       => __( 'Site', 'metamanager' ),
+				'description' => 'Site content, SEO, and server status reports.',
+			)
+		);
 	}
 
 	public function register_abilities(): void {
@@ -214,27 +217,36 @@ class MM_Abilities {
 		// GCM server status lives in the GCM Coworker (gcm/*).
 		// MXRoute mail status lives in mxroute/queue-status.
 		// Only MetaManager's own daemon status is reported here.
-		wp_register_ability( 'metamanager/get-daemon-status', array(
-			'label'         => __( 'Get Daemon Status', 'metamanager' ),
-			'description'   => 'Read the MetaManager daemon status: daemon running state and PIDs, queue depths, tool availability, WP-Cron history.',
-			'category'      => 'site',
-			'input_schema'  => array( 'type' => 'object', 'properties' => new stdClass() ),
-			'output_schema' => array(
-				'type'       => 'object',
-				'properties' => array(
-					'ts'             => array( 'type' => 'string' ),
-					'plugin_version' => array( 'type' => 'string' ),
-					'daemon_version' => array( 'type' => [ 'string', 'null' ] ),
-					'daemons'        => array( 'type' => 'object' ),
-					'queues'         => array( 'type' => 'object' ),
-					'tools'          => array( 'type' => 'object' ),
-					'cron'           => array( 'type' => 'object' ),
+		wp_register_ability(
+			'metamanager/get-daemon-status',
+			array(
+				'label'               => __( 'Get Daemon Status', 'metamanager' ),
+				'description'         => 'Read the MetaManager daemon status: daemon running state and PIDs, queue depths, tool availability, WP-Cron history.',
+				'category'            => 'site',
+				'input_schema'        => array(
+					'type'       => 'object',
+					'properties' => new stdClass(),
 				),
-			),
-			'execute_callback'    => array( $this, 'ability_get_daemon_status' ),
-			'permission_callback' => array( $this, 'can_use' ),
-			'meta'                => array( 'mcp.public' => true, 'tier' => 'read' ),
-		) );
+				'output_schema'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'ts'             => array( 'type' => 'string' ),
+						'plugin_version' => array( 'type' => 'string' ),
+						'daemon_version' => array( 'type' => [ 'string', 'null' ] ),
+						'daemons'        => array( 'type' => 'object' ),
+						'queues'         => array( 'type' => 'object' ),
+						'tools'          => array( 'type' => 'object' ),
+						'cron'           => array( 'type' => 'object' ),
+					),
+				),
+				'execute_callback'    => array( $this, 'ability_get_daemon_status' ),
+				'permission_callback' => array( $this, 'can_use' ),
+				'meta'                => array(
+					'mcp.public' => true,
+					'tier'       => 'read',
+				),
+			)
+		);
 	}
 
 	/**
@@ -249,41 +261,71 @@ class MM_Abilities {
 	// -------------------------------------------------------------------------
 
 	private function register_get_post_meta(): void {
-		wp_register_ability( 'metamanager/get-post-meta', [
-			'label'       => 'Get Post Metadata',
-			'description' => 'Read SEO metadata (title, description, OG tags, schema type) for a WordPress post or page.',
-			'category'    => 'site',
-			'input_schema'  => [
-				'type'       => 'object',
-				'properties' => [
-					'post_id' => [
-						'type'        => 'integer',
-						'description' => 'The post ID to read metadata for.',
+		wp_register_ability(
+			'metamanager/get-post-meta',
+			[
+				'label'               => 'Get Post Metadata',
+				'description'         => 'Read SEO metadata (title, description, OG tags, schema type) for a WordPress post or page.',
+				'category'            => 'site',
+				'input_schema'        => [
+					'type'       => 'object',
+					'properties' => [
+						'post_id' => [
+							'type'        => 'integer',
+							'description' => 'The post ID to read metadata for.',
+						],
+					],
+					'required'   => [ 'post_id' ],
+				],
+				'output_schema'       => [
+					'type'       => 'object',
+					'properties' => [
+						'post_id'          => [ 'type' => 'integer' ],
+						'title'            => [
+							'type'        => 'string',
+							'description' => 'SEO title override.',
+						],
+						'description'      => [
+							'type'        => 'string',
+							'description' => 'Meta description override.',
+						],
+						'canonical'        => [
+							'type'        => 'string',
+							'description' => 'Canonical URL override.',
+						],
+						'noindex'          => [
+							'type'        => [ 'string', 'null' ],
+							'description' => 'robots noindex: "yes", "no", or null (default).',
+						],
+						'nofollow'         => [ 'type' => [ 'string', 'null' ] ],
+						'og_title'         => [
+							'type'        => 'string',
+							'description' => 'Open Graph title override.',
+						],
+						'og_description'   => [ 'type' => 'string' ],
+						'og_image_url'     => [
+							'type'        => 'string',
+							'description' => 'Open Graph image URL.',
+						],
+						'schema_type'      => [
+							'type'        => 'string',
+							'description' => 'Schema.org type (e.g. BlogPosting, Product).',
+						],
+						'breadcrumb_label' => [ 'type' => 'string' ],
+						'schema_fields'    => [
+							'type'        => 'object',
+							'description' => 'Per-type schema field overrides.',
+						],
 					],
 				],
-				'required' => [ 'post_id' ],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'post_id'    => [ 'type' => 'integer' ],
-					'title'      => [ 'type' => 'string', 'description' => 'SEO title override.' ],
-					'description' => [ 'type' => 'string', 'description' => 'Meta description override.' ],
-					'canonical'  => [ 'type' => 'string', 'description' => 'Canonical URL override.' ],
-					'noindex'    => [ 'type' => [ 'string', 'null' ], 'description' => 'robots noindex: "yes", "no", or null (default).' ],
-					'nofollow'   => [ 'type' => [ 'string', 'null' ] ],
-					'og_title'   => [ 'type' => 'string', 'description' => 'Open Graph title override.' ],
-					'og_description' => [ 'type' => 'string' ],
-					'og_image_url'   => [ 'type' => 'string', 'description' => 'Open Graph image URL.' ],
-					'schema_type'    => [ 'type' => 'string', 'description' => 'Schema.org type (e.g. BlogPosting, Product).' ],
-					'breadcrumb_label' => [ 'type' => 'string' ],
-					'schema_fields' => [ 'type' => 'object', 'description' => 'Per-type schema field overrides.' ],
+				'execute_callback'    => [ $this, 'ability_get_post_meta' ],
+				'permission_callback' => [ $this, 'can_use' ],
+				'meta'                => [
+					'mcp.public' => true,
+					'tier'       => 'read',
 				],
-			],
-			'execute_callback'    => [ $this, 'ability_get_post_meta' ],
-			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
-		] );
+			]
+		);
 	}
 
 	/**
@@ -307,38 +349,65 @@ class MM_Abilities {
 	// -------------------------------------------------------------------------
 
 	private function register_update_post_meta(): void {
-		wp_register_ability( 'metamanager/update-post-meta', [
-			'label'       => 'Update Post Metadata',
-			'description' => 'Write SEO metadata fields for a WordPress post or page. Only provided fields are updated; omitted fields remain unchanged.',
-			'category'    => 'site',
-			'input_schema'  => [
-				'type'       => 'object',
-				'properties' => [
-					'post_id'      => [ 'type' => 'integer', 'description' => 'The post ID to update.' ],
-					'title'        => [ 'type' => 'string', 'description' => 'SEO title override.' ],
-					'description'  => [ 'type' => 'string', 'description' => 'Meta description override.' ],
-					'canonical'    => [ 'type' => 'string', 'description' => 'Canonical URL.' ],
-					'noindex'      => [ 'type' => 'string', 'enum' => [ 'yes', 'no' ] ],
-					'nofollow'     => [ 'type' => 'string', 'enum' => [ 'yes', 'no' ] ],
-					'og_title'     => [ 'type' => 'string' ],
-					'og_description' => [ 'type' => 'string' ],
-					'og_image_url' => [ 'type' => 'string', 'description' => 'OG image URL or attachment ID.' ],
-					'schema_type'  => [ 'type' => 'string', 'description' => 'Schema.org type.' ],
-					'breadcrumb_label' => [ 'type' => 'string' ],
+		wp_register_ability(
+			'metamanager/update-post-meta',
+			[
+				'label'               => 'Update Post Metadata',
+				'description'         => 'Write SEO metadata fields for a WordPress post or page. Only provided fields are updated; omitted fields remain unchanged.',
+				'category'            => 'site',
+				'input_schema'        => [
+					'type'       => 'object',
+					'properties' => [
+						'post_id'          => [
+							'type'        => 'integer',
+							'description' => 'The post ID to update.',
+						],
+						'title'            => [
+							'type'        => 'string',
+							'description' => 'SEO title override.',
+						],
+						'description'      => [
+							'type'        => 'string',
+							'description' => 'Meta description override.',
+						],
+						'canonical'        => [
+							'type'        => 'string',
+							'description' => 'Canonical URL.',
+						],
+						'noindex'          => [
+							'type' => 'string',
+							'enum' => [ 'yes', 'no' ],
+						],
+						'nofollow'         => [
+							'type' => 'string',
+							'enum' => [ 'yes', 'no' ],
+						],
+						'og_title'         => [ 'type' => 'string' ],
+						'og_description'   => [ 'type' => 'string' ],
+						'og_image_url'     => [
+							'type'        => 'string',
+							'description' => 'OG image URL or attachment ID.',
+						],
+						'schema_type'      => [
+							'type'        => 'string',
+							'description' => 'Schema.org type.',
+						],
+						'breadcrumb_label' => [ 'type' => 'string' ],
+					],
+					'required'   => [ 'post_id' ],
 				],
-				'required' => [ 'post_id' ],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'success' => [ 'type' => 'boolean' ],
-					'post_id' => [ 'type' => 'integer' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'properties' => [
+						'success' => [ 'type' => 'boolean' ],
+						'post_id' => [ 'type' => 'integer' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'ability_update_post_meta' ],
-			'permission_callback' => [ $this, 'can_edit_meta' ],
-			'meta'        => [ 'mcp.public' => true ],
-		] );
+				'execute_callback'    => [ $this, 'ability_update_post_meta' ],
+				'permission_callback' => [ $this, 'can_edit_meta' ],
+				'meta'                => [ 'mcp.public' => true ],
+			]
+		);
 	}
 
 	/**
@@ -359,9 +428,23 @@ class MM_Abilities {
 		$existing = $settings->get_post_meta( $post_id );
 
 		// Merge only provided fields.
-		$updatable = [ 'title', 'description', 'canonical', 'noindex', 'nofollow',
-			'noarchive', 'nosnippet', 'noimageindex', 'og_title', 'og_description',
-			'og_image_id', 'og_image_url', 'schema_type', 'breadcrumb_label', 'schema_fields' ];
+		$updatable = [
+			'title',
+			'description',
+			'canonical',
+			'noindex',
+			'nofollow',
+			'noarchive',
+			'nosnippet',
+			'noimageindex',
+			'og_title',
+			'og_description',
+			'og_image_id',
+			'og_image_url',
+			'schema_type',
+			'breadcrumb_label',
+			'schema_fields',
+		];
 
 		foreach ( $updatable as $field ) {
 			if ( array_key_exists( $field, $input ) ) {
@@ -371,7 +454,10 @@ class MM_Abilities {
 
 		$settings->save_post_meta( $post_id, $existing );
 
-		return [ 'success' => true, 'post_id' => $post_id ];
+		return [
+			'success' => true,
+			'post_id' => $post_id,
+		];
 	}
 
 	// -------------------------------------------------------------------------
@@ -379,31 +465,40 @@ class MM_Abilities {
 	// -------------------------------------------------------------------------
 
 	private function register_get_schema(): void {
-		wp_register_ability( 'metamanager/get-schema', [
-			'label'       => 'Get Schema Output',
-			'description' => 'Fetch the complete JSON-LD schema output for a given URL. Returns the full @graph.',
-			'category'    => 'site',
-			'input_schema'  => [
-				'type'       => 'object',
-				'properties' => [
-					'url' => [
-						'type'        => 'string',
-						'description' => 'The URL to fetch schema for. Must be on this site.',
+		wp_register_ability(
+			'metamanager/get-schema',
+			[
+				'label'               => 'Get Schema Output',
+				'description'         => 'Fetch the complete JSON-LD schema output for a given URL. Returns the full @graph.',
+				'category'            => 'site',
+				'input_schema'        => [
+					'type'       => 'object',
+					'properties' => [
+						'url' => [
+							'type'        => 'string',
+							'description' => 'The URL to fetch schema for. Must be on this site.',
+						],
+					],
+					'required'   => [ 'url' ],
+				],
+				'output_schema'       => [
+					'type'       => 'object',
+					'properties' => [
+						'url'    => [ 'type' => 'string' ],
+						'schema' => [
+							'type'        => 'object',
+							'description' => 'The JSON-LD output with @context and @graph.',
+						],
 					],
 				],
-				'required' => [ 'url' ],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'url'    => [ 'type' => 'string' ],
-					'schema' => [ 'type' => 'object', 'description' => 'The JSON-LD output with @context and @graph.' ],
+				'execute_callback'    => [ $this, 'ability_get_schema' ],
+				'permission_callback' => [ $this, 'can_use' ],
+				'meta'                => [
+					'mcp.public' => true,
+					'tier'       => 'read',
 				],
-			],
-			'execute_callback'    => [ $this, 'ability_get_schema' ],
-			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
-		] );
+			]
+		);
 	}
 
 	/**
@@ -416,24 +511,29 @@ class MM_Abilities {
 			return new WP_Error( 'invalid_url', 'A valid URL on this site is required.' );
 		}
 
-		$host = wp_parse_url( $url, PHP_URL_HOST );
+		$host      = wp_parse_url( $url, PHP_URL_HOST );
 		$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
 		if ( $host !== $site_host ) {
 			return new WP_Error( 'external_url', 'URL must belong to this site.' );
 		}
 
 		// Temporarily switch context to the requested URL.
-		$context = new MM_Page_Context();
+		$context  = new MM_Page_Context();
 		$settings = MM_Site_Settings::get_instance();
 		$emitter  = new MM_Head_Emitter( $context, $settings );
 
 		// Parse the URL path to set up the context.
-		$path = wp_parse_url( $url, PHP_URL_PATH ) ?: '/';
+		$path                   = wp_parse_url( $url, PHP_URL_PATH ) ?: '/';
 		$_SERVER['REQUEST_URI'] = $path;
 
 		// Force a fresh context parse.
 		$context = new MM_Page_Context();
-		$data    = [ 'title' => '', 'meta' => [], 'links' => [], 'schema' => [] ];
+		$data    = [
+			'title'  => '',
+			'meta'   => [],
+			'links'  => [],
+			'schema' => [],
+		];
 
 		// Populate all modules.
 		( new MM_Mod_Head_Meta( $settings ) )->populate( $data, $context, $settings );
@@ -456,33 +556,45 @@ class MM_Abilities {
 	// -------------------------------------------------------------------------
 
 	private function register_get_business_profile(): void {
-		wp_register_ability( 'metamanager/get-business-profile', [
-			'label'       => 'Get Business Profile',
-			'description' => 'Retrieve the site-wide LocalBusiness or Organization entity including name, address, phone, hours, and social profiles.',
-			'category'    => 'site',
-			'input_schema'  => [
-				'type'       => 'object',
-				'properties' => [],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'type'         => [ 'type' => 'string', 'description' => 'Organization or LocalBusiness.' ],
-					'name'         => [ 'type' => 'string' ],
-					'description'  => [ 'type' => 'string' ],
-					'telephone'    => [ 'type' => 'string' ],
-					'email'        => [ 'type' => 'string' ],
-					'address'      => [ 'type' => 'object' ],
-					'geo'          => [ 'type' => 'object' ],
-					'hours'        => [ 'type' => 'array' ],
-					'price_range'  => [ 'type' => 'string' ],
-					'same_as'      => [ 'type' => 'array', 'description' => 'Social profile URLs.' ],
+		wp_register_ability(
+			'metamanager/get-business-profile',
+			[
+				'label'               => 'Get Business Profile',
+				'description'         => 'Retrieve the site-wide LocalBusiness or Organization entity including name, address, phone, hours, and social profiles.',
+				'category'            => 'site',
+				'input_schema'        => [
+					'type'       => 'object',
+					'properties' => [],
 				],
-			],
-			'execute_callback'    => [ $this, 'ability_get_business_profile' ],
-			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
-		] );
+				'output_schema'       => [
+					'type'       => 'object',
+					'properties' => [
+						'type'        => [
+							'type'        => 'string',
+							'description' => 'Organization or LocalBusiness.',
+						],
+						'name'        => [ 'type' => 'string' ],
+						'description' => [ 'type' => 'string' ],
+						'telephone'   => [ 'type' => 'string' ],
+						'email'       => [ 'type' => 'string' ],
+						'address'     => [ 'type' => 'object' ],
+						'geo'         => [ 'type' => 'object' ],
+						'hours'       => [ 'type' => 'array' ],
+						'price_range' => [ 'type' => 'string' ],
+						'same_as'     => [
+							'type'        => 'array',
+							'description' => 'Social profile URLs.',
+						],
+					],
+				],
+				'execute_callback'    => [ $this, 'ability_get_business_profile' ],
+				'permission_callback' => [ $this, 'can_use' ],
+				'meta'                => [
+					'mcp.public' => true,
+					'tier'       => 'read',
+				],
+			]
+		);
 	}
 
 	/**
@@ -508,7 +620,7 @@ class MM_Abilities {
 				'postal'  => $local['postal'] ?? '',
 				'country' => $local['country'] ?? '',
 			],
-			'geo' => [
+			'geo'         => [
 				'latitude'  => $local['latitude'] ?? '',
 				'longitude' => $local['longitude'] ?? '',
 			],
@@ -518,9 +630,12 @@ class MM_Abilities {
 		];
 
 		// Remove empty values.
-		return array_filter( $profile, function ( $v ) {
-			return is_array( $v ) || $v !== '';
-		} );
+		return array_filter(
+			$profile,
+			function ( $v ) {
+				return is_array( $v ) || $v !== '';
+			}
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -528,35 +643,41 @@ class MM_Abilities {
 	// -------------------------------------------------------------------------
 
 	private function register_get_navigation(): void {
-		wp_register_ability( 'metamanager/get-navigation', [
-			'label'       => 'Get Navigation Menu',
-			'description' => 'Retrieve the primary navigation menu items designated for schema. Returns the menu name and ordered items with URLs.',
-			'category'    => 'site',
-			'input_schema'  => [
-				'type'       => 'object',
-				'properties' => [],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'menu_name' => [ 'type' => 'string' ],
-					'items'     => [
-						'type'  => 'array',
-						'items' => [
-							'type'       => 'object',
-							'properties' => [
-								'name'     => [ 'type' => 'string' ],
-								'url'      => [ 'type' => 'string' ],
-								'position' => [ 'type' => 'integer' ],
+		wp_register_ability(
+			'metamanager/get-navigation',
+			[
+				'label'               => 'Get Navigation Menu',
+				'description'         => 'Retrieve the primary navigation menu items designated for schema. Returns the menu name and ordered items with URLs.',
+				'category'            => 'site',
+				'input_schema'        => [
+					'type'       => 'object',
+					'properties' => [],
+				],
+				'output_schema'       => [
+					'type'       => 'object',
+					'properties' => [
+						'menu_name' => [ 'type' => 'string' ],
+						'items'     => [
+							'type'  => 'array',
+							'items' => [
+								'type'       => 'object',
+								'properties' => [
+									'name'     => [ 'type' => 'string' ],
+									'url'      => [ 'type' => 'string' ],
+									'position' => [ 'type' => 'integer' ],
+								],
 							],
 						],
 					],
 				],
-			],
-			'execute_callback'    => [ $this, 'ability_get_navigation' ],
-			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
-		] );
+				'execute_callback'    => [ $this, 'ability_get_navigation' ],
+				'permission_callback' => [ $this, 'can_use' ],
+				'meta'                => [
+					'mcp.public' => true,
+					'tier'       => 'read',
+				],
+			]
+		);
 	}
 
 	/**
@@ -566,10 +687,16 @@ class MM_Abilities {
 	public function ability_get_navigation( array $input ) {
 		$menu = MM_Mod_Base::get_primary_menu();
 		if ( ! $menu ) {
-			return [ 'menu_name' => '', 'items' => [] ];
+			return [
+				'menu_name' => '',
+				'items'     => [],
+			];
 		}
 
-		return [ 'menu_name' => $menu['name'], 'items' => $menu['items'] ];
+		return [
+			'menu_name' => $menu['name'],
+			'items'     => $menu['items'],
+		];
 	}
 
 	// -------------------------------------------------------------------------
@@ -577,34 +704,46 @@ class MM_Abilities {
 	// -------------------------------------------------------------------------
 
 	private function register_get_term_meta(): void {
-		wp_register_ability( 'metamanager/get-term-meta', [
-			'label'       => 'Get Term Metadata',
-			'description' => 'Read SEO metadata (title, description, OG tags) for a taxonomy term (category, tag, etc.).',
-			'category'    => 'site',
-			'input_schema'  => [
-				'type'       => 'object',
-				'properties' => [
-					'term_id'  => [ 'type' => 'integer', 'description' => 'The term ID.' ],
-					'taxonomy' => [ 'type' => 'string', 'description' => 'The taxonomy slug (e.g. "category", "post_tag").' ],
+		wp_register_ability(
+			'metamanager/get-term-meta',
+			[
+				'label'               => 'Get Term Metadata',
+				'description'         => 'Read SEO metadata (title, description, OG tags) for a taxonomy term (category, tag, etc.).',
+				'category'            => 'site',
+				'input_schema'        => [
+					'type'       => 'object',
+					'properties' => [
+						'term_id'  => [
+							'type'        => 'integer',
+							'description' => 'The term ID.',
+						],
+						'taxonomy' => [
+							'type'        => 'string',
+							'description' => 'The taxonomy slug (e.g. "category", "post_tag").',
+						],
+					],
+					'required'   => [ 'term_id', 'taxonomy' ],
 				],
-				'required' => [ 'term_id', 'taxonomy' ],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'term_id'     => [ 'type' => 'integer' ],
-					'taxonomy'    => [ 'type' => 'string' ],
-					'title'       => [ 'type' => 'string' ],
-					'description' => [ 'type' => 'string' ],
-					'og_title'    => [ 'type' => 'string' ],
-					'og_description' => [ 'type' => 'string' ],
-					'og_image_url' => [ 'type' => 'string' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'properties' => [
+						'term_id'        => [ 'type' => 'integer' ],
+						'taxonomy'       => [ 'type' => 'string' ],
+						'title'          => [ 'type' => 'string' ],
+						'description'    => [ 'type' => 'string' ],
+						'og_title'       => [ 'type' => 'string' ],
+						'og_description' => [ 'type' => 'string' ],
+						'og_image_url'   => [ 'type' => 'string' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'ability_get_term_meta' ],
-			'permission_callback' => [ $this, 'can_use' ],
-			'meta'        => [ 'mcp.public' => true, 'tier' => 'read' ],
-		] );
+				'execute_callback'    => [ $this, 'ability_get_term_meta' ],
+				'permission_callback' => [ $this, 'can_use' ],
+				'meta'                => [
+					'mcp.public' => true,
+					'tier'       => 'read',
+				],
+			]
+		);
 	}
 
 	/**
@@ -627,10 +766,13 @@ class MM_Abilities {
 		$settings = MM_Site_Settings::get_instance();
 		$meta     = $settings->get_term_meta( $term_id );
 
-		return array_merge( [
-			'term_id'  => $term_id,
-			'taxonomy' => $taxonomy,
-		], $meta );
+		return array_merge(
+			[
+				'term_id'  => $term_id,
+				'taxonomy' => $taxonomy,
+			],
+			$meta
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -641,6 +783,4 @@ class MM_Abilities {
 	// free; writes are gated per target; trash/restore are marked
 	// destructive for the chat's typed-confirmation tier.
 	// -------------------------------------------------------------------------
-
-
 }

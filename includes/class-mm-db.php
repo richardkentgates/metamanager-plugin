@@ -45,7 +45,7 @@ class MM_DB {
 	public static function create_or_update_table(): void {
 		global $wpdb;
 
-		$table          = self::table_name();
+		$table           = self::table_name();
 		$charset_collate = $wpdb->get_charset_collate();
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -84,7 +84,8 @@ class MM_DB {
 		// avoids information_schema queries that can return stale results inside
 		// WP test suite transactions.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL fallback; table identifier is prefix-derived, not user input.
-		$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
+		$wpdb->query(
+			"CREATE TABLE IF NOT EXISTS {$table} (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			attachment_id BIGINT(20) UNSIGNED NOT NULL,
 			image_name VARCHAR(255) NOT NULL DEFAULT '',
@@ -104,7 +105,8 @@ class MM_DB {
 			KEY idx_attachment (attachment_id),
 			KEY idx_job_type (job_type),
 			KEY idx_status (status)
-		) {$charset_collate};" );
+		) {$charset_collate};"
+		);
 		// phpcs:enable
 	}
 
@@ -137,11 +139,13 @@ class MM_DB {
 
 		// Keep only the latest row per (attachment_id, job_type, size).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->query( $wpdb->prepare(
-			'DELETE t1 FROM %i t1 INNER JOIN %i t2 ON t1.attachment_id = t2.attachment_id AND t1.job_type = t2.job_type AND t1.size = t2.size AND t1.id < t2.id',
-			$table,
-			$table
-		) );
+		$wpdb->query(
+			$wpdb->prepare(
+				'DELETE t1 FROM %i t1 INNER JOIN %i t2 ON t1.attachment_id = t2.attachment_id AND t1.job_type = t2.job_type AND t1.size = t2.size AND t1.id < t2.id',
+				$table,
+				$table
+			)
+		);
 	}
 
 	/**
@@ -160,7 +164,7 @@ class MM_DB {
 		$table = self::table_name();
 
 		$bytes_before = isset( $job['bytes_before'] ) && (int) $job['bytes_before'] > 0 ? (int) $job['bytes_before'] : null;
-		$bytes_after  = isset( $job['bytes_after'] )  && (int) $job['bytes_after']  > 0 ? (int) $job['bytes_after']  : null;
+		$bytes_after  = isset( $job['bytes_after'] ) && (int) $job['bytes_after'] > 0 ? (int) $job['bytes_after'] : null;
 
 		$attachment_id = absint( $job['attachment_id'] ?? 0 );
 		$job_type      = sanitize_key( $job['job_type'] ?? 'unknown' );
@@ -187,7 +191,7 @@ class MM_DB {
 		}
 		if ( null !== $bytes_after ) {
 			$data['bytes_after'] = $bytes_after;
-			$formats[]          = '%d';
+			$formats[]           = '%d';
 		}
 
 		// REPLACE INTO atomically enforces the UNIQUE KEY (attachment_id, job_type, size),
@@ -224,7 +228,7 @@ class MM_DB {
 			'per_page' => 20,
 			'paged'    => 1,
 		];
-		$args = wp_parse_args( $args, $defaults );
+		$args     = wp_parse_args( $args, $defaults );
 
 		$allowed_orderby = [ 'id', 'image_name', 'job_type', 'status', 'submitted_at', 'completed_at', 'bytes_before', 'bytes_after' ];
 		$orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'id';
@@ -237,7 +241,8 @@ class MM_DB {
 			$like         = '%' . $wpdb->esc_like( $args['search'] ) . '%';
 			$conditions[] = $wpdb->prepare(
 				'(image_name LIKE %s OR job_type LIKE %s)',
-				$like, $like
+				$like,
+				$like
 			);
 		}
 		$allowed_statuses = [ 'pending', 'completed', 'failed' ];
@@ -260,7 +265,10 @@ class MM_DB {
 		);
 		// phpcs:enable
 
-		return [ 'jobs' => $jobs ?: [], 'total' => $total ];
+		return [
+			'jobs'  => $jobs ?: [],
+			'total' => $total,
+		];
 	}
 
 	/**
@@ -333,12 +341,14 @@ class MM_DB {
 		global $wpdb;
 		$table = self::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (bool) $wpdb->get_var( $wpdb->prepare(
-			'SELECT COUNT(*) FROM %i WHERE attachment_id = %d AND job_type = \'compression\' AND size = %s AND status = \'completed\'',
-			$table,
-			$attachment_id,
-			$size
-		) );
+		return (bool) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE attachment_id = %d AND job_type = \'compression\' AND size = %s AND status = \'completed\'',
+				$table,
+				$attachment_id,
+				$size
+			)
+		);
 	}
 
 	/**
@@ -352,11 +362,13 @@ class MM_DB {
 		global $wpdb;
 		$table = self::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (bool) $wpdb->get_var( $wpdb->prepare(
-			'SELECT COUNT(*) FROM %i WHERE attachment_id = %d AND job_type = \'metadata\' AND status = \'completed\'',
-			$table,
-			$attachment_id
-		) );
+		return (bool) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE attachment_id = %d AND job_type = \'metadata\' AND status = \'completed\'',
+				$table,
+				$attachment_id
+			)
+		);
 	}
 
 	/**
@@ -405,11 +417,13 @@ class MM_DB {
 		global $wpdb;
 		$table = self::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (bool) $wpdb->get_var( $wpdb->prepare(
-			'SELECT COUNT(*) FROM %i WHERE attachment_id = %d AND status = \'completed\'',
-			$table,
-			$attachment_id
-		) );
+		return (bool) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE attachment_id = %d AND status = \'completed\'',
+				$table,
+				$attachment_id
+			)
+		);
 	}
 
 	/**
@@ -423,11 +437,13 @@ class MM_DB {
 		global $wpdb;
 		$table = self::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$types = $wpdb->get_col( $wpdb->prepare(
-			'SELECT DISTINCT job_type FROM %i WHERE attachment_id = %d AND status = \'pending\'',
-			$table,
-			$attachment_id
-		) );
+		$types = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT DISTINCT job_type FROM %i WHERE attachment_id = %d AND status = \'pending\'',
+				$table,
+				$attachment_id
+			)
+		);
 		return is_array( $types ) ? $types : [];
 	}
 
@@ -442,14 +458,15 @@ class MM_DB {
 		global $wpdb;
 		$table = self::table_name();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$ids = $wpdb->get_col( $wpdb->prepare(
-			'SELECT DISTINCT attachment_id FROM %i WHERE job_type = %s AND status = \'completed\'',
-			$table,
-			$job_type
-		) );
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT DISTINCT attachment_id FROM %i WHERE job_type = %s AND status = \'completed\'',
+				$table,
+				$job_type
+			)
+		);
 		return $ids ? array_map( 'intval', $ids ) : [];
 	}
-
 }
 
 // Run on every admin_init to self-heal if the table drifts (e.g. after manual DB restore).

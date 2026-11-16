@@ -21,15 +21,15 @@ class MM_Metadata_Help {
 				'<p>' . esc_html__( 'Select the most specific Schema.org business subtype that describes your organisation — the grouped dropdown maps to the full LocalBusiness hierarchy. Fill in every field you can; more complete data produces richer results.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'The Payment Accepted field maps to the schema:paymentAccepted property. Enter accepted payment methods (e.g. Cash, Credit Card, Visa, PayPal) as individual items.', 'metamanager' ) . '</p>',
 
-			'titles' => '<p>' . esc_html__( 'The Titles page controls every SEO title and meta description template across the site. Titles are assembled using token variables so you can build dynamic patterns without writing code.', 'metamanager' ) . '</p>' .
+			'titles'   => '<p>' . esc_html__( 'The Titles page controls every SEO title and meta description template across the site. Titles are assembled using token variables so you can build dynamic patterns without writing code.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Tokens available: %%sitetitle%%, %%tagline%%, %%sep%%, %%post_title%%, %%term_title%%, %%author_name%%, %%page%%, %%current_year%%, %%post_type_label%%, %%search_query%%.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Individual posts, terms, and users can override any template from their own SEO metabox or profile fields.', 'metamanager' ) . '</p>',
 
-			'social' => '<p>' . esc_html__( 'The Social page configures Open Graph (Facebook, LinkedIn, Pinterest) and Twitter/X Card meta tags. These tags control how your pages appear when shared on social networks.', 'metamanager' ) . '</p>' .
+			'social'   => '<p>' . esc_html__( 'The Social page configures Open Graph (Facebook, LinkedIn, Pinterest) and Twitter/X Card meta tags. These tags control how your pages appear when shared on social networks.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Set a default OG image that is used as a fallback when no featured image is available. For best results use a 1200×630 px image (1.91:1 ratio).', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Social profile URLs entered here are also added to the sameAs property of your LocalBusiness / Organization schema node.', 'metamanager' ) . '</p>',
 
-			'schema' => '<p>' . esc_html__( 'The Schema page configures site-wide JSON-LD defaults. Metamanager always emits a WebSite node and a per-page WebPage node. You control which content-type node is attached to each post type.', 'metamanager' ) . '</p>' .
+			'schema'   => '<p>' . esc_html__( 'The Schema page configures site-wide JSON-LD defaults. Metamanager always emits a WebSite node and a per-page WebPage node. You control which content-type node is attached to each post type.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'The Knowledge Entity setting controls the top-level organisation node (WebSite isPartOf). Breadcrumbs and SearchAction are toggled here globally and can be fine-tuned per-post.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'The Custom JSON-LD field is a power-user escape hatch: any valid JSON-LD object pasted there is merged verbatim into the @graph.', 'metamanager' ) . '</p>',
 
@@ -37,28 +37,28 @@ class MM_Metadata_Help {
 				'<p>' . esc_html__( 'When ping is enabled, Google and Bing are notified within 60 seconds whenever you publish or update a post. Each engine is pinged at most once per publish event via WP-Cron.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Password-protected and noindex posts are excluded from the sitemap by default. Adjust "Records per file" if you have a very large site (default: 1 000).', 'metamanager' ) . '</p>',
 
-			'robots' => '<p>' . esc_html__( 'The Robots page replaces the WordPress-generated robots.txt with a fully customisable version. The output is served live — no static file is written to disk.', 'metamanager' ) . '</p>' .
+			'robots'   => '<p>' . esc_html__( 'The Robots page replaces the WordPress-generated robots.txt with a fully customisable version. The output is served live — no static file is written to disk.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'By default /wp-admin/ is disallowed and /wp-admin/admin-ajax.php is explicitly allowed. A Sitemap: directive pointing to /sitemap.xml is appended automatically.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Use the Custom directives textarea for any directive not covered by the form fields (e.g. per-bot rules). One directive per line, no blank lines required between sections.', 'metamanager' ) . '</p>',
 
-			'authors' => '<p>' . esc_html__( 'The Authors page controls SEO settings for author archive pages. You can set a global title and description template, toggle author archives to noindex by default, and control whether Person schema nodes are emitted.', 'metamanager' ) . '</p>' .
+			'authors'  => '<p>' . esc_html__( 'The Authors page controls SEO settings for author archive pages. You can set a global title and description template, toggle author archives to noindex by default, and control whether Person schema nodes are emitted.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Individual authors can override these defaults from their WordPress profile page using the Metamanager fields added there. Social profile links entered on each profile are included in that author\'s Person schema sameAs array.', 'metamanager' ) . '</p>',
 
-			'hygiene' => '<p>' . esc_html__( 'The Hygiene page has two sections: head cleanup and content audits. Head cleanup removes WordPress-generated tags that add noise, expose version information, or are unsupported by modern search engines.', 'metamanager' ) . '</p>' .
+			'hygiene'  => '<p>' . esc_html__( 'The Hygiene page has two sections: head cleanup and content audits. Head cleanup removes WordPress-generated tags that add noise, expose version information, or are unsupported by modern search engines.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Content audits scan published posts for SEO issues: orphan pages (no internal links pointing to them), thin content (below the configured word-count floor), and duplicate titles (multiple posts sharing the same title template output).', 'metamanager' ) . '</p>',
 
-			'feed' => '<p>' . esc_html__( 'The RSS Feed page controls what WordPress includes in its RSS 2.0 output. By default WordPress appends comment-API elements to every feed item and discloses the WordPress version — neither is needed by any modern feed reader.', 'metamanager' ) . '</p>' .
+			'feed'     => '<p>' . esc_html__( 'The RSS Feed page controls what WordPress includes in its RSS 2.0 output. By default WordPress appends comment-API elements to every feed item and discloses the WordPress version — neither is needed by any modern feed reader.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Enable RSS Cleanup is the master switch. The individual toggles let you keep any element you rely on while stripping the rest. The text fields let you override the channel title and add a copyright notice without editing theme files.', 'metamanager' ) . '</p>',
 
-			'links' => '<p>' . esc_html__( 'The Links page shows all internal and external links extracted from your post content and their last-checked HTTP status code. Broken links (4xx/5xx) are highlighted in red.', 'metamanager' ) . '</p>' .
+			'links'    => '<p>' . esc_html__( 'The Links page shows all internal and external links extracted from your post content and their last-checked HTTP status code. Broken links (4xx/5xx) are highlighted in red.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Links are extracted automatically when a post is saved. The WP-Cron checker runs twice daily by default, checking a configurable batch size to avoid server timeouts.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'You can ignore individual links or entire domains. The "Re-check" button forces an immediate HEAD request for a single URL. Use WP-CLI (wp metamanager metadata check-links --all) for a full one-shot scan.', 'metamanager' ) . '</p>',
 
-			'tools' => '<p>' . esc_html__( 'The Tools page provides one-click maintenance actions. Actions run via AJAX and report success or failure inline — no page reload required.', 'metamanager' ) . '</p>' .
+			'tools'    => '<p>' . esc_html__( 'The Tools page provides one-click maintenance actions. Actions run via AJAX and report success or failure inline — no page reload required.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Flush Rewrites re-registers all sitemap URL patterns in the WordPress rewrite table — run this after activating the plugin on a new server or after changing permalink settings.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Reset Settings wipes all Metamanager options back to factory defaults. This cannot be undone. Export your settings first if you need a backup.', 'metamanager' ) . '</p>',
 
-			'contact' => '<p>' . esc_html__( 'The Contact Card page controls the Business Contact Card displayed via the Metamanager Business Contact widget, the Business Contact Gutenberg block, or the [gcm_business_contact] shortcode.', 'metamanager' ) . '</p>' .
+			'contact'  => '<p>' . esc_html__( 'The Contact Card page controls the Business Contact Card displayed via the Metamanager Business Contact widget, the Business Contact Gutenberg block, or the [gcm_business_contact] shortcode.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Visible Actions determine which buttons appear on every card. Any action whose corresponding data is missing from your Business Profile (e.g. no phone number set) is automatically hidden regardless of this setting.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Card and Button Appearance controls are sitewide — they apply to every widget, block, and shortcode instance at once. Each card also emits an inline schema.org JSON-LD node scoped to that placement.', 'metamanager' ) . '</p>' .
 				'<p>' . esc_html__( 'Download endpoints (vCard, JSON, CSV) are served from /gcm-biz-export/{format}/ and can be linked to directly. If these URLs return 404 after activation, go to Metamanager → Tools and click Flush Rewrite Rules.', 'metamanager' ) . '</p>',

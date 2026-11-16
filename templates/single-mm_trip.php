@@ -33,7 +33,7 @@ while ( have_posts() ) {
 		<?php
 		$dest_id = (int) get_post_meta( get_the_ID(), '_mm_destination_id', true );
 		if ( $dest_id && get_post_status( $dest_id ) === 'publish' ) :
-		?>
+			?>
 			<div class="mm-trip-destination" style="background:#f0f0f1;padding:15px;border-radius:4px;margin-top:20px;">
 				<h3>Destination: <a href="<?php echo esc_url( get_permalink( $dest_id ) ); ?>"><?php echo esc_html( get_the_title( $dest_id ) ); ?></a></h3>
 				<?php

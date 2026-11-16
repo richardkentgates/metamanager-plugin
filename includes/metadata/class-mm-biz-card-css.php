@@ -21,46 +21,52 @@ class MM_Biz_Card_CSS {
 			return '';
 		}
 
-		$card_bg           = self::color( $s['card_bg']           ?? '#ffffff' );
-		$card_text         = self::color( $s['card_text']         ?? '#333333' );
-		$card_border       = self::color( $s['card_border']       ?? '#e2e2e2' );
+		$card_bg           = self::color( $s['card_bg'] ?? '#ffffff' );
+		$card_text         = self::color( $s['card_text'] ?? '#333333' );
+		$card_border       = self::color( $s['card_border'] ?? '#e2e2e2' );
 		$card_border_width = self::length( $s['card_border_width'] ?? '1px' );
-		$card_radius       = self::shorthand( $s['card_radius']    ?? '8px' );
-		$card_padding      = self::shorthand( $s['card_padding']   ?? '24px' );
-		$card_max_width    = self::length( $s['card_max_width']    ?? '420px' );
-		$card_shadow       = self::shadow( $s['card_shadow']       ?? '0 2px 8px rgba(0,0,0,0.08)' );
-		$btn_bg            = self::color( $s['btn_bg']             ?? '#0073aa' );
-		$btn_text          = self::color( $s['btn_text']           ?? '#ffffff' );
-		$btn_radius        = self::shorthand( $s['btn_radius']     ?? '4px' );
-		$btn_padding       = self::shorthand( $s['btn_padding']    ?? '10px 16px' );
-		$btn_font_size     = self::length( $s['btn_font_size']     ?? '14px' );
+		$card_radius       = self::shorthand( $s['card_radius'] ?? '8px' );
+		$card_padding      = self::shorthand( $s['card_padding'] ?? '24px' );
+		$card_max_width    = self::length( $s['card_max_width'] ?? '420px' );
+		$card_shadow       = self::shadow( $s['card_shadow'] ?? '0 2px 8px rgba(0,0,0,0.08)' );
+		$btn_bg            = self::color( $s['btn_bg'] ?? '#0073aa' );
+		$btn_text          = self::color( $s['btn_text'] ?? '#ffffff' );
+		$btn_radius        = self::shorthand( $s['btn_radius'] ?? '4px' );
+		$btn_padding       = self::shorthand( $s['btn_padding'] ?? '10px 16px' );
+		$btn_font_size     = self::length( $s['btn_font_size'] ?? '14px' );
 		$btn_font_weight   = (string) ( $s['btn_font_weight'] ?? '500' );
-		$btn_border_t     = self::shorthand( $s['btn_border_thickness'] ?? '0px' );
-		$btn_border_c     = self::color( $s['btn_border_color']       ?? '#0073aa' );
-		$btn_shadow_on    = ! empty( $s['btn_box_shadow'] );
-		$btn_shadow_color = (string) ( $s['btn_box_shadow_color'] ?? 'rgba(0,0,0,0.3)' );
-		$btn_shadow_x     = self::shorthand( $s['btn_box_shadow_x']     ?? '0px' );
-		$btn_shadow_y     = self::shorthand( $s['btn_box_shadow_y']     ?? '2px' );
-		$btn_shadow_blur  = self::shorthand( $s['btn_box_shadow_blur']  ?? '4px' );
+		$btn_border_t      = self::shorthand( $s['btn_border_thickness'] ?? '0px' );
+		$btn_border_c      = self::color( $s['btn_border_color'] ?? '#0073aa' );
+		$btn_shadow_on     = ! empty( $s['btn_box_shadow'] );
+		$btn_shadow_color  = (string) ( $s['btn_box_shadow_color'] ?? 'rgba(0,0,0,0.3)' );
+		$btn_shadow_x      = self::shorthand( $s['btn_box_shadow_x'] ?? '0px' );
+		$btn_shadow_y      = self::shorthand( $s['btn_box_shadow_y'] ?? '2px' );
+		$btn_shadow_blur   = self::shorthand( $s['btn_box_shadow_blur'] ?? '4px' );
 		$btn_shadow_spread = self::shorthand( $s['btn_box_shadow_spread'] ?? '0px' );
-		$btn_shadow_css   = $btn_shadow_on ? "box-shadow:{$btn_shadow_x} {$btn_shadow_y} {$btn_shadow_blur} {$btn_shadow_spread} {$btn_shadow_color};" : '';
-		$btn_hover_on     = $s['btn_hover_enabled'] ?? true;
-		$raw_hover_bg     = trim( (string) ( $s['btn_hover_bg'] ?? '' ) );
-		$raw_hover_text   = trim( (string) ( $s['btn_hover_text'] ?? '' ) );
-		$btn_hover_bg     = $raw_hover_bg ? self::color( $raw_hover_bg ) : '';
-		$btn_hover_text   = $raw_hover_text ? self::color( $raw_hover_text ) : '';
-		$hover_css        = '';
+		$btn_shadow_css    = $btn_shadow_on ? "box-shadow:{$btn_shadow_x} {$btn_shadow_y} {$btn_shadow_blur} {$btn_shadow_spread} {$btn_shadow_color};" : '';
+		$btn_hover_on      = $s['btn_hover_enabled'] ?? true;
+		$raw_hover_bg      = trim( (string) ( $s['btn_hover_bg'] ?? '' ) );
+		$raw_hover_text    = trim( (string) ( $s['btn_hover_text'] ?? '' ) );
+		$btn_hover_bg      = $raw_hover_bg ? self::color( $raw_hover_bg ) : '';
+		$btn_hover_text    = $raw_hover_text ? self::color( $raw_hover_text ) : '';
+		$hover_css         = '';
 		if ( $btn_hover_on ) {
 			$hover_parts = [];
-			if ( $btn_hover_bg )   $hover_parts[] = "background:{$btn_hover_bg}";
-			if ( $btn_hover_text ) $hover_parts[] = "color:{$btn_hover_text} !important";
-			if ( ! $btn_hover_bg && ! $btn_hover_text ) $hover_parts[] = "opacity:0.88";
-			$hover_css = implode(';', $hover_parts) . ';';
+			if ( $btn_hover_bg ) {
+				$hover_parts[] = "background:{$btn_hover_bg}";
+			}
+			if ( $btn_hover_text ) {
+				$hover_parts[] = "color:{$btn_hover_text} !important";
+			}
+			if ( ! $btn_hover_bg && ! $btn_hover_text ) {
+				$hover_parts[] = 'opacity:0.88';
+			}
+			$hover_css = implode( ';', $hover_parts ) . ';';
 		}
-		$name_font_size    = self::length( $s['name_font_size']    ?? '20px' );
-		$body_font_size    = self::length( $s['body_font_size']    ?? '14px' );
+		$name_font_size = self::length( $s['name_font_size'] ?? '20px' );
+		$body_font_size = self::length( $s['body_font_size'] ?? '14px' );
 
-		$css  = ".gcm-biz-card{box-sizing:border-box;display:block;";
+		$css  = '.gcm-biz-card{box-sizing:border-box;display:block;';
 		$css .= "max-width:{$card_max_width};padding:{$card_padding};";
 		$css .= "background:{$card_bg};color:{$card_text};";
 		$css .= "border:{$card_border_width} solid {$card_border};";
@@ -109,21 +115,21 @@ class MM_Biz_Card_CSS {
 
 	/** Single CSS length: digits, dot, units (px em rem % vh vw). */
 	private static function length( string $v ): string {
-		$v = trim( $v );
+		$v         = trim( $v );
 		$sanitized = preg_replace( '/[^a-zA-Z0-9.%]/', '', $v );
 		return $sanitized ?: '0';
 	}
 
 	/** Shorthand length (up to 4 space-separated lengths). */
 	private static function shorthand( string $v ): string {
-		$v = trim( $v );
+		$v         = trim( $v );
 		$sanitized = preg_replace( '/[^a-zA-Z0-9.% ]/', '', $v );
 		return $sanitized ?: '0';
 	}
 
 	/** Box-shadow value: lengths, colors, keywords. */
 	private static function shadow( string $v ): string {
-		$v = trim( $v );
+		$v         = trim( $v );
 		$sanitized = preg_replace( '/[^a-zA-Z0-9#%(),.\s\-]/', '', $v );
 		return $sanitized ?: 'none';
 	}

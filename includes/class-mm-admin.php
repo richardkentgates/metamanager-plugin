@@ -36,21 +36,37 @@ class MM_Admin {
 	 * The JS uses data-write-cap on each grid item to show/hide fields dynamically.
 	 */
 	private const FIELD_COMPAT = [
-		'full' => [
-			MM_Metadata::META_CREATOR, MM_Metadata::META_COPYRIGHT, MM_Metadata::META_OWNER,
-			MM_Metadata::META_HEADLINE, MM_Metadata::META_CREDIT, MM_Metadata::META_KEYWORDS,
-			MM_Metadata::META_DATE, MM_Metadata::META_CITY, MM_Metadata::META_STATE,
-			MM_Metadata::META_COUNTRY, MM_Metadata::META_RATING,
+		'full'        => [
+			MM_Metadata::META_CREATOR,
+			MM_Metadata::META_COPYRIGHT,
+			MM_Metadata::META_OWNER,
+			MM_Metadata::META_HEADLINE,
+			MM_Metadata::META_CREDIT,
+			MM_Metadata::META_KEYWORDS,
+			MM_Metadata::META_DATE,
+			MM_Metadata::META_CITY,
+			MM_Metadata::META_STATE,
+			MM_Metadata::META_COUNTRY,
+			MM_Metadata::META_RATING,
 		],
-		'xmp_only' => [
-			MM_Metadata::META_CREATOR, MM_Metadata::META_COPYRIGHT,
-			MM_Metadata::META_HEADLINE, MM_Metadata::META_CREDIT, MM_Metadata::META_KEYWORDS,
-			MM_Metadata::META_DATE, MM_Metadata::META_CITY, MM_Metadata::META_STATE,
-			MM_Metadata::META_COUNTRY, MM_Metadata::META_RATING,
+		'xmp_only'    => [
+			MM_Metadata::META_CREATOR,
+			MM_Metadata::META_COPYRIGHT,
+			MM_Metadata::META_HEADLINE,
+			MM_Metadata::META_CREDIT,
+			MM_Metadata::META_KEYWORDS,
+			MM_Metadata::META_DATE,
+			MM_Metadata::META_CITY,
+			MM_Metadata::META_STATE,
+			MM_Metadata::META_COUNTRY,
+			MM_Metadata::META_RATING,
 		],
 		'vorbis_only' => [
-			MM_Metadata::META_CREATOR, MM_Metadata::META_COPYRIGHT,
-			MM_Metadata::META_HEADLINE, MM_Metadata::META_KEYWORDS, MM_Metadata::META_DATE,
+			MM_Metadata::META_CREATOR,
+			MM_Metadata::META_COPYRIGHT,
+			MM_Metadata::META_HEADLINE,
+			MM_Metadata::META_KEYWORDS,
+			MM_Metadata::META_DATE,
 		],
 	];
 
@@ -126,141 +142,161 @@ class MM_Admin {
 
 	public static function add_help_tabs( \WP_Screen $screen ): void {
 		if ( 'metamanager_page_mm-site-assistant' === $screen->id ) {
-			$screen->add_help_tab( [
-				'id'      => 'mm-ai-overview',
-				'title'   => __( 'Site Assistant', 'metamanager' ),
-				'content' => '<p>' . esc_html__( 'The assistant acts only through this site\'s registered abilities. Reads (reports, listings) execute immediately. Writes appear as approval cards: Approve, Decline, or edit the input first. Destructive actions require typing CONFIRM. Every execution is written to the audit trail with actor, ability, input and outcome.', 'metamanager' ) . '</p>'
-					. '<p>' . esc_html__( 'Rate caps: 50 turns per session, 200 per user per day.', 'metamanager' ) . '</p>',
-			] );
-			$screen->add_help_tab( [
-				'id'      => 'mm-ai-provider',
-				'title'   => __( 'AI provider', 'metamanager' ),
-				'content' => '<p>' . esc_html__( 'The model runs through the WordPress AI Client: Settings > Connections holds the providers (Gemini = the google connector; install its provider plugin, ai-provider-for-google) and the API key (option connectors_ai_google_api_key). No provider configured? The assistant says so instead of guessing.', 'metamanager' ) . '</p>'
-					. '<p>' . esc_html__( 'Descriptions derive only from the native excerpt field (enabled for pages and posts).', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm-ai-overview',
+					'title'   => __( 'Site Assistant', 'metamanager' ),
+					'content' => '<p>' . esc_html__( 'The assistant acts only through this site\'s registered abilities. Reads (reports, listings) execute immediately. Writes appear as approval cards: Approve, Decline, or edit the input first. Destructive actions require typing CONFIRM. Every execution is written to the audit trail with actor, ability, input and outcome.', 'metamanager' ) . '</p>'
+						. '<p>' . esc_html__( 'Rate caps: 50 turns per session, 200 per user per day.', 'metamanager' ) . '</p>',
+				]
+			);
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm-ai-provider',
+					'title'   => __( 'AI provider', 'metamanager' ),
+					'content' => '<p>' . esc_html__( 'The model runs through the WordPress AI Client: Settings > Connections holds the providers (Gemini = the google connector; install its provider plugin, ai-provider-for-google) and the API key (option connectors_ai_google_api_key). No provider configured? The assistant says so instead of guessing.', 'metamanager' ) . '</p>'
+						. '<p>' . esc_html__( 'Descriptions derive only from the native excerpt field (enabled for pages and posts).', 'metamanager' ) . '</p>',
+				]
+			);
 			return;
 		}
 
 		// Jobs dashboard help.
 		if ( 'toplevel_page_metamanager' === $screen->id ) {
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_overview',
-				'title'   => __( 'Overview', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Metamanager Job Dashboard', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'This page shows everything Metamanager is doing or has done: pending jobs waiting for the OS daemons, the history of completed and failed jobs, and cron event execution history — all in a single unified view.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'The dashboard refreshes automatically every 5 seconds. You do not need to reload the page.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'The dashboard includes three sections: pending jobs, job history (completed/failed), and cron event history with last run times, status icons, and pass/fail counts.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Access to this dashboard and all write operations (bulk actions, re-queue, library scan) requires the Editor role or higher (edit_others_posts capability). Per-attachment actions such as recompressing or saving metadata on a single file respect normal WordPress ownership — Authors can act on their own uploads.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_overview',
+					'title'   => __( 'Overview', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Metamanager Job Dashboard', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'This page shows everything Metamanager is doing or has done: pending jobs waiting for the OS daemons, the history of completed and failed jobs, and cron event execution history — all in a single unified view.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'The dashboard refreshes automatically every 5 seconds. You do not need to reload the page.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'The dashboard includes three sections: pending jobs, job history (completed/failed), and cron event history with last run times, status icons, and pass/fail counts.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Access to this dashboard and all write operations (bulk actions, re-queue, library scan) requires the Editor role or higher (edit_others_posts capability). Per-attachment actions such as recompressing or saving metadata on a single file respect normal WordPress ownership — Authors can act on their own uploads.', 'metamanager' ) . '</p>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_queue',
-				'title'   => __( 'Pending Jobs', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Pending Jobs', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'Jobs enter the queue when you upload a media file, save metadata fields on an attachment edit screen, run Scan Existing Library from this dashboard, or trigger a bulk or batch action from the Media Library.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Each job is written as a small JSON file to one of two directories inside wp-content/metamanager-jobs/: compress/ for image compression jobs, and meta/ for metadata embedding jobs.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'The OS daemons watch these directories with inotifywait and process jobs immediately — no polling delay. Jobs disappear from this view as soon as a daemon processes them.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_queue',
+					'title'   => __( 'Pending Jobs', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Pending Jobs', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'Jobs enter the queue when you upload a media file, save metadata fields on an attachment edit screen, run Scan Existing Library from this dashboard, or trigger a bulk or batch action from the Media Library.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Each job is written as a small JSON file to one of two directories inside wp-content/metamanager-jobs/: compress/ for image compression jobs, and meta/ for metadata embedding jobs.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'The OS daemons watch these directories with inotifywait and process jobs immediately — no polling delay. Jobs disappear from this view as soon as a daemon processes them.', 'metamanager' ) . '</p>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_history',
-				'title'   => __( 'Job Results', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Job Results', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'After a daemon finishes a job it writes a result JSON to the completed/ or failed/ directory. WP-Cron reads these files every 60 seconds and records them in the database.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Completed jobs show the file size, dimensions (where applicable), timestamps, and the trigger that created the job (e.g. upload, edit, scan, batch apply, CLI). Failed jobs show a Re-queue button — click it to re-submit the original job file without any manual steps.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Use the search box to filter by file name, job type, or status. Clear History removes all records from the database but does not affect any media files.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_history',
+					'title'   => __( 'Job Results', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Job Results', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'After a daemon finishes a job it writes a result JSON to the completed/ or failed/ directory. WP-Cron reads these files every 60 seconds and records them in the database.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Completed jobs show the file size, dimensions (where applicable), timestamps, and the trigger that created the job (e.g. upload, edit, scan, batch apply, CLI). Failed jobs show a Re-queue button — click it to re-submit the original job file without any manual steps.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Use the search box to filter by file name, job type, or status. Clear History removes all records from the database but does not affect any media files.', 'metamanager' ) . '</p>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_daemons',
-				'title'   => __( 'Daemons', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'OS Daemons', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'Two systemd services handle all media file processing:', 'metamanager' ) . '</p>' .
-					'<ul>' .
-					'<li><strong>metamanager-compress-daemon</strong> — ' . esc_html__( 'lossless JPEG compression via jpegtran; lossless PNG compression via optipng; lossless WebP recompression via cwebp; video container remux via ffmpeg. Files are only replaced if the result is smaller.', 'metamanager' ) . '</li>' .
-					'<li><strong>metamanager-meta-daemon</strong> — ' . esc_html__( 'writes metadata via ExifTool in a single pass, using each file\'s native tag system: EXIF/IPTC/XMP for images; ID3 for MP3; QuickTime atoms for MP4/MOV/M4A; Vorbis comments for OGG/FLAC; XMP-only for AVI/WAV/WMV/WMA/PDF; read-only for MKV/WebM/OGV.', 'metamanager' ) . '</li>' .
-					'</ul>' .
-					'<p>' . esc_html__( 'The banner at the top of the page shows tool availability and daemon health. A green icon means the tool is installed and reachable. A red icon means it is missing or the daemon is not running. Daemon status is read from a PID file — no elevated privileges are needed.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'The System Status section shows tool availability, the installed daemon version, the version required by the current plugin, and whether they match.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'To restart a daemon from the server:', 'metamanager' ) . '</p>' .
-					'<code>sudo systemctl restart metamanager-compress-daemon</code><br>' .
-					'<code>sudo systemctl restart metamanager-meta-daemon</code>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_daemons',
+					'title'   => __( 'Daemons', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'OS Daemons', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'Two systemd services handle all media file processing:', 'metamanager' ) . '</p>' .
+						'<ul>' .
+						'<li><strong>metamanager-compress-daemon</strong> — ' . esc_html__( 'lossless JPEG compression via jpegtran; lossless PNG compression via optipng; lossless WebP recompression via cwebp; video container remux via ffmpeg. Files are only replaced if the result is smaller.', 'metamanager' ) . '</li>' .
+						'<li><strong>metamanager-meta-daemon</strong> — ' . esc_html__( 'writes metadata via ExifTool in a single pass, using each file\'s native tag system: EXIF/IPTC/XMP for images; ID3 for MP3; QuickTime atoms for MP4/MOV/M4A; Vorbis comments for OGG/FLAC; XMP-only for AVI/WAV/WMV/WMA/PDF; read-only for MKV/WebM/OGV.', 'metamanager' ) . '</li>' .
+						'</ul>' .
+						'<p>' . esc_html__( 'The banner at the top of the page shows tool availability and daemon health. A green icon means the tool is installed and reachable. A red icon means it is missing or the daemon is not running. Daemon status is read from a PID file — no elevated privileges are needed.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'The System Status section shows tool availability, the installed daemon version, the version required by the current plugin, and whether they match.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'To restart a daemon from the server:', 'metamanager' ) . '</p>' .
+						'<code>sudo systemctl restart metamanager-compress-daemon</code><br>' .
+						'<code>sudo systemctl restart metamanager-meta-daemon</code>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_bulk_actions',
-				'title'   => __( 'Bulk Actions', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Bulk Actions (Media Library)', 'metamanager' ) . '</h2>' .
-					'<ul>' .
-					'<li><strong>' . esc_html__( 'Compress Lossless', 'metamanager' ) . '</strong> — ' . esc_html__( 'Queues lossless compression for all uncompressed files in the selection. Images: JPEG via jpegtran, PNG via optipng, WebP via cwebp. Video: container remux via ffmpeg. Files are only replaced if the result is smaller.', 'metamanager' ) . '</li>' .
-					'<li><strong>' . esc_html__( 'Inject Site Info into Metadata', 'metamanager' ) . '</strong> — ' . esc_html__( 'Writes Publisher (your site name) and Website (your site URL) into IPTC and XMP. This is neutral provenance — it never sets Creator, Copyright, or Owner.', 'metamanager' ) . '</li>' .
-					'</ul>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_bulk_actions',
+					'title'   => __( 'Bulk Actions', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Bulk Actions (Media Library)', 'metamanager' ) . '</h2>' .
+						'<ul>' .
+						'<li><strong>' . esc_html__( 'Compress Lossless', 'metamanager' ) . '</strong> — ' . esc_html__( 'Queues lossless compression for all uncompressed files in the selection. Images: JPEG via jpegtran, PNG via optipng, WebP via cwebp. Video: container remux via ffmpeg. Files are only replaced if the result is smaller.', 'metamanager' ) . '</li>' .
+						'<li><strong>' . esc_html__( 'Inject Site Info into Metadata', 'metamanager' ) . '</strong> — ' . esc_html__( 'Writes Publisher (your site name) and Website (your site URL) into IPTC and XMP. This is neutral provenance — it never sets Creator, Copyright, or Owner.', 'metamanager' ) . '</li>' .
+						'</ul>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'title'   => __( 'Metadata Fields', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Metadata Fields', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'Metamanager maps WordPress fields to each file\'s native tag system. Images write EXIF, IPTC, and XMP simultaneously; MP3 uses ID3; MP4/MOV/M4A use QuickTime atoms; OGG/FLAC use Vorbis comments; AVI/WAV/WMV/WMA and PDF use XMP-only. All field names below apply across all supported types.', 'metamanager' ) . '</p>' .
-					'<table style="border-collapse:collapse;width:100%;font-size:13px;">' .
-					'<tr style="border-bottom:1px solid #ddd;"><th style="text-align:left;padding:4px 8px;">Field</th><th style="text-align:left;padding:4px 8px;">Source</th><th style="text-align:left;padding:4px 8px;">Bulk?</th></tr>' .
-					'<tr><td style="padding:4px 8px;">Title</td><td style="padding:4px 8px;">WP Post Title</td><td style="padding:4px 8px;">No</td></tr>' .
-					'<tr><td style="padding:4px 8px;">Description</td><td style="padding:4px 8px;">WP Post Content</td><td style="padding:4px 8px;">No</td></tr>' .
-					'<tr><td style="padding:4px 8px;">Caption</td><td style="padding:4px 8px;">WP Excerpt</td><td style="padding:4px 8px;">No</td></tr>' .
-					'<tr><td style="padding:4px 8px;">Alt Text</td><td style="padding:4px 8px;">WP Alt Field</td><td style="padding:4px 8px;">No</td></tr>' .
-					'<tr><td style="padding:4px 8px;"><strong>Creator</strong></td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-					'<tr><td style="padding:4px 8px;"><strong>Copyright</strong></td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-					'<tr><td style="padding:4px 8px;"><strong>Owner</strong></td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-					'<tr><td style="padding:4px 8px;">Publisher</td><td style="padding:4px 8px;">Site name (auto)</td><td style="padding:4px 8px;">Yes — Inject Site Info</td></tr>' .
-					'<tr><td style="padding:4px 8px;">Website</td><td style="padding:4px 8px;">Site URL (auto)</td><td style="padding:4px 8px;">Yes — Inject Site Info</td></tr>' .
-				'<tr><td colspan="3" style="padding:6px 8px 2px;font-weight:700;border-top:1px solid #ddd;">Editorial</td></tr>' .
-				'<tr><td style="padding:4px 8px;">Headline</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-				'<tr><td style="padding:4px 8px;">Credit</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-				'<tr><td colspan="3" style="padding:6px 8px 2px;font-weight:700;border-top:1px solid #ddd;">Classification</td></tr>' .
-				'<tr><td style="padding:4px 8px;">Keywords</td><td style="padding:4px 8px;">Per-image field (semicolon-separated)</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-				'<tr><td style="padding:4px 8px;">Date Created</td><td style="padding:4px 8px;">Per-image field (YYYY-MM-DD)</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-				'<tr><td style="padding:4px 8px;">Rating</td><td style="padding:4px 8px;">Per-image field (0–5 stars)</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-				'<tr><td colspan="3" style="padding:6px 8px 2px;font-weight:700;border-top:1px solid #ddd;">Location (IPTC Photo Metadata Standard)</td></tr>' .
-				'<tr><td style="padding:4px 8px;">City</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-				'<tr><td style="padding:4px 8px;">State / Province</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-				'<tr><td style="padding:4px 8px;">Country</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
-				'</table>' .
-					'<p style="margin-top:.75em;">' . esc_html__( 'All per-image fields can be stamped across multiple images at once from the Batch Metadata page. Leave any field blank to leave it unchanged on the selected images.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'title'   => __( 'Metadata Fields', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Metadata Fields', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'Metamanager maps WordPress fields to each file\'s native tag system. Images write EXIF, IPTC, and XMP simultaneously; MP3 uses ID3; MP4/MOV/M4A use QuickTime atoms; OGG/FLAC use Vorbis comments; AVI/WAV/WMV/WMA and PDF use XMP-only. All field names below apply across all supported types.', 'metamanager' ) . '</p>' .
+						'<table style="border-collapse:collapse;width:100%;font-size:13px;">' .
+						'<tr style="border-bottom:1px solid #ddd;"><th style="text-align:left;padding:4px 8px;">Field</th><th style="text-align:left;padding:4px 8px;">Source</th><th style="text-align:left;padding:4px 8px;">Bulk?</th></tr>' .
+						'<tr><td style="padding:4px 8px;">Title</td><td style="padding:4px 8px;">WP Post Title</td><td style="padding:4px 8px;">No</td></tr>' .
+						'<tr><td style="padding:4px 8px;">Description</td><td style="padding:4px 8px;">WP Post Content</td><td style="padding:4px 8px;">No</td></tr>' .
+						'<tr><td style="padding:4px 8px;">Caption</td><td style="padding:4px 8px;">WP Excerpt</td><td style="padding:4px 8px;">No</td></tr>' .
+						'<tr><td style="padding:4px 8px;">Alt Text</td><td style="padding:4px 8px;">WP Alt Field</td><td style="padding:4px 8px;">No</td></tr>' .
+						'<tr><td style="padding:4px 8px;"><strong>Creator</strong></td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+						'<tr><td style="padding:4px 8px;"><strong>Copyright</strong></td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+						'<tr><td style="padding:4px 8px;"><strong>Owner</strong></td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+						'<tr><td style="padding:4px 8px;">Publisher</td><td style="padding:4px 8px;">Site name (auto)</td><td style="padding:4px 8px;">Yes — Inject Site Info</td></tr>' .
+						'<tr><td style="padding:4px 8px;">Website</td><td style="padding:4px 8px;">Site URL (auto)</td><td style="padding:4px 8px;">Yes — Inject Site Info</td></tr>' .
+					'<tr><td colspan="3" style="padding:6px 8px 2px;font-weight:700;border-top:1px solid #ddd;">Editorial</td></tr>' .
+					'<tr><td style="padding:4px 8px;">Headline</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+					'<tr><td style="padding:4px 8px;">Credit</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+					'<tr><td colspan="3" style="padding:6px 8px 2px;font-weight:700;border-top:1px solid #ddd;">Classification</td></tr>' .
+					'<tr><td style="padding:4px 8px;">Keywords</td><td style="padding:4px 8px;">Per-image field (semicolon-separated)</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+					'<tr><td style="padding:4px 8px;">Date Created</td><td style="padding:4px 8px;">Per-image field (YYYY-MM-DD)</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+					'<tr><td style="padding:4px 8px;">Rating</td><td style="padding:4px 8px;">Per-image field (0–5 stars)</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+					'<tr><td colspan="3" style="padding:6px 8px 2px;font-weight:700;border-top:1px solid #ddd;">Location (IPTC Photo Metadata Standard)</td></tr>' .
+					'<tr><td style="padding:4px 8px;">City</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+					'<tr><td style="padding:4px 8px;">State / Province</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+					'<tr><td style="padding:4px 8px;">Country</td><td style="padding:4px 8px;">Per-image field</td><td style="padding:4px 8px;">Yes — Batch Metadata</td></tr>' .
+					'</table>' .
+						'<p style="margin-top:.75em;">' . esc_html__( 'All per-image fields can be stamped across multiple images at once from the Batch Metadata page. Leave any field blank to leave it unchanged on the selected images.', 'metamanager' ) . '</p>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_updates',
-				'title'   => __( 'Updates', 'metamanager' ),
-				'content' =>
-				'<h2>' . esc_html__( 'Keeping Metamanager Up to Date', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'Metamanager integrates with the WordPress update system. New releases from the apt server appear automatically in Dashboard → Updates.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'To check immediately, go to Plugins → Installed Plugins and click the "Check for Updates" link next to Metamanager.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Daemon updates are triggered automatically by the plugin after every plugin update. The server\'s apt channel (test or stable) determines which daemon version is installed.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_updates',
+					'title'   => __( 'Updates', 'metamanager' ),
+					'content' =>
+					'<h2>' . esc_html__( 'Keeping Metamanager Up to Date', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'Metamanager integrates with the WordPress update system. New releases from the apt server appear automatically in Dashboard → Updates.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'To check immediately, go to Plugins → Installed Plugins and click the "Check for Updates" link next to Metamanager.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Daemon updates are triggered automatically by the plugin after every plugin update. The server\'s apt channel (test or stable) determines which daemon version is installed.', 'metamanager' ) . '</p>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_cron',
-				'title'   => __( 'WP-Cron History', 'metamanager' ),
-				'content' =>
-				'<h2>' . esc_html__( 'WP-Cron History Tracking', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'Metamanager tracks the execution history of all its cron events. Each cron callback is wrapped with MM_Cron_Tracker, which automatically records:', 'metamanager' ) . '</p>' .
-					'<ul>' .
-					'<li>' . esc_html__( 'Last run time and next scheduled time', 'metamanager' ) . '</li>' .
-					'<li>' . esc_html__( 'Pass/fail counts (total runs and failures)', 'metamanager' ) . '</li>' .
-					'<li>' . esc_html__( 'Last 20 runs per hook with timestamps and status', 'metamanager' ) . '</li>' .
-					'</ul>' .
-					'<p>' . esc_html__( 'Tracked cron events:', 'metamanager' ) . '</p>' .
-					'<ul>' .
-					'<li><strong>mm_import_completed_jobs</strong> — ' . esc_html__( 'Reads completed job results from the daemon output directories and updates the database.', 'metamanager' ) . '</li>' .
-					'<li><strong>mm_write_status_json</strong> — ' . esc_html__( 'Writes the status JSON file consumed by GCM and monitoring tools.', 'metamanager' ) . '</li>' .
-					'</ul>' .
-					'<p>' . esc_html__( 'Cron history is visible in the dashboard widget under Metamanager → Dashboard, and in the status JSON file under the "cron" key.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_cron',
+					'title'   => __( 'WP-Cron History', 'metamanager' ),
+					'content' =>
+					'<h2>' . esc_html__( 'WP-Cron History Tracking', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'Metamanager tracks the execution history of all its cron events. Each cron callback is wrapped with MM_Cron_Tracker, which automatically records:', 'metamanager' ) . '</p>' .
+						'<ul>' .
+						'<li>' . esc_html__( 'Last run time and next scheduled time', 'metamanager' ) . '</li>' .
+						'<li>' . esc_html__( 'Pass/fail counts (total runs and failures)', 'metamanager' ) . '</li>' .
+						'<li>' . esc_html__( 'Last 20 runs per hook with timestamps and status', 'metamanager' ) . '</li>' .
+						'</ul>' .
+						'<p>' . esc_html__( 'Tracked cron events:', 'metamanager' ) . '</p>' .
+						'<ul>' .
+						'<li><strong>mm_import_completed_jobs</strong> — ' . esc_html__( 'Reads completed job results from the daemon output directories and updates the database.', 'metamanager' ) . '</li>' .
+						'<li><strong>mm_write_status_json</strong> — ' . esc_html__( 'Writes the status JSON file consumed by GCM and monitoring tools.', 'metamanager' ) . '</li>' .
+						'</ul>' .
+						'<p>' . esc_html__( 'Cron history is visible in the dashboard widget under Metamanager → Dashboard, and in the status JSON file under the "cron" key.', 'metamanager' ) . '</p>',
+				]
+			);
 
 			$screen->set_help_sidebar(
 				'<p><strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ' ' . MM_VERSION . '</strong></p>' .
@@ -273,89 +309,101 @@ class MM_Admin {
 
 		// Media Library help sidebar addendum.
 		if ( 'upload' === $screen->id ) {
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_media_column',
-				'title'   => __( 'Compression Column', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Metamanager Compression Column', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'The Compression column shows the lossless compression status of each eligible media file. It polls the server every 10 seconds and updates without a page reload.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Status meanings:', 'metamanager' ) . '</p>' .
-					'<ul>' .
-					'<li><strong style="color:#13bb2c;">' . esc_html__( 'Compressed', 'metamanager' ) . '</strong> — ' . esc_html__( 'The file has been losslessly optimised.', 'metamanager' ) . '</li>' .
-					'<li><strong style="color:#e6b800;">' . esc_html__( 'Queued (clock icon)', 'metamanager' ) . '</strong> — ' . esc_html__( 'One or more daemon jobs (import, compression, or metadata write-back) are pending for this file. The tooltip lists the queued job types. The indicator clears automatically once the daemon processes them.', 'metamanager' ) . '</li>' .
-					'<li><strong style="color:#e6b800;">' . esc_html__( 'Pending', 'metamanager' ) . '</strong> — ' . esc_html__( 'A compression job is queued and waiting for the daemon.', 'metamanager' ) . '</li>' .
-					'<li><strong style="color:#e54c3c;">' . esc_html__( 'Failed', 'metamanager' ) . '</strong> — ' . esc_html__( 'The last compression attempt failed. Go to Media → Metamanager to re-queue.', 'metamanager' ) . '</li>' .
-					'<li><strong style="color:#888;">' . esc_html__( 'Not compressed', 'metamanager' ) . '</strong> — ' . esc_html__( 'No compression job has run yet. Use Compress Lossless from the Bulk Actions menu.', 'metamanager' ) . '</li>' .
-					'</ul>' .
-					'<p><a href="' . esc_url( admin_url( 'admin.php?page=metamanager' ) ) . '">' . esc_html__( 'View Job Dashboard →', 'metamanager' ) . '</a></p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_media_column',
+					'title'   => __( 'Compression Column', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Metamanager Compression Column', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'The Compression column shows the lossless compression status of each eligible media file. It polls the server every 10 seconds and updates without a page reload.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Status meanings:', 'metamanager' ) . '</p>' .
+						'<ul>' .
+						'<li><strong style="color:#13bb2c;">' . esc_html__( 'Compressed', 'metamanager' ) . '</strong> — ' . esc_html__( 'The file has been losslessly optimised.', 'metamanager' ) . '</li>' .
+						'<li><strong style="color:#e6b800;">' . esc_html__( 'Queued (clock icon)', 'metamanager' ) . '</strong> — ' . esc_html__( 'One or more daemon jobs (import, compression, or metadata write-back) are pending for this file. The tooltip lists the queued job types. The indicator clears automatically once the daemon processes them.', 'metamanager' ) . '</li>' .
+						'<li><strong style="color:#e6b800;">' . esc_html__( 'Pending', 'metamanager' ) . '</strong> — ' . esc_html__( 'A compression job is queued and waiting for the daemon.', 'metamanager' ) . '</li>' .
+						'<li><strong style="color:#e54c3c;">' . esc_html__( 'Failed', 'metamanager' ) . '</strong> — ' . esc_html__( 'The last compression attempt failed. Go to Media → Metamanager to re-queue.', 'metamanager' ) . '</li>' .
+						'<li><strong style="color:#888;">' . esc_html__( 'Not compressed', 'metamanager' ) . '</strong> — ' . esc_html__( 'No compression job has run yet. Use Compress Lossless from the Bulk Actions menu.', 'metamanager' ) . '</li>' .
+						'</ul>' .
+						'<p><a href="' . esc_url( admin_url( 'admin.php?page=metamanager' ) ) . '">' . esc_html__( 'View Job Dashboard →', 'metamanager' ) . '</a></p>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_media_meta_sync',
-				'title'   => __( 'Meta Sync Column', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Metamanager Meta Sync Column', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'The Meta Sync column shows whether file-level metadata (EXIF, IPTC, XMP) has been embedded into the media file.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Status meanings:', 'metamanager' ) . '</p>' .
-					'<ul>' .
-					'<li><strong style="color:#13bb2c;">' . esc_html__( 'Embedded', 'metamanager' ) . '</strong> — ' . esc_html__( 'Metadata has been written into the file by the daemon.', 'metamanager' ) . '</li>' .
-					'<li><strong style="color:#e6b800;">' . esc_html__( 'Queued (clock icon)', 'metamanager' ) . '</strong> — ' . esc_html__( 'A metadata embedding job is pending. The daemon will write WP fields into the file shortly.', 'metamanager' ) . '</li>' .
-					'<li><strong style="color:#e54c3c;">' . esc_html__( 'Not embedded', 'metamanager' ) . '</strong> — ' . esc_html__( 'No metadata has been written to the file yet. Use Embed Metadata from the Bulk Actions menu, or save the attachment to trigger automatic embedding.', 'metamanager' ) . '</li>' .
-					'</ul>' .
-					'<p>' . esc_html__( 'Metadata embedding happens automatically on upload. You can also trigger it manually from the Media Library bulk actions or the attachment edit screen.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_media_meta_sync',
+					'title'   => __( 'Meta Sync Column', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Metamanager Meta Sync Column', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'The Meta Sync column shows whether file-level metadata (EXIF, IPTC, XMP) has been embedded into the media file.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Status meanings:', 'metamanager' ) . '</p>' .
+						'<ul>' .
+						'<li><strong style="color:#13bb2c;">' . esc_html__( 'Embedded', 'metamanager' ) . '</strong> — ' . esc_html__( 'Metadata has been written into the file by the daemon.', 'metamanager' ) . '</li>' .
+						'<li><strong style="color:#e6b800;">' . esc_html__( 'Queued (clock icon)', 'metamanager' ) . '</strong> — ' . esc_html__( 'A metadata embedding job is pending. The daemon will write WP fields into the file shortly.', 'metamanager' ) . '</li>' .
+						'<li><strong style="color:#e54c3c;">' . esc_html__( 'Not embedded', 'metamanager' ) . '</strong> — ' . esc_html__( 'No metadata has been written to the file yet. Use Embed Metadata from the Bulk Actions menu, or save the attachment to trigger automatic embedding.', 'metamanager' ) . '</li>' .
+						'</ul>' .
+						'<p>' . esc_html__( 'Metadata embedding happens automatically on upload. You can also trigger it manually from the Media Library bulk actions or the attachment edit screen.', 'metamanager' ) . '</p>',
+				]
+			);
 		}
 
 		// Batch Metadata (Media Processing) help.
 		if ( 'metamanager_page_metamanager-bulk-meta' === $screen->id ) {
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_bulk_meta_overview',
-				'title'   => __( 'Overview', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Media Processing', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'This page lets you bulk-edit metadata fields across multiple media files at once. Select files, choose a field, set a value, and apply — the changes are saved to WordPress and queued for daemon embedding into the files.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Fields available for bulk editing: Creator, Copyright, Owner, Headline, Credit, Keywords, Date, City, State, Country, Rating.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Changes are applied immediately to WordPress post meta. A metadata write-back job is then queued for each affected file so the daemon embeds the new values into EXIF/IPTC/XMP.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_bulk_meta_overview',
+					'title'   => __( 'Overview', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Media Processing', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'This page lets you bulk-edit metadata fields across multiple media files at once. Select files, choose a field, set a value, and apply — the changes are saved to WordPress and queued for daemon embedding into the files.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Fields available for bulk editing: Creator, Copyright, Owner, Headline, Credit, Keywords, Date, City, State, Country, Rating.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Changes are applied immediately to WordPress post meta. A metadata write-back job is then queued for each affected file so the daemon embeds the new values into EXIF/IPTC/XMP.', 'metamanager' ) . '</p>',
+				]
+			);
 		}
 
 		// Settings page help.
 		if ( 'metamanager_page_metamanager-settings' === $screen->id ) {
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_settings_api',
-				'title'   => __( 'REST API Access', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'REST API Access Control', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'These settings control external access to the Metamanager REST endpoints. Logged-in WordPress users are never affected — the Media Library status column and job dashboard always work regardless of what is configured here.', 'metamanager' ) . '</p>' .
-					'<ul>' .
-					'<li><strong>' . esc_html__( 'Disable REST API', 'metamanager' ) . '</strong> — ' . esc_html__( 'Blocks all unauthenticated requests to /wp-json/metamanager/v1/*. Logged-in users are not blocked.', 'metamanager' ) . '</li>' .
-					'<li><strong>' . esc_html__( 'Allowed IP Addresses', 'metamanager' ) . '</strong> — ' . esc_html__( 'Restricts unauthenticated access to requests originating from the listed IPv4 or IPv6 addresses. Leave blank to allow requests from any IP. Logged-in users are not subject to this restriction.', 'metamanager' ) . '</li>' .
-					'</ul>' .
-					'<p>' . esc_html__( 'Normal WordPress authentication (X-WP-Nonce header or cookie) and capability checks still apply to all requests.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_settings_api',
+					'title'   => __( 'REST API Access', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'REST API Access Control', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'These settings control external access to the Metamanager REST endpoints. Logged-in WordPress users are never affected — the Media Library status column and job dashboard always work regardless of what is configured here.', 'metamanager' ) . '</p>' .
+						'<ul>' .
+						'<li><strong>' . esc_html__( 'Disable REST API', 'metamanager' ) . '</strong> — ' . esc_html__( 'Blocks all unauthenticated requests to /wp-json/metamanager/v1/*. Logged-in users are not blocked.', 'metamanager' ) . '</li>' .
+						'<li><strong>' . esc_html__( 'Allowed IP Addresses', 'metamanager' ) . '</strong> — ' . esc_html__( 'Restricts unauthenticated access to requests originating from the listed IPv4 or IPv6 addresses. Leave blank to allow requests from any IP. Logged-in users are not subject to this restriction.', 'metamanager' ) . '</li>' .
+						'</ul>' .
+						'<p>' . esc_html__( 'Normal WordPress authentication (X-WP-Nonce header or cookie) and capability checks still apply to all requests.', 'metamanager' ) . '</p>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_settings_notify',
-				'title'   => __( 'Upload Receipts', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Upload Receipt Emails', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'The site admin always receives a batched digest email after uploads — no toggle needed. Each WordPress user can control their own receipt preference from Users → Your Profile → Metamanager → Upload receipts. The checkbox is enabled by default; uncheck it to stop receiving receipts without affecting anyone else.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Uploads within a 60-second window are grouped into a single email per recipient — no matter how many files are uploaded in that window.', 'metamanager' ) . '</p>' .
-					'<ul>' .
-					'<li><strong>' . esc_html__( 'Extra CC address', 'metamanager' ) . '</strong> — ' . esc_html__( 'An additional email address to CC on every upload receipt sent to the admin. Leave blank to send only to the admin address. Per-user receipts are controlled from each user\'s own profile page.', 'metamanager' ) . '</li>' .
-					'</ul>' .
-					'<p>' . esc_html__( 'If an email fails to send, an admin notice banner appears at the top of the dashboard with a one-click retry button. Dismiss it to discard the failed batch without retrying.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_settings_notify',
+					'title'   => __( 'Upload Receipts', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Upload Receipt Emails', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'The site admin always receives a batched digest email after uploads — no toggle needed. Each WordPress user can control their own receipt preference from Users → Your Profile → Metamanager → Upload receipts. The checkbox is enabled by default; uncheck it to stop receiving receipts without affecting anyone else.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Uploads within a 60-second window are grouped into a single email per recipient — no matter how many files are uploaded in that window.', 'metamanager' ) . '</p>' .
+						'<ul>' .
+						'<li><strong>' . esc_html__( 'Extra CC address', 'metamanager' ) . '</strong> — ' . esc_html__( 'An additional email address to CC on every upload receipt sent to the admin. Leave blank to send only to the admin address. Per-user receipts are controlled from each user\'s own profile page.', 'metamanager' ) . '</li>' .
+						'</ul>' .
+						'<p>' . esc_html__( 'If an email fails to send, an admin notice banner appears at the top of the dashboard with a one-click retry button. Dismiss it to discard the failed batch without retrying.', 'metamanager' ) . '</p>',
+				]
+			);
 
-			$screen->add_help_tab( [
-				'id'      => 'mm_help_settings_data',
-				'title'   => __( 'Data & Uninstall', 'metamanager' ),
-				'content' =>
-					'<h2>' . esc_html__( 'Data & Uninstall', 'metamanager' ) . '</h2>' .
-					'<p>' . esc_html__( 'By default, Metamanager leaves all data in place when the plugin is deleted — options, post meta, and the job log table are kept so nothing is lost on an accidental uninstall.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'Enable "Remove all data on uninstall" only when you are certain you want a clean removal. When this setting is on, deleting the plugin from the Plugins screen will permanently remove all plugin options, all custom post meta, the metamanager_jobs database table, and the job queue directory.', 'metamanager' ) . '</p>' .
-					'<p>' . esc_html__( 'The daemon services must be stopped and removed manually from the server.', 'metamanager' ) . '</p>',
-			] );
+			$screen->add_help_tab(
+				[
+					'id'      => 'mm_help_settings_data',
+					'title'   => __( 'Data & Uninstall', 'metamanager' ),
+					'content' =>
+						'<h2>' . esc_html__( 'Data & Uninstall', 'metamanager' ) . '</h2>' .
+						'<p>' . esc_html__( 'By default, Metamanager leaves all data in place when the plugin is deleted — options, post meta, and the job log table are kept so nothing is lost on an accidental uninstall.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'Enable "Remove all data on uninstall" only when you are certain you want a clean removal. When this setting is on, deleting the plugin from the Plugins screen will permanently remove all plugin options, all custom post meta, the metamanager_jobs database table, and the job queue directory.', 'metamanager' ) . '</p>' .
+						'<p>' . esc_html__( 'The daemon services must be stopped and removed manually from the server.', 'metamanager' ) . '</p>',
+				]
+			);
 
 			$screen->set_help_sidebar(
 				'<p><strong>' . esc_html__( 'Metamanager', 'metamanager' ) . ' ' . MM_VERSION . '</strong></p>' .
@@ -437,13 +485,13 @@ class MM_Admin {
 				? '<span class="dashicons dashicons-yes-alt" style="color:#00a32a;vertical-align:middle;" title="' . esc_attr( $ok_title ) . '"></span>'
 				: '<span class="dashicons dashicons-dismiss" style="color:#d63638;vertical-align:middle;" title="' . esc_attr( $fail_title ) . '"></span>';
 
-		echo 'ExifTool '  . $icon( $status['exiftool'],        'ExifTool found',   'ExifTool missing — metadata embedding disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $icon closure returns esc_attr-escaped HTML
-		echo ' &nbsp;jpegtran ' . $icon( $status['jpegtran'],  'jpegtran found',   'jpegtran missing — JPEG lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo ' &nbsp;optipng '  . $icon( $status['optipng'],   'optipng found',    'optipng missing — PNG lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo ' &nbsp;cwebp '    . $icon( $status['cwebp'],     'cwebp found',      'cwebp missing — WebP lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo ' &nbsp;ffmpeg '   . $icon( $status['ffmpeg'],    'ffmpeg found',     'ffmpeg missing — video remux disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo 'ExifTool ' . $icon( $status['exiftool'], 'ExifTool found', 'ExifTool missing — metadata embedding disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $icon closure returns esc_attr-escaped HTML
+		echo ' &nbsp;jpegtran ' . $icon( $status['jpegtran'], 'jpegtran found', 'jpegtran missing — JPEG lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo ' &nbsp;optipng ' . $icon( $status['optipng'], 'optipng found', 'optipng missing — PNG lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo ' &nbsp;cwebp ' . $icon( $status['cwebp'], 'cwebp found', 'cwebp missing — WebP lossless compression disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo ' &nbsp;ffmpeg ' . $icon( $status['ffmpeg'], 'ffmpeg found', 'ffmpeg missing — video remux disabled' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo ' &nbsp;Compress daemon ' . $icon( $status['compress_daemon'], 'Compression daemon running', 'Compression daemon not running' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo ' &nbsp;Metadata daemon ' . $icon( $status['meta_daemon'],     'Metadata daemon running',    'Metadata daemon not running' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo ' &nbsp;Metadata daemon ' . $icon( $status['meta_daemon'], 'Metadata daemon running', 'Metadata daemon not running' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	// -----------------------------------------------------------------------
@@ -462,10 +510,10 @@ class MM_Admin {
 	}
 
 	public static function render_dashboard_widget(): void {
-		$status      = MM_Status::system_status();
-		$updater     = self::get_updater_status();
-		$queues      = $updater['queues'] ?? [];
-		$cron_data   = $updater['cron'] ?? [];
+		$status    = MM_Status::system_status();
+		$updater   = self::get_updater_status();
+		$queues    = $updater['queues'] ?? [];
+		$cron_data = $updater['cron'] ?? [];
 
 		$tool_icon = function ( bool $ok, string $ok_title, string $fail_title ) {
 			return $ok
@@ -474,13 +522,13 @@ class MM_Admin {
 		};
 
 		$tools = array(
-			array( 'ExifTool',          $status['exiftool'],        'ExifTool found',                'ExifTool missing' ),
-			array( 'jpegtran',          $status['jpegtran'],        'jpegtran found',                'jpegtran missing' ),
-			array( 'optipng',           $status['optipng'],         'optipng found',                 'optipng missing' ),
-			array( 'cwebp',             $status['cwebp'],           'cwebp found',                   'cwebp missing' ),
-			array( 'ffmpeg',            $status['ffmpeg'],          'ffmpeg found',                  'ffmpeg missing' ),
-			array( 'Compress daemon',   $status['compress_daemon'], 'Compression daemon running',    'Compression daemon stopped' ),
-			array( 'Metadata daemon',   $status['meta_daemon'],     'Metadata daemon running',       'Metadata daemon stopped' ),
+			array( 'ExifTool', $status['exiftool'], 'ExifTool found', 'ExifTool missing' ),
+			array( 'jpegtran', $status['jpegtran'], 'jpegtran found', 'jpegtran missing' ),
+			array( 'optipng', $status['optipng'], 'optipng found', 'optipng missing' ),
+			array( 'cwebp', $status['cwebp'], 'cwebp found', 'cwebp missing' ),
+			array( 'ffmpeg', $status['ffmpeg'], 'ffmpeg found', 'ffmpeg missing' ),
+			array( 'Compress daemon', $status['compress_daemon'], 'Compression daemon running', 'Compression daemon stopped' ),
+			array( 'Metadata daemon', $status['meta_daemon'], 'Metadata daemon running', 'Metadata daemon stopped' ),
 		);
 
 		$installed_ver = $updater['installed_version'] ?? null;
@@ -509,10 +557,10 @@ class MM_Admin {
 			'waiting'  => esc_html__( 'Waiting for plugin', 'metamanager' ),
 			'none'     => esc_html__( 'None', 'metamanager' ),
 		);
-		$action = $updater['status'] ?? 'none';
-		$color  = in_array( $action, array( 'ok', 'updated', 'ahead' ), true ) ? '#00a32a'
+		$action        = $updater['status'] ?? 'none';
+		$color         = in_array( $action, array( 'ok', 'updated', 'ahead' ), true ) ? '#00a32a'
 			: ( in_array( $action, array( 'failed', 'error' ), true ) ? '#d63638' : '#dba617' );
-		$updater_row = '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
+		$updater_row   = '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
 			. ( $action_labels[ $action ] ?? esc_html( $action ) )
 			. '</span>';
 		if ( ! empty( $updater['message'] ) ) {
@@ -578,16 +626,18 @@ class MM_Admin {
 			<thead><tr><th><?php esc_html_e( 'Cron Event', 'metamanager' ); ?></th><th><?php esc_html_e( 'Last Run', 'metamanager' ); ?></th><th style="text-align:right"><?php esc_html_e( 'Pass / Fail', 'metamanager' ); ?></th></tr></thead>
 			<tbody>
 				<?php if ( ! empty( $cron_data ) ) : ?>
-				<?php foreach ( $cron_data as $hook => $info ) : ?>
+					<?php foreach ( $cron_data as $hook => $info ) : ?>
 				<tr>
 					<td><?php echo esc_html( $hook ); ?></td>
 					<td style="white-space:nowrap"><?php echo $info['last_run'] ? esc_html( gmdate( 'M j, g:ia', strtotime( $info['last_run'] ) ) ) : '—'; ?></td>
 					<td style="text-align:right;white-space:nowrap">
 						<?php echo esc_html( $info['pass_count'] ?? 0 ); ?>
 						/
-						<?php echo ( $info['fail_count'] ?? 0 ) > 0
+						<?php
+						echo ( $info['fail_count'] ?? 0 ) > 0
 							? '<span style="color:#d63638;font-weight:600">' . esc_html( $info['fail_count'] ) . '</span>'
-							: esc_html( $info['fail_count'] ?? 0 ); ?>
+							: esc_html( $info['fail_count'] ?? 0 );
+						?>
 					</td>
 				</tr>
 				<?php endforeach; ?>
@@ -644,7 +694,7 @@ class MM_Admin {
 			setInterval(refreshMMStatus,60000);
 		})();
 		</script>
-	<?php
+		<?php
 	}
 
 	/**
@@ -654,7 +704,7 @@ class MM_Admin {
 	 */
 	private static function get_updater_status(): ?array {
 		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
-		$file = $job_root . '/metamanager-status.json';
+		$file     = $job_root . '/metamanager-status.json';
 		if ( ! is_readable( $file ) ) {
 			return null;
 		}
@@ -669,16 +719,16 @@ class MM_Admin {
 		}
 		// Flatten for the dashboard widget.
 		return [
-			'installed_version' => $data['daemon_version'] ?? null,
-			'last_check'        => $data['ts'] ?? '',
-			'last_update'       => '',
-			'status'            => ( $data['daemon_version'] ?? null ) !== null ? 'ok' : 'error',
-			'message'           => '',
+			'installed_version'   => $data['daemon_version'] ?? null,
+			'last_check'          => $data['ts'] ?? '',
+			'last_update'         => '',
+			'status'              => ( $data['daemon_version'] ?? null ) !== null ? 'ok' : 'error',
+			'message'             => '',
 			'daemon_pid_compress' => $data['daemons']['compress']['pid'] ?? '',
 			'daemon_pid_meta'     => $data['daemons']['meta']['pid'] ?? '',
-			'queues'             => $data['queues'] ?? [],
-			'tools'              => $data['tools'] ?? [],
-			'cron'               => $data['cron'] ?? [],
+			'queues'              => $data['queues'] ?? [],
+			'tools'               => $data['tools'] ?? [],
+			'cron'                => $data['cron'] ?? [],
 		];
 	}
 
@@ -721,11 +771,13 @@ class MM_Admin {
 			$pending_types = MM_DB::get_pending_job_types( $attachment_id );
 			if ( ! empty( $pending_types ) ) {
 				echo '<span class="dashicons dashicons-clock" style="color:#dba617;" title="'
-					. esc_attr( sprintf(
+					. esc_attr(
+						sprintf(
 						/* translators: %s: comma-separated job type list */
-						__( 'Queued: %s', 'metamanager' ),
-						implode( ', ', $pending_types )
-					) ) . '"></span>';
+							__( 'Queued: %s', 'metamanager' ),
+							implode( ', ', $pending_types )
+						)
+					) . '"></span>';
 				return;
 			}
 
@@ -808,14 +860,17 @@ class MM_Admin {
 		// Pending jobs notice.
 		$pending_types = MM_DB::get_pending_job_types( $post->ID );
 		if ( ! empty( $pending_types ) ) {
-			$labels = array_map( static function ( string $t ): string {
-				return match ( $t ) {
-					'import'      => __( 'metadata import', 'metamanager' ),
-					'compression' => __( 'compression', 'metamanager' ),
-					'metadata'    => __( 'metadata write-back', 'metamanager' ),
-					default       => $t,
-				};
-			}, $pending_types );
+			$labels = array_map(
+				static function ( string $t ): string {
+					return match ( $t ) {
+						'import'      => __( 'metadata import', 'metamanager' ),
+						'compression' => __( 'compression', 'metamanager' ),
+						'metadata'    => __( 'metadata write-back', 'metamanager' ),
+						default       => $t,
+					};
+				},
+				$pending_types
+			);
 			echo '<div style="background:#fff8e1;border:1px solid #dba617;padding:8px 12px;border-radius:3px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">';
 			echo '<span class="dashicons dashicons-clock" style="color:#dba617;flex-shrink:0;"></span>';
 			echo '<span>' . sprintf(
@@ -976,9 +1031,9 @@ class MM_Admin {
 	// Bulk actions
 	//
 	// IMPORTANT: Only two bulk actions touch metadata:
-	//   1. "Inject Site Info" — sets Publisher (site name) + Website (site URL) only.
-	//      This is neutral provenance, not an ownership or copyright claim.
-	//   2. "Compress (Lossless)" — queues compression jobs.
+	// 1. "Inject Site Info" — sets Publisher (site name) + Website (site URL) only.
+	// This is neutral provenance, not an ownership or copyright claim.
+	// 2. "Compress (Lossless)" — queues compression jobs.
 	//
 	// We intentionally do NOT provide bulk set-copyright or bulk set-creator
 	// because doing so would falsely claim authorship or rights over images that
@@ -1122,21 +1177,25 @@ class MM_Admin {
 		if ( ! empty( $_REQUEST['mm_bulk_compress'] ) ) {
 			$n = absint( $_REQUEST['mm_bulk_compress'] );
 			echo '<div class="notice notice-success is-dismissible"><p>'
-				. esc_html( sprintf(
+				. esc_html(
+					sprintf(
 					/* translators: %d: number of media files */
-					__( 'Metamanager: Compression queued for %d media file(s).', 'metamanager' ),
-					absint( $n )
-				) )
+						__( 'Metamanager: Compression queued for %d media file(s).', 'metamanager' ),
+						absint( $n )
+					)
+				)
 				. '</p></div>';
 		}
 		if ( ! empty( $_REQUEST['mm_bulk_site_info'] ) ) {
 			$n = absint( $_REQUEST['mm_bulk_site_info'] );
 			echo '<div class="notice notice-success is-dismissible"><p>'
-				. esc_html( sprintf(
+				. esc_html(
+					sprintf(
 					/* translators: %d: number of media files */
-					__( 'Metamanager: Site provenance info (Publisher + Website) injected for %d media file(s).', 'metamanager' ),
-					absint( $n )
-				) )
+						__( 'Metamanager: Site provenance info (Publisher + Website) injected for %d media file(s).', 'metamanager' ),
+						absint( $n )
+					)
+				)
 				. '</p></div>';
 		}
 		// phpcs:enable
@@ -1156,8 +1215,8 @@ class MM_Admin {
 	private static function do_bulk_compress( array $post_ids ): int {
 		$count = 0;
 		foreach ( $post_ids as $id ) {
-			$id   = (int) $id;
-			$mime = (string) get_post_mime_type( $id );
+			$id       = (int) $id;
+			$mime     = (string) get_post_mime_type( $id );
 			$is_image = wp_attachment_is_image( $id );
 			$is_video = MM_Metadata::is_video_mime( $mime );
 
@@ -1176,9 +1235,9 @@ class MM_Admin {
 			}
 
 			// Images: existing per-size logic.
-			$meta    = wp_get_attachment_metadata( $id ) ?: [];
-			$file    = get_attached_file( $id );
-			$queued  = false;
+			$meta   = wp_get_attachment_metadata( $id ) ?: [];
+			$file   = get_attached_file( $id );
+			$queued = false;
 
 			if ( $file && file_exists( $file ) && ! MM_Status::is_compressed( $id, 'full' ) ) {
 				MM_Job_Queue::write_job( 'compression', $id, $file, 'full', [ 'trigger' => 'bulk' ] );
@@ -1274,8 +1333,10 @@ class MM_Admin {
 				if ( '' !== $lat && '' !== $lon ) {
 					wp_enqueue_style( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4' );
 					wp_enqueue_script( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true );
-					add_action( 'admin_footer', function () use ( $lat, $lon ) {
-						?>
+					add_action(
+						'admin_footer',
+						function () use ( $lat, $lon ) {
+							?>
 						<script>
 						jQuery(function($){
 							if (typeof L === 'undefined') return;
@@ -1287,8 +1348,9 @@ class MM_Admin {
 							setTimeout(function(){ map.invalidateSize(); }, 200);
 						});
 						</script>
-						<?php
-					} );
+							<?php
+						}
+					);
 				}
 			}
 		}
@@ -1324,7 +1386,7 @@ class MM_Admin {
 		// Read-only status checks: any user who can access the Media Library.
 		$auth_uploader = fn() => $api_check() && current_user_can( 'upload_files' );
 		// Dashboard / write operations: must be able to manage others' media.
-		$auth_editor   = fn() => $api_check() && current_user_can( 'edit_others_posts' );
+		$auth_editor = fn() => $api_check() && current_user_can( 'edit_others_posts' );
 
 		// --- Compression status (POST: batch, for Media Library column polling) ---
 		register_rest_route(
@@ -1334,7 +1396,7 @@ class MM_Admin {
 				'methods'             => 'POST',
 				'callback'            => [ __CLASS__, 'rest_compression_status' ],
 				'permission_callback' => $auth_uploader,
-				'args' => [
+				'args'                => [
 					'ids' => [
 						'required'          => true,
 						'validate_callback' => fn( $v ) => is_array( $v ),
@@ -1352,12 +1414,30 @@ class MM_Admin {
 				'methods'             => 'GET',
 				'callback'            => [ __CLASS__, 'rest_get_jobs' ],
 				'permission_callback' => $auth_editor,
-				'args' => [
-					'search'   => [ 'type' => 'string',  'default' => '' ],
-					'orderby'  => [ 'type' => 'string',  'default' => 'id' ],
-					'order'    => [ 'type' => 'string',  'default' => 'DESC' ],
-					'per_page' => [ 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 100 ],
-					'page'     => [ 'type' => 'integer', 'default' => 1,  'minimum' => 1 ],
+				'args'                => [
+					'search'   => [
+						'type'    => 'string',
+						'default' => '',
+					],
+					'orderby'  => [
+						'type'    => 'string',
+						'default' => 'id',
+					],
+					'order'    => [
+						'type'    => 'string',
+						'default' => 'DESC',
+					],
+					'per_page' => [
+						'type'    => 'integer',
+						'default' => 20,
+						'minimum' => 1,
+						'maximum' => 100,
+					],
+					'page'     => [
+						'type'    => 'integer',
+						'default' => 1,
+						'minimum' => 1,
+					],
 				],
 			]
 		);
@@ -1370,8 +1450,11 @@ class MM_Admin {
 				'methods'             => 'GET',
 				'callback'            => [ __CLASS__, 'rest_get_job' ],
 				'permission_callback' => $auth_editor,
-				'args' => [
-					'id' => [ 'type' => 'integer', 'required' => true ],
+				'args'                => [
+					'id' => [
+						'type'     => 'integer',
+						'required' => true,
+					],
 				],
 			]
 		);
@@ -1384,8 +1467,11 @@ class MM_Admin {
 				'methods'             => 'GET',
 				'callback'            => [ __CLASS__, 'rest_attachment_status' ],
 				'permission_callback' => $auth_uploader,
-				'args' => [
-					'id' => [ 'type' => 'integer', 'required' => true ],
+				'args'                => [
+					'id' => [
+						'type'     => 'integer',
+						'required' => true,
+					],
 				],
 			]
 		);
@@ -1398,9 +1484,15 @@ class MM_Admin {
 				'methods'             => 'POST',
 				'callback'            => [ __CLASS__, 'rest_compress_attachment' ],
 				'permission_callback' => $auth_editor,
-				'args' => [
-					'id'    => [ 'type' => 'integer', 'required' => true ],
-					'force' => [ 'type' => 'boolean', 'default' => false ],
+				'args'                => [
+					'id'    => [
+						'type'     => 'integer',
+						'required' => true,
+					],
+					'force' => [
+						'type'    => 'boolean',
+						'default' => false,
+					],
 				],
 			]
 		);
@@ -1413,8 +1505,11 @@ class MM_Admin {
 				'methods'             => 'POST',
 				'callback'            => [ __CLASS__, 'rest_embed_attachment' ],
 				'permission_callback' => $auth_editor,
-				'args' => [
-					'id' => [ 'type' => 'integer', 'required' => true ],
+				'args'                => [
+					'id' => [
+						'type'     => 'integer',
+						'required' => true,
+					],
 				],
 			]
 		);
@@ -1472,15 +1567,17 @@ class MM_Admin {
 	 * REST: paginated job history.
 	 */
 	public static function rest_get_jobs( \WP_REST_Request $request ) {
-		$result = MM_DB::get_jobs( [
-			'search'   => (string) $request->get_param( 'search' ),
-			'orderby'  => (string) $request->get_param( 'orderby' ),
-			'order'    => (string) $request->get_param( 'order' ),
-			'per_page' => (int) $request->get_param( 'per_page' ),
-			'paged'    => (int) $request->get_param( 'page' ),
-		] );
+		$result   = MM_DB::get_jobs(
+			[
+				'search'   => (string) $request->get_param( 'search' ),
+				'orderby'  => (string) $request->get_param( 'orderby' ),
+				'order'    => (string) $request->get_param( 'order' ),
+				'per_page' => (int) $request->get_param( 'per_page' ),
+				'paged'    => (int) $request->get_param( 'page' ),
+			]
+		);
 		$response = rest_ensure_response( $result['jobs'] );
-		$response->header( 'X-WP-Total',      (string) $result['total'] );
+		$response->header( 'X-WP-Total', (string) $result['total'] );
 		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $result['total'] / max( 1, (int) $request->get_param( 'per_page' ) ) ) );
 		return $response;
 	}
@@ -1504,11 +1601,13 @@ class MM_Admin {
 		if ( ! get_post( $id ) ) {
 			return new \WP_Error( 'not_found', __( 'Attachment not found.', 'metamanager' ), [ 'status' => 404 ] );
 		}
-		return rest_ensure_response( [
-			'id'          => $id,
-			'compression' => MM_Status::compression_status( $id ),
-			'meta_synced' => MM_DB::has_any_completed_metadata( $id ),
-		] );
+		return rest_ensure_response(
+			[
+				'id'          => $id,
+				'compression' => MM_Status::compression_status( $id ),
+				'meta_synced' => MM_DB::has_any_completed_metadata( $id ),
+			]
+		);
 	}
 
 	/**
@@ -1543,13 +1642,15 @@ class MM_Admin {
 			MM_Job_Queue::enqueue_all_sizes( $id, [], 'compression', [ 'trigger' => 'rest_api' ] );
 		}
 
-		return rest_ensure_response( [
-			'id'      => $id,
-			'queued'  => true,
-			'message' => $is_video
-				? __( 'Video remux job queued.', 'metamanager' )
-				: __( 'Compression jobs queued.', 'metamanager' ),
-		] );
+		return rest_ensure_response(
+			[
+				'id'      => $id,
+				'queued'  => true,
+				'message' => $is_video
+					? __( 'Video remux job queued.', 'metamanager' )
+					: __( 'Compression jobs queued.', 'metamanager' ),
+			]
+		);
 	}
 
 	/**
@@ -1567,7 +1668,7 @@ class MM_Admin {
 	 */
 	public static function rest_get_status( \WP_REST_Request $request ) {
 		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
-		$file = $job_root . '/metamanager-status.json';
+		$file     = $job_root . '/metamanager-status.json';
 		if ( ! is_readable( $file ) ) {
 			return new \WP_Error(
 				'status_unavailable',
@@ -1639,13 +1740,15 @@ class MM_Admin {
 			MM_Job_Queue::write_job( 'metadata', $id, $file, 'full', [ 'trigger' => 'rest_api' ] );
 		}
 
-		return rest_ensure_response( [
-			'id'      => $id,
-			'queued'  => true,
-			'message' => $is_image
-				? __( 'Metadata embedding jobs queued for all image sizes.', 'metamanager' )
-				: __( 'Metadata embedding job queued.', 'metamanager' ),
-		] );
+		return rest_ensure_response(
+			[
+				'id'      => $id,
+				'queued'  => true,
+				'message' => $is_image
+					? __( 'Metadata embedding jobs queued for all image sizes.', 'metamanager' )
+					: __( 'Metadata embedding job queued.', 'metamanager' ),
+			]
+		);
 	}
 
 	// -----------------------------------------------------------------------
@@ -1821,10 +1924,10 @@ class MM_Admin {
 		}
 
 		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
-		$file  = $job_root . '/metamanager-status.json';
-		$json  = is_readable( $file ) ? @file_get_contents( $file ) : false;
-		$data  = $json ? json_decode( $json, true ) : null;
-		$queues = $data['queues'] ?? [];
+		$file     = $job_root . '/metamanager-status.json';
+		$json     = is_readable( $file ) ? @file_get_contents( $file ) : false;
+		$data     = $json ? json_decode( $json, true ) : null;
+		$queues   = $data['queues'] ?? [];
 
 		$installed_ver = $data['daemon_version'] ?? null;
 
@@ -1844,19 +1947,21 @@ class MM_Admin {
 			'waiting'  => 'Waiting for plugin',
 			'none'     => 'None',
 		];
-		$action = ( null !== $installed_ver ) ? 'ok' : 'error';
-		$color  = in_array( $action, [ 'ok', 'updated', 'ahead' ], true ) ? '#00a32a'
+		$action        = ( null !== $installed_ver ) ? 'ok' : 'error';
+		$color         = in_array( $action, [ 'ok', 'updated', 'ahead' ], true ) ? '#00a32a'
 			: ( in_array( $action, [ 'failed', 'error' ], true ) ? '#d63638' : '#dba617' );
-		$updater_row = '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
+		$updater_row   = '<span style="color:' . esc_attr( $color ) . ';font-weight:600;">'
 			. esc_html( $action_labels[ $action ] )
 			. '</span>';
 
-		wp_send_json_success( [
-			'queues'        => $queues,
-			'daemon_status' => $daemon_status,
-			'updater_row'   => $updater_row,
-			'cron'          => $data['cron'] ?? [],
-		] );
+		wp_send_json_success(
+			[
+				'queues'        => $queues,
+				'daemon_status' => $daemon_status,
+				'updater_row'   => $updater_row,
+				'cron'          => $data['cron'] ?? [],
+			]
+		);
 	}
 
 	public static function ajax_requeue_job(): void {
@@ -1894,20 +1999,22 @@ class MM_Admin {
 		// Memory gate: pause if memory is critically low.
 		if ( MM_Memory_Manager::should_pause() ) {
 			MM_Memory_Manager::set_notice();
-			wp_send_json_success( [
-				'count'  => 0,
-				'offset' => 0,
-				'total'  => 0,
-				'done'   => false,
-				'paused' => true,
-				'message' => 'Memory limit reached — batch paused, will resume automatically.',
-			] );
+			wp_send_json_success(
+				[
+					'count'   => 0,
+					'offset'  => 0,
+					'total'   => 0,
+					'done'    => false,
+					'paused'  => true,
+					'message' => 'Memory limit reached — batch paused, will resume automatically.',
+				]
+			);
 		}
 		MM_Memory_Manager::clear_notice();
 
-		$offset     = max( 0, (int) wp_unslash( $_POST['offset']     ?? 0 ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- (int) cast is sanitization
-		$max_batch  = max( 1, min( 200, (int) wp_unslash( $_POST['batch_size'] ?? 50 ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$max_batch  = min( $max_batch, MM_Settings::get_batch_size() );
+		$offset    = max( 0, (int) wp_unslash( $_POST['offset'] ?? 0 ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- (int) cast is sanitization
+		$max_batch = max( 1, min( 200, (int) wp_unslash( $_POST['batch_size'] ?? 50 ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$max_batch = min( $max_batch, MM_Settings::get_batch_size() );
 
 		// Include images plus all supported video and audio MIME types.
 		$all_mime_types = array_merge(
@@ -1919,22 +2026,24 @@ class MM_Admin {
 
 		// Build the list of IDs that have no completed metadata job — history table
 		// is the single source of truth; no post_meta queries needed.
-		$all_ids     = get_posts( [
-			'post_type'      => 'attachment',
-			'post_mime_type' => $all_mime_types,
-			'post_status'    => 'inherit',
-			'numberposts'    => -1,
-			'fields'         => 'ids',
-			'orderby'        => 'ID',
-			'order'          => 'ASC',
-		] );
+		$all_ids     = get_posts(
+			[
+				'post_type'      => 'attachment',
+				'post_mime_type' => $all_mime_types,
+				'post_status'    => 'inherit',
+				'numberposts'    => -1,
+				'fields'         => 'ids',
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+			]
+		);
 		$done_ids    = MM_DB::get_ids_with_completed_job( 'metadata' );
 		$pending_ids = array_values( array_diff( array_map( 'intval', $all_ids ), $done_ids ) );
 
 		$total = count( $pending_ids );
 
 		// Build candidate job data for memory-aware batch sizing.
-		$candidate_ids = array_slice( $pending_ids, $offset, $max_batch );
+		$candidate_ids  = array_slice( $pending_ids, $offset, $max_batch );
 		$candidate_jobs = [];
 		foreach ( $candidate_ids as $id ) {
 			$mime = (string) get_post_mime_type( $id );
@@ -1983,12 +2092,14 @@ class MM_Admin {
 		$new_offset = $offset + $count;
 		$done       = empty( $batch ) || $new_offset >= $total;
 
-		wp_send_json_success( [
-			'count'  => $count,
-			'offset' => $new_offset,
-			'total'  => $total,
-			'done'   => $done,
-		] );
+		wp_send_json_success(
+			[
+				'count'  => $count,
+				'offset' => $new_offset,
+				'total'  => $total,
+				'done'   => $done,
+			]
+		);
 	}
 
 	/**
@@ -2037,8 +2148,8 @@ class MM_Admin {
 			wp_send_json_error( 'Permission denied.' );
 		}
 
-		$raw_ids      = array_map( 'absint', (array) ( $_POST['ids'] ?? [] ) );
-		$raw_fields   = (array) wp_unslash( $_POST['fields'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- fields are validated against $allowed_fields allowlist below
+		$raw_ids       = array_map( 'absint', (array) ( $_POST['ids'] ?? [] ) );
+		$raw_fields    = (array) wp_unslash( $_POST['fields'] ?? [] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- fields are validated against $allowed_fields allowlist below
 		$also_compress = ! empty( $_POST['also_compress'] );
 
 		$allowed_fields = [
@@ -2078,7 +2189,7 @@ class MM_Admin {
 			}
 
 			// Server-side MIME-type validation — skip fields not writable for this format.
-			$mime     = (string) get_post_mime_type( $id );
+			$mime      = (string) get_post_mime_type( $id );
 			$write_cap = MM_Metadata::write_capability( $mime );
 
 			if ( 'read_only' === $write_cap ) {
@@ -2133,13 +2244,15 @@ class MM_Admin {
 			wp_send_json_success( [] );
 		}
 
-		$products = wc_get_products( [
-			's'      => $search,
-			'limit'  => 20,
-			'orderby' => 'title',
-			'order'  => 'ASC',
-			'return' => 'objects',
-		] );
+		$products = wc_get_products(
+			[
+				's'       => $search,
+				'limit'   => 20,
+				'orderby' => 'title',
+				'order'   => 'ASC',
+				'return'  => 'objects',
+			]
+		);
 
 		$results = [];
 		foreach ( $products as $product ) {
@@ -2249,11 +2362,26 @@ class MM_Admin {
 		$per_page = 25;
 
 		// Pending jobs — always shown in full, never paginated.
-		$pending_result = MM_DB::get_jobs( [ 'search' => $search, 'status' => 'pending', 'per_page' => 500, 'orderby' => 'submitted_at', 'order' => 'ASC' ] );
+		$pending_result = MM_DB::get_jobs(
+			[
+				'search'   => $search,
+				'status'   => 'pending',
+				'per_page' => 500,
+				'orderby'  => 'submitted_at',
+				'order'    => 'ASC',
+			]
+		);
 		$pending_jobs   = $pending_result['jobs'];
 
 		// Completed / failed — paginated.
-		$done_result = MM_DB::get_jobs( [ 'search' => $search, 'status' => 'not_pending', 'paged' => $paged, 'per_page' => $per_page ] );
+		$done_result = MM_DB::get_jobs(
+			[
+				'search'   => $search,
+				'status'   => 'not_pending',
+				'paged'    => $paged,
+				'per_page' => $per_page,
+			]
+		);
 		$done_jobs   = $done_result['jobs'];
 		$done_total  = $done_result['total'];
 		$total_pages = (int) ceil( $done_total / $per_page );
@@ -2322,7 +2450,8 @@ class MM_Admin {
 				echo '<div class="tablenav bottom"><div class="tablenav-pages">'
 					. '<span class="displaying-num">' . sprintf(
 						/* translators: %d: item count */
-						esc_html__( '%d items', 'metamanager' ), absint( $done_total )
+						esc_html__( '%d items', 'metamanager' ),
+						absint( $done_total )
 					) . '</span>';
 				self::render_pagination( $paged, $total_pages, 'ajax' );
 				echo '</div></div>';
@@ -2357,7 +2486,7 @@ class MM_Admin {
 
 		// Result cell.
 		$bytes_before = (int) ( $job->bytes_before ?? 0 );
-		$bytes_after  = (int) ( $job->bytes_after  ?? 0 );
+		$bytes_after  = (int) ( $job->bytes_after ?? 0 );
 		if ( 'compression' === $job->job_type && $bytes_before > 0 && $bytes_after > 0 ) {
 			if ( $bytes_after < $bytes_before ) {
 				$saved       = $bytes_before - $bytes_after;
@@ -2485,16 +2614,46 @@ class MM_Admin {
 
 		// All metadata fields with their UI config.
 		$all_fields = [
-			MM_Metadata::META_CREATOR   => [ 'label' => __( 'Creator', 'metamanager' ),        'placeholder' => '' ],
-			MM_Metadata::META_COPYRIGHT => [ 'label' => __( 'Copyright', 'metamanager' ),      'placeholder' => '' ],
-			MM_Metadata::META_OWNER     => [ 'label' => __( 'Owner', 'metamanager' ),          'placeholder' => '' ],
-			MM_Metadata::META_HEADLINE  => [ 'label' => __( 'Headline', 'metamanager' ),       'placeholder' => '' ],
-			MM_Metadata::META_CREDIT    => [ 'label' => __( 'Credit', 'metamanager' ),         'placeholder' => '' ],
-			MM_Metadata::META_KEYWORDS  => [ 'label' => __( 'Keywords', 'metamanager' ),       'placeholder' => 'tag1; tag2; tag3' ],
-			MM_Metadata::META_DATE      => [ 'label' => __( 'Date Created', 'metamanager' ),   'placeholder' => 'YYYY-MM-DD' ],
-			MM_Metadata::META_CITY      => [ 'label' => __( 'City', 'metamanager' ),           'placeholder' => '' ],
-			MM_Metadata::META_STATE     => [ 'label' => __( 'State / Province', 'metamanager' ), 'placeholder' => '' ],
-			MM_Metadata::META_COUNTRY   => [ 'label' => __( 'Country', 'metamanager' ),        'placeholder' => '' ],
+			MM_Metadata::META_CREATOR   => [
+				'label'       => __( 'Creator', 'metamanager' ),
+				'placeholder' => '',
+			],
+			MM_Metadata::META_COPYRIGHT => [
+				'label'       => __( 'Copyright', 'metamanager' ),
+				'placeholder' => '',
+			],
+			MM_Metadata::META_OWNER     => [
+				'label'       => __( 'Owner', 'metamanager' ),
+				'placeholder' => '',
+			],
+			MM_Metadata::META_HEADLINE  => [
+				'label'       => __( 'Headline', 'metamanager' ),
+				'placeholder' => '',
+			],
+			MM_Metadata::META_CREDIT    => [
+				'label'       => __( 'Credit', 'metamanager' ),
+				'placeholder' => '',
+			],
+			MM_Metadata::META_KEYWORDS  => [
+				'label'       => __( 'Keywords', 'metamanager' ),
+				'placeholder' => 'tag1; tag2; tag3',
+			],
+			MM_Metadata::META_DATE      => [
+				'label'       => __( 'Date Created', 'metamanager' ),
+				'placeholder' => 'YYYY-MM-DD',
+			],
+			MM_Metadata::META_CITY      => [
+				'label'       => __( 'City', 'metamanager' ),
+				'placeholder' => '',
+			],
+			MM_Metadata::META_STATE     => [
+				'label'       => __( 'State / Province', 'metamanager' ),
+				'placeholder' => '',
+			],
+			MM_Metadata::META_COUNTRY   => [
+				'label'       => __( 'Country', 'metamanager' ),
+				'placeholder' => '',
+			],
 		];
 		?>
 		<div class="wrap">
@@ -2511,7 +2670,8 @@ class MM_Admin {
 					<h3 style="margin:0 0 4px;font-size:14px;"><?php esc_html_e( 'Values to Apply', 'metamanager' ); ?></h3>
 					<p style="margin:0 0 12px;font-size:12px;color:#50575e;"><?php esc_html_e( 'Fill in the fields you want to overwrite. Leave a field blank to leave it unchanged on the selected images.', 'metamanager' ); ?></p>
 
-				<?php foreach ( $all_fields as $key => $cfg ) :
+				<?php
+				foreach ( $all_fields as $key => $cfg ) :
 					// Build comma-separated list of write-cap levels that support this field.
 					$caps = [];
 					foreach ( self::FIELD_COMPAT as $level => $fields ) {
@@ -2520,15 +2680,15 @@ class MM_Admin {
 						}
 					}
 					$cap_str = implode( ',', $caps );
-				?>
+					?>
 				<div class="mm-field-group" data-field="<?php echo esc_attr( $key ); ?>" data-caps="<?php echo esc_attr( $cap_str ); ?>" style="margin-bottom:8px;">
 					<label style="display:block;font-size:12px;font-weight:600;margin-bottom:2px;"><?php echo esc_html( $cfg['label'] ); ?></label>
 					<input type="text"
-						   class="mm-apply-field"
-						   data-key="<?php echo esc_attr( $key ); ?>"
-						   placeholder="<?php echo esc_attr( $cfg['placeholder'] ?: $cfg['label'] ); ?>"
-						   value=""
-						   style="width:100%;box-sizing:border-box;">
+							class="mm-apply-field"
+							data-key="<?php echo esc_attr( $key ); ?>"
+							placeholder="<?php echo esc_attr( $cfg['placeholder'] ?: $cfg['label'] ); ?>"
+							value=""
+							style="width:100%;box-sizing:border-box;">
 				</div>
 				<?php endforeach; ?>
 
@@ -2577,8 +2737,8 @@ class MM_Admin {
 							<option value="pdf" <?php selected( $filter, 'pdf' ); ?>><?php esc_html_e( 'PDF', 'metamanager' ); ?></option>
 						</select>
 						<input type="search" name="s" value="<?php echo esc_attr( $search ); ?>"
-							   placeholder="<?php echo esc_attr__( 'Search by title…', 'metamanager' ); ?>"
-							   style="width:160px;">
+								placeholder="<?php echo esc_attr__( 'Search by title…', 'metamanager' ); ?>"
+								style="width:160px;">
 						<button class="button"><?php esc_html_e( 'Search', 'metamanager' ); ?></button>
 						<?php if ( $search || $filter ) : ?>
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=metamanager-bulk-meta' ) ); ?>" class="button"><?php esc_html_e( 'Clear', 'metamanager' ); ?></a>
@@ -2601,43 +2761,59 @@ class MM_Admin {
 					<p><?php esc_html_e( 'No media found.', 'metamanager' ); ?></p>
 				<?php else : ?>
 						<div id="mm-image-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;">
-							<?php foreach ( $ids as $id ) :
-								$id       = (int) $id;
-								$mime     = (string) get_post_mime_type( $id );
-								$is_image = wp_attachment_is_image( $id );
-								$is_video = str_starts_with( $mime, 'video/' );
-								$is_audio = str_starts_with( $mime, 'audio/' );
-								$is_pdf   = 'application/pdf' === $mime;
-								$src      = $is_image ? ( wp_get_attachment_image_url( $id, 'thumbnail' ) ?: '' ) : '';
-								$title    = get_the_title( $id );
-								$edit_url = get_edit_post_link( $id );
-								$creator  = (string) get_post_meta( $id, MM_Metadata::META_CREATOR, true );
-								$city     = (string) get_post_meta( $id, MM_Metadata::META_CITY, true );
-								$country  = (string) get_post_meta( $id, MM_Metadata::META_COUNTRY, true );
-							$rating   = (int) get_post_meta( $id, MM_Metadata::META_RATING, true );
-							$gps_lat  = (string) get_post_meta( $id, MM_Metadata::META_GPS_LAT, true );
-							$gps_lon  = (string) get_post_meta( $id, MM_Metadata::META_GPS_LON, true );
-							$gps_alt  = (string) get_post_meta( $id, MM_Metadata::META_GPS_ALT, true );
-							$loc      = implode( ', ', array_filter( [ $city, $country ] ) );
+							<?php
+							foreach ( $ids as $id ) :
+								$id        = (int) $id;
+								$mime      = (string) get_post_mime_type( $id );
+								$is_image  = wp_attachment_is_image( $id );
+								$is_video  = str_starts_with( $mime, 'video/' );
+								$is_audio  = str_starts_with( $mime, 'audio/' );
+								$is_pdf    = 'application/pdf' === $mime;
+								$src       = $is_image ? ( wp_get_attachment_image_url( $id, 'thumbnail' ) ?: '' ) : '';
+								$title     = get_the_title( $id );
+								$edit_url  = get_edit_post_link( $id );
+								$creator   = (string) get_post_meta( $id, MM_Metadata::META_CREATOR, true );
+								$city      = (string) get_post_meta( $id, MM_Metadata::META_CITY, true );
+								$country   = (string) get_post_meta( $id, MM_Metadata::META_COUNTRY, true );
+								$rating    = (int) get_post_meta( $id, MM_Metadata::META_RATING, true );
+								$gps_lat   = (string) get_post_meta( $id, MM_Metadata::META_GPS_LAT, true );
+								$gps_lon   = (string) get_post_meta( $id, MM_Metadata::META_GPS_LON, true );
+								$gps_alt   = (string) get_post_meta( $id, MM_Metadata::META_GPS_ALT, true );
+								$loc       = implode( ', ', array_filter( [ $city, $country ] ) );
 								$write_cap = MM_Metadata::WRITE_CAPABILITY[ $mime ] ?? 'read_only';
 								?>
 								<div class="mm-grid-item"
-									 data-id="<?php echo esc_attr( (string) $id ); ?>"
-									 data-mime="<?php echo esc_attr( $mime ); ?>"
-									 data-write-cap="<?php echo esc_attr( $write_cap ); ?>"
-									 data-compressible="<?php echo in_array( $mime, $compressible, true ) ? '1' : '0'; ?>"
-									 style="background:#fff;border:2px solid #c3c4c7;border-radius:4px;padding:8px;cursor:pointer;position:relative;">
+									data-id="<?php echo esc_attr( (string) $id ); ?>"
+									data-mime="<?php echo esc_attr( $mime ); ?>"
+									data-write-cap="<?php echo esc_attr( $write_cap ); ?>"
+									data-compressible="<?php echo in_array( $mime, $compressible, true ) ? '1' : '0'; ?>"
+									style="background:#fff;border:2px solid #c3c4c7;border-radius:4px;padding:8px;cursor:pointer;position:relative;">
 									<input type="checkbox"
-										   class="mm-cb"
-										   value="<?php echo esc_attr( (string) $id ); ?>"
-										   style="position:absolute;top:10px;left:10px;z-index:2;width:16px;height:16px;">
+											class="mm-cb"
+											value="<?php echo esc_attr( (string) $id ); ?>"
+											style="position:absolute;top:10px;left:10px;z-index:2;width:16px;height:16px;">
 									<?php if ( $src ) : ?>
 										<img src="<?php echo esc_url( $src ); ?>"
-											 style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:2px;display:block;margin-bottom:6px;">
+											style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:2px;display:block;margin-bottom:6px;">
 									<?php else : ?>
 										<div style="width:100%;aspect-ratio:1/1;background:#f0f0f1;border-radius:2px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;">
 											<span style="font-size:24px;color:#c3c4c7;">
-												<?php if ( $is_video ) : ?>&#127909;<?php elseif ( $is_audio ) : ?>&#127925;<?php elseif ( $is_pdf ) : ?>&#128196;<?php else : ?>&#128444;<?php endif; ?>
+												<?php
+												if ( $is_video ) :
+													?>
+													&#127909;
+													<?php
+elseif ( $is_audio ) :
+	?>
+	&#127925;
+	<?php
+elseif ( $is_pdf ) :
+	?>
+	&#128196;
+	<?php
+else :
+	?>
+	&#128444;<?php endif; ?>
 											</span>
 										</div>
 									<?php endif; ?>
@@ -2655,7 +2831,7 @@ class MM_Admin {
 										<div style="font-size:10px;color:#50575e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo esc_html( $loc ); ?></div>
 									<?php endif; ?>
 									<?php if ( $gps_lat ) : ?>
-										<div style="font-size:10px;color:#0073aa;" title="<?php echo esc_attr( $gps_lat . ', ' . $gps_lon . ($gps_alt ? ' alt ' . $gps_alt . 'm' : '') ); ?>">&#128205; <?php echo esc_html( $gps_lat ); ?>, <?php echo esc_html( $gps_lon ); ?></div>
+										<div style="font-size:10px;color:#0073aa;" title="<?php echo esc_attr( $gps_lat . ', ' . $gps_lon . ( $gps_alt ? ' alt ' . $gps_alt . 'm' : '' ) ); ?>">&#128205; <?php echo esc_html( $gps_lat ); ?>, <?php echo esc_html( $gps_lon ); ?></div>
 									<?php endif; ?>
 									<?php if ( $rating > 0 ) : ?>
 										<div style="font-size:10px;color:#dba617;letter-spacing:1px;">
@@ -2681,7 +2857,18 @@ class MM_Admin {
 									);
 									?>
 								</span>
-								<?php self::render_pagination( $paged, $total_pages, 'url', [ 's' => $search, 'page' => 'metamanager-bulk-meta', 'media_type' => $filter ] ); ?>
+								<?php
+								self::render_pagination(
+									$paged,
+									$total_pages,
+									'url',
+									[
+										's'          => $search,
+										'page'       => 'metamanager-bulk-meta',
+										'media_type' => $filter,
+									]
+								);
+								?>
 							</div>
 						</div>
 						<?php endif; ?>
@@ -2853,5 +3040,4 @@ class MM_Admin {
 		</script>
 		<?php
 	}
-
 }

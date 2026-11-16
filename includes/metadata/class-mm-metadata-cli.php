@@ -42,10 +42,10 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 	 * @when after_wp_load
 	 */
 	public function export( array $args, array $assoc_args ): void {
-		$settings  = get_option( MM_META_OPT_SETTINGS, [] );
-		$business  = get_option( MM_META_OPT_BUSINESS, [] );
-		$format    = $assoc_args['format'] ?? 'json';
-		$flags     = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+		$settings = get_option( MM_META_OPT_SETTINGS, [] );
+		$business = get_option( MM_META_OPT_BUSINESS, [] );
+		$format   = $assoc_args['format'] ?? 'json';
+		$flags    = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
 
 		if ( 'pretty' === $format ) {
 			$flags |= JSON_PRETTY_PRINT;
@@ -94,7 +94,7 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 			$json = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		} else {
 			$json = '';
-			while ( !feof( STDIN ) ) {
+			while ( ! feof( STDIN ) ) {
 				$json .= fread( STDIN, 8192 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_operations_read
 			}
 		}
@@ -143,8 +143,10 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 		}
 
 		$parts = [];
-		if ( $has_settings ) { $parts[] = 'settings'; }
-		if ( $has_business ) { $parts[] = 'business profile'; }
+		if ( $has_settings ) {
+			$parts[] = 'settings'; }
+		if ( $has_business ) {
+			$parts[] = 'business profile'; }
 		WP_CLI::success( 'Imported ' . implode( ' + ', $parts ) . '.' );
 	}
 
@@ -188,8 +190,8 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 	 * @when after_wp_load
 	 */
 	public function check_links( array $args, array $assoc_args ): void {
-		$settings = MM_Site_Settings::get_instance();
-		$checker  = new MM_Mod_Links( $settings );
+		$settings  = MM_Site_Settings::get_instance();
+		$checker   = new MM_Mod_Links( $settings );
 		$check_all = isset( $assoc_args['all'] );
 
 		if ( $check_all ) {
@@ -202,11 +204,11 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 			WP_CLI::log( "Running {$runs} batch(es) for {$total} link(s)..." );
 			for ( $i = 0; $i < $runs; $i++ ) {
 				$checker->run_batch_check();
-				WP_CLI::log( "Batch " . ( $i + 1 ) . "/{$runs} done." );
+				WP_CLI::log( 'Batch ' . ( $i + 1 ) . "/{$runs} done." );
 			}
 		} else {
 			$checker->run_batch_check();
-			WP_CLI::log( "One batch checked." );
+			WP_CLI::log( 'One batch checked.' );
 		}
 
 		// Report broken count.
@@ -253,11 +255,11 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 	 * @when after_wp_load
 	 */
 	public function backfill_links( array $args, array $assoc_args ): void {
-		$settings = MM_Site_Settings::get_instance();
-		$mod      = new MM_Mod_Links( $settings );
-		$batch    = 50;
-		$offset   = 0;
-		$progress = null;
+		$settings      = MM_Site_Settings::get_instance();
+		$mod           = new MM_Mod_Links( $settings );
+		$batch         = 50;
+		$offset        = 0;
+		$progress      = null;
 		$new_count     = 0;
 		$skipped_count = 0;
 
@@ -335,23 +337,26 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 			WP_CLI::error( 'URL must start with ' . home_url() );
 		}
 
-		$response = wp_remote_get( $url, [
-			'timeout'   => 15,
-			'user-agent' => 'GCM-SEO-CLI/1.0',
-		] );
+		$response = wp_remote_get(
+			$url,
+			[
+				'timeout'    => 15,
+				'user-agent' => 'GCM-SEO-CLI/1.0',
+			]
+		);
 
 		if ( is_wp_error( $response ) ) {
 			WP_CLI::error( 'Request failed: ' . $response->get_error_message() );
 		}
 
-		$body    = wp_remote_retrieve_body( $response );
-		$code    = wp_remote_retrieve_response_code( $response );
+		$body = wp_remote_retrieve_body( $response );
+		$code = wp_remote_retrieve_response_code( $response );
 		WP_CLI::log( "HTTP {$code}" );
 
 		// Extract all <script type="application/ld+json"> blocks.
 		if ( preg_match_all( '/<script[^>]+type=["\']application\/ld\+json["\'][^>]*>(.*?)<\/script>/is', $body, $matches ) ) {
 			foreach ( $matches[1] as $i => $json ) {
-				WP_CLI::log( "\n── JSON-LD block " . ( $i + 1 ) . " ──" );
+				WP_CLI::log( "\n── JSON-LD block " . ( $i + 1 ) . ' ──' );
 				$decoded = json_decode( trim( $json ), true );
 				WP_CLI::line( wp_json_encode( $decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
 			}
@@ -396,8 +401,8 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 			}
 			++$changes;
 			WP_CLI::log( "  {$label}: {$key}" );
-			WP_CLI::log( "    - " . wp_json_encode( $old_val ) );
-			WP_CLI::log( "    + " . wp_json_encode( $new_val ) );
+			WP_CLI::log( '    - ' . wp_json_encode( $old_val ) );
+			WP_CLI::log( '    + ' . wp_json_encode( $new_val ) );
 		}
 
 		if ( 0 === $changes ) {

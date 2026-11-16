@@ -26,15 +26,15 @@ class MM_Listing_Card_CSS {
 	 * @return string Safe CSS string.
 	 */
 	public static function generate( array $s ): string {
-		$btn_text       = self::sanitize( $s['btn_text'] ?? 'Learn more' );
-		$btn_bg         = self::color( $s['btn_bg'] ?? '#0073aa' );
-		$btn_text_color = self::color( $s['btn_text_color'] ?? '#ffffff' );
-		$btn_radius     = self::shorthand( $s['btn_radius'] ?? '4px' );
-		$btn_padding    = self::shorthand( $s['btn_padding'] ?? '10px 16px' );
-		$btn_font_size  = self::length( $s['btn_font_size'] ?? '14px' );
+		$btn_text        = self::sanitize( $s['btn_text'] ?? 'Learn more' );
+		$btn_bg          = self::color( $s['btn_bg'] ?? '#0073aa' );
+		$btn_text_color  = self::color( $s['btn_text_color'] ?? '#ffffff' );
+		$btn_radius      = self::shorthand( $s['btn_radius'] ?? '4px' );
+		$btn_padding     = self::shorthand( $s['btn_padding'] ?? '10px 16px' );
+		$btn_font_size   = self::length( $s['btn_font_size'] ?? '14px' );
 		$btn_font_weight = self::font_weight( $s['btn_font_weight'] ?? '600' );
 
-		$css  = ".mm-service-card__link{display:inline-block;";
+		$css  = '.mm-service-card__link{display:inline-block;';
 		$css .= "padding:{$btn_padding};background:{$btn_bg};color:{$btn_text_color};";
 		$css .= "border-radius:{$btn_radius};font-size:{$btn_font_size};";
 		$css .= "font-weight:{$btn_font_weight};text-decoration:none;margin-top:8px;}\n";

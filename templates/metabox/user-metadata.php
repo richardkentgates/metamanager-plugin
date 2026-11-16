@@ -3,12 +3,13 @@
  * User SEO profile fields.
  *
  * Variables:
+ *
  *   @var WP_User          $user
  *   @var array            $meta   Current _mm_meta values
  *   @var MM_Site_Settings $settings
  */
 defined( 'ABSPATH' ) || exit;
-$noindex        = $meta['noindex']        ?? null;
+$noindex        = $meta['noindex'] ?? null;
 $social_fields  = MM_User_Meta_Panel::SOCIAL_FIELDS;
 $upload_receipt = MM_Upload_Notify::user_wants_receipt( $user->ID );
 ?>
@@ -44,18 +45,19 @@ $upload_receipt = MM_Upload_Notify::user_wants_receipt( $user->ID );
 		</th>
 	</tr>
 
-	<?php foreach ( $social_fields as $field => $label ) :
+	<?php
+	foreach ( $social_fields as $field => $label ) :
 		$val = $meta[ 'social_' . $field ] ?? '';
-	?>
+		?>
 	<tr>
-		<th><label for="mm_meta_social_<?php echo esc_attr($field); ?>"><?php echo esc_html($label); ?></label></th>
+		<th><label for="mm_meta_social_<?php echo esc_attr( $field ); ?>"><?php echo esc_html( $label ); ?></label></th>
 		<td>
-			<input type="<?php echo in_array($field,['linkedin','instagram','website'],true)?'url':'text'; ?>"
-				   id="mm_meta_social_<?php echo esc_attr($field); ?>"
-				   name="mm_meta_social_<?php echo esc_attr($field); ?>"
-				   value="<?php echo esc_attr($val); ?>"
-				   class="regular-text"
-				   placeholder="<?php echo 'twitter'===$field?'@handle':'https://…'; ?>">
+			<input type="<?php echo in_array( $field, [ 'linkedin','instagram','website' ], true ) ? 'url' : 'text'; ?>"
+					id="mm_meta_social_<?php echo esc_attr( $field ); ?>"
+					name="mm_meta_social_<?php echo esc_attr( $field ); ?>"
+					value="<?php echo esc_attr( $val ); ?>"
+					class="regular-text"
+					placeholder="<?php echo 'twitter' === $field ? '@handle' : 'https://…'; ?>">
 		</td>
 	</tr>
 	<?php endforeach; ?>

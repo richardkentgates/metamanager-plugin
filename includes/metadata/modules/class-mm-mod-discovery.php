@@ -94,25 +94,31 @@ class MM_Mod_Discovery {
 		$description = get_bloginfo( 'description' );
 		$home        = home_url( '/' );
 
-		$lines = [];
+		$lines   = [];
 		$lines[] = "# {$name}";
 		$lines[] = '';
 		$lines[] = $description;
 		$lines[] = '';
-		$lines[] = "## Site Info";
+		$lines[] = '## Site Info';
 		$lines[] = "- URL: {$home}";
-		$lines[] = "- CMS: WordPress";
-		$lines[] = "- SEO Plugin: Metamanager";
+		$lines[] = '- CMS: WordPress';
+		$lines[] = '- SEO Plugin: Metamanager';
 
 		// MCP endpoint.
 		if ( class_exists( 'WP\MCP\Core\McpAdapter' ) ) {
-			$lines[] = "- MCP Endpoint: " . home_url( '/wp-json/metamanager-mcp/mcp' );
+			$lines[] = '- MCP Endpoint: ' . home_url( '/wp-json/metamanager-mcp/mcp' );
 		}
 
 		$lines[] = '';
 
 		// Pages.
-		$pages = get_pages( [ 'number' => 20, 'post_status' => 'publish', 'sort_column' => 'menu_order' ] );
+		$pages = get_pages(
+			[
+				'number'      => 20,
+				'post_status' => 'publish',
+				'sort_column' => 'menu_order',
+			]
+		);
 		if ( $pages ) {
 			$lines[] = '## Pages';
 			foreach ( $pages as $page ) {
@@ -127,7 +133,12 @@ class MM_Mod_Discovery {
 		}
 
 		// Recent posts.
-		$posts = get_posts( [ 'number' => 20, 'post_status' => 'publish' ] );
+		$posts = get_posts(
+			[
+				'number'      => 20,
+				'post_status' => 'publish',
+			]
+		);
 		if ( $posts ) {
 			$lines[] = '## Recent Posts';
 			foreach ( $posts as $post ) {
@@ -143,9 +154,21 @@ class MM_Mod_Discovery {
 		}
 
 		// Taxonomies.
-		$taxonomies = get_taxonomies( [ 'public' => true, 'show_in_rest' => true ], 'objects' );
+		$taxonomies = get_taxonomies(
+			[
+				'public'       => true,
+				'show_in_rest' => true,
+			],
+			'objects'
+		);
 		foreach ( $taxonomies as $tax ) {
-			$terms = get_terms( [ 'taxonomy' => $tax->name, 'number' => 10, 'hide_empty' => true ] );
+			$terms = get_terms(
+				[
+					'taxonomy'   => $tax->name,
+					'number'     => 10,
+					'hide_empty' => true,
+				]
+			);
 			if ( empty( $terms ) || is_wp_error( $terms ) ) {
 				continue;
 			}
@@ -198,9 +221,9 @@ class MM_Mod_Discovery {
 		$home = home_url( '/' );
 
 		$catalog = [
-			'rel'   => 'catalog',
-			'href'  => $home,
-			'title' => get_bloginfo( 'name' ) . ' — API Catalog',
+			'rel'     => 'catalog',
+			'href'    => $home,
+			'title'   => get_bloginfo( 'name' ) . ' — API Catalog',
 			'linkset' => [
 				[
 					'rel'   => 'describedby',

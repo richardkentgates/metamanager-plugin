@@ -20,8 +20,8 @@ class MM_Mod_Robots extends MM_Mod_Base {
 	}
 
 	public function generate( string $output, bool $public ): string {
-		$s       = $this->settings;
-		$lines   = [];
+		$s     = $this->settings;
+		$lines = [];
 
 		$lines[] = 'User-agent: *';
 

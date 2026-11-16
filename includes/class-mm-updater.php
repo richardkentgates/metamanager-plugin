@@ -93,10 +93,13 @@ class MM_Updater {
 		$channel = defined( 'MM_UPDATE_CHANNEL' ) ? MM_UPDATE_CHANNEL : 'production';
 		$url     = ( 'test' === $channel ) ? self::METADATA_URL_TEST : self::METADATA_URL;
 
-		$response = wp_remote_get( $url, [
-			'timeout'    => 10,
-			'user-agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; Metamanager/' . MM_VERSION,
-		] );
+		$response = wp_remote_get(
+			$url,
+			[
+				'timeout'    => 10,
+				'user-agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; Metamanager/' . MM_VERSION,
+			]
+		);
 
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
 			return null;
@@ -108,10 +111,10 @@ class MM_Updater {
 			return null;
 		}
 
-		// Ensure requires object exists with php and wordpress keys.
+		// Ensure requires object exists with php and WordPress keys.
 		if ( empty( $metadata->requires ) || ! is_object( $metadata->requires ) ) {
 			$metadata->requires = (object) [
-				'php'      => '8.0',
+				'php'       => '8.0',
 				'wordpress' => '6.2',
 			];
 		}
@@ -212,23 +215,23 @@ class MM_Updater {
 		$requires_wp    = $metadata->requires->wordpress ?? '6.0';
 
 		return (object) [
-			'name'              => 'Metamanager',
-			'slug'              => 'metamanager',
-			'version'           => $remote_version,
-			'author'            => '<a href="https://github.com/richardkentgates">Richard Kent Gates</a>',
-			'author_profile'    => 'https://github.com/richardkentgates',
-			'homepage'          => 'https://metamanager.richardkentgates.com',
-			'requires'          => $requires_wp,
-			'requires_php'      => $requires_php,
-			'download_link'     => $metadata->download_url,
-			'trunk'             => $metadata->download_url,
-			'last_updated'      => '',
-			'sections'          => [
+			'name'           => 'Metamanager',
+			'slug'           => 'metamanager',
+			'version'        => $remote_version,
+			'author'         => '<a href="https://github.com/richardkentgates">Richard Kent Gates</a>',
+			'author_profile' => 'https://github.com/richardkentgates',
+			'homepage'       => 'https://metamanager.richardkentgates.com',
+			'requires'       => $requires_wp,
+			'requires_php'   => $requires_php,
+			'download_link'  => $metadata->download_url,
+			'trunk'          => $metadata->download_url,
+			'last_updated'   => '',
+			'sections'       => [
 				'description' => 'Lossless image compression and standards-compliant EXIF/IPTC/XMP metadata embedding for WordPress, powered by OS-level daemons.',
 				'changelog'   => $this->build_changelog_section(),
 			],
-			'banners'           => [],
-			'icons'             => [],
+			'banners'        => [],
+			'icons'          => [],
 		];
 	}
 
@@ -317,11 +320,13 @@ class MM_Updater {
 		if ( $metadata ) {
 			$remote_version = $metadata->version;
 			if ( version_compare( $remote_version, MM_VERSION, '>' ) ) {
-				$notice = rawurlencode( sprintf(
+				$notice = rawurlencode(
+					sprintf(
 					/* translators: %s = new version number */
-					__( 'Metamanager %s is available. Check the Updates page to install.', 'metamanager' ),
-					$remote_version
-				) );
+						__( 'Metamanager %s is available. Check the Updates page to install.', 'metamanager' ),
+						$remote_version
+					)
+				);
 				$type = 'updated';
 			} else {
 				$notice = rawurlencode( __( 'Metamanager is up to date.', 'metamanager' ) );
@@ -332,15 +337,17 @@ class MM_Updater {
 			$type   = 'error';
 		}
 
-		wp_safe_redirect( add_query_arg(
-			[
-				'mm_notice'      => $notice,
-				'mm_notice_type' => $type,
-				'mm_check_update' => false,   // drop nonce params on redirect
-				'_wpnonce'        => false,
-			],
-			admin_url( 'plugins.php' )
-		) );
+		wp_safe_redirect(
+			add_query_arg(
+				[
+					'mm_notice'       => $notice,
+					'mm_notice_type'  => $type,
+					'mm_check_update' => false,   // drop nonce params on redirect
+					'_wpnonce'        => false,
+				],
+				admin_url( 'plugins.php' )
+			)
+		);
 		exit;
 	}
 

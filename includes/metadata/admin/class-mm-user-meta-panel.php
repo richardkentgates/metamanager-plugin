@@ -33,10 +33,10 @@ class MM_User_Meta_Panel {
 		if ( ! $this->settings->get( 'authors.enabled', true ) ) {
 			return;
 		}
-		add_action( 'show_user_profile',        [ $this, 'render_fields' ] );
-		add_action( 'edit_user_profile',         [ $this, 'render_fields' ] );
-		add_action( 'personal_options_update',   [ $this, 'save_meta' ] );
-		add_action( 'edit_user_profile_update',  [ $this, 'save_meta' ] );
+		add_action( 'show_user_profile', [ $this, 'render_fields' ] );
+		add_action( 'edit_user_profile', [ $this, 'render_fields' ] );
+		add_action( 'personal_options_update', [ $this, 'save_meta' ] );
+		add_action( 'edit_user_profile_update', [ $this, 'save_meta' ] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -70,7 +70,7 @@ class MM_User_Meta_Panel {
 		$clean = [];
 
 		// Noindex checkbox — checked = hide from search.
-		$noindex = ! empty( $_POST['mm_meta_noindex'] );
+		$noindex          = ! empty( $_POST['mm_meta_noindex'] );
 		$clean['noindex'] = $noindex;
 
 		// Social profiles.
@@ -94,5 +94,4 @@ class MM_User_Meta_Panel {
 			update_user_meta( $user_id, MM_Upload_Notify::META_USER_RECEIPT, $wants ? '1' : '0' );
 		}
 	}
-
 }

@@ -1,6 +1,7 @@
 <?php
 /**
  * Admin tab — Business Profile.
+ *
  * @var MM_Site_Settings $settings
  */
 defined( 'ABSPATH' ) || exit;
@@ -10,17 +11,53 @@ $opt = MM_META_OPT_BUSINESS;
 $business_types = MM_Mod_Local::get_business_types();
 
 // Opening hours skeleton (7 rows if none saved)
-$hours = $b['hours'] ?? [];
+$hours         = $b['hours'] ?? [];
 $hour_defaults = [
-	['days'=>['Monday'],'open'=>'09:00','close'=>'17:00','closed'=>false],
-	['days'=>['Tuesday'],'open'=>'09:00','close'=>'17:00','closed'=>false],
-	['days'=>['Wednesday'],'open'=>'09:00','close'=>'17:00','closed'=>false],
-	['days'=>['Thursday'],'open'=>'09:00','close'=>'17:00','closed'=>false],
-	['days'=>['Friday'],'open'=>'09:00','close'=>'17:00','closed'=>false],
-	['days'=>['Saturday'],'open'=>'','close'=>'','closed'=>true],
-	['days'=>['Sunday'],'open'=>'','close'=>'','closed'=>true],
+	[
+		'days'   => [ 'Monday' ],
+		'open'   => '09:00',
+		'close'  => '17:00',
+		'closed' => false,
+	],
+	[
+		'days'   => [ 'Tuesday' ],
+		'open'   => '09:00',
+		'close'  => '17:00',
+		'closed' => false,
+	],
+	[
+		'days'   => [ 'Wednesday' ],
+		'open'   => '09:00',
+		'close'  => '17:00',
+		'closed' => false,
+	],
+	[
+		'days'   => [ 'Thursday' ],
+		'open'   => '09:00',
+		'close'  => '17:00',
+		'closed' => false,
+	],
+	[
+		'days'   => [ 'Friday' ],
+		'open'   => '09:00',
+		'close'  => '17:00',
+		'closed' => false,
+	],
+	[
+		'days'   => [ 'Saturday' ],
+		'open'   => '',
+		'close'  => '',
+		'closed' => true,
+	],
+	[
+		'days'   => [ 'Sunday' ],
+		'open'   => '',
+		'close'  => '',
+		'closed' => true,
+	],
 ];
-if ( empty($hours) ) { $hours = $hour_defaults; }
+if ( empty( $hours ) ) {
+	$hours = $hour_defaults; }
 ?>
 
 <div class="mm-meta-panel" id="page-business">
@@ -32,20 +69,20 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 		<tr>
 			<th><label for="gcm_biz_name">Business Name</label></th>
 			<td>
-				<input type="text" id="gcm_biz_name" name="<?php echo esc_attr($opt); ?>[name]"
-					value="<?php echo esc_attr($b['name']); ?>" class="regular-text">
+				<input type="text" id="gcm_biz_name" name="<?php echo esc_attr( $opt ); ?>[name]"
+					value="<?php echo esc_attr( $b['name'] ); ?>" class="regular-text">
 			</td>
 		</tr>
 		<tr>
 			<th><label for="gcm_biz_type">Business Type</label></th>
 			<td>
-				<select id="gcm_biz_type" name="<?php echo esc_attr($opt); ?>[type]">
-					<option value="Organization" <?php selected($b['type'],'Organization'); ?>>Organization (generic)</option>
-					<option value="LocalBusiness" <?php selected($b['type'],'LocalBusiness'); ?>>LocalBusiness (generic)</option>
+				<select id="gcm_biz_type" name="<?php echo esc_attr( $opt ); ?>[type]">
+					<option value="Organization" <?php selected( $b['type'], 'Organization' ); ?>>Organization (generic)</option>
+					<option value="LocalBusiness" <?php selected( $b['type'], 'LocalBusiness' ); ?>>LocalBusiness (generic)</option>
 					<?php foreach ( $business_types as $group_label => $subtypes ) : ?>
-						<optgroup label="<?php echo esc_attr($group_label); ?>">
+						<optgroup label="<?php echo esc_attr( $group_label ); ?>">
 							<?php foreach ( $subtypes as $slug => $label ) : ?>
-								<option value="<?php echo esc_attr($slug); ?>" <?php selected($b['type'],$slug); ?>><?php echo esc_html($label); ?></option>
+								<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $b['type'], $slug ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</optgroup>
 					<?php endforeach; ?>
@@ -56,11 +93,11 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 			<th><label for="gcm_biz_logo">Logo</label></th>
 			<td>
 				<div class="gcm-media-picker" data-target="gcm_biz_logo_id" data-preview="gcm_biz_logo_preview">
-					<input type="hidden" id="gcm_biz_logo_id" name="<?php echo esc_attr($opt); ?>[logo_id]" value="<?php echo (int)($b['logo_id']??0); ?>">
-					<input type="text"   id="gcm_biz_logo_url" name="<?php echo esc_attr($opt); ?>[logo_url]" value="<?php echo esc_attr($b['logo_url']??''); ?>" class="large-text" placeholder="URL or pick from media library">
+					<input type="hidden" id="gcm_biz_logo_id" name="<?php echo esc_attr( $opt ); ?>[logo_id]" value="<?php echo (int) ( $b['logo_id'] ?? 0 ); ?>">
+					<input type="text"   id="gcm_biz_logo_url" name="<?php echo esc_attr( $opt ); ?>[logo_url]" value="<?php echo esc_attr( $b['logo_url'] ?? '' ); ?>" class="large-text" placeholder="URL or pick from media library">
 					<button type="button" class="button gcm-btn-pick-media">Choose Image</button>
-					<?php if ( ! empty($b['logo_url']) ) : ?>
-						<img id="gcm_biz_logo_preview" src="<?php echo esc_url($b['logo_url']); ?>" class="gcm-image-preview" style="max-height:60px;display:block;margin-top:8px;">
+					<?php if ( ! empty( $b['logo_url'] ) ) : ?>
+						<img id="gcm_biz_logo_preview" src="<?php echo esc_url( $b['logo_url'] ); ?>" class="gcm-image-preview" style="max-height:60px;display:block;margin-top:8px;">
 					<?php else : ?>
 						<img id="gcm_biz_logo_preview" src="" class="gcm-image-preview" style="max-height:60px;display:none;margin-top:8px;">
 					<?php endif; ?>
@@ -70,23 +107,23 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 		<tr>
 			<th><label for="gcm_biz_phone">Phone</label></th>
 			<td>
-				<input type="text" id="gcm_biz_phone" name="<?php echo esc_attr($opt); ?>[phone]"
-					value="<?php echo esc_attr($b['phone']??''); ?>" class="regular-text" placeholder="+1 (555) 000-0000">
+				<input type="text" id="gcm_biz_phone" name="<?php echo esc_attr( $opt ); ?>[phone]"
+					value="<?php echo esc_attr( $b['phone'] ?? '' ); ?>" class="regular-text" placeholder="+1 (555) 000-0000">
 			</td>
 		</tr>
 		<tr>
 			<th><label for="gcm_biz_email">Email</label></th>
 			<td>
-				<input type="email" id="gcm_biz_email" name="<?php echo esc_attr($opt); ?>[email]"
-					value="<?php echo esc_attr($b['email']??''); ?>" class="regular-text">
+				<input type="email" id="gcm_biz_email" name="<?php echo esc_attr( $opt ); ?>[email]"
+					value="<?php echo esc_attr( $b['email'] ?? '' ); ?>" class="regular-text">
 			</td>
 		</tr>
 		<tr>
 			<th><label for="gcm_biz_price">Price Range</label></th>
 			<td>
-				<select id="gcm_biz_price" name="<?php echo esc_attr($opt); ?>[price_range]">
-					<?php foreach ( ['', '$', '$$', '$$$', '$$$$'] as $p ) : ?>
-						<option value="<?php echo esc_attr($p); ?>" <?php selected($b['price_range']??'',$p); ?>><?php echo $p ? esc_html($p) : '— not set —'; ?></option>
+				<select id="gcm_biz_price" name="<?php echo esc_attr( $opt ); ?>[price_range]">
+					<?php foreach ( [ '', '$', '$$', '$$$', '$$$$' ] as $p ) : ?>
+						<option value="<?php echo esc_attr( $p ); ?>" <?php selected( $b['price_range'] ?? '', $p ); ?>><?php echo $p ? esc_html( $p ) : '— not set —'; ?></option>
 					<?php endforeach; ?>
 				</select>
 			</td>
@@ -94,23 +131,23 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 		<tr>
 			<th><label for="gcm_biz_description">Business Description</label></th>
 			<td>
-				<textarea id="gcm_biz_description" name="<?php echo esc_attr($opt); ?>[description]" rows="4" class="large-text" placeholder="Describe your business — used for AboutPage schema and meta description"><?php echo esc_textarea($b['description']??''); ?></textarea>
+				<textarea id="gcm_biz_description" name="<?php echo esc_attr( $opt ); ?>[description]" rows="4" class="large-text" placeholder="Describe your business — used for AboutPage schema and meta description"><?php echo esc_textarea( $b['description'] ?? '' ); ?></textarea>
 				<p class="description">Used for AboutPage schema, LocalBusiness <code>description</code>, and meta description tag.</p>
 			</td>
 		</tr>
 		<tr>
 			<th><label for="gcm_biz_founding_date">Founding Date</label></th>
 			<td>
-				<input type="date" id="gcm_biz_founding_date" name="<?php echo esc_attr($opt); ?>[founding_date]"
-					value="<?php echo esc_attr($b['founding_date']??''); ?>" class="regular-text">
+				<input type="date" id="gcm_biz_founding_date" name="<?php echo esc_attr( $opt ); ?>[founding_date]"
+					value="<?php echo esc_attr( $b['founding_date'] ?? '' ); ?>" class="regular-text">
 				<p class="description">Optional. Used in Organization/LocalBusiness schema.</p>
 			</td>
 		</tr>
 		<tr>
 			<th><label for="gcm_biz_number_of_employees">Number of Employees</label></th>
 			<td>
-				<input type="text" id="gcm_biz_number_of_employees" name="<?php echo esc_attr($opt); ?>[number_of_employees]"
-					value="<?php echo esc_attr($b['number_of_employees']??''); ?>" class="regular-text" placeholder="e.g. 5-10">
+				<input type="text" id="gcm_biz_number_of_employees" name="<?php echo esc_attr( $opt ); ?>[number_of_employees]"
+					value="<?php echo esc_attr( $b['number_of_employees'] ?? '' ); ?>" class="regular-text" placeholder="e.g. 5-10">
 				<p class="description">Optional. Used in Organization schema.</p>
 			</td>
 		</tr>
@@ -121,13 +158,13 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 				$payment_methods = [ 'Cash', 'Check', 'Credit Card', 'Debit Card', 'Invoice', 'PayPal', 'Apple Pay', 'Google Pay', 'Venmo' ];
 				$accepted        = (array) ( $b['payment_accepted'] ?? [] );
 				foreach ( $payment_methods as $method ) :
-				?>
+					?>
 					<label style="display:inline-block;margin-right:16px;margin-bottom:4px">
 						<input type="checkbox"
-							name="<?php echo esc_attr($opt); ?>[payment_accepted][]"
-							value="<?php echo esc_attr($method); ?>"
+							name="<?php echo esc_attr( $opt ); ?>[payment_accepted][]"
+							value="<?php echo esc_attr( $method ); ?>"
 							<?php checked( in_array( $method, $accepted, true ) ); ?>>
-						<?php echo esc_html($method); ?>
+						<?php echo esc_html( $method ); ?>
 					</label>
 				<?php endforeach; ?>
 				<p class="description">Emitted as <code>paymentAccepted</code> in LocalBusiness schema.</p>
@@ -140,28 +177,28 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 		<?php $a = $b['address'] ?? []; ?>
 		<tr>
 			<th><label for="gcm_addr_street">Street Address</label></th>
-			<td><input type="text" id="gcm_addr_street" name="<?php echo esc_attr($opt); ?>[address][street]" value="<?php echo esc_attr($a['street']??''); ?>" class="regular-text"></td>
+			<td><input type="text" id="gcm_addr_street" name="<?php echo esc_attr( $opt ); ?>[address][street]" value="<?php echo esc_attr( $a['street'] ?? '' ); ?>" class="regular-text"></td>
 		</tr>
 		<tr>
 			<th><label for="gcm_addr_city">City</label></th>
-			<td><input type="text" id="gcm_addr_city" name="<?php echo esc_attr($opt); ?>[address][city]" value="<?php echo esc_attr($a['city']??''); ?>" class="regular-text"></td>
+			<td><input type="text" id="gcm_addr_city" name="<?php echo esc_attr( $opt ); ?>[address][city]" value="<?php echo esc_attr( $a['city'] ?? '' ); ?>" class="regular-text"></td>
 		</tr>
 		<tr>
 			<th><label for="gcm_addr_state">State / Province</label></th>
-			<td><input type="text" id="gcm_addr_state" name="<?php echo esc_attr($opt); ?>[address][state]" value="<?php echo esc_attr($a['state']??''); ?>" class="regular-text" placeholder="e.g. NC"></td>
+			<td><input type="text" id="gcm_addr_state" name="<?php echo esc_attr( $opt ); ?>[address][state]" value="<?php echo esc_attr( $a['state'] ?? '' ); ?>" class="regular-text" placeholder="e.g. NC"></td>
 		</tr>
 		<tr>
 			<th><label for="gcm_addr_zip">ZIP / Postal Code</label></th>
-			<td><input type="text" id="gcm_addr_zip" name="<?php echo esc_attr($opt); ?>[address][zip]" value="<?php echo esc_attr($a['zip']??''); ?>" class="small-text"></td>
+			<td><input type="text" id="gcm_addr_zip" name="<?php echo esc_attr( $opt ); ?>[address][zip]" value="<?php echo esc_attr( $a['zip'] ?? '' ); ?>" class="small-text"></td>
 		</tr>
 		<tr>
 			<th><label for="gcm_addr_country">Country Code</label></th>
-			<td><input type="text" id="gcm_addr_country" name="<?php echo esc_attr($opt); ?>[address][country]" value="<?php echo esc_attr($a['country']??'US'); ?>" class="small-text" placeholder="US"></td>
+			<td><input type="text" id="gcm_addr_country" name="<?php echo esc_attr( $opt ); ?>[address][country]" value="<?php echo esc_attr( $a['country'] ?? 'US' ); ?>" class="small-text" placeholder="US"></td>
 		</tr>
 		<tr>
 			<th><label for="gcm_google_maps_api_key">Google Maps API Key</label></th>
 			<td>
-				<input type="text" id="gcm_google_maps_api_key" name="<?php echo esc_attr($opt); ?>[google_maps_api_key]" value="<?php echo esc_attr( $b['google_maps_api_key'] ?? '' ); ?>" class="regular-text" placeholder="AIza...">
+				<input type="text" id="gcm_google_maps_api_key" name="<?php echo esc_attr( $opt ); ?>[google_maps_api_key]" value="<?php echo esc_attr( $b['google_maps_api_key'] ?? '' ); ?>" class="regular-text" placeholder="AIza...">
 				<p class="description">Coordinates are derived automatically from the business address using the Google Maps Geocoding API.</p>
 				<?php if ( ! empty( $b['lat'] ) && ! empty( $b['lng'] ) ) : ?>
 				<p class="description">Current coordinates: <code><?php echo esc_html( $b['lat'] . ', ' . $b['lng'] ); ?></code></p>
@@ -172,11 +209,11 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 			<th><label>Business Location Type</label></th>
 			<td>
 				<label style="display:block;margin-bottom:6px;">
-					<input type="radio" name="<?php echo esc_attr($opt); ?>[location_type]" value="brick_and_mortar" <?php checked( ($b['location_type']??'brick_and_mortar') === 'brick_and_mortar' ); ?>>
+					<input type="radio" name="<?php echo esc_attr( $opt ); ?>[location_type]" value="brick_and_mortar" <?php checked( ( $b['location_type'] ?? 'brick_and_mortar' ) === 'brick_and_mortar' ); ?>>
 					<strong>Brick &amp; Mortar</strong> — customers visit this address
 				</label>
 				<label style="display:block;">
-					<input type="radio" name="<?php echo esc_attr($opt); ?>[location_type]" value="service_area" <?php checked( ($b['location_type']??'') === 'service_area' ); ?>>
+					<input type="radio" name="<?php echo esc_attr( $opt ); ?>[location_type]" value="service_area" <?php checked( ( $b['location_type'] ?? '' ) === 'service_area' ); ?>>
 					<strong>Service Area</strong> — we come to you (mailing address only)
 				</label>
 				<p class="description">Controls how the address is presented. Service area businesses show the address as mailing-only with no map link. Brick &amp; mortar locations show the full address with map and directions.</p>
@@ -187,19 +224,19 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 			<td>
 				<?php $map_links = $b['map_links'] ?? []; ?>
 				<label style="display:block;margin-bottom:4px;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[map_links][google]" value="1" <?php checked( ! empty( $map_links['google'] ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[map_links][google]" value="1" <?php checked( ! empty( $map_links['google'] ) ); ?>>
 					Google Maps
 				</label>
 				<label style="display:block;margin-bottom:4px;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[map_links][bing]" value="1" <?php checked( ! empty( $map_links['bing'] ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[map_links][bing]" value="1" <?php checked( ! empty( $map_links['bing'] ) ); ?>>
 					Bing Maps
 				</label>
 				<label style="display:block;margin-bottom:4px;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[map_links][apple]" value="1" <?php checked( ! empty( $map_links['apple'] ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[map_links][apple]" value="1" <?php checked( ! empty( $map_links['apple'] ) ); ?>>
 					Apple Maps
 				</label>
 				<label style="display:block;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[map_links][geo]" value="1" <?php checked( ! empty( $map_links['geo'] ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[map_links][geo]" value="1" <?php checked( ! empty( $map_links['geo'] ) ); ?>>
 					Geo (device default maps app)
 				</label>
 				<p class="description">Choose which map links appear on Contact and About pages. All enabled by default.</p>
@@ -209,27 +246,27 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 			<th><label>Contact Page Actions</label></th>
 			<td>
 				<label style="display:block;margin-bottom:4px;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[show_phone]" value="1" <?php checked( ! empty( $b['show_phone'] ?? true ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_phone]" value="1" <?php checked( ! empty( $b['show_phone'] ?? true ) ); ?>>
 					Show phone / click-to-call button
 				</label>
 				<label style="display:block;margin-bottom:4px;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[show_sms]" value="1" <?php checked( ! empty( $b['show_sms'] ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_sms]" value="1" <?php checked( ! empty( $b['show_sms'] ) ); ?>>
 					Show SMS / text button
 				</label>
 				<label style="display:block;margin-bottom:4px;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[show_email]" value="1" <?php checked( ! empty( $b['show_email'] ?? true ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_email]" value="1" <?php checked( ! empty( $b['show_email'] ?? true ) ); ?>>
 					Show email button
 				</label>
 				<label style="display:block;margin-bottom:4px;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[show_vcard]" value="1" <?php checked( ! empty( $b['show_vcard'] ?? true ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_vcard]" value="1" <?php checked( ! empty( $b['show_vcard'] ?? true ) ); ?>>
 					Show vCard (.vcf) download button
 				</label>
 				<label style="display:block;margin-bottom:4px;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[show_json]" value="1" <?php checked( ! empty( $b['show_json'] ?? true ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_json]" value="1" <?php checked( ! empty( $b['show_json'] ?? true ) ); ?>>
 					Show JSON contact download button
 				</label>
 				<label style="display:block;">
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[show_csv]" value="1" <?php checked( ! empty( $b['show_csv'] ?? true ) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_csv]" value="1" <?php checked( ! empty( $b['show_csv'] ?? true ) ); ?>>
 					Show CSV contact download button
 				</label>
 				<p class="description">Choose which action buttons appear on the Contact page template.</p>
@@ -238,14 +275,14 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 		<tr>
 			<th><label for="gcm_booking_link">Booking Link</label></th>
 			<td>
-				<input type="url" id="gcm_booking_link" name="<?php echo esc_attr($opt); ?>[booking_link]" value="<?php echo esc_attr( $b['booking_link'] ?? '' ); ?>" class="regular-text" placeholder="https://...">
+				<input type="url" id="gcm_booking_link" name="<?php echo esc_attr( $opt ); ?>[booking_link]" value="<?php echo esc_attr( $b['booking_link'] ?? '' ); ?>" class="regular-text" placeholder="https://...">
 				<p class="description">Optional. External booking/scheduling URL (Vagaro, Square, Acuity, etc.). If set, a booking button appears on the Contact page.</p>
 			</td>
 		</tr>
 		<tr>
 			<th><label for="gcm_booking_link_label">Booking Button Label</label></th>
 			<td>
-				<input type="text" id="gcm_booking_link_label" name="<?php echo esc_attr($opt); ?>[booking_link_label]" value="<?php echo esc_attr( $b['booking_link_label'] ?? 'Book Now' ); ?>" class="regular-text">
+				<input type="text" id="gcm_booking_link_label" name="<?php echo esc_attr( $opt ); ?>[booking_link_label]" value="<?php echo esc_attr( $b['booking_link_label'] ?? 'Book Now' ); ?>" class="regular-text">
 				<p class="description">Text displayed on the booking button. Default: Book Now</p>
 			</td>
 		</tr>
@@ -253,7 +290,7 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 			<th><label for="gcm_booking_link_new_tab">Open in New Tab</label></th>
 			<td>
 				<label>
-					<input type="checkbox" id="gcm_booking_link_new_tab" name="<?php echo esc_attr($opt); ?>[booking_link_new_tab]" value="1" <?php checked( ! empty( $b['booking_link_new_tab'] ) ); ?>>
+					<input type="checkbox" id="gcm_booking_link_new_tab" name="<?php echo esc_attr( $opt ); ?>[booking_link_new_tab]" value="1" <?php checked( ! empty( $b['booking_link_new_tab'] ) ); ?>>
 					Open booking link in a new browser tab
 				</label>
 			</td>
@@ -277,28 +314,28 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 			</thead>
 		<tbody class="gcm-repeater-body" id="gcm-hours-rows"
 				data-sortable="true"
-				data-name-base="<?php echo esc_attr($opt); ?>[hours]">
+				data-name-base="<?php echo esc_attr( $opt ); ?>[hours]">
 				<?php
-				$days_all = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+				$days_all = [ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday' ];
 				foreach ( $hours as $ri => $row ) :
-					$row_days = is_array($row['days']) ? $row['days'] : [];
-				?>
+					$row_days = is_array( $row['days'] ) ? $row['days'] : [];
+					?>
 				<tr class="gcm-repeater-row">
 					<td class="gcm-drag-handle-cell"><span class="gcm-drag-handle dashicons dashicons-move" title="Drag to reorder"></span></td>
 					<td class="gcm-days-cell">
 						<?php foreach ( $days_all as $d ) : ?>
 							<label class="gcm-day-label">
 								<input type="checkbox"
-			name="<?php echo esc_attr($opt); ?>[hours][<?php echo absint( $ri ); ?>][days][]"
-									value="<?php echo esc_attr($d); ?>"
-									<?php checked( in_array($d, $row_days, true) ); ?>>
-								<?php echo esc_html( substr($d,0,3) ); ?>
+			name="<?php echo esc_attr( $opt ); ?>[hours][<?php echo absint( $ri ); ?>][days][]"
+									value="<?php echo esc_attr( $d ); ?>"
+									<?php checked( in_array( $d, $row_days, true ) ); ?>>
+								<?php echo esc_html( substr( $d, 0, 3 ) ); ?>
 							</label>
 						<?php endforeach; ?>
 					</td>
-				<td><input type="time" name="<?php echo esc_attr($opt); ?>[hours][<?php echo absint( $ri ); ?>][open]" value="<?php echo esc_attr($row['open']??''); ?>" class="gcm-time-input"></td>
-				<td><input type="time" name="<?php echo esc_attr($opt); ?>[hours][<?php echo absint( $ri ); ?>][close]" value="<?php echo esc_attr($row['close']??''); ?>" class="gcm-time-input"></td>
-				<td style="text-align:center"><input type="checkbox" name="<?php echo esc_attr($opt); ?>[hours][<?php echo absint( $ri ); ?>][closed]" value="1" <?php checked(!empty($row['closed'])); ?>></td>
+				<td><input type="time" name="<?php echo esc_attr( $opt ); ?>[hours][<?php echo absint( $ri ); ?>][open]" value="<?php echo esc_attr( $row['open'] ?? '' ); ?>" class="gcm-time-input"></td>
+				<td><input type="time" name="<?php echo esc_attr( $opt ); ?>[hours][<?php echo absint( $ri ); ?>][close]" value="<?php echo esc_attr( $row['close'] ?? '' ); ?>" class="gcm-time-input"></td>
+				<td style="text-align:center"><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[hours][<?php echo absint( $ri ); ?>][closed]" value="1" <?php checked( ! empty( $row['closed'] ) ); ?>></td>
 					<td><button type="button" class="button-link gcm-repeater-remove">&times;</button></td>
 				</tr>
 				<?php endforeach; ?>
@@ -310,11 +347,11 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 	<h2>Service Areas</h2>
 	<p class="description">Cities or regions you serve. Each becomes a <code>City</code> node in <code>areaServed</code>.</p>
 	<div class="gcm-repeater" id="gcm-areas-repeater">
-		<ul class="gcm-simple-list" id="gcm-areas-list" data-name-base="<?php echo esc_attr($opt); ?>[service_areas]">
-			<?php foreach ( (array)($b['service_areas']??[]) as $ai => $area ) : ?>
+		<ul class="gcm-simple-list" id="gcm-areas-list" data-name-base="<?php echo esc_attr( $opt ); ?>[service_areas]">
+			<?php foreach ( (array) ( $b['service_areas'] ?? [] ) as $ai => $area ) : ?>
 				<li class="gcm-simple-list-item">
-					<input type="text" name="<?php echo esc_attr($opt); ?>[service_areas][]"
-						value="<?php echo esc_attr($area); ?>" class="regular-text" placeholder="City name">
+					<input type="text" name="<?php echo esc_attr( $opt ); ?>[service_areas][]"
+						value="<?php echo esc_attr( $area ); ?>" class="regular-text" placeholder="City name">
 					<button type="button" class="button-link gcm-repeater-remove">✕</button>
 				</li>
 			<?php endforeach; ?>
@@ -334,13 +371,14 @@ if ( empty($hours) ) { $hours = $hour_defaults; }
 			'bluesky'   => 'BlueSky',
 			'pinterest' => 'Pinterest',
 		];
-		$accounts = $b['accounts'] ?? [];
-		foreach ( $social_fields as $field => $label ) : ?>
+		$accounts      = $b['accounts'] ?? [];
+		foreach ( $social_fields as $field => $label ) :
+			?>
 		<tr>
-			<th><label><?php echo esc_html($label); ?></label></th>
+			<th><label><?php echo esc_html( $label ); ?></label></th>
 			<td>
-				<input type="url" name="<?php echo esc_attr($opt); ?>[accounts][<?php echo esc_attr($field); ?>]"
-					value="<?php echo esc_attr($accounts[$field]??''); ?>"
+				<input type="url" name="<?php echo esc_attr( $opt ); ?>[accounts][<?php echo esc_attr( $field ); ?>]"
+					value="<?php echo esc_attr( $accounts[ $field ] ?? '' ); ?>"
 					class="large-text" placeholder="Full URL">
 			</td>
 		</tr>

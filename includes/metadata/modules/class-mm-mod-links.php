@@ -35,9 +35,9 @@ class MM_Mod_Links extends MM_Mod_Base {
 		add_action( 'before_delete_post', [ $this, 'purge_for_post' ] );
 
 		// Admin AJAX.
-		add_action( 'wp_ajax_mm_meta_links_fetch',    [ $this, 'ajax_fetch_links' ] );
-		add_action( 'wp_ajax_mm_meta_recheck_link',   [ $this, 'ajax_recheck_link' ] );
-		add_action( 'wp_ajax_mm_meta_ignore_link',    [ $this, 'ajax_ignore_link' ] );
+		add_action( 'wp_ajax_mm_meta_links_fetch', [ $this, 'ajax_fetch_links' ] );
+		add_action( 'wp_ajax_mm_meta_recheck_link', [ $this, 'ajax_recheck_link' ] );
+		add_action( 'wp_ajax_mm_meta_ignore_link', [ $this, 'ajax_ignore_link' ] );
 		add_action( 'wp_ajax_mm_meta_scan_all_posts', [ $this, 'ajax_scan_all_posts' ] );
 	}
 
@@ -76,7 +76,8 @@ class MM_Mod_Links extends MM_Mod_Base {
 		// avoids information_schema queries that can return stale results inside
 		// WP test suite transactions.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL fallback; table identifier is prefix-derived, not user input.
-		$wpdb->query( "CREATE TABLE IF NOT EXISTS {$table} (
+		$wpdb->query(
+			"CREATE TABLE IF NOT EXISTS {$table} (
 			id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			url         TEXT            NOT NULL,
 			url_hash    CHAR(32)        NOT NULL,
@@ -92,7 +93,8 @@ class MM_Mod_Links extends MM_Mod_Base {
 			UNIQUE KEY url_post (url_hash, post_id),
 			KEY is_broken (is_broken),
 			KEY last_checked (last_checked)
-		) {$charset};" );
+		) {$charset};"
+		);
 		// phpcs:enable
 	}
 
@@ -114,7 +116,15 @@ class MM_Mod_Links extends MM_Mod_Base {
 			return;
 		}
 
-		$monitored_types = array_keys( $this->settings->get( 'sitemap.post_types', [ 'post' => true, 'page' => true ] ) );
+		$monitored_types = array_keys(
+			$this->settings->get(
+				'sitemap.post_types',
+				[
+					'post' => true,
+					'page' => true,
+				]
+			)
+		);
 		if ( ! in_array( $post->post_type, $monitored_types, true ) ) {
 			return;
 		}
@@ -127,17 +137,19 @@ class MM_Mod_Links extends MM_Mod_Base {
 
 		foreach ( $links as $link ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->query( $wpdb->prepare(
-				'INSERT INTO %i (url, url_hash, post_id, anchor_text, link_type)
+			$wpdb->query(
+				$wpdb->prepare(
+					'INSERT INTO %i (url, url_hash, post_id, anchor_text, link_type)
 				 VALUES (%s, %s, %d, %s, %s)
 				 ON DUPLICATE KEY UPDATE anchor_text = VALUES(anchor_text)',
-				$table,
-				$link['url'],
-				md5( $link['url'] ),
-				$post_id,
-				$link['anchor'],
-				$link['type']
-			) );
+					$table,
+					$link['url'],
+					md5( $link['url'] ),
+					$post_id,
+					$link['anchor'],
+					$link['type']
+				)
+			);
 		}
 	}
 
@@ -207,14 +219,17 @@ class MM_Mod_Links extends MM_Mod_Base {
 
 		// Pick the $batch_size links least-recently checked (NULL first).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $wpdb->prepare(
-			'SELECT id, url FROM %i
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id, url FROM %i
 			 WHERE is_ignored = 0
 			 ORDER BY last_checked ASC, id ASC
 			 LIMIT %d',
-			$table,
-			$batch_size
-		), ARRAY_A );
+				$table,
+				$batch_size
+			),
+			ARRAY_A
+		);
 
 		if ( ! $rows ) {
 			return;
@@ -231,7 +246,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 				continue;
 			}
 
-			$code = $this->head_request( $url, $timeout );
+			$code   = $this->head_request( $url, $timeout );
 			$broken = ( $code === 0 || ( $code >= 400 && $code !== 429 ) ) ? 1 : 0;
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -263,11 +278,14 @@ class MM_Mod_Links extends MM_Mod_Base {
 			}
 		}
 
-		$response = wp_remote_head( $url, [
-			'timeout'     => $timeout,
-			'redirection' => 3,
-			'user-agent'  => 'GCM-SEO-LinkChecker/1.0',
-		] );
+		$response = wp_remote_head(
+			$url,
+			[
+				'timeout'     => $timeout,
+				'redirection' => 3,
+				'user-agent'  => 'GCM-SEO-LinkChecker/1.0',
+			]
+		);
 		if ( is_wp_error( $response ) ) {
 			return 0;
 		}
@@ -276,8 +294,8 @@ class MM_Mod_Links extends MM_Mod_Base {
 
 	private function maybe_send_alert(): void {
 		global $wpdb;
-		$table    = self::table_name();
-		$interval = HOUR_IN_SECONDS * 24;
+		$table     = self::table_name();
+		$interval  = HOUR_IN_SECONDS * 24;
 		$cache_key = 'mm_meta_link_alert_sent';
 
 		if ( get_transient( $cache_key ) ) {
@@ -285,9 +303,11 @@ class MM_Mod_Links extends MM_Mod_Base {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared
-		$count = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$table} WHERE is_broken = 1 AND is_ignored = 0" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		) );
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE is_broken = 1 AND is_ignored = 0" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			)
+		);
 
 		if ( $count > 0 ) {
 			$email   = sanitize_email( $this->settings->get( 'links.email_address', get_option( 'admin_email' ) ) );
@@ -314,11 +334,11 @@ class MM_Mod_Links extends MM_Mod_Base {
 		}
 
 		global $wpdb;
-		$table      = self::table_name();
-		$filter     = sanitize_text_field( wp_unslash( $_POST['filter'] ?? 'broken' ) );
-		$paged      = max( 1, absint( wp_unslash( $_POST['paged'] ?? 1 ) ) );
-		$per_page   = 50;
-		$offset     = ( $paged - 1 ) * $per_page;
+		$table    = self::table_name();
+		$filter   = sanitize_text_field( wp_unslash( $_POST['filter'] ?? 'broken' ) );
+		$paged    = max( 1, absint( wp_unslash( $_POST['paged'] ?? 1 ) ) );
+		$per_page = 50;
+		$offset   = ( $paged - 1 ) * $per_page;
 
 		// $where is built from a controlled match() on a sanitized $filter — not user input.
 		$where = match ( $filter ) {
@@ -329,15 +349,18 @@ class MM_Mod_Links extends MM_Mod_Base {
 		};
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is a plugin-owned table name; $where is a static controlled fragment from match()
-		$rows = $wpdb->get_results( $wpdb->prepare(
-			"SELECT l.*, p.post_title FROM {$table} l
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT l.*, p.post_title FROM {$table} l
 			 LEFT JOIN {$wpdb->posts} p ON p.ID = l.post_id
 			 {$where}
 			 ORDER BY l.is_broken DESC, l.last_checked ASC
 			 LIMIT %d OFFSET %d",
-			$per_page,
-			$offset
-		), ARRAY_A );
+				$per_page,
+				$offset
+			),
+			ARRAY_A
+		);
 
 		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} {$where}" ) );
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -350,12 +373,14 @@ class MM_Mod_Links extends MM_Mod_Base {
 			unset( $row );
 		}
 
-		wp_send_json_success( [
-			'rows'       => $rows,
-			'total'      => $total,
-			'paged'      => $paged,
-			'per_page'   => $per_page,
-		] );
+		wp_send_json_success(
+			[
+				'rows'     => $rows,
+				'total'    => $total,
+				'paged'    => $paged,
+				'per_page' => $per_page,
+			]
+		);
 	}
 
 	public function ajax_recheck_link(): void {
@@ -394,7 +419,12 @@ class MM_Mod_Links extends MM_Mod_Base {
 			[ '%d' ]
 		);
 
-		wp_send_json_success( [ 'http_code' => $code, 'is_broken' => $broken ] );
+		wp_send_json_success(
+			[
+				'http_code' => $code,
+				'is_broken' => $broken,
+			]
+		);
 	}
 
 	public function ajax_ignore_link(): void {
@@ -444,7 +474,15 @@ class MM_Mod_Links extends MM_Mod_Base {
 	public function backfill_posts( int $offset = 0, int $batch_size = 20 ): array {
 		global $wpdb;
 		$table           = self::table_name();
-		$monitored_types = array_keys( $this->settings->get( 'sitemap.post_types', [ 'post' => true, 'page' => true ] ) );
+		$monitored_types = array_keys(
+			$this->settings->get(
+				'sitemap.post_types',
+				[
+					'post' => true,
+					'page' => true,
+				]
+			)
+		);
 		$types_ph        = implode( ',', array_fill( 0, count( $monitored_types ), '%s' ) );
 
 		// Total qualifying posts — stable across the whole scan session.
@@ -459,33 +497,51 @@ class MM_Mod_Links extends MM_Mod_Base {
 
 		if ( 0 === $total ) {
 			// phpcs:enable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-			return [ 'total' => 0, 'scanned' => 0, 'skipped' => 0, 'new_offset' => 0, 'done' => true ];
+			return [
+				'total'      => 0,
+				'scanned'    => 0,
+				'skipped'    => 0,
+				'new_offset' => 0,
+				'done'       => true,
+			];
 		}
 
 		// Fetch next batch in stable ID order.
-		$post_ids = array_map( 'intval', (array) $wpdb->get_col(
-			$wpdb->prepare(
+		$post_ids = array_map(
+			'intval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->posts is the core table property; the IN list is built %s placeholders and all values pass through prepare().
-				"SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$types_ph}) ORDER BY ID ASC LIMIT %d OFFSET %d",
-				...[...$monitored_types, $batch_size, $offset]
+					"SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$types_ph}) ORDER BY ID ASC LIMIT %d OFFSET %d",
+					...[ ...$monitored_types, $batch_size, $offset ]
+				)
 			)
-		) );
+		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 
 		if ( ! $post_ids ) {
-			return [ 'total' => $total, 'scanned' => 0, 'skipped' => 0, 'new_offset' => $offset, 'done' => true ];
+			return [
+				'total'      => $total,
+				'scanned'    => 0,
+				'skipped'    => 0,
+				'new_offset' => $offset,
+				'done'       => true,
+			];
 		}
 
 		// Batch-check which post IDs already have entries — skip those.
 		// $id_ph is a dynamically-built list of %d placeholders for safe use in prepare().
 		$id_ph = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-		$already = array_map( 'intval', (array) $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT post_id FROM {$table} WHERE post_id IN ({$id_ph})",
-				...$post_ids
+		$already = array_map(
+			'intval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT post_id FROM {$table} WHERE post_id IN ({$id_ph})",
+					...$post_ids
+				)
 			)
-		) );
+		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
 		foreach ( $post_ids as $post_id ) {

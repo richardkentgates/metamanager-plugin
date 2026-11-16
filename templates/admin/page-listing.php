@@ -9,8 +9,8 @@
  */
 defined( 'ABSPATH' ) || exit;
 
-$s   = $settings->get( 'listing' );
-$opt = MM_META_OPT_SETTINGS;
+$s         = $settings->get( 'listing' );
+$opt       = MM_META_OPT_SETTINGS;
 $biz_style = MM_Mod_Business_Contact::get_style_settings();
 ?>
 
@@ -87,7 +87,14 @@ $biz_style = MM_Mod_Business_Contact::get_style_settings();
 			<td>
 				<select id="listing-btn_font_weight"
 					name="<?php echo esc_attr( $opt ); ?>[listing][btn_font_weight]">
-					<?php foreach ( array( '400' => 'Normal', '500' => 'Medium', '600' => 'Semibold', '700' => 'Bold' ) as $val => $label ) : ?>
+					<?php
+					foreach ( array(
+						'400' => 'Normal',
+						'500' => 'Medium',
+						'600' => 'Semibold',
+						'700' => 'Bold',
+					) as $val => $label ) :
+						?>
 						<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $s['btn_font_weight'], $val ); ?>><?php echo esc_html( $label ); ?></option>
 					<?php endforeach; ?>
 				</select>
@@ -206,11 +213,11 @@ $biz_style = MM_Mod_Business_Contact::get_style_settings();
 		"><?php echo esc_html( $s['btn_text'] ); ?></a>
 		<p style="margin:16px 0 8px;font-size:12px;color:#666;">Hover state:</p>
 		<?php
-		$h_bg = trim( (string) ( $s['btn_hover_bg'] ?? '' ) );
-		$h_text = trim( (string) ( $s['btn_hover_text'] ?? '' ) );
-		$hover_bg_css = $h_bg ? $h_bg : $s['btn_bg'];
+		$h_bg           = trim( (string) ( $s['btn_hover_bg'] ?? '' ) );
+		$h_text         = trim( (string) ( $s['btn_hover_text'] ?? '' ) );
+		$hover_bg_css   = $h_bg ? $h_bg : $s['btn_bg'];
 		$hover_text_css = $h_text ? $h_text : $s['btn_text_color'];
-		$hover_opacity = ( ! $h_bg && ! $h_text ) ? '0.88' : '1';
+		$hover_opacity  = ( ! $h_bg && ! $h_text ) ? '0.88' : '1';
 		?>
 		<a id="listing-preview-btn-hover" style="
 			display: inline-block;

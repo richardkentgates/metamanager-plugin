@@ -26,7 +26,7 @@ abstract class MM_Mod_Base {
 	 * Populate the shared document data array.
 	 *
 	 * @param array            $data     Passed by reference.
-	 * @param MM_Page_Context $context  Current page context.
+	 * @param MM_Page_Context  $context  Current page context.
 	 * @param MM_Site_Settings $settings Plugin settings.
 	 */
 	abstract public function populate( array &$data, MM_Page_Context $context, MM_Site_Settings $settings ): void;
@@ -47,23 +47,25 @@ abstract class MM_Mod_Base {
 		// (stored as _mm_nav_menu_primary term meta on the nav_menu term).
 		static $designated = null;
 		if ( null === $designated ) {
-			$designated = get_terms( [
-				'taxonomy'   => 'nav_menu',
-				'meta_query' => [
-					[
-						'key'   => '_mm_nav_menu_primary',
-						'value' => '1',
+			$designated = get_terms(
+				[
+					'taxonomy'   => 'nav_menu',
+					'meta_query' => [
+						[
+							'key'   => '_mm_nav_menu_primary',
+							'value' => '1',
+						],
 					],
-				],
-				'number'     => 1,
-				'hide_empty' => false,
-			] );
+					'number'     => 1,
+					'hide_empty' => false,
+				]
+			);
 		}
 		if ( ! is_wp_error( $designated ) && ! empty( $designated ) ) {
 			$schema_menu_id = (int) $designated[0]->term_id;
-			$menu_items = wp_get_nav_menu_items( $schema_menu_id );
+			$menu_items     = wp_get_nav_menu_items( $schema_menu_id );
 			if ( ! empty( $menu_items ) ) {
-				$items = [];
+				$items    = [];
 				$position = 1;
 				foreach ( $menu_items as $item ) {
 					if ( $item->url && $item->title ) {
@@ -104,8 +106,8 @@ abstract class MM_Mod_Base {
 		}
 
 		$menu_items = wp_get_nav_menu_items( $menu_id );
-		$menu_obj  = get_term( $menu_id, 'nav_menu' );
-		$menu_name = ( $menu_obj && ! is_wp_error( $menu_obj ) ) ? $menu_obj->name : 'Navigation';
+		$menu_obj   = get_term( $menu_id, 'nav_menu' );
+		$menu_name  = ( $menu_obj && ! is_wp_error( $menu_obj ) ) ? $menu_obj->name : 'Navigation';
 
 		$items = [];
 		if ( is_array( $menu_items ) ) {
@@ -153,9 +155,14 @@ abstract class MM_Mod_Base {
 		$key = $attrs['name'] ?? $attrs['property'] ?? null;
 		if ( $key ) {
 			// Remove existing with same identifier.
-			$data['meta'] = array_values( array_filter( $data['meta'], function ( $m ) use ( $key ) {
-				return ( $m['name'] ?? $m['property'] ?? null ) !== $key;
-			} ) );
+			$data['meta'] = array_values(
+				array_filter(
+					$data['meta'],
+					function ( $m ) use ( $key ) {
+						return ( $m['name'] ?? $m['property'] ?? null ) !== $key;
+					}
+				)
+			);
 		}
 		$data['meta'][] = $attrs;
 	}
@@ -219,7 +226,7 @@ abstract class MM_Mod_Base {
 			$src  = wp_get_attachment_image_src( $attachment_id, 'full' );
 			return [
 				'url'    => $src ? $src[0] : '',
-				'width'  => $meta['width']  ?? ( $src[1] ?? 0 ),
+				'width'  => $meta['width'] ?? ( $src[1] ?? 0 ),
 				'height' => $meta['height'] ?? ( $src[2] ?? 0 ),
 			];
 		}
@@ -229,8 +236,16 @@ abstract class MM_Mod_Base {
 			if ( $id ) {
 				return $this->image_data( $id );
 			}
-			return [ 'url' => $url, 'width' => 0, 'height' => 0 ];
+			return [
+				'url'    => $url,
+				'width'  => 0,
+				'height' => 0,
+			];
 		}
-		return [ 'url' => '', 'width' => 0, 'height' => 0 ];
+		return [
+			'url'    => '',
+			'width'  => 0,
+			'height' => 0,
+		];
 	}
 }

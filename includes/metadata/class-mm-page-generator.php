@@ -68,10 +68,12 @@ class MM_Page_Generator {
 		// Preserve page template — wp_update_post resets _wp_page_template to 'default'.
 		$saved_template = get_page_template_slug( $page_id );
 
-		wp_update_post( [
-			'ID'           => $page_id,
-			'post_content' => $html,
-		] );
+		wp_update_post(
+			[
+				'ID'           => $page_id,
+				'post_content' => $html,
+			]
+		);
 
 		if ( $saved_template ) {
 			update_post_meta( $page_id, '_wp_page_template', $saved_template );
@@ -80,7 +82,7 @@ class MM_Page_Generator {
 		add_action( 'save_post', [ 'MM_Schema_Post_Types', 'save_meta' ], 10, 2 );
 
 		// Apply noindex if the templates setting says so.
-		$settings = MM_Site_Settings::get_instance();
+		$settings    = MM_Site_Settings::get_instance();
 		$noindex_map = [
 			'mm-about'    => 'templates.noindex_about',
 			'mm-contact'  => 'templates.noindex_contact',
@@ -88,7 +90,7 @@ class MM_Page_Generator {
 		];
 		if ( isset( $noindex_map[ $template ] ) ) {
 			$noindex = (bool) $settings->get( $noindex_map[ $template ], false );
-			$fields = get_post_meta( $page_id, 'mm_schema_fields', true );
+			$fields  = get_post_meta( $page_id, 'mm_schema_fields', true );
 			if ( ! is_array( $fields ) ) {
 				$fields = [];
 			}
@@ -162,13 +164,15 @@ class MM_Page_Generator {
 	 * @return int|null Page ID, or null if not found.
 	 */
 	public static function find_page_by_template( string $template ): ?int {
-		$pages = get_posts( [
-			'post_type'   => 'page',
-			'meta_key'    => '_wp_page_template',
-			'meta_value'  => $template,
-			'numberposts' => 1,
-			'post_status' => 'publish',
-		] );
+		$pages = get_posts(
+			[
+				'post_type'   => 'page',
+				'meta_key'    => '_wp_page_template',
+				'meta_value'  => $template,
+				'numberposts' => 1,
+				'post_status' => 'publish',
+			]
+		);
 
 		return ! empty( $pages ) ? $pages[0]->ID : null;
 	}
@@ -237,10 +241,12 @@ class MM_Page_Generator {
 
 		self::regenerate_page( $template );
 
-		wp_send_json_success( [
-			'message' => 'Page content regenerated.',
-			'edit_url' => get_edit_post_link( $page_id, 'raw' ),
-			'view_url' => get_permalink( $page_id ),
-		] );
+		wp_send_json_success(
+			[
+				'message'  => 'Page content regenerated.',
+				'edit_url' => get_edit_post_link( $page_id, 'raw' ),
+				'view_url' => get_permalink( $page_id ),
+			]
+		);
 	}
 }

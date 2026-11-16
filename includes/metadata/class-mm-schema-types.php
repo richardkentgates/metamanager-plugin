@@ -92,7 +92,7 @@ class MM_Schema_Types {
 
 		return [
 			// ── Event ─────────────────────────────────────────────────────────
-			'Event' => [
+			'Event'              => [
 				[
 					'key'         => 'event_start_date',
 					'label'       => 'Start Date & Time',
@@ -225,10 +225,10 @@ class MM_Schema_Types {
 					'placeholder' => '',
 					'description' => 'Required for Google rich results if event is online or mixed.',
 					'options'     => [
-						''                                    => '— Not specified —',
-						'OfflineEventAttendanceMode'         => 'In-Person Only',
-						'OnlineEventAttendanceMode'          => 'Online Only',
-						'MixedEventAttendanceMode'           => 'Mixed (In-Person + Online)',
+						''                           => '— Not specified —',
+						'OfflineEventAttendanceMode' => 'In-Person Only',
+						'OnlineEventAttendanceMode'  => 'Online Only',
+						'MixedEventAttendanceMode'   => 'Mixed (In-Person + Online)',
 					],
 				],
 				[
@@ -240,28 +240,28 @@ class MM_Schema_Types {
 					'placeholder' => '',
 					'description' => 'Category of event (used by Google for rich results filtering).',
 					'options'     => [
-						''                  => '— Not specified —',
-						'BusinessEvent'     => 'Business Event',
-						'ChildrensEvent'    => "Children's Event",
-						'ComedyEvent'       => 'Comedy Event',
-						'DanceEvent'        => 'Dance Event',
-						'ExhibitionEvent'   => 'Exhibition Event',
-						'FestivalEvent'     => 'Festival Event',
-						'FoodEvent'         => 'Food Event',
-						'LiteraryEvent'     => 'Literary Event',
-						'MusicEvent'        => 'Music Event',
-						'PoliticalEvent'    => 'Political Event',
-						'SaleEvent'         => 'Sale Event',
-						'SocialEvent'       => 'Social Event',
-						'SportsEvent'       => 'Sports Event',
-						'TheaterEvent'      => 'Theater Event',
-						'VisualArtsEvent'   => 'Visual Arts Event',
+						''                => '— Not specified —',
+						'BusinessEvent'   => 'Business Event',
+						'ChildrensEvent'  => "Children's Event",
+						'ComedyEvent'     => 'Comedy Event',
+						'DanceEvent'      => 'Dance Event',
+						'ExhibitionEvent' => 'Exhibition Event',
+						'FestivalEvent'   => 'Festival Event',
+						'FoodEvent'       => 'Food Event',
+						'LiteraryEvent'   => 'Literary Event',
+						'MusicEvent'      => 'Music Event',
+						'PoliticalEvent'  => 'Political Event',
+						'SaleEvent'       => 'Sale Event',
+						'SocialEvent'     => 'Social Event',
+						'SportsEvent'     => 'Sports Event',
+						'TheaterEvent'    => 'Theater Event',
+						'VisualArtsEvent' => 'Visual Arts Event',
 					],
 				],
 			],
 
 			// ── Service ───────────────────────────────────────────────────────
-			'Service' => [
+			'Service'            => [
 				[
 					'key'         => 'service_type',
 					'label'       => 'Service Type',
@@ -329,11 +329,11 @@ class MM_Schema_Types {
 
 			// ── FAQPage ──────────────────────────────────────────────────────
 			// Fields are dynamically rendered in the metabox (not static field defs).
-			'FAQPage' => [],
+			'FAQPage'            => [],
 
 			// ── HowTo ──────────────────────────────────────────────────────
 			// Steps are dynamically rendered; these are HowTo-level fields.
-			'HowTo' => [
+			'HowTo'              => [
 				[
 					'key'         => 'howto_total_time',
 					'label'       => 'Total Time',
@@ -364,7 +364,7 @@ class MM_Schema_Types {
 			],
 
 			// ── Product ───────────────────────────────────────────────────────
-			'Product' => [
+			'Product'            => [
 				[
 					'key'         => 'product_brand',
 					'label'       => 'Brand',
@@ -410,7 +410,7 @@ class MM_Schema_Types {
 			],
 
 			// ── TouristTrip ───────────────────────────────────────────────────
-			'TouristTrip' => [
+			'TouristTrip'        => [
 				[
 					'key'         => 'trip_departure_name',
 					'label'       => 'Departure Location',
@@ -616,7 +616,7 @@ class MM_Schema_Types {
 			],
 
 			// ── Vehicle ───────────────────────────────────────────────────────
-			'Vehicle' => [
+			'Vehicle'            => [
 				[
 					'key'         => 'vessel_year',
 					'label'       => 'Year',
@@ -683,7 +683,7 @@ class MM_Schema_Types {
 			],
 
 			// ── Course ────────────────────────────────────────────────────────
-			'Course' => [
+			'Course'             => [
 				[
 					'key'         => 'course_credential',
 					'label'       => 'Credential Awarded',
@@ -774,7 +774,7 @@ class MM_Schema_Types {
 			],
 
 			// ── LocalBusiness (directory listings) ───────────────────────────
-			'LocalBusiness' => [
+			'LocalBusiness'      => [
 				[
 					'key'         => 'business_type',
 					'label'       => 'Business Type',
@@ -839,10 +839,10 @@ class MM_Schema_Types {
 					'placeholder' => '',
 					'description' => '',
 					'options'     => [
-						''    => '— Not specified —',
-						'$'   => '$ — Inexpensive',
-						'$$'  => '$$ — Moderate',
-						'$$$' => '$$$ — Upscale',
+						''     => '— Not specified —',
+						'$'    => '$ — Inexpensive',
+						'$$'   => '$$ — Moderate',
+						'$$$'  => '$$$ — Upscale',
 						'$$$$' => '$$$$ — Premium',
 					],
 				],
@@ -858,7 +858,7 @@ class MM_Schema_Types {
 			],
 
 			// ── Organization (nonprofits, public assistance) ─────────────────
-			'Organization' => [
+			'Organization'       => [
 				[
 					'key'         => 'org_type',
 					'label'       => 'Organization Type',
@@ -868,11 +868,11 @@ class MM_Schema_Types {
 					'placeholder' => '',
 					'description' => 'The most specific Schema.org Organization subtype.',
 					'options'     => [
-						''                      => '— Organization —',
-						'NGO'                   => 'NGO — Non-governmental organization',
-						'GovernmentOrganization' => 'Government Organization',
+						''                        => '— Organization —',
+						'NGO'                     => 'NGO — Non-governmental organization',
+						'GovernmentOrganization'  => 'Government Organization',
 						'EducationalOrganization' => 'Educational Organization',
-						'MedicalOrganization'   => 'Medical Organization',
+						'MedicalOrganization'     => 'Medical Organization',
 					],
 				],
 				[
@@ -1067,9 +1067,9 @@ class MM_Schema_Types {
 			$cost_amount = $str( 'howto_cost_amount' );
 			if ( $cost_amount ) {
 				$out['estimatedCost'] = [
-					'@type'         => 'MonetaryAmount',
-					'currency'      => $str( 'howto_cost_currency' ) ?: 'USD',
-					'value'         => $cost_amount,
+					'@type'    => 'MonetaryAmount',
+					'currency' => $str( 'howto_cost_currency' ) ?: 'USD',
+					'value'    => $cost_amount,
 				];
 			}
 			$supply = [];
@@ -1105,9 +1105,9 @@ class MM_Schema_Types {
 				$step_image = $str( "howto_step_image_{$i}" );
 				if ( $step_name || $step_text ) {
 					$step = [
-						'@type'          => 'HowToStep',
-						'name'           => $step_name,
-						'text'           => $step_text,
+						'@type' => 'HowToStep',
+						'name'  => $step_name,
+						'text'  => $step_text,
 					];
 					if ( $step_image ) {
 						$step['image'] = $step_image;
@@ -1123,14 +1123,17 @@ class MM_Schema_Types {
 		// ── Product ───────────────────────────────────────────────────────────
 		if ( 'Product' === $type ) {
 			if ( $str( 'product_brand' ) ) {
-				$out['brand'] = [ '@type' => 'Brand', 'name' => $str( 'product_brand' ) ];
+				$out['brand'] = [
+					'@type' => 'Brand',
+					'name'  => $str( 'product_brand' ),
+				];
 			}
 			$offer = $make_offer( 'product_price', 'product_currency' );
 			if ( $offer ) {
 				$avail = $str( 'product_availability' );
-			if ( in_array( $avail, [ 'InStock', 'OutOfStock', 'PreOrder' ], true ) ) {
-				$offer['availability'] = 'https://schema.org/' . $avail;
-			}
+				if ( in_array( $avail, [ 'InStock', 'OutOfStock', 'PreOrder' ], true ) ) {
+					$offer['availability'] = 'https://schema.org/' . $avail;
+				}
 				$out['offers'] = $offer;
 			}
 		}
@@ -1139,14 +1142,21 @@ class MM_Schema_Types {
 		if ( 'TouristTrip' === $type ) {
 			$dep_name = $str( 'trip_departure_name' );
 			if ( $dep_name ) {
-				$place = [ '@type' => 'Place', 'name' => $dep_name ];
+				$place = [
+					'@type' => 'Place',
+					'name'  => $dep_name,
+				];
 				if ( $str( 'trip_departure_address' ) ) {
 					$place['address'] = $str( 'trip_departure_address' );
 				}
 				$lat = $str( 'trip_departure_lat' );
 				$lng = $str( 'trip_departure_lng' );
 				if ( $lat && $lng && is_numeric( $lat ) && is_numeric( $lng ) ) {
-					$place['geo'] = [ '@type' => 'GeoCoordinates', 'latitude' => (float) $lat, 'longitude' => (float) $lng ];
+					$place['geo'] = [
+						'@type'     => 'GeoCoordinates',
+						'latitude'  => (float) $lat,
+						'longitude' => (float) $lng,
+					];
 				}
 				$out['tripOrigin'] = $place;
 			}
@@ -1155,7 +1165,14 @@ class MM_Schema_Types {
 				$out['itinerary'] = [
 					'@type'           => 'ItemList',
 					'itemListElement' => [
-						[ '@type' => 'ListItem', 'position' => 1, 'item' => [ '@type' => 'TouristAttraction', 'name' => $dest_name ] ],
+						[
+							'@type'    => 'ListItem',
+							'position' => 1,
+							'item'     => [
+								'@type' => 'TouristAttraction',
+								'name'  => $dest_name,
+							],
+						],
 					],
 				];
 			}
@@ -1167,7 +1184,7 @@ class MM_Schema_Types {
 				$out['maximumAttendeeCapacity'] = (int) $passengers;
 			}
 			if ( $str( 'trip_tourist_type' ) ) {
-				$ttypes = array_map( 'trim', explode( ',', $str( 'trip_tourist_type' ) ) );
+				$ttypes             = array_map( 'trim', explode( ',', $str( 'trip_tourist_type' ) ) );
 				$out['touristType'] = count( $ttypes ) === 1 ? $ttypes[0] : array_values( $ttypes );
 			}
 			if ( $str( 'trip_departure_time' ) ) {
@@ -1194,10 +1211,14 @@ class MM_Schema_Types {
 			$lat = $str( 'destination_lat' );
 			$lng = $str( 'destination_lng' );
 			if ( $lat && $lng && is_numeric( $lat ) && is_numeric( $lng ) ) {
-				$out['geo'] = [ '@type' => 'GeoCoordinates', 'latitude' => (float) $lat, 'longitude' => (float) $lng ];
+				$out['geo'] = [
+					'@type'     => 'GeoCoordinates',
+					'latitude'  => (float) $lat,
+					'longitude' => (float) $lng,
+				];
 			}
 			if ( $str( 'destination_tourist_type' ) ) {
-				$ttypes = array_map( 'trim', explode( ',', $str( 'destination_tourist_type' ) ) );
+				$ttypes             = array_map( 'trim', explode( ',', $str( 'destination_tourist_type' ) ) );
 				$out['touristType'] = count( $ttypes ) === 1 ? $ttypes[0] : array_values( $ttypes );
 			}
 			if ( $str( 'destination_map_url' ) ) {
@@ -1208,11 +1229,14 @@ class MM_Schema_Types {
 			}
 			$attractions = $str( 'destination_attractions' );
 			if ( $attractions ) {
-				$names = array_map( 'trim', explode( ',', $attractions ) );
+				$names    = array_map( 'trim', explode( ',', $attractions ) );
 				$includes = [];
 				foreach ( $names as $aname ) {
 					if ( $aname ) {
-						$includes[] = [ '@type' => 'TouristAttraction', 'name' => $aname ];
+						$includes[] = [
+							'@type' => 'TouristAttraction',
+							'name'  => $aname,
+						];
 					}
 				}
 				if ( ! empty( $includes ) ) {
@@ -1230,7 +1254,10 @@ class MM_Schema_Types {
 				$out['bodyType'] = $str( 'vessel_type' );
 			}
 			if ( $str( 'vessel_manufacturer' ) ) {
-				$out['manufacturer'] = [ '@type' => 'Organization', 'name' => $str( 'vessel_manufacturer' ) ];
+				$out['manufacturer'] = [
+					'@type' => 'Organization',
+					'name'  => $str( 'vessel_manufacturer' ),
+				];
 			}
 			$passengers = $str( 'vessel_passengers' );
 			if ( $passengers && is_numeric( $passengers ) ) {
@@ -1239,7 +1266,7 @@ class MM_Schema_Types {
 			$length = $str( 'vessel_length' );
 			$engine = $str( 'vessel_engine' );
 			if ( $length || $engine ) {
-				$parts = array_filter( [ $length, $engine ] );
+				$parts                       = array_filter( [ $length, $engine ] );
 				$out['vehicleConfiguration'] = implode( ', ', $parts );
 			}
 			$amenities = $str( 'vessel_amenities' );
@@ -1247,7 +1274,11 @@ class MM_Schema_Types {
 				$items = array_filter( array_map( 'trim', explode( "\n", $amenities ) ) );
 				$props = [];
 				foreach ( $items as $item ) {
-					$props[] = [ '@type' => 'PropertyValue', 'name' => 'Amenity', 'value' => $item ];
+					$props[] = [
+						'@type' => 'PropertyValue',
+						'name'  => 'Amenity',
+						'value' => $item,
+					];
 				}
 				if ( ! empty( $props ) ) {
 					$out['additionalProperty'] = $props;
@@ -1273,7 +1304,10 @@ class MM_Schema_Types {
 				$out['courseCode'] = $str( 'course_code' );
 			}
 			if ( $str( 'course_provider' ) ) {
-				$out['provider'] = [ '@type' => 'Organization', 'name' => $str( 'course_provider' ) ];
+				$out['provider'] = [
+					'@type' => 'Organization',
+					'name'  => $str( 'course_provider' ),
+				];
 			}
 			$offer = $make_offer( 'course_price', 'course_currency' );
 			if ( $offer ) {
@@ -1313,7 +1347,11 @@ class MM_Schema_Types {
 			$lat = $str( 'business_lat' );
 			$lng = $str( 'business_lng' );
 			if ( $lat && $lng && is_numeric( $lat ) && is_numeric( $lng ) ) {
-				$out['geo'] = [ '@type' => 'GeoCoordinates', 'latitude' => (float) $lat, 'longitude' => (float) $lng ];
+				$out['geo'] = [
+					'@type'     => 'GeoCoordinates',
+					'latitude'  => (float) $lat,
+					'longitude' => (float) $lng,
+				];
 			}
 		}
 
@@ -1338,7 +1376,7 @@ class MM_Schema_Types {
 				$out['url'] = $org_url;
 			}
 			if ( $str( 'org_area_served' ) ) {
-				$areas = array_map( 'trim', explode( ',', $str( 'org_area_served' ) ) );
+				$areas             = array_map( 'trim', explode( ',', $str( 'org_area_served' ) ) );
 				$out['areaServed'] = count( $areas ) === 1 ? $areas[0] : array_values( $areas );
 			}
 		}

@@ -116,7 +116,7 @@ class MM_Upload_Notify {
 		// Group items by user_id so each uploader gets their own section.
 		$by_user = [];
 		foreach ( $batch as $item ) {
-			$uid = (int) ( $item['user_id'] ?? 0 );
+			$uid               = (int) ( $item['user_id'] ?? 0 );
 			$by_user[ $uid ][] = (int) $item['attachment_id'];
 		}
 
@@ -124,7 +124,7 @@ class MM_Upload_Notify {
 
 		// -----------------------------------------------------------------
 		// 1. Email to each individual uploader (non-admin uploaders only;
-		//    admin gets a combined email below to avoid duplicates).
+		// admin gets a combined email below to avoid duplicates).
 		// -----------------------------------------------------------------
 		foreach ( $by_user as $uid => $ids ) {
 			$user = $uid > 0 ? get_userdata( $uid ) : false;
@@ -185,13 +185,13 @@ class MM_Upload_Notify {
 			// Build body with per-user grouping for the admin.
 			$intro_lines = [ __( 'The following images were uploaded to the Media Library:', 'metamanager' ), '' ];
 			foreach ( $by_user as $uid => $ids ) {
-				$user        = $uid > 0 ? get_userdata( $uid ) : false;
-				$uploader    = $user ? $user->display_name . ' <' . $user->user_email . '>' : __( '(unknown user)', 'metamanager' );
+				$user     = $uid > 0 ? get_userdata( $uid ) : false;
+				$uploader = $user ? $user->display_name . ' <' . $user->user_email . '>' : __( '(unknown user)', 'metamanager' );
 				/* translators: %s: uploader display name and email address */
 				$intro_lines[] = sprintf( __( 'Uploaded by: %s', 'metamanager' ), $uploader );
 				foreach ( $ids as $id ) {
-					$title = html_entity_decode( (string) get_the_title( $id ), ENT_QUOTES );
-					$url   = wp_get_attachment_url( $id );
+					$title         = html_entity_decode( (string) get_the_title( $id ), ENT_QUOTES );
+					$url           = wp_get_attachment_url( $id );
 					$intro_lines[] = '  • ' . ( $title ?: '#' . $id ) . ( $url ? ' — ' . $url : '' );
 				}
 				$intro_lines[] = '';
@@ -228,8 +228,8 @@ class MM_Upload_Notify {
 
 			$body_lines = [ __( 'The following images were uploaded to the Media Library:', 'metamanager' ), '' ];
 			foreach ( $all_ids as $id ) {
-				$title = html_entity_decode( (string) get_the_title( $id ), ENT_QUOTES );
-				$url   = wp_get_attachment_url( $id );
+				$title        = html_entity_decode( (string) get_the_title( $id ), ENT_QUOTES );
+				$url          = wp_get_attachment_url( $id );
 				$body_lines[] = '  • ' . ( $title ?: '#' . $id ) . ( $url ? ' — ' . $url : '' );
 			}
 			$body_lines[] = '';
@@ -365,15 +365,21 @@ class MM_Upload_Notify {
 				),
 				sprintf(
 					/* translators: %s: date and time when the email failed */
-					esc_html__( 'Failed: %s', 'metamanager' ), esc_html( $date )
+					esc_html__( 'Failed: %s', 'metamanager' ),
+					esc_html( $date )
 				),
 				sprintf(
 					/* translators: %d: number of send retry attempts */
-					esc_html__( 'Retries: %d', 'metamanager' ), absint( $retries )
+					esc_html__( 'Retries: %d', 'metamanager' ),
+					absint( $retries )
 				),
 				esc_html__( 'The email will not be re-attempted automatically.', 'metamanager' ),
-				esc_attr( $key ), esc_attr( $retry_nonce ),   esc_html__( 'Retry', 'metamanager' ),
-				esc_attr( $key ), esc_attr( $dismiss_nonce ), esc_html__( 'Dismiss', 'metamanager' )
+				esc_attr( $key ),
+				esc_attr( $retry_nonce ),
+				esc_html__( 'Retry', 'metamanager' ),
+				esc_attr( $key ),
+				esc_attr( $dismiss_nonce ),
+				esc_html__( 'Dismiss', 'metamanager' )
 			);
 		}
 

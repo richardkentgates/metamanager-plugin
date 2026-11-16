@@ -44,14 +44,14 @@ class MM_Mod_Author extends MM_Mod_Base {
 	}
 
 	private function build_person_node( \WP_User $author, MM_Site_Settings $settings ): array {
-		$meta        = $settings->get_user_meta( $author->ID );
-		$author_url  = get_author_posts_url( $author->ID );
+		$meta       = $settings->get_user_meta( $author->ID );
+		$author_url = get_author_posts_url( $author->ID );
 
 		$node = [
-			'@type'       => 'Person',
-			'@id'         => $author_url . '#person',
-			'name'        => $author->display_name,
-			'url'         => $author_url,
+			'@type' => 'Person',
+			'@id'   => $author_url . '#person',
+			'name'  => $author->display_name,
+			'url'   => $author_url,
 		];
 
 		if ( $author->description ) {

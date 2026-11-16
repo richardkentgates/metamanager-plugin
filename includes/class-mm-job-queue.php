@@ -116,7 +116,7 @@ class MM_Job_Queue {
 		$dir = ( 'compression' === $type ) ? MM_JOB_COMPRESS : MM_JOB_META;
 
 		// Check for unclaimed pending jobs for this attachment+size.
-		$pending = new \GlobIterator( $dir . $attachment_id . '-' . $size . '-*.json' );
+		$pending     = new \GlobIterator( $dir . $attachment_id . '-' . $size . '-*.json' );
 		$had_pending = $pending->count() > 0;
 
 		if ( $had_pending ) {
@@ -124,12 +124,14 @@ class MM_Job_Queue {
 			if ( 'compression' === $type ) {
 				self::push_queue_notice( 'skipped', $type, $attachment_id, $size );
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional operational log, not debug output
-				error_log( sprintf(
-					'[Metamanager] %s job skipped — already pending: attachment %d, size %s.',
-					ucfirst( $type ),
-					$attachment_id,
-					$size
-				) );
+				error_log(
+					sprintf(
+						'[Metamanager] %s job skipped — already pending: attachment %d, size %s.',
+						ucfirst( $type ),
+						$attachment_id,
+						$size
+					)
+				);
 				return 'skipped';
 			}
 			// Metadata jobs run in sequence — write the new job and notify.
@@ -145,17 +147,20 @@ class MM_Job_Queue {
 			}
 		}
 
-		$job = array_merge( [
-			'attachment_id'  => $attachment_id,
-			'image_name'     => pathinfo( get_attached_file( $attachment_id ) ?: '', PATHINFO_FILENAME ),
-			'job_type'       => $type,
-			'file_path'      => $file_path,
-			'size'           => $size,
-			'dimensions'     => $dimensions,
-			'submitted_at'   => current_time( 'mysql' ),
-			'optimize_level' => (int) get_option( 'mm_compress_level', 2 ),
-			'metadata'       => MM_Metadata::get_fields_for_job( $attachment_id ),
-		], $extra );
+		$job = array_merge(
+			[
+				'attachment_id'  => $attachment_id,
+				'image_name'     => pathinfo( get_attached_file( $attachment_id ) ?: '', PATHINFO_FILENAME ),
+				'job_type'       => $type,
+				'file_path'      => $file_path,
+				'size'           => $size,
+				'dimensions'     => $dimensions,
+				'submitted_at'   => current_time( 'mysql' ),
+				'optimize_level' => (int) get_option( 'mm_compress_level', 2 ),
+				'metadata'       => MM_Metadata::get_fields_for_job( $attachment_id ),
+			],
+			$extra
+		);
 
 		$uid      = wp_generate_password( 6, false, false );
 		$filename = $dir . $attachment_id . '-' . $size . '-' . time() . '-' . $uid . '.json';
@@ -165,12 +170,14 @@ class MM_Job_Queue {
 
 		if ( false === $bytes || 0 === $bytes ) {
 			// phpcs:ignore WordPress.PHP.NoSilencedErrors
-			@error_log( sprintf(
-				'[Metamanager] Failed to write job file: %s (attachment %d, size %s)',
-				$filename,
-				$attachment_id,
-				$size
-			) );
+			@error_log(
+				sprintf(
+					'[Metamanager] Failed to write job file: %s (attachment %d, size %s)',
+					$filename,
+					$attachment_id,
+					$size
+				)
+			);
 			return 'failed';
 		}
 
@@ -308,7 +315,7 @@ class MM_Job_Queue {
 	 * @return array Unmodified metadata (we are a passthrough filter).
 	 */
 	public static function on_upload( array $metadata, int $attachment_id ): array {
-		$mime = (string) get_post_mime_type( $attachment_id );
+		$mime     = (string) get_post_mime_type( $attachment_id );
 		$is_image = wp_attachment_is_image( $attachment_id );
 		$is_video = MM_Metadata::is_video_mime( $mime );
 		$is_audio = MM_Metadata::is_audio_mime( $mime );
@@ -410,7 +417,10 @@ class MM_Job_Queue {
 	 * @return array[ 'compression' => [...], 'metadata' => [...] ]
 	 */
 	public static function get_pending_jobs(): array {
-		$result = [ 'compression' => [], 'metadata' => [] ];
+		$result = [
+			'compression' => [],
+			'metadata'    => [],
+		];
 
 		foreach ( [
 			'compression' => MM_JOB_COMPRESS,
@@ -463,7 +473,10 @@ class MM_Job_Queue {
 			(int) $row->attachment_id,
 			$row->file_path,
 			$row->size,
-			[ 'trigger' => 'requeue', 'requeue_source_id' => $job_id ]
+			[
+				'trigger'           => 'requeue',
+				'requeue_source_id' => $job_id,
+			]
 		);
 
 		return true;

@@ -76,10 +76,10 @@ class MM_Mod_Schema extends MM_Mod_Base {
 
 	private function add_website_node( array &$data, MM_Site_Settings $settings ): void {
 		$node = [
-			'@type'  => 'WebSite',
-			'@id'    => $this->site_id( 'website' ),
-			'url'    => $this->site_url(),
-			'name'   => get_bloginfo( 'name' ),
+			'@type' => 'WebSite',
+			'@id'   => $this->site_id( 'website' ),
+			'url'   => $this->site_url(),
+			'name'  => get_bloginfo( 'name' ),
 		];
 		if ( get_bloginfo( 'description' ) ) {
 			$node['description'] = get_bloginfo( 'description' );
@@ -119,21 +119,27 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			return;
 		}
 
-		$nav_items = array_map( function ( $item ) {
-			return [
-				'@type'    => 'SiteNavigationElement',
-				'name'     => $item['name'],
-				'url'      => $item['url'],
-				'position' => $item['position'],
-			];
-		}, $menu['items'] );
+		$nav_items = array_map(
+			function ( $item ) {
+				return [
+					'@type'    => 'SiteNavigationElement',
+					'name'     => $item['name'],
+					'url'      => $item['url'],
+					'position' => $item['position'],
+				];
+			},
+			$menu['items']
+		);
 
-		$this->add_node( $data, [
-			'@type'   => 'SiteNavigationElement',
-			'@id'     => $this->site_id( 'navigation' ),
-			'name'    => $menu['name'],
-			'hasPart' => $nav_items,
-		] );
+		$this->add_node(
+			$data,
+			[
+				'@type'   => 'SiteNavigationElement',
+				'@id'     => $this->site_id( 'navigation' ),
+				'name'    => $menu['name'],
+				'hasPart' => $nav_items,
+			]
+		);
 
 		// Link WebSite node to navigation.
 		foreach ( $data['schema'] as &$node ) {
@@ -195,11 +201,11 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		$node = [
-			'@type'       => $type,
-			'@id'         => $url . '#webpage',
-			'url'         => $url,
-			'name'        => $title,
-			'isPartOf'    => [ '@id' => $this->site_id( 'website' ) ],
+			'@type'    => $type,
+			'@id'      => $url . '#webpage',
+			'url'      => $url,
+			'name'     => $title,
+			'isPartOf' => [ '@id' => $this->site_id( 'website' ) ],
 		];
 
 		if ( $entity_type ) {
@@ -239,17 +245,22 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		if ( 'CollectionPage' === $type && $context->is_singular() ) {
 			$post = $context->get_post();
 			if ( $post ) {
-				$events = get_posts( [
-					'post_type'      => 'mm_event',
-					'post_status'    => 'publish',
-					'posts_per_page' => 50,
-					'orderby'        => 'date',
-					'order'          => 'DESC',
-				] );
+				$events = get_posts(
+					[
+						'post_type'      => 'mm_event',
+						'post_status'    => 'publish',
+						'posts_per_page' => 50,
+						'orderby'        => 'date',
+						'order'          => 'DESC',
+					]
+				);
 				if ( ! empty( $events ) ) {
-					$node['hasPart'] = array_map( function( $e ) {
-						return [ '@id' => get_permalink( $e->ID ) . '#event' ];
-					}, $events );
+					$node['hasPart'] = array_map(
+						function ( $e ) {
+							return [ '@id' => get_permalink( $e->ID ) . '#event' ];
+						},
+						$events
+					);
 				}
 			}
 		}
@@ -261,7 +272,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 
 		// Date signals (singular posts).
 		if ( $context->is_singular() && $context->get_post() ) {
-			$post = $context->get_post();
+			$post                  = $context->get_post();
 			$node['datePublished'] = get_the_date( 'c', $post );
 			$node['dateModified']  = get_the_modified_date( 'c', $post );
 		}
@@ -270,17 +281,25 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		$og_image = $this->get_og_image( $data );
 		if ( $og_image ) {
 			$node['primaryImageOfPage'] = [ '@id' => $url . '#primaryimage' ];
-			$image_node = array(
+			$image_node                 = array(
 				'@type' => 'ImageObject',
 				'@id'   => $url . '#primaryimage',
 				'url'   => $og_image['url'],
 			);
 			// Only emit width/height as QuantitativeValue when valid positive integers.
 			if ( ! empty( $og_image['width'] ) && is_numeric( $og_image['width'] ) && (int) $og_image['width'] > 0 ) {
-				$image_node['width'] = array( '@type' => 'QuantitativeValue', 'value' => (int) $og_image['width'], 'unitCode' => 'PIX' );
+				$image_node['width'] = array(
+					'@type'    => 'QuantitativeValue',
+					'value'    => (int) $og_image['width'],
+					'unitCode' => 'PIX',
+				);
 			}
 			if ( ! empty( $og_image['height'] ) && is_numeric( $og_image['height'] ) && (int) $og_image['height'] > 0 ) {
-				$image_node['height'] = array( '@type' => 'QuantitativeValue', 'value' => (int) $og_image['height'], 'unitCode' => 'PIX' );
+				$image_node['height'] = array(
+					'@type'    => 'QuantitativeValue',
+					'value'    => (int) $og_image['height'],
+					'unitCode' => 'PIX',
+				);
 			}
 			$this->add_node( $data, $image_node );
 		}
@@ -318,12 +337,12 @@ class MM_Mod_Schema extends MM_Mod_Base {
 					}
 				}
 				// The post itself.
-			$meta  = $settings->get_post_meta( $post->ID );
-			// Read breadcrumb label from CPT meta first, then legacy _mm_meta.
-			$label = get_post_meta( $post->ID, 'mm_breadcrumb_label', true );
-			if ( ! $label ) {
-				$label = ! empty( $meta['breadcrumb_label'] ) ? $meta['breadcrumb_label'] : get_the_title( $post );
-			}
+				$meta = $settings->get_post_meta( $post->ID );
+				// Read breadcrumb label from CPT meta first, then legacy _mm_meta.
+				$label = get_post_meta( $post->ID, 'mm_breadcrumb_label', true );
+				if ( ! $label ) {
+					$label = ! empty( $meta['breadcrumb_label'] ) ? $meta['breadcrumb_label'] : get_the_title( $post );
+				}
 				$items[] = $this->crumb( $pos++, $label, get_permalink( $post ) );
 			}
 		} elseif ( $context->is_tax() || $context->is_category() || $context->is_tag() ) {
@@ -346,9 +365,9 @@ class MM_Mod_Schema extends MM_Mod_Base {
 				}
 			}
 		} elseif ( $context->is_post_type_archive() ) {
-			$pt   = $context->get_post_type();
-			$name = get_post_type_object( $pt ) ? get_post_type_object( $pt )->labels->name : $pt;
-			$url  = get_post_type_archive_link( $pt ) ?: '';
+			$pt      = $context->get_post_type();
+			$name    = get_post_type_object( $pt ) ? get_post_type_object( $pt )->labels->name : $pt;
+			$url     = get_post_type_archive_link( $pt ) ?: '';
 			$items[] = $this->crumb( $pos++, $name, $url );
 		} elseif ( $context->is_author() ) {
 			$author  = $context->get_author();
@@ -360,11 +379,14 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		$url = $this->current_url();
-		$this->add_node( $data, [
-			'@type'           => 'BreadcrumbList',
-			'@id'             => $url . '#breadcrumb',
-			'itemListElement' => $items,
-		] );
+		$this->add_node(
+			$data,
+			[
+				'@type'           => 'BreadcrumbList',
+				'@id'             => $url . '#breadcrumb',
+				'itemListElement' => $items,
+			]
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -409,7 +431,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		if ( in_array( $type, self::NON_CREATIVEWORK_TYPES, true ) ) {
 			// Place/Intangible, not CreativeWork: name instead of headline,
 			// and no date/isPartOf fields (not in their vocabulary).
-			$node['name']            = get_the_title( $post );
+			$node['name']             = get_the_title( $post );
 			$node['mainEntityOfPage'] = [ '@id' => $url . '#webpage' ];
 		} else {
 			$node['headline']      = get_the_title( $post );
@@ -451,7 +473,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 		}
 		if ( empty( $schema_fields ) ) {
-			$post_meta = $settings->get_post_meta( $post->ID );
+			$post_meta     = $settings->get_post_meta( $post->ID );
 			$schema_fields = $post_meta['schema_fields'] ?? [];
 		}
 		if ( 'Product' === $type && $this->is_woocommerce_active() ) {
@@ -496,11 +518,15 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			// Destination reference.
 			$dest_id = (int) get_post_meta( $post->ID, '_mm_destination_id', true );
 			if ( $dest_id && get_post_status( $dest_id ) === 'publish' ) {
-				$dest_url = get_permalink( $dest_id );
+				$dest_url          = get_permalink( $dest_id );
 				$node['itinerary'] = [
 					'@type'           => 'ItemList',
 					'itemListElement' => [
-						[ '@type' => 'ListItem', 'position' => 1, 'item' => [ '@id' => $dest_url . '#touristdestination' ] ],
+						[
+							'@type'    => 'ListItem',
+							'position' => 1,
+							'item'     => [ '@id' => $dest_url . '#touristdestination' ],
+						],
 					],
 				];
 			}
@@ -547,12 +573,15 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			$url  = is_string( $url ) ? $url : '';
 		}
 
-		$this->add_node( $data, [
-			'@type'           => 'ItemList',
-			'@id'             => $url . '#itemlist',
-			'name'            => $name,
-			'itemListElement' => $items,
-		] );
+		$this->add_node(
+			$data,
+			[
+				'@type'           => 'ItemList',
+				'@id'             => $url . '#itemlist',
+				'name'            => $name,
+				'itemListElement' => $items,
+			]
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -584,10 +613,16 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	private function get_og_image( array $data ): ?array {
 		foreach ( $data['meta'] as $mt ) {
 			if ( ( $mt['property'] ?? '' ) === 'og:image' && $mt['content'] ) {
-				$img = [ 'url' => $mt['content'], 'width' => 0, 'height' => 0 ];
+				$img = [
+					'url'    => $mt['content'],
+					'width'  => 0,
+					'height' => 0,
+				];
 				foreach ( $data['meta'] as $m2 ) {
-					if ( ( $m2['property'] ?? '' ) === 'og:image:width' )  { $img['width']  = (int) $m2['content']; }
-					if ( ( $m2['property'] ?? '' ) === 'og:image:height' ) { $img['height'] = (int) $m2['content']; }
+					if ( ( $m2['property'] ?? '' ) === 'og:image:width' ) {
+						$img['width'] = (int) $m2['content']; }
+					if ( ( $m2['property'] ?? '' ) === 'og:image:height' ) {
+						$img['height'] = (int) $m2['content']; }
 				}
 				return $img;
 			}
@@ -668,7 +703,10 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 		}
 		if ( $brand ) {
-			$out['brand'] = [ '@type' => 'Brand', 'name' => $brand ];
+			$out['brand'] = [
+				'@type' => 'Brand',
+				'name'  => $brand,
+			];
 		}
 
 		return $out;
@@ -745,7 +783,7 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		// Add featured image schema.
-		$src = wp_get_attachment_image_src( $thumb_id, 'full' );
+		$src  = wp_get_attachment_image_src( $thumb_id, 'full' );
 		$item = [
 			'type'          => 'image',
 			'url'           => $thumb_url,
@@ -815,37 +853,52 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		if ( MM_Metadata::is_video_mime( $mime ) ) {
-			$this->add_video_schema( $data, [
-				'type'          => 'video',
-				'url'           => $url,
-				'attachment_id' => $post->ID,
-				'duration'      => (int) get_post_meta( $post->ID, MM_Metadata::META_DURATION, true ),
-			], $post );
+			$this->add_video_schema(
+				$data,
+				[
+					'type'          => 'video',
+					'url'           => $url,
+					'attachment_id' => $post->ID,
+					'duration'      => (int) get_post_meta( $post->ID, MM_Metadata::META_DURATION, true ),
+				],
+				$post
+			);
 		} elseif ( MM_Metadata::is_audio_mime( $mime ) ) {
-			$this->add_audio_schema( $data, [
-				'type'          => 'audio',
-				'url'           => $url,
-				'attachment_id' => $post->ID,
-				'duration'      => (int) get_post_meta( $post->ID, MM_Metadata::META_DURATION, true ),
-			], $post );
+			$this->add_audio_schema(
+				$data,
+				[
+					'type'          => 'audio',
+					'url'           => $url,
+					'attachment_id' => $post->ID,
+					'duration'      => (int) get_post_meta( $post->ID, MM_Metadata::META_DURATION, true ),
+				],
+				$post
+			);
 		} elseif ( MM_Metadata::is_pdf_mime( $mime ) ) {
-			$this->add_document_schema( $data, [
-				'type'          => 'document',
-				'url'           => $url,
-				'attachment_id' => $post->ID,
-			] );
+			$this->add_document_schema(
+				$data,
+				[
+					'type'          => 'document',
+					'url'           => $url,
+					'attachment_id' => $post->ID,
+				]
+			);
 		} elseif ( wp_attachment_is_image( $post->ID ) ) {
 			$src = wp_get_attachment_image_src( $post->ID, 'full' );
 			if ( $src ) {
-				$this->add_image_schema( $data, [
-					'type'          => 'image',
-					'url'           => $src[0],
-					'attachment_id' => $post->ID,
-					'width'         => $src[1],
-					'height'        => $src[2],
-					'alt'           => (string) get_post_meta( $post->ID, '_wp_attachment_image_alt', true ),
-					'caption'       => trim( $post->post_excerpt ),
-				], $post );
+				$this->add_image_schema(
+					$data,
+					[
+						'type'          => 'image',
+						'url'           => $src[0],
+						'attachment_id' => $post->ID,
+						'width'         => $src[1],
+						'height'        => $src[2],
+						'alt'           => (string) get_post_meta( $post->ID, '_wp_attachment_image_alt', true ),
+						'caption'       => trim( $post->post_excerpt ),
+					],
+					$post
+				);
 			}
 		}
 	}
@@ -874,10 +927,18 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		];
 
 		if ( $item['width'] && is_numeric( $item['width'] ) && (int) $item['width'] > 0 ) {
-			$node['width'] = array( '@type' => 'QuantitativeValue', 'value' => (int) $item['width'], 'unitCode' => 'PIX' );
+			$node['width'] = array(
+				'@type'    => 'QuantitativeValue',
+				'value'    => (int) $item['width'],
+				'unitCode' => 'PIX',
+			);
 		}
 		if ( $item['height'] && is_numeric( $item['height'] ) && (int) $item['height'] > 0 ) {
-			$node['height'] = array( '@type' => 'QuantitativeValue', 'value' => (int) $item['height'], 'unitCode' => 'PIX' );
+			$node['height'] = array(
+				'@type'    => 'QuantitativeValue',
+				'value'    => (int) $item['height'],
+				'unitCode' => 'PIX',
+			);
 		}
 
 		// Enrich from attachment metadata.
@@ -898,7 +959,10 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			// Attribution.
 			$creator = $meta( MM_Metadata::META_CREATOR );
 			if ( '' !== $creator ) {
-				$node['creator'] = [ '@type' => 'Person', 'name' => $creator ];
+				$node['creator'] = [
+					'@type' => 'Person',
+					'name'  => $creator,
+				];
 			}
 			$copyright = $meta( MM_Metadata::META_COPYRIGHT );
 			if ( '' !== $copyright ) {
@@ -906,7 +970,10 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			}
 			$owner = $meta( MM_Metadata::META_OWNER );
 			if ( '' !== $owner ) {
-				$node['copyrightHolder'] = [ '@type' => 'Organization', 'name' => $owner ];
+				$node['copyrightHolder'] = [
+					'@type' => 'Organization',
+					'name'  => $owner,
+				];
 			}
 
 			// Classification.
@@ -930,7 +997,10 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			// Thumbnail (medium size if different from full).
 			$thumb = wp_get_attachment_image_src( $item['attachment_id'], 'medium' );
 			if ( $thumb && $thumb[0] !== $item['url'] ) {
-				$node['thumbnail'] = [ '@type' => 'ImageObject', 'url' => $thumb[0] ];
+				$node['thumbnail'] = [
+					'@type' => 'ImageObject',
+					'url'   => $thumb[0],
+				];
 			}
 		} else {
 			// Minimal schema from HTML only.
@@ -957,11 +1027,11 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		}
 
 		$node = [
-			'@type'       => 'VideoObject',
-			'@id'         => $item['url'] . '#video',
-			'url'         => $schema_url,
-			'contentUrl'  => $schema_url,
-			'uploadDate'  => gmdate( 'Y-m-d', strtotime( $post->post_date_gmt ) ),
+			'@type'      => 'VideoObject',
+			'@id'        => $item['url'] . '#video',
+			'url'        => $schema_url,
+			'contentUrl' => $schema_url,
+			'uploadDate' => gmdate( 'Y-m-d', strtotime( $post->post_date_gmt ) ),
 		];
 
 		if ( $item['attachment_id'] ) {
@@ -1105,11 +1175,11 @@ class MM_Mod_Schema extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	private function add_location_to_node( array &$node, int $attachment_id ): void {
-		$lat   = (string) get_post_meta( $attachment_id, MM_Metadata::META_GPS_LAT, true );
-		$lon   = (string) get_post_meta( $attachment_id, MM_Metadata::META_GPS_LON, true );
-		$alt_m = (string) get_post_meta( $attachment_id, MM_Metadata::META_GPS_ALT, true );
-		$city  = (string) get_post_meta( $attachment_id, MM_Metadata::META_CITY, true );
-		$state = (string) get_post_meta( $attachment_id, MM_Metadata::META_STATE, true );
+		$lat     = (string) get_post_meta( $attachment_id, MM_Metadata::META_GPS_LAT, true );
+		$lon     = (string) get_post_meta( $attachment_id, MM_Metadata::META_GPS_LON, true );
+		$alt_m   = (string) get_post_meta( $attachment_id, MM_Metadata::META_GPS_ALT, true );
+		$city    = (string) get_post_meta( $attachment_id, MM_Metadata::META_CITY, true );
+		$state   = (string) get_post_meta( $attachment_id, MM_Metadata::META_STATE, true );
 		$country = (string) get_post_meta( $attachment_id, MM_Metadata::META_COUNTRY, true );
 
 		$loc_parts = array_filter( [ $city, $state, $country ] );
@@ -1123,14 +1193,20 @@ class MM_Mod_Schema extends MM_Mod_Base {
 			if ( '' !== $alt_m ) {
 				$geo['elevation'] = (float) $alt_m;
 			}
-			$place = [ '@type' => 'Place', 'geo' => $geo ];
+			$place = [
+				'@type' => 'Place',
+				'geo'   => $geo,
+			];
 			if ( $loc_parts ) {
 				$place['name'] = implode( ', ', $loc_parts );
 			}
 			$node['locationCreated'] = $place;
 			$node['contentLocation'] = $place;
 		} elseif ( $loc_parts ) {
-			$place = [ '@type' => 'Place', 'name' => implode( ', ', $loc_parts ) ];
+			$place                   = [
+				'@type' => 'Place',
+				'name'  => implode( ', ', $loc_parts ),
+			];
 			$node['locationCreated'] = $place;
 			$node['contentLocation'] = $place;
 		}
@@ -1141,9 +1217,12 @@ class MM_Mod_Schema extends MM_Mod_Base {
 		$m = (int) floor( ( $seconds % 3600 ) / 60 );
 		$s = $seconds % 60;
 		$d = 'PT';
-		if ( $h ) { $d .= $h . 'H'; }
-		if ( $m ) { $d .= $m . 'M'; }
-		if ( $s || ( ! $h && ! $m ) ) { $d .= $s . 'S'; }
+		if ( $h ) {
+			$d .= $h . 'H'; }
+		if ( $m ) {
+			$d .= $m . 'M'; }
+		if ( $s || ( ! $h && ! $m ) ) {
+			$d .= $s . 'S'; }
 		return $d;
 	}
 }

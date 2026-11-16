@@ -35,7 +35,7 @@ $toggles = [
 		'label' => 'X-Pingback HTTP Header',
 		'desc'  => 'Removes the <code>X-Pingback</code> server header.',
 	],
-	'remove_x_powered_by'   => [
+	'remove_x_powered_by'    => [
 		'label' => 'X-Powered-By HTTP Header',
 		'desc'  => 'Removes <code>X-Powered-By: PHP</code> from server responses.',
 	],

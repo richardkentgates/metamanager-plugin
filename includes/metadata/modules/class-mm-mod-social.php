@@ -27,7 +27,13 @@ class MM_Mod_Social extends MM_Mod_Base {
 		// Pinterest site verification.
 		$pinterest_verify = $settings->get( 'social.pinterest_verify', '' );
 		if ( $pinterest_verify ) {
-			$this->add_meta( $data, [ 'name' => 'p:domain_verify', 'content' => sanitize_text_field( $pinterest_verify ) ] );
+			$this->add_meta(
+				$data,
+				[
+					'name'    => 'p:domain_verify',
+					'content' => sanitize_text_field( $pinterest_verify ),
+				]
+			);
 		}
 	}
 
@@ -41,7 +47,11 @@ class MM_Mod_Social extends MM_Mod_Base {
 		$description = '';
 		$og_type     = 'website';
 		$url         = home_url( add_query_arg( [] ) );
-		$image       = [ 'url' => '', 'width' => 0, 'height' => 0 ];
+		$image       = [
+			'url'    => '',
+			'width'  => 0,
+			'height' => 0,
+		];
 		$article     = [];
 		$author_user = null;
 
@@ -83,35 +93,35 @@ class MM_Mod_Social extends MM_Mod_Base {
 					}
 				}
 
-			// Article type for blog posts only — pages get 'website'.
-			if ( 'post' === $post->post_type ) {
-				$og_type = 'article';
-				$author_user = get_userdata( (int) $post->post_author );
+				// Article type for blog posts only — pages get 'website'.
+				if ( 'post' === $post->post_type ) {
+					$og_type     = 'article';
+					$author_user = get_userdata( (int) $post->post_author );
 
-				$cats = get_the_category( $post->ID );
-				$tags = get_the_tags( $post->ID );
+					$cats = get_the_category( $post->ID );
+					$tags = get_the_tags( $post->ID );
 
-				$article = [
-					'published_time' => get_the_date( 'c', $post ),
-					'modified_time'  => get_the_modified_date( 'c', $post ),
-					'author'         => $author_user ? get_author_posts_url( $author_user->ID ) : '',
-					'section'        => $cats ? $cats[0]->name : '',
-					'tags'           => $tags ? wp_list_pluck( $tags, 'name' ) : [],
-				];
-			} elseif ( 'product' === $post->post_type ) {
-				// WooCommerce product.
-				$og_type = 'product';
-			} else {
-				// Pages and other non-article types → website.
-				$og_type = 'website';
-			}
+					$article = [
+						'published_time' => get_the_date( 'c', $post ),
+						'modified_time'  => get_the_modified_date( 'c', $post ),
+						'author'         => $author_user ? get_author_posts_url( $author_user->ID ) : '',
+						'section'        => $cats ? $cats[0]->name : '',
+						'tags'           => $tags ? wp_list_pluck( $tags, 'name' ) : [],
+					];
+				} elseif ( 'product' === $post->post_type ) {
+					// WooCommerce product.
+					$og_type = 'product';
+				} else {
+					// Pages and other non-article types → website.
+					$og_type = 'website';
+				}
 
-			// Front page overrides — must be 'website'.
-			if ( $context->is_front_page() ) {
-				$og_type  = 'website';
-				$article  = [];
-				$url      = home_url( '/' );
-			}
+				// Front page overrides — must be 'website'.
+				if ( $context->is_front_page() ) {
+					$og_type = 'website';
+					$article = [];
+					$url     = home_url( '/' );
+				}
 			}
 		} elseif ( $context->is_front_page() || $context->is_home() ) {
 			$url   = home_url( '/' );
@@ -148,26 +158,86 @@ class MM_Mod_Social extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	private function emit_og( array &$data, array $r, MM_Page_Context $context, MM_Site_Settings $settings ): void {
-		$this->add_meta( $data, [ 'property' => 'og:type',        'content' => $r['og_type'] ] );
-		$this->add_meta( $data, [ 'property' => 'og:title',       'content' => $r['title'] ] );
-		$this->add_meta( $data, [ 'property' => 'og:url',         'content' => $r['url'] ] );
-		$this->add_meta( $data, [ 'property' => 'og:locale',      'content' => $settings->get( 'social.og_locale', 'en_US' ) ] );
-		$this->add_meta( $data, [ 'property' => 'og:site_name',   'content' => get_bloginfo( 'name' ) ] );
+		$this->add_meta(
+			$data,
+			[
+				'property' => 'og:type',
+				'content'  => $r['og_type'],
+			]
+		);
+		$this->add_meta(
+			$data,
+			[
+				'property' => 'og:title',
+				'content'  => $r['title'],
+			]
+		);
+		$this->add_meta(
+			$data,
+			[
+				'property' => 'og:url',
+				'content'  => $r['url'],
+			]
+		);
+		$this->add_meta(
+			$data,
+			[
+				'property' => 'og:locale',
+				'content'  => $settings->get( 'social.og_locale', 'en_US' ),
+			]
+		);
+		$this->add_meta(
+			$data,
+			[
+				'property' => 'og:site_name',
+				'content'  => get_bloginfo( 'name' ),
+			]
+		);
 
 		if ( $r['description'] ) {
-			$this->add_meta( $data, [ 'property' => 'og:description', 'content' => $r['description'] ] );
+			$this->add_meta(
+				$data,
+				[
+					'property' => 'og:description',
+					'content'  => $r['description'],
+				]
+			);
 		}
 
 		// Image — always include dimensions when available.
 		if ( $r['image']['url'] ) {
-			$this->add_meta( $data, [ 'property' => 'og:image',        'content' => $r['image']['url'] ] );
+			$this->add_meta(
+				$data,
+				[
+					'property' => 'og:image',
+					'content'  => $r['image']['url'],
+				]
+			);
 			if ( $r['image']['width'] ) {
-				$this->add_meta( $data, [ 'property' => 'og:image:width',  'content' => (string) $r['image']['width'] ] );
+				$this->add_meta(
+					$data,
+					[
+						'property' => 'og:image:width',
+						'content'  => (string) $r['image']['width'],
+					]
+				);
 			}
 			if ( $r['image']['height'] ) {
-				$this->add_meta( $data, [ 'property' => 'og:image:height', 'content' => (string) $r['image']['height'] ] );
+				$this->add_meta(
+					$data,
+					[
+						'property' => 'og:image:height',
+						'content'  => (string) $r['image']['height'],
+					]
+				);
 			}
-			$this->add_meta( $data, [ 'property' => 'og:image:type',   'content' => $this->mime_from_url( $r['image']['url'] ) ] );
+			$this->add_meta(
+				$data,
+				[
+					'property' => 'og:image:type',
+					'content'  => $this->mime_from_url( $r['image']['url'] ),
+				]
+			);
 		}
 
 		// Video attachment → og:video.
@@ -178,17 +248,53 @@ class MM_Mod_Social extends MM_Mod_Base {
 				$url  = wp_get_attachment_url( $post->ID );
 				if ( $url ) {
 					if ( MM_Metadata::is_video_mime( $mime ) ) {
-						$this->add_meta( $data, [ 'property' => 'og:video',        'content' => $url ] );
+						$this->add_meta(
+							$data,
+							[
+								'property' => 'og:video',
+								'content'  => $url,
+							]
+						);
 						if ( str_starts_with( $url, 'https://' ) ) {
-							$this->add_meta( $data, [ 'property' => 'og:video:secure_url', 'content' => $url ] );
+							$this->add_meta(
+								$data,
+								[
+									'property' => 'og:video:secure_url',
+									'content'  => $url,
+								]
+							);
 						}
-						$this->add_meta( $data, [ 'property' => 'og:video:type',   'content' => $mime ] );
+						$this->add_meta(
+							$data,
+							[
+								'property' => 'og:video:type',
+								'content'  => $mime,
+							]
+						);
 					} elseif ( MM_Metadata::is_audio_mime( $mime ) ) {
-						$this->add_meta( $data, [ 'property' => 'og:audio',        'content' => $url ] );
+						$this->add_meta(
+							$data,
+							[
+								'property' => 'og:audio',
+								'content'  => $url,
+							]
+						);
 						if ( str_starts_with( $url, 'https://' ) ) {
-							$this->add_meta( $data, [ 'property' => 'og:audio:secure_url', 'content' => $url ] );
+							$this->add_meta(
+								$data,
+								[
+									'property' => 'og:audio:secure_url',
+									'content'  => $url,
+								]
+							);
 						}
-						$this->add_meta( $data, [ 'property' => 'og:audio:type',   'content' => $mime ] );
+						$this->add_meta(
+							$data,
+							[
+								'property' => 'og:audio:type',
+								'content'  => $mime,
+							]
+						);
 					}
 				}
 			}
@@ -198,32 +304,71 @@ class MM_Mod_Social extends MM_Mod_Base {
 		if ( 'article' === $r['og_type'] && $r['article'] ) {
 			$a = $r['article'];
 			if ( $a['published_time'] ) {
-				$this->add_meta( $data, [ 'property' => 'article:published_time', 'content' => $a['published_time'] ] );
+				$this->add_meta(
+					$data,
+					[
+						'property' => 'article:published_time',
+						'content'  => $a['published_time'],
+					]
+				);
 			}
 			if ( $a['modified_time'] ) {
-				$this->add_meta( $data, [ 'property' => 'article:modified_time',  'content' => $a['modified_time'] ] );
+				$this->add_meta(
+					$data,
+					[
+						'property' => 'article:modified_time',
+						'content'  => $a['modified_time'],
+					]
+				);
 			}
 			if ( $a['author'] ) {
-				$this->add_meta( $data, [ 'property' => 'article:author',          'content' => $a['author'] ] );
+				$this->add_meta(
+					$data,
+					[
+						'property' => 'article:author',
+						'content'  => $a['author'],
+					]
+				);
 			}
 			if ( $a['section'] ) {
-				$this->add_meta( $data, [ 'property' => 'article:section',         'content' => $a['section'] ] );
+				$this->add_meta(
+					$data,
+					[
+						'property' => 'article:section',
+						'content'  => $a['section'],
+					]
+				);
 			}
 			foreach ( $a['tags'] as $tag ) {
-				$data['meta'][] = [ 'property' => 'article:tag', 'content' => $tag ];
+				$data['meta'][] = [
+					'property' => 'article:tag',
+					'content'  => $tag,
+				];
 			}
 		}
 
 		// Facebook app ID.
 		$fb_app_id = $settings->get( 'social.fb_app_id', '' );
 		if ( $fb_app_id ) {
-			$this->add_meta( $data, [ 'property' => 'fb:app_id', 'content' => $fb_app_id ] );
+			$this->add_meta(
+				$data,
+				[
+					'property' => 'fb:app_id',
+					'content'  => $fb_app_id,
+				]
+			);
 		}
 
 		// Facebook page ID (fb:admins).
 		$fb_page_id = $settings->get( 'social.fb_page_id', '' );
 		if ( $fb_page_id ) {
-			$this->add_meta( $data, [ 'property' => 'fb:admins', 'content' => $fb_page_id ] );
+			$this->add_meta(
+				$data,
+				[
+					'property' => 'fb:admins',
+					'content'  => $fb_page_id,
+				]
+			);
 		}
 	}
 
@@ -236,30 +381,66 @@ class MM_Mod_Social extends MM_Mod_Base {
 			? $settings->get( 'social.twitter_card_type', 'summary_large_image' )
 			: 'summary';
 
-		$this->add_meta( $data, [ 'name' => 'twitter:card',  'content' => $card ] );
-		$this->add_meta( $data, [ 'name' => 'twitter:title', 'content' => $r['title'] ] );
+		$this->add_meta(
+			$data,
+			[
+				'name'    => 'twitter:card',
+				'content' => $card,
+			]
+		);
+		$this->add_meta(
+			$data,
+			[
+				'name'    => 'twitter:title',
+				'content' => $r['title'],
+			]
+		);
 
 		if ( $r['description'] ) {
-			$this->add_meta( $data, [ 'name' => 'twitter:description', 'content' => $r['description'] ] );
+			$this->add_meta(
+				$data,
+				[
+					'name'    => 'twitter:description',
+					'content' => $r['description'],
+				]
+			);
 		}
 
 		if ( $r['image']['url'] ) {
-			$this->add_meta( $data, [ 'name' => 'twitter:image', 'content' => $r['image']['url'] ] );
+			$this->add_meta(
+				$data,
+				[
+					'name'    => 'twitter:image',
+					'content' => $r['image']['url'],
+				]
+			);
 		}
 
 		$site_handle = $settings->get( 'social.twitter_site', '' );
 		if ( $site_handle ) {
 			$handle = '@' . ltrim( $site_handle, '@' );
-			$this->add_meta( $data, [ 'name' => 'twitter:site', 'content' => $handle ] );
+			$this->add_meta(
+				$data,
+				[
+					'name'    => 'twitter:site',
+					'content' => $handle,
+				]
+			);
 		}
 
 		// Per-author twitter handle on articles.
 		if ( $r['author_user'] ) {
 			$author_meta = $settings->get_user_meta( $r['author_user']->ID );
-			$twitter = $author_meta['social']['twitter'] ?? '';
+			$twitter     = $author_meta['social']['twitter'] ?? '';
 			if ( $twitter ) {
 				$handle = '@' . ltrim( $twitter, '@' );
-				$this->add_meta( $data, [ 'name' => 'twitter:creator', 'content' => $handle ] );
+				$this->add_meta(
+					$data,
+					[
+						'name'    => 'twitter:creator',
+						'content' => $handle,
+					]
+				);
 			}
 		}
 	}
@@ -277,12 +458,22 @@ class MM_Mod_Social extends MM_Mod_Base {
 		if ( $url ) {
 			return $this->image_data( 0, $url );
 		}
-		return [ 'url' => '', 'width' => 0, 'height' => 0 ];
+		return [
+			'url'    => '',
+			'width'  => 0,
+			'height' => 0,
+		];
 	}
 
 	private function mime_from_url( string $url ): string {
 		$ext = strtolower( pathinfo( wp_parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
-		$map = [ 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'gif' => 'image/gif', 'webp' => 'image/webp' ];
+		$map = [
+			'jpg'  => 'image/jpeg',
+			'jpeg' => 'image/jpeg',
+			'png'  => 'image/png',
+			'gif'  => 'image/gif',
+			'webp' => 'image/webp',
+		];
 		return $map[ $ext ] ?? 'image/jpeg';
 	}
 }

@@ -38,16 +38,16 @@ defined( 'ABSPATH' ) || exit;
  */
 class MM_Settings {
 
-	const OPTION_COMPRESS_LEVEL         = 'mm_compress_level';
-	const OPTION_NOTIFY_ENABLED         = 'mm_notify_enabled';
-	const OPTION_NOTIFY_EMAIL           = 'mm_notify_email';
-	const OPTION_DELETE_DATA            = 'mm_delete_data_on_uninstall';
-	const OPTION_API_DISABLED           = 'mm_api_disabled';
-	const OPTION_API_ALLOWED_IPS        = 'mm_api_allowed_ips';
-	const OPTION_UPLOAD_NOTIFY_EXTRA    = 'mm_upload_notify_extra_email';
-	const OPTION_AUTO_PROVENANCE        = 'mm_auto_provenance';
-	const OPTION_BATCH_SIZE             = 'mm_batch_size';
-	const OPTION_MAX_REVISIONS          = 'mm_max_revisions';
+	const OPTION_COMPRESS_LEVEL      = 'mm_compress_level';
+	const OPTION_NOTIFY_ENABLED      = 'mm_notify_enabled';
+	const OPTION_NOTIFY_EMAIL        = 'mm_notify_email';
+	const OPTION_DELETE_DATA         = 'mm_delete_data_on_uninstall';
+	const OPTION_API_DISABLED        = 'mm_api_disabled';
+	const OPTION_API_ALLOWED_IPS     = 'mm_api_allowed_ips';
+	const OPTION_UPLOAD_NOTIFY_EXTRA = 'mm_upload_notify_extra_email';
+	const OPTION_AUTO_PROVENANCE     = 'mm_auto_provenance';
+	const OPTION_BATCH_SIZE          = 'mm_batch_size';
+	const OPTION_MAX_REVISIONS       = 'mm_max_revisions';
 
 	// -----------------------------------------------------------------------
 	// Boot
@@ -58,7 +58,7 @@ class MM_Settings {
 		// Metamanager submenus (which use default priority 10), so
 		// Preferences appears at the bottom of the sub-nav stack.
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu' ], 50 );
-		add_action( 'admin_init',  [ __CLASS__, 'register_settings' ] );
+		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
 	}
 
 	// -----------------------------------------------------------------------
