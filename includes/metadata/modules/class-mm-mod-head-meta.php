@@ -5,12 +5,26 @@
  * Per-page robots attributes (noindex, nofollow, noarchive, nosnippet,
  * noimageindex) flow:
  *   per-post meta override  >  per-type global default  >  built-in fallback
+ *
+ * @package Metamanager
  */
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Mod head meta.
+ *
+ * @package Metamanager
+ */
 class MM_Mod_Head_Meta extends MM_Mod_Base {
 
+	/**
+	 * Populate.
+	 *
+	 * @param array            $data Data.
+	 * @param MM_Page_Context  $context Context.
+	 * @param MM_Site_Settings $settings Settings.
+	 */
 	public function populate( array &$data, MM_Page_Context $context, MM_Site_Settings $settings ): void {
 		$title       = $this->resolve_title( $context, $settings );
 		$description = $this->resolve_description( $context, $settings );
@@ -24,16 +38,34 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 
 		// Meta description.
 		if ( $description ) {
-			$this->add_meta( $data, [ 'name' => 'description', 'content' => $description ] );
+			$this->add_meta(
+				$data,
+				array(
+					'name'    => 'description',
+					'content' => $description,
+				)
+			);
 		}
 
 		// Canonical link.
 		if ( $canonical ) {
-			$this->add_link( $data, [ 'rel' => 'canonical', 'href' => $canonical ] );
+			$this->add_link(
+				$data,
+				array(
+					'rel'  => 'canonical',
+					'href' => $canonical,
+				)
+			);
 		}
 
 		// Robots meta — always emit so crawlers have explicit instruction.
-		$this->add_meta( $data, [ 'name' => 'robots', 'content' => $robots ] );
+		$this->add_meta(
+			$data,
+			array(
+				'name'    => 'robots',
+				'content' => $robots,
+			)
+		);
 
 		// License / copyright link on singular and attachment pages.
 		$this->add_license_link( $data, $context );
@@ -43,6 +75,13 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	// Title
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Resolve title.
+	 *
+	 * @param MM_Page_Context  $context Context.
+	 * @param MM_Site_Settings $settings Settings.
+	 * @return string Resulting string.
+	 */
 	private function resolve_title( MM_Page_Context $context, MM_Site_Settings $settings ): string {
 		$page = $context->get_page_number();
 
@@ -62,8 +101,8 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 					return $this->maybe_append_page( $resolved, $page, $settings );
 				}
 				// Per-type default template.
-				$pt  = $post->post_type;
-				$tpl = $settings->get( "titles.post_types.{$pt}.single_title", '%%post_title%% %%sep%% %%sitetitle%%' );
+				$pt       = $post->post_type;
+				$tpl      = $settings->get( "titles.post_types.{$pt}.single_title", '%%post_title%% %%sep%% %%sitetitle%%' );
 				$resolved = $settings->resolve( $tpl, $post, null, null, $page );
 				return $this->maybe_append_page( $resolved, $page, $settings );
 			}
@@ -71,8 +110,8 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 
 		// 3. Blog index (posts page).
 		if ( $context->is_home() ) {
-			$pt  = 'post';
-			$tpl = $settings->get( "titles.post_types.{$pt}.archive_title", 'Blog %%sep%% %%sitetitle%%' );
+			$pt       = 'post';
+			$tpl      = $settings->get( "titles.post_types.{$pt}.archive_title", 'Blog %%sep%% %%sitetitle%%' );
 			$resolved = $settings->resolve( $tpl );
 			return $this->maybe_append_page( $resolved, $page, $settings );
 		}
@@ -81,7 +120,7 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 		if ( $context->is_tax() || $context->is_category() || $context->is_tag() ) {
 			$term = $context->get_term();
 			if ( $term ) {
-				$tpl = $settings->get( "titles.taxonomies.{$term->taxonomy}.archive_title", '%%term_title%% %%sep%% %%sitetitle%%' );
+				$tpl      = $settings->get( "titles.taxonomies.{$term->taxonomy}.archive_title", '%%term_title%% %%sep%% %%sitetitle%%' );
 				$resolved = $settings->resolve( $tpl, null, $term );
 				return $this->maybe_append_page( $resolved, $page, $settings );
 			}
@@ -91,7 +130,7 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 		if ( $context->is_author() ) {
 			$author = $context->get_author();
 			if ( $author ) {
-				$tpl = $settings->get( 'authors.title_template', 'Articles by %%author_name%% %%sep%% %%sitetitle%%' );
+				$tpl      = $settings->get( 'authors.title_template', 'Articles by %%author_name%% %%sep%% %%sitetitle%%' );
 				$resolved = $settings->resolve( $tpl, null, null, $author );
 				return $this->maybe_append_page( $resolved, $page, $settings );
 			}
@@ -103,7 +142,7 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 			$tpl = $settings->get( "titles.post_types.{$pt}.archive_title", '%%post_type_label%% %%sep%% %%sitetitle%%' );
 			// Resolve %%post_type_label%% to the plural label for archives.
 			$pt_obj = get_post_type_object( $pt );
-			$tpl = str_replace( '%%post_type_label%%', $pt_obj ? $pt_obj->labels->name : $pt, $tpl );
+			$tpl    = str_replace( '%%post_type_label%%', $pt_obj ? $pt_obj->labels->name : $pt, $tpl );
 			return $settings->resolve( $tpl );
 		}
 
@@ -131,6 +170,13 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	// Meta description
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Resolve description.
+	 *
+	 * @param MM_Page_Context  $context Context.
+	 * @param MM_Site_Settings $settings Settings.
+	 * @return string Resulting string.
+	 */
 	private function resolve_description( MM_Page_Context $context, MM_Site_Settings $settings ): string {
 		// Front page (must check before is_singular, which also matches static front pages).
 		if ( $context->is_front_page() ) {
@@ -148,8 +194,8 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 				}
 				// Per-post meta, else configured source (default: excerpt only).
 				$source = $settings->get( "titles.post_types.{$post->post_type}.description_source", 'excerpt' );
-				$desc = $this->auto_description( $post, $source );
-				return $desc ?: get_bloginfo( 'description' );
+				$desc   = $this->auto_description( $post, $source );
+				return $desc ? $desc : get_bloginfo( 'description' );
 			}
 		}
 
@@ -184,6 +230,13 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	// Canonical
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Resolve canonical.
+	 *
+	 * @param MM_Page_Context  $context Context.
+	 * @param MM_Site_Settings $settings Settings.
+	 * @return string Resulting string.
+	 */
 	private function resolve_canonical( MM_Page_Context $context, MM_Site_Settings $settings ): string {
 		// Front page (must check before is_singular, which also matches static front pages).
 		if ( $context->is_front_page() ) {
@@ -222,7 +275,8 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 		}
 
 		if ( $context->is_post_type_archive() ) {
-			return get_post_type_archive_link( $context->get_post_type() ) ?: '';
+			$mm_value = get_post_type_archive_link( $context->get_post_type() );
+			return $mm_value ? $mm_value : '';
 		}
 
 		if ( $context->is_search() ) {
@@ -236,11 +290,18 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	// Robots directives — the heart of per-page attribute control
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Resolve robots.
+	 *
+	 * @param MM_Page_Context  $context Context.
+	 * @param MM_Site_Settings $settings Settings.
+	 * @return string Resulting string.
+	 */
 	private function resolve_robots( MM_Page_Context $context, MM_Site_Settings $settings ): string {
-		$noindex    = false;
-		$nofollow   = false;
-		$noarchive  = false;
-		$nosnippet  = false;
+		$noindex      = false;
+		$nofollow     = false;
+		$noarchive    = false;
+		$nosnippet    = false;
 		$noimageindex = false;
 
 		if ( $context->is_singular() ) {
@@ -250,10 +311,10 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 				$pt   = $post->post_type;
 
 				// noindex: per-post → per-type default.
-				$noindex   = $this->resolve_flag( $meta, 'noindex', (bool) $settings->get( "titles.post_types.{$pt}.noindex", false ) );
-				$nofollow  = $this->resolve_flag( $meta, 'nofollow', false );
-				$noarchive = $this->resolve_flag( $meta, 'noarchive', false );
-				$nosnippet = $this->resolve_flag( $meta, 'nosnippet', false );
+				$noindex      = $this->resolve_flag( $meta, 'noindex', (bool) $settings->get( "titles.post_types.{$pt}.noindex", false ) );
+				$nofollow     = $this->resolve_flag( $meta, 'nofollow', false );
+				$noarchive    = $this->resolve_flag( $meta, 'noarchive', false );
+				$nosnippet    = $this->resolve_flag( $meta, 'nosnippet', false );
 				$noimageindex = $this->resolve_flag( $meta, 'noimageindex', false );
 
 				// Password-protected posts auto-noindex.
@@ -297,21 +358,38 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	/**
 	 * Resolve a boolean robots flag from postmeta, with a default fallback.
 	 * Uses three-state logic: null = "not set" (use default), true/false = explicit override.
+	 *
+	 * @param array  $meta Metadata.
+	 * @param string $key Key.
+	 * @param bool   $default Default value.
 	 */
 	private function resolve_flag( array $meta, string $key, bool $default ): bool {
-		if ( array_key_exists( $key, $meta ) && $meta[ $key ] !== null && $meta[ $key ] !== '' ) {
+		if ( array_key_exists( $key, $meta ) && null !== $meta[ $key ] && '' !== $meta[ $key ] ) {
 			return (bool) $meta[ $key ];
 		}
 		return $default;
 	}
 
+	/**
+	 * Build robots string.
+	 *
+	 * @param bool $noindex Noindex.
+	 * @param bool $nofollow Nofollow.
+	 * @param bool $noarchive Noarchive.
+	 * @param bool $nosnippet Nosnippet.
+	 * @param bool $noimageindex Noimageindex.
+	 * @return string Resulting string.
+	 */
 	private function build_robots_string( bool $noindex, bool $nofollow, bool $noarchive, bool $nosnippet, bool $noimageindex ): string {
-		$parts = [];
-		$parts[] = $noindex   ? 'noindex'   : 'index';
-		$parts[] = $nofollow  ? 'nofollow'  : 'follow';
-		if ( $noarchive )   { $parts[] = 'noarchive'; }
-		if ( $nosnippet )   { $parts[] = 'nosnippet'; }
-		if ( $noimageindex) { $parts[] = 'noimageindex'; }
+		$parts   = array();
+		$parts[] = $noindex ? 'noindex' : 'index';
+		$parts[] = $nofollow ? 'nofollow' : 'follow';
+		if ( $noarchive ) {
+			$parts[] = 'noarchive'; }
+		if ( $nosnippet ) {
+			$parts[] = 'nosnippet'; }
+		if ( $noimageindex ) {
+			$parts[] = 'noimageindex'; }
 		return implode( ', ', $parts );
 	}
 
@@ -319,6 +397,13 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	// Helpers
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Auto description.
+	 *
+	 * @param \WP_Post $post Post object.
+	 * @param string   $source Source.
+	 * @return string Resulting string.
+	 */
 	private function auto_description( \WP_Post $post, string $source ): string {
 		if ( 'excerpt' === $source || '' === $source ) {
 			if ( $post->post_excerpt ) {
@@ -333,6 +418,14 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 		return '';
 	}
 
+	/**
+	 * Maybe run append page.
+	 *
+	 * @param string           $title Title.
+	 * @param int              $page Page.
+	 * @param MM_Site_Settings $settings Settings.
+	 * @return string Resulting string.
+	 */
 	private function maybe_append_page( string $title, int $page, MM_Site_Settings $settings ): string {
 		if ( $page > 1 && $settings->get( 'titles.paginate_append', true ) ) {
 			$sep    = $settings->get( 'titles.separator', '|' );
@@ -348,6 +441,9 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	 * On attachment pages, uses the attachment's own mm_copyright meta.
 	 * On singular posts/pages, scans content for media and uses the first
 	 * detected attachment's copyright (if consistent across all media).
+	 *
+	 * @param array           $data Data.
+	 * @param MM_Page_Context $context Context.
 	 */
 	private function add_license_link( array &$data, MM_Page_Context $context ): void {
 		if ( ! $context->is_singular() ) {
@@ -386,12 +482,27 @@ class MM_Mod_Head_Meta extends MM_Mod_Base {
 	 *
 	 * If the value is a valid URL, outputs <link rel="license">.
 	 * Otherwise, outputs <meta name="copyright">.
+	 *
+	 * @param string $copyright Copyright.
+	 * @param array  $data Data.
 	 */
 	private function emit_license( string $copyright, array &$data ): void {
 		if ( filter_var( $copyright, FILTER_VALIDATE_URL ) ) {
-			$this->add_link( $data, [ 'rel' => 'license', 'href' => esc_url( $copyright ) ] );
+			$this->add_link(
+				$data,
+				array(
+					'rel'  => 'license',
+					'href' => esc_url( $copyright ),
+				)
+			);
 		} else {
-			$this->add_meta( $data, [ 'name' => 'copyright', 'content' => esc_attr( $copyright ) ] );
+			$this->add_meta(
+				$data,
+				array(
+					'name'    => 'copyright',
+					'content' => esc_attr( $copyright ),
+				)
+			);
 		}
 	}
 }

@@ -30,6 +30,6 @@ class MM_Daemon_Updater {
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$version = trim( file_get_contents( self::DAEMON_VERSION_FILE ) );
-		return $version !== '' ? $version : null;
+		return '' !== $version ? $version : null;
 	}
 }

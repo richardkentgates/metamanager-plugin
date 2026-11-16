@@ -13,23 +13,55 @@
  *   'links'  => [ ['rel'=>..., 'href'=>...], ... ],
  *   'schema' => array  (will be JSON-encoded as @graph),
  * ]
+ *
+ * @package Metamanager
  */
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Head emitter.
+ *
+ * @package Metamanager
+ */
 class MM_Head_Emitter {
 
-	/** @var MM_Mod_Base[] */
-	private array $modules = [];
+	/**
+	 * Registered modules.
+	 *
+	 * @var MM_Mod_Base[]
+	 */
+	private array $modules = array();
 
-	private MM_Page_Context  $context;
+	/**
+	 * Context.
+	 *
+	 * @var MM_Page_Context
+	 */
+	private MM_Page_Context $context;
+	/**
+	 * Settings.
+	 *
+	 * @var MM_Site_Settings
+	 */
 	private MM_Site_Settings $settings;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param MM_Page_Context  $context Context.
+	 * @param MM_Site_Settings $settings Settings.
+	 */
 	public function __construct( MM_Page_Context $context, MM_Site_Settings $settings ) {
 		$this->context  = $context;
 		$this->settings = $settings;
 	}
 
+	/**
+	 * Add module.
+	 *
+	 * @param MM_Mod_Base $module Module.
+	 */
 	public function add_module( MM_Mod_Base $module ): void {
 		$this->modules[] = $module;
 	}
@@ -38,13 +70,16 @@ class MM_Head_Emitter {
 	// wp_head callback
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Render.
+	 */
 	public function render(): void {
-		$data = [
+		$data = array(
 			'title'  => '',
-			'meta'   => [],
-			'links'  => [],
-			'schema' => [],
-		];
+			'meta'   => array(),
+			'links'  => array(),
+			'schema' => array(),
+		);
 
 		foreach ( $this->modules as $module ) {
 			$module->populate( $data, $this->context, $this->settings );
@@ -82,7 +117,7 @@ class MM_Head_Emitter {
 
 		// <link> tags.
 		foreach ( $data['links'] as $link ) {
-			$link = array_map( 'esc_attr', $link );
+			$link  = array_map( 'esc_attr', $link );
 			$attrs = '';
 			foreach ( $link as $attr => $val ) {
 				$attrs .= sprintf( ' %s="%s"', esc_attr( $attr ), $val );
@@ -92,10 +127,10 @@ class MM_Head_Emitter {
 
 		// JSON-LD @graph.
 		if ( ! empty( $data['schema'] ) ) {
-			$graph = [
+			$graph = array(
 				'@context' => 'https://schema.org',
 				'@graph'   => array_values( $data['schema'] ),
-			];
+			);
 			echo '<script type="application/ld+json">'
 				. wp_json_encode( $graph, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT )
 				. '</script>' . "\n";

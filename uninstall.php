@@ -28,7 +28,7 @@ function _mm_uninstall_site(): void {
 	global $wpdb;
 
 	// Options registered by the plugin.
-	$options = [
+	$options = array(
 		'mm_compress_level',
 		'mm_notify_enabled',
 		'mm_notify_email',
@@ -47,7 +47,7 @@ function _mm_uninstall_site(): void {
 		'mm_meta_business',
 		'mm_memory_limit_notice',
 		'mm_cron_history',
-	];
+	);
 	foreach ( $options as $option ) {
 		delete_option( $option );
 	}
@@ -57,7 +57,7 @@ function _mm_uninstall_site(): void {
 	delete_transient( 'mm_upload_batch' );
 
 	// Exact post meta keys.
-	$meta_keys = [
+	$meta_keys = array(
 		'mm_creator',
 		'mm_copyright',
 		'mm_owner',
@@ -78,7 +78,7 @@ function _mm_uninstall_site(): void {
 		'mm_meta_synced',
 		'mm_schema_fields',
 		'mm_breadcrumb_label',
-	];
+	);
 	foreach ( $meta_keys as $key ) {
 		delete_post_meta_by_key( $key );
 	}
@@ -114,7 +114,7 @@ $job_root    = WP_CONTENT_DIR . '/metamanager-jobs';
 $any_deleted = false;
 
 if ( is_multisite() ) {
-	$sites = get_sites( [ 'number' => 0 ] );
+	$sites = get_sites( array( 'number' => 0 ) );
 	foreach ( $sites as $site ) {
 		switch_to_blog( (int) $site->blog_id );
 		if ( get_option( 'mm_delete_data_on_uninstall' ) ) {

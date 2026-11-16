@@ -22,19 +22,19 @@ defined( 'ABSPATH' ) || exit;
 // Plugin constants
 // ---------------------------------------------------------------------------
 
-define( 'MM_VERSION',     '2.3.316' );
+define( 'MM_VERSION', '2.3.316' );
 define( 'MM_PLUGIN_FILE', __FILE__ );
-define( 'MM_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
-define( 'MM_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
+define( 'MM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'MM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 // Metadata subsystem constants (used by includes/metadata/** classes).
-define( 'MM_META_VERSION',      MM_VERSION );
-define( 'MM_META_FILE',         __FILE__ );
-define( 'MM_META_DIR',          MM_PLUGIN_DIR );
-define( 'MM_META_URL',          MM_PLUGIN_URL );
+define( 'MM_META_VERSION', MM_VERSION );
+define( 'MM_META_FILE', __FILE__ );
+define( 'MM_META_DIR', MM_PLUGIN_DIR );
+define( 'MM_META_URL', MM_PLUGIN_URL );
 define( 'MM_META_OPT_SETTINGS', 'mm_meta_settings' );
 define( 'MM_META_OPT_BUSINESS', 'mm_meta_business' );
-define( 'MM_META_KEY',          '_mm_meta' );
+define( 'MM_META_KEY', '_mm_meta' );
 
 /**
  * Job queue directories.
@@ -43,11 +43,11 @@ define( 'MM_META_KEY',          '_mm_meta' );
  * the shell scripts with the exact value of WP_CONTENT_DIR at deploy time,
  * so PHP and the OS always agree on the location — no hardcoded paths anywhere.
  */
-define( 'MM_JOB_ROOT',     WP_CONTENT_DIR . '/metamanager-jobs' );
+define( 'MM_JOB_ROOT', WP_CONTENT_DIR . '/metamanager-jobs' );
 define( 'MM_JOB_COMPRESS', MM_JOB_ROOT . '/compress/' );
-define( 'MM_JOB_META',     MM_JOB_ROOT . '/meta/' );
-define( 'MM_JOB_DONE',     MM_JOB_ROOT . '/completed/' );
-define( 'MM_JOB_FAILED',   MM_JOB_ROOT . '/failed/' );
+define( 'MM_JOB_META', MM_JOB_ROOT . '/meta/' );
+define( 'MM_JOB_DONE', MM_JOB_ROOT . '/completed/' );
+define( 'MM_JOB_FAILED', MM_JOB_ROOT . '/failed/' );
 
 /** Database table name (without prefix). */
 define( 'MM_JOB_TABLE', 'metamanager_jobs' );
@@ -58,7 +58,7 @@ define( 'MM_JOB_TABLE', 'metamanager_jobs' );
  * systemd service has PrivateTmp=yes (which isolates /tmp per-service).
  */
 define( 'MM_PID_COMPRESS', MM_JOB_ROOT . '/compress-daemon.pid' );
-define( 'MM_PID_META',     MM_JOB_ROOT . '/meta-daemon.pid' );
+define( 'MM_PID_META', MM_JOB_ROOT . '/meta-daemon.pid' );
 
 // ---------------------------------------------------------------------------
 // Autoload classes
@@ -131,9 +131,12 @@ if ( class_exists( 'MM_Abilities' ) ) {
 
 // Boot the metadata subsystem after all plugins are loaded so hooks fire in
 // the correct order.
-add_action( 'plugins_loaded', function (): void {
-	( new MM_Metadata_Loader() )->run();
-} );
+add_action(
+	'plugins_loaded',
+	function (): void {
+		( new MM_Metadata_Loader() )->run();
+	}
+);
 
 // Register schema custom post types (Event, Product, Service, etc.).
 MM_Schema_Post_Types::init();
@@ -142,22 +145,27 @@ MM_Schema_Post_Types::init();
 MM_Page_Generator::init();
 
 // Apply max revisions setting from Metamanager preferences.
-add_filter( 'wp_revisions_to_keep', function( $num, $post ) {
-	$max = MM_Settings::get_max_revisions();
-	if ( $max === 0 ) {
-		return $num; // Unlimited.
-	}
-	$post_type = get_post_type( $post );
-	// Apply to pages, posts, and schema CPTs.
-	if ( in_array( $post_type, [ 'page', 'post' ], true ) || MM_Schema_Post_Types::is_schema_cpt( $post_type ) ) {
-		return min( $num < 0 ? $max : $num, $max );
-	}
-	return $num;
-}, 10, 2 );
+add_filter(
+	'wp_revisions_to_keep',
+	function ( $num, $post ) {
+		$max = MM_Settings::get_max_revisions();
+		if ( 0 === $max ) {
+			return $num; // Unlimited.
+		}
+		$post_type = get_post_type( $post );
+		// Apply to pages, posts, and schema CPTs.
+		if ( in_array( $post_type, array( 'page', 'post' ), true ) || MM_Schema_Post_Types::is_schema_cpt( $post_type ) ) {
+			return min( $num < 0 ? $max : $num, $max );
+		}
+		return $num;
+	},
+	10,
+	2
+);
 
 // Auto-clean job history when an attachment is deleted from the Media Library.
 // Fires in both admin and REST API contexts, so it belongs here unconditionally.
-add_action( 'delete_attachment', [ 'MM_DB', 'delete_jobs_for_attachment' ] );
+add_action( 'delete_attachment', array( 'MM_DB', 'delete_jobs_for_attachment' ) );
 
 // Metadata version history — tracks changes to the 14 MM-managed attachment fields.
 MM_Metadata_History::register_hooks();
@@ -190,14 +198,14 @@ function mm_activate_single_site(): void {
 	// Migrate option keys from old gcm-seo-core names to mm_meta_* keys.
 	// Safe to run on every activation — only copies when old key exists and new
 	// key does not, then removes the old key so it is a one-time migration.
-	$migrations = [
-		'gcm_seo_settings'     => MM_META_OPT_SETTINGS,
-		'gcm_seo_business'     => MM_META_OPT_BUSINESS,
+	$migrations = array(
+		'gcm_seo_settings'      => MM_META_OPT_SETTINGS,
+		'gcm_seo_business'      => MM_META_OPT_BUSINESS,
 		'gcm_seo_contact_style' => 'mm_meta_contact_style',
-	];
+	);
 	foreach ( $migrations as $old_key => $new_key ) {
 		$old_value = get_option( $old_key, null );
-		if ( $old_value !== null && get_option( $new_key, null ) === null ) {
+		if ( null !== $old_value && get_option( $new_key, null ) === null ) {
 			update_option( $new_key, $old_value, false );
 			delete_option( $old_key );
 		}
@@ -206,30 +214,43 @@ function mm_activate_single_site(): void {
 	// Auto-create schema template pages (About, Contact, Calendar) so
 	// auto-generated content is live out of the box. Content is built
 	// from the business profile and event posts and stays current.
-	$auto_pages = [
-		'mm-about'    => [ 'title' => 'About Us',  'slug' => 'about' ],
-		'mm-contact'  => [ 'title' => 'Contact',   'slug' => 'contact' ],
-		'mm-calendar' => [ 'title' => 'Calendar',  'slug' => 'calendar' ],
-	];
+	$auto_pages = array(
+		'mm-about'    => array(
+			'title' => 'About Us',
+			'slug'  => 'about',
+		),
+		'mm-contact'  => array(
+			'title' => 'Contact',
+			'slug'  => 'contact',
+		),
+		'mm-calendar' => array(
+			'title' => 'Calendar',
+			'slug'  => 'calendar',
+		),
+	);
 	foreach ( $auto_pages as $template => $cfg ) {
 		// Skip if a page with this template already exists.
-		$existing = get_posts( [
-			'post_type'   => 'page',
-			'meta_key'    => '_wp_page_template',
-			'meta_value'  => $template,
-			'numberposts' => 1,
-			'post_status' => 'publish',
-		] );
+		$existing = get_posts(
+			array(
+				'post_type'   => 'page',
+				'meta_key'    => '_wp_page_template',
+				'meta_value'  => $template,
+				'numberposts' => 1,
+				'post_status' => 'publish',
+			)
+		);
 		if ( ! empty( $existing ) ) {
 			continue;
 		}
-		$page_id = wp_insert_post( [
-			'post_type'    => 'page',
-			'post_title'   => $cfg['title'],
-			'post_name'    => $cfg['slug'],
-			'post_content' => '',
-			'post_status'  => 'publish',
-		] );
+		$page_id = wp_insert_post(
+			array(
+				'post_type'    => 'page',
+				'post_title'   => $cfg['title'],
+				'post_name'    => $cfg['slug'],
+				'post_content' => '',
+				'post_status'  => 'publish',
+			)
+		);
 		if ( is_int( $page_id ) && $page_id > 0 ) {
 			update_post_meta( $page_id, '_wp_page_template', $template );
 		}
@@ -252,7 +273,7 @@ function mm_activate_single_site(): void {
  */
 function mm_activate( bool $network_wide = false ): void {
 	if ( $network_wide && is_multisite() ) {
-		$sites = get_sites( [ 'number' => 0 ] );
+		$sites = get_sites( array( 'number' => 0 ) );
 		foreach ( $sites as $site ) {
 			switch_to_blog( (int) $site->blog_id );
 			mm_activate_single_site();
@@ -271,7 +292,7 @@ function mm_activate( bool $network_wide = false ): void {
  */
 function mm_deactivate( bool $network_wide = false ): void {
 	if ( $network_wide && is_multisite() ) {
-		$sites = get_sites( [ 'number' => 0 ] );
+		$sites = get_sites( array( 'number' => 0 ) );
 		foreach ( $sites as $site ) {
 			switch_to_blog( (int) $site->blog_id );
 			mm_deactivate_site();
@@ -323,15 +344,18 @@ function mm_on_new_site( WP_Site $site ): void {
 // Custom cron interval
 // ---------------------------------------------------------------------------
 
-add_filter( 'cron_schedules', function ( array $schedules ): array {
-	if ( ! isset( $schedules['mm_every_minute'] ) ) {
-		$schedules['mm_every_minute'] = [
-			'interval' => 60,
-			'display'  => esc_html__( 'Every Minute (Metamanager)', 'metamanager' ),
-		];
+add_filter(
+	'cron_schedules',
+	function ( array $schedules ): array {
+		if ( ! isset( $schedules['mm_every_minute'] ) ) {
+			$schedules['mm_every_minute'] = array(
+				'interval' => 60,
+				'display'  => esc_html__( 'Every Minute (Metamanager)', 'metamanager' ),
+			);
+		}
+		return $schedules;
 	}
-	return $schedules;
-} );
+);
 
 // ---------------------------------------------------------------------------
 // Cron handler: import daemon-completed jobs into DB
@@ -344,7 +368,7 @@ add_filter( 'cron_schedules', function ( array $schedules ): array {
 // ---------------------------------------------------------------------------
 
 add_action( 'mm_import_completed_jobs', MM_Cron_Tracker::wrap( 'mm_import_completed_jobs', 'mm_import_completed_jobs' ) );
-add_action( 'mm_write_status_json', MM_Cron_Tracker::wrap( 'mm_write_status_json', [ 'MM_Status', 'write_status_json' ] ) );
+add_action( 'mm_write_status_json', MM_Cron_Tracker::wrap( 'mm_write_status_json', array( 'MM_Status', 'write_status_json' ) ) );
 
 /**
  * Scan completed/failed result directories and persist to DB.
@@ -376,12 +400,12 @@ function mm_import_completed_jobs(): void {
 	}
 	MM_Memory_Manager::clear_notice();
 
-	$result_dirs = [
+	$result_dirs = array(
 		MM_JOB_DONE   => 'completed',
 		MM_JOB_FAILED => 'failed',
-	];
+	);
 
-	$failed_jobs = [];
+	$failed_jobs = array();
 
 	// Initialise WP_Filesystem for local file reads (direct method; no credentials needed).
 	require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -412,10 +436,12 @@ function mm_import_completed_jobs(): void {
 				$backup = $filepath . '.unparseable';
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
 				rename( $filepath, $backup );
-				error_log( sprintf(
-					'[Metamanager] Unparseable result file renamed for inspection: %s',
-					$backup
-				) );
+				error_log(
+					sprintf(
+						'[Metamanager] Unparseable result file renamed for inspection: %s',
+						$backup
+					)
+				);
 				continue;
 			}
 
@@ -425,10 +451,12 @@ function mm_import_completed_jobs(): void {
 			// record is confirmed written. If the insert fails the file is
 			// left in place so the next cron run can retry it.
 			if ( ! MM_DB::log_job( $job ) ) {
-				error_log( sprintf(
-					'[Metamanager] DB insert failed for result file: %s — will retry on next cron run.',
-					$filepath
-				) );
+				error_log(
+					sprintf(
+						'[Metamanager] DB insert failed for result file: %s — will retry on next cron run.',
+						$filepath
+					)
+				);
 				continue;
 			}
 
@@ -436,7 +464,7 @@ function mm_import_completed_jobs(): void {
 			// the metadata write-back job so the daemon embeds the values.
 			if ( 'import' === ( $job['job_type'] ?? '' ) && 'completed' === $status ) {
 				$att_id  = (int) ( $job['attachment_id'] ?? 0 );
-				$tags    = is_array( $job['embedded_tags'] ?? null ) ? $job['embedded_tags'] : [];
+				$tags    = is_array( $job['embedded_tags'] ?? null ) ? $job['embedded_tags'] : array();
 				$trigger = (string) ( $job['trigger'] ?? '' );
 				if ( $att_id > 0 ) {
 					if ( 'verify' === $trigger ) {
@@ -450,14 +478,14 @@ function mm_import_completed_jobs(): void {
 						$file = get_attached_file( $att_id );
 						$mime = (string) get_post_mime_type( $att_id );
 						if ( $file && file_exists( $file ) && MM_Metadata::can_write_meta( $mime ) ) {
-							MM_Job_Queue::write_job( 'metadata', $att_id, $file, 'full', [ 'trigger' => 'import' ] );
+							MM_Job_Queue::write_job( 'metadata', $att_id, $file, 'full', array( 'trigger' => 'import' ) );
 						}
 
 						// For images, also queue metadata write-back for all registered sizes.
 						if ( wp_attachment_is_image( $att_id ) ) {
 							$meta = wp_get_attachment_metadata( $att_id );
 							if ( is_array( $meta ) ) {
-								MM_Job_Queue::enqueue_all_sizes( $att_id, $meta, 'metadata', [ 'trigger' => 'import' ] );
+								MM_Job_Queue::enqueue_all_sizes( $att_id, $meta, 'metadata', array( 'trigger' => 'import' ) );
 							}
 						}
 					}
@@ -473,7 +501,7 @@ function mm_import_completed_jobs(): void {
 				$att_id = (int) ( $job['attachment_id'] ?? 0 );
 				$file   = $att_id > 0 ? get_attached_file( $att_id ) : '';
 				if ( $att_id > 0 && $file && file_exists( $file ) && MM_Status::exiftool_available() ) {
-					MM_Job_Queue::write_job( 'import', $att_id, (string) $file, 'full', [ 'trigger' => 'verify' ] );
+					MM_Job_Queue::write_job( 'import', $att_id, (string) $file, 'full', array( 'trigger' => 'verify' ) );
 				}
 			}
 
@@ -498,7 +526,7 @@ function mm_import_completed_jobs(): void {
 			count( $failed_jobs ),
 			wp_specialchars_decode( get_option( 'blogname', '' ), ENT_QUOTES )
 		);
-		$lines = [ 'The following Metamanager jobs failed:', '' ];
+		$lines = array( 'The following Metamanager jobs failed:', '' );
 		foreach ( $failed_jobs as $job ) {
 			$detail  = is_array( $job['details'] ?? null ) ? ( $job['details']['message'] ?? '' ) : '';
 			$lines[] = '• ' . ( $job['image_name'] ?? '(unknown)' )
@@ -508,7 +536,7 @@ function mm_import_completed_jobs(): void {
 		$lines[] = '';
 		$lines[] = 'View the Job Dashboard: ' . admin_url( 'upload.php?page=metamanager-jobs' );
 
-		wp_mail( $to, $subject, implode( "\n", $lines ), [ 'Content-Type: text/plain; charset=UTF-8' ] );
+		wp_mail( $to, $subject, implode( "\n", $lines ), array( 'Content-Type: text/plain; charset=UTF-8' ) );
 	}
 
 	// Release the concurrency lock.
@@ -520,35 +548,38 @@ function mm_import_completed_jobs(): void {
 // ---------------------------------------------------------------------------
 
 // Register custom attachment post meta — type safety, sanitisation, REST API.
-add_action( 'init', [ 'MM_Metadata', 'register_meta' ] );
+add_action( 'init', array( 'MM_Metadata', 'register_meta' ) );
 
 // Enable excerpt field for pages (WordPress only supports excerpts for posts by default).
-add_action( 'init', function (): void {
-	add_post_type_support( 'page', 'excerpt' );
-} );
+add_action(
+	'init',
+	function (): void {
+		add_post_type_support( 'page', 'excerpt' );
+	}
+);
 
 // After WordPress generates image sizes on upload, enqueue both job types.
-add_filter( 'wp_generate_attachment_metadata', [ 'MM_Job_Queue', 'on_upload' ], 20, 2 );
+add_filter( 'wp_generate_attachment_metadata', array( 'MM_Job_Queue', 'on_upload' ), 20, 2 );
 
 // Upload receipt notifications (runs on front-end and admin; cron fires outside is_admin()).
 MM_Upload_Notify::init();
 
 // When attachment fields are saved in admin, enqueue metadata jobs only.
-add_filter( 'attachment_fields_to_save', [ 'MM_Metadata', 'on_fields_save' ], 10, 2 );
+add_filter( 'attachment_fields_to_save', array( 'MM_Metadata', 'on_fields_save' ), 10, 2 );
 
 // Catch native metadata field changes from REST API and WP-CLI
 // (which bypass attachment_fields_to_save).
-add_action( 'save_post', [ 'MM_Metadata', 'on_save_post_attachment' ], 20, 2 );
+add_action( 'save_post', array( 'MM_Metadata', 'on_save_post_attachment' ), 20, 2 );
 
 // Extend media edit screen with our custom metadata fields.
-add_filter( 'attachment_fields_to_edit', [ 'MM_Metadata', 'register_fields' ], 10, 2 );
+add_filter( 'attachment_fields_to_edit', array( 'MM_Metadata', 'register_fields' ), 10, 2 );
 
 // Clean up when an attachment is deleted.
-add_action( 'delete_attachment', [ 'MM_Job_Queue', 'on_delete_attachment' ] );
+add_action( 'delete_attachment', array( 'MM_Job_Queue', 'on_delete_attachment' ) );
 
 // REST routes must register for all request types (not just admin pages).
 // REST requests are not is_admin() context, so registering here is required.
-add_action( 'rest_api_init', [ 'MM_Admin', 'register_rest_routes' ] );
+add_action( 'rest_api_init', array( 'MM_Admin', 'register_rest_routes' ) );
 
 // ---------------------------------------------------------------------------
 // Boot admin
@@ -565,36 +596,45 @@ if ( is_admin() ) {
 	MM_Settings::init();
 
 	// Memory limit admin notice (dynamic — set/cleared by cron cycles).
-	add_action( 'admin_notices', [ 'MM_Memory_Manager', 'render_notice' ] );
+	add_action( 'admin_notices', array( 'MM_Memory_Manager', 'render_notice' ) );
 
 	// Persistent admin notice if daemon package is missing.
-	add_action( 'admin_init', function (): void {
-		if ( ! MM_Status::daemon_package_installed() ) {
-			add_action( 'admin_notices', function (): void {
-				printf(
-					'<div class="notice notice-error"><p><strong>%s</strong> %s</p></div>',
-					esc_html__( 'Metamanager:', 'metamanager' ),
-					esc_html__( 'The daemon package is not installed. The plugin cannot function without it. Install: sudo apt install metamanager', 'metamanager' )
+	add_action(
+		'admin_init',
+		function (): void {
+			if ( ! MM_Status::daemon_package_installed() ) {
+				add_action(
+					'admin_notices',
+					function (): void {
+						printf(
+							'<div class="notice notice-error"><p><strong>%s</strong> %s</p></div>',
+							esc_html__( 'Metamanager:', 'metamanager' ),
+							esc_html__( 'The daemon package is not installed. The plugin cannot function without it. Install: sudo apt install metamanager', 'metamanager' )
+						);
+					}
 				);
-			} );
+			}
 		}
-	} );
+	);
 
 	// Display the one-shot notice produced by the manual "Check for Updates" redirect.
-	add_action( 'admin_notices', function (): void {
-		if ( empty( $_GET['mm_notice'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			return;
-		}
+	add_action(
+		'admin_notices',
+		function (): void {
+			if ( empty( $_GET['mm_notice'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				return;
+			}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only GET param set by MM_Updater
-		$type    = in_array( wp_unslash( $_GET['mm_notice_type'] ?? '' ), [ 'updated', 'error' ], true )
+			$type = in_array( wp_unslash( $_GET['mm_notice_type'] ?? '' ), array( 'updated', 'error' ), true )
 			? sanitize_key( wp_unslash( $_GET['mm_notice_type'] ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			: 'updated';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized below via sanitize_text_field
 			$message = sanitize_text_field( urldecode( wp_unslash( $_GET['mm_notice'] ) ) );
-		printf(
-			'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
-			esc_attr( $type ),
-			esc_html( $message )
-		);
-	} );
+			printf(
+				'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
+				esc_attr( $type ),
+				esc_html( $message )
+			);
+		}
+	);
 }

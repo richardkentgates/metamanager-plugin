@@ -9,6 +9,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Listing card CSS.
+ *
+ * @package Metamanager
+ */
 class MM_Listing_Card_CSS {
 
 	/**
@@ -26,15 +31,15 @@ class MM_Listing_Card_CSS {
 	 * @return string Safe CSS string.
 	 */
 	public static function generate( array $s ): string {
-		$btn_text       = self::sanitize( $s['btn_text'] ?? 'Learn more' );
-		$btn_bg         = self::color( $s['btn_bg'] ?? '#0073aa' );
-		$btn_text_color = self::color( $s['btn_text_color'] ?? '#ffffff' );
-		$btn_radius     = self::shorthand( $s['btn_radius'] ?? '4px' );
-		$btn_padding    = self::shorthand( $s['btn_padding'] ?? '10px 16px' );
-		$btn_font_size  = self::length( $s['btn_font_size'] ?? '14px' );
+		$btn_text        = self::sanitize( $s['btn_text'] ?? 'Learn more' );
+		$btn_bg          = self::color( $s['btn_bg'] ?? '#0073aa' );
+		$btn_text_color  = self::color( $s['btn_text_color'] ?? '#ffffff' );
+		$btn_radius      = self::shorthand( $s['btn_radius'] ?? '4px' );
+		$btn_padding     = self::shorthand( $s['btn_padding'] ?? '10px 16px' );
+		$btn_font_size   = self::length( $s['btn_font_size'] ?? '14px' );
 		$btn_font_weight = self::font_weight( $s['btn_font_weight'] ?? '600' );
 
-		$css  = ".mm-service-card__link{display:inline-block;";
+		$css  = '.mm-service-card__link{display:inline-block;';
 		$css .= "padding:{$btn_padding};background:{$btn_bg};color:{$btn_text_color};";
 		$css .= "border-radius:{$btn_radius};font-size:{$btn_font_size};";
 		$css .= "font-weight:{$btn_font_weight};text-decoration:none;margin-top:8px;}\n";
@@ -43,26 +48,56 @@ class MM_Listing_Card_CSS {
 		return $css;
 	}
 
+	/**
+	 * Handle color.
+	 *
+	 * @param string $v V.
+	 * @return string Resulting string.
+	 */
 	private static function color( string $v ): string {
 		$v = trim( $v );
 		return preg_match( '/^#[0-9a-fA-F]{3,8}$/', $v ) ? $v : '#0073aa';
 	}
 
+	/**
+	 * Handle length.
+	 *
+	 * @param string $v V.
+	 * @return string Resulting string.
+	 */
 	private static function length( string $v ): string {
 		$v = trim( $v );
 		return preg_match( '/^[0-9.]+(px|rem|em|%)$/', $v ) ? $v : '14px';
 	}
 
+	/**
+	 * Handle shorthand.
+	 *
+	 * @param string $v V.
+	 * @return string Resulting string.
+	 */
 	private static function shorthand( string $v ): string {
 		$v = trim( $v );
 		return preg_match( '/^[0-9a-zA-Z .%]+$/', $v ) ? $v : '4px';
 	}
 
+	/**
+	 * Font weight.
+	 *
+	 * @param string $v V.
+	 * @return string Resulting string.
+	 */
 	private static function font_weight( string $v ): string {
 		$v = trim( $v );
 		return in_array( $v, array( '400', '500', '600', '700' ), true ) ? $v : '600';
 	}
 
+	/**
+	 * Sanitize.
+	 *
+	 * @param string $v V.
+	 * @return string Resulting string.
+	 */
 	private static function sanitize( string $v ): string {
 		return esc_html( trim( $v ) );
 	}

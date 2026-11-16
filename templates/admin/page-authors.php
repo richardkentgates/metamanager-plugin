@@ -1,8 +1,12 @@
 <?php
 /**
  * Admin tab — Authors.
+ *
  * @var MM_Site_Settings $settings
+ *
+ * @package Metamanager
  */
+
 defined( 'ABSPATH' ) || exit;
 $opt = MM_META_OPT_SETTINGS;
 $s   = $settings;
@@ -15,8 +19,8 @@ $s   = $settings;
 			<th>Enable Author SEO</th>
 			<td>
 				<label>
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[authors][enabled]" value="1"
-						<?php checked( $s->get('authors.enabled', true) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[authors][enabled]" value="1"
+						<?php checked( $s->get( 'authors.enabled', true ) ); ?>>
 					Enable author archive optimisation and Person schema
 				</label>
 			</td>
@@ -25,8 +29,8 @@ $s   = $settings;
 			<th><label for="gcm_author_title">Author Archive Title</label></th>
 			<td>
 				<input type="text" id="gcm_author_title"
-					name="<?php echo esc_attr($opt); ?>[authors][title_template]"
-					value="<?php echo esc_attr( $s->get('authors.title_template','Articles by %%author_name%% %%sep%% %%sitetitle%%') ); ?>"
+					name="<?php echo esc_attr( $opt ); ?>[authors][title_template]"
+					value="<?php echo esc_attr( $s->get( 'authors.title_template', 'Articles by %%author_name%% %%sep%% %%sitetitle%%' ) ); ?>"
 					class="large-text">
 			</td>
 		</tr>
@@ -34,8 +38,8 @@ $s   = $settings;
 			<th><label for="gcm_author_desc">Author Description Template</label></th>
 			<td>
 				<input type="text" id="gcm_author_desc"
-					name="<?php echo esc_attr($opt); ?>[authors][description_template]"
-					value="<?php echo esc_attr( $s->get('authors.description_template','%%author_bio%%') ); ?>"
+					name="<?php echo esc_attr( $opt ); ?>[authors][description_template]"
+					value="<?php echo esc_attr( $s->get( 'authors.description_template', '%%author_bio%%' ) ); ?>"
 					class="large-text">
 				<p class="description">Default: <code>%%author_bio%%</code>. Overridable per-user in the profile editor.</p>
 			</td>
@@ -44,8 +48,8 @@ $s   = $settings;
 			<th>Default noindex</th>
 			<td>
 				<label>
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[authors][noindex_default]" value="1"
-						<?php checked( $s->get('authors.noindex_default', false) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[authors][noindex_default]" value="1"
+						<?php checked( $s->get( 'authors.noindex_default', false ) ); ?>>
 					noindex all author archives by default (overridable per-user)
 				</label>
 			</td>
@@ -58,8 +62,8 @@ $s   = $settings;
 			<th>Emit Person nodes</th>
 			<td>
 				<label>
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[authors][person_schema]" value="1"
-						<?php checked( $s->get('authors.person_schema', true) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[authors][person_schema]" value="1"
+						<?php checked( $s->get( 'authors.person_schema', true ) ); ?>>
 					Output <code>Person</code> JSON-LD nodes on author archive pages
 				</label>
 			</td>
@@ -68,8 +72,8 @@ $s   = $settings;
 			<th>Social Fields on Profile</th>
 			<td>
 				<label>
-					<input type="checkbox" name="<?php echo esc_attr($opt); ?>[authors][profile_social_fields]" value="1"
-						<?php checked( $s->get('authors.profile_social_fields', true) ); ?>>
+					<input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[authors][profile_social_fields]" value="1"
+						<?php checked( $s->get( 'authors.profile_social_fields', true ) ); ?>>
 					Show social profile link fields on the WordPress user edit screen
 				</label>
 				<p class="description">Twitter, LinkedIn, Instagram, BlueSky, and personal website. These populate <code>sameAs</code> in Person schema.</p>
