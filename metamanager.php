@@ -215,7 +215,9 @@ function mm_activate_single_site(): void {
 		// Skip if a page with this template already exists.
 		$existing = get_posts( [
 			'post_type'   => 'page',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional lookup by meta; there is no indexed alternative.
 			'meta_key'    => '_wp_page_template',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Intentional lookup by meta; there is no indexed alternative.
 			'meta_value'  => $template,
 			'numberposts' => 1,
 			'post_status' => 'publish',
@@ -412,6 +414,7 @@ function mm_import_completed_jobs(): void {
 				$backup = $filepath . '.unparseable';
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
 				rename( $filepath, $backup );
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Operational failure is intentionally logged for site admins.
 				error_log( sprintf(
 					'[Metamanager] Unparseable result file renamed for inspection: %s',
 					$backup
@@ -425,6 +428,7 @@ function mm_import_completed_jobs(): void {
 			// record is confirmed written. If the insert fails the file is
 			// left in place so the next cron run can retry it.
 			if ( ! MM_DB::log_job( $job ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Operational failure is intentionally logged for site admins.
 				error_log( sprintf(
 					'[Metamanager] DB insert failed for result file: %s — will retry on next cron run.',
 					$filepath

@@ -366,9 +366,11 @@ class MM_Status {
 		$compress_pid = null;
 		$meta_pid     = null;
 		if ( file_exists( MM_PID_COMPRESS ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reads a local file, not a remote URL.
 			$compress_pid = (int) trim( file_get_contents( MM_PID_COMPRESS ) );
 		}
 		if ( file_exists( MM_PID_META ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reads a local file, not a remote URL.
 			$meta_pid = (int) trim( file_get_contents( MM_PID_META ) );
 		}
 
@@ -428,12 +430,17 @@ class MM_Status {
 	public static function link_stats(): array {
 		global $wpdb;
 		$table = MM_Mod_Links::table_name();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Queries the plugin's own custom table; WordPress has no API for it.
 		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
 			return array( 'total' => 0, 'broken' => 0, 'ignored' => 0, 'last_checked' => null );
 		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Queries the plugin's own custom table; WordPress has no API for it.
 		$total    = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE is_ignored = 0', $table ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Queries the plugin's own custom table; WordPress has no API for it.
 		$broken   = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE is_broken = 1 AND is_ignored = 0', $table ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Queries the plugin's own custom table; WordPress has no API for it.
 		$ignored  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE is_ignored = 1', $table ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Queries the plugin's own custom table; WordPress has no API for it.
 		$last_chk = (string) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(last_checked) FROM %i', $table ) );
 		return array(
 			'total'        => $total,

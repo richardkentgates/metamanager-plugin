@@ -164,7 +164,9 @@ class MM_Page_Generator {
 	public static function find_page_by_template( string $template ): ?int {
 		$pages = get_posts( [
 			'post_type'   => 'page',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional lookup by meta; there is no indexed alternative.
 			'meta_key'    => '_wp_page_template',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Intentional lookup by meta; there is no indexed alternative.
 			'meta_value'  => $template,
 			'numberposts' => 1,
 			'post_status' => 'publish',

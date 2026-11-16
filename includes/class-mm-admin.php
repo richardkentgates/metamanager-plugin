@@ -1822,6 +1822,7 @@ class MM_Admin {
 
 		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
 		$file  = $job_root . '/metamanager-status.json';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reads a local file, not a remote URL.
 		$json  = is_readable( $file ) ? @file_get_contents( $file ) : false;
 		$data  = $json ? json_decode( $json, true ) : null;
 		$queues = $data['queues'] ?? [];

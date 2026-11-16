@@ -463,6 +463,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 		}
 
 		// Fetch next batch in stable ID order.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Queries the plugin's own custom table; WordPress has no API for it.
 		$post_ids = array_map( 'intval', (array) $wpdb->get_col(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->posts is the core table property; the IN list is built %s placeholders and all values pass through prepare().

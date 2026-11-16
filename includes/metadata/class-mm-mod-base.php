@@ -49,6 +49,7 @@ abstract class MM_Mod_Base {
 		if ( null === $designated ) {
 			$designated = get_terms( [
 				'taxonomy'   => 'nav_menu',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Intentional lookup by meta; there is no indexed alternative.
 				'meta_query' => [
 					[
 						'key'   => '_mm_nav_menu_primary',

@@ -49,6 +49,7 @@ defined( 'ABSPATH' ) || exit;
 		<?php
 		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
 		$status_file = $job_root . '/metamanager-status.json';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reads a local file, not a remote URL.
 		$status_json = is_readable( $status_file ) ? @file_get_contents( $status_file ) : false;
 		$status_data = $status_json ? json_decode( $status_json, true ) : null;
 		$daemon_ver = $status_data['daemon_version'] ?? null;

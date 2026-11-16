@@ -265,6 +265,7 @@ class MM_Upload_Notify {
 			$headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
 			$sent    = wp_mail( $to, $subject, $body, $headers );
 		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Operational failure is intentionally logged for site admins.
 			error_log( '[Metamanager] wp_mail() threw an exception: ' . $e->getMessage() );
 			$sent = false;
 		}
@@ -308,6 +309,7 @@ class MM_Upload_Notify {
 
 		update_option( self::FAILED_OPTION, $failures, false );
 
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Operational failure is intentionally logged for site admins.
 		error_log( '[Metamanager] Upload receipt email failed for ' . $to . ' — stored for retry.' );
 	}
 

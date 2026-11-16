@@ -127,7 +127,9 @@ class MM_Schema_Post_Types {
 
 		foreach ( self::TEMPLATES as $template_slug => $schema_type ) {
 			$pages = get_pages( [
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional lookup by meta; there is no indexed alternative.
 				'meta_key'   => '_wp_page_template',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Intentional lookup by meta; there is no indexed alternative.
 				'meta_value' => $template_slug,
 			] );
 			$count = count( $pages );
@@ -573,6 +575,7 @@ class MM_Schema_Post_Types {
 		$query = new \WP_Query( [
 			'post_type'      => 'mm_event',
 			'posts_per_page' => 20,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional lookup by meta; there is no indexed alternative.
 			'meta_key'       => 'mm_schema_fields',
 			'orderby'        => 'meta_value',
 			'order'          => 'ASC',
@@ -1260,6 +1263,7 @@ class MM_Schema_Post_Types {
 	 */
 	public static function get_archive_css(): string {
 		return file_exists( MM_META_DIR . 'assets/css/archive-layouts.css' )
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reads a local file, not a remote URL.
 			? (string) file_get_contents( MM_META_DIR . 'assets/css/archive-layouts.css' )
 			: '';
 	}

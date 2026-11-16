@@ -164,7 +164,7 @@ class MM_Job_Queue {
 		$bytes = $fs->put_contents( $filename, (string) wp_json_encode( $job ), FS_CHMOD_FILE );
 
 		if ( false === $bytes || 0 === $bytes ) {
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Operational failure is intentionally logged for site admins.
 			@error_log( sprintf(
 				'[Metamanager] Failed to write job file: %s (attachment %d, size %s)',
 				$filename,

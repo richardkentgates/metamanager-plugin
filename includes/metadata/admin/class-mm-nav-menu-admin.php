@@ -206,6 +206,7 @@ class MM_Nav_Menu_Admin {
 		if ( $is_primary ) {
 			$old = get_terms( [
 				'taxonomy'   => 'nav-menus',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Intentional lookup by meta; there is no indexed alternative.
 				'meta_query' => [ [ 'key' => '_mm_nav_menu_primary', 'value' => '1' ] ],
 				'number'     => 0,
 				'hide_empty' => false,
