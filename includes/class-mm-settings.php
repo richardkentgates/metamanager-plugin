@@ -38,33 +38,39 @@ defined( 'ABSPATH' ) || exit;
  */
 class MM_Settings {
 
-	const OPTION_COMPRESS_LEVEL         = 'mm_compress_level';
-	const OPTION_NOTIFY_ENABLED         = 'mm_notify_enabled';
-	const OPTION_NOTIFY_EMAIL           = 'mm_notify_email';
-	const OPTION_DELETE_DATA            = 'mm_delete_data_on_uninstall';
-	const OPTION_API_DISABLED           = 'mm_api_disabled';
-	const OPTION_API_ALLOWED_IPS        = 'mm_api_allowed_ips';
-	const OPTION_UPLOAD_NOTIFY_EXTRA    = 'mm_upload_notify_extra_email';
-	const OPTION_AUTO_PROVENANCE        = 'mm_auto_provenance';
-	const OPTION_BATCH_SIZE             = 'mm_batch_size';
-	const OPTION_MAX_REVISIONS          = 'mm_max_revisions';
+	const OPTION_COMPRESS_LEVEL      = 'mm_compress_level';
+	const OPTION_NOTIFY_ENABLED      = 'mm_notify_enabled';
+	const OPTION_NOTIFY_EMAIL        = 'mm_notify_email';
+	const OPTION_DELETE_DATA         = 'mm_delete_data_on_uninstall';
+	const OPTION_API_DISABLED        = 'mm_api_disabled';
+	const OPTION_API_ALLOWED_IPS     = 'mm_api_allowed_ips';
+	const OPTION_UPLOAD_NOTIFY_EXTRA = 'mm_upload_notify_extra_email';
+	const OPTION_AUTO_PROVENANCE     = 'mm_auto_provenance';
+	const OPTION_BATCH_SIZE          = 'mm_batch_size';
+	const OPTION_MAX_REVISIONS       = 'mm_max_revisions';
 
 	// -----------------------------------------------------------------------
 	// Boot
 	// -----------------------------------------------------------------------
 
+	/**
+	 * Initialise.
+	 */
 	public static function init(): void {
 		// Priority 50 ensures this submenu is registered after all other
 		// Metamanager submenus (which use default priority 10), so
 		// Preferences appears at the bottom of the sub-nav stack.
-		add_action( 'admin_menu', [ __CLASS__, 'add_menu' ], 50 );
-		add_action( 'admin_init',  [ __CLASS__, 'register_settings' ] );
+		add_action( 'admin_menu', array( __CLASS__, 'add_menu' ), 50 );
+		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 	}
 
 	// -----------------------------------------------------------------------
 	// Menu
 	// -----------------------------------------------------------------------
 
+	/**
+	 * Add menu.
+	 */
 	public static function add_menu(): void {
 		add_submenu_page(
 			'metamanager',
@@ -72,7 +78,7 @@ class MM_Settings {
 			esc_html__( 'Preferences', 'metamanager' ),
 			'manage_options',
 			'metamanager-settings',
-			[ __CLASS__, 'render_page' ]
+			array( __CLASS__, 'render_page' )
 		);
 	}
 
@@ -80,45 +86,48 @@ class MM_Settings {
 	// Register settings
 	// -----------------------------------------------------------------------
 
+	/**
+	 * Register settings.
+	 */
 	public static function register_settings(): void {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_COMPRESS_LEVEL,
-			[
+			array(
 				'type'              => 'integer',
 				'sanitize_callback' => fn( $v ) => max( 1, min( 7, (int) $v ) ),
 				'default'           => 2,
-			]
+			)
 		);
 
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_NOTIFY_ENABLED,
-			[
+			array(
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => false,
-			]
+			)
 		);
 
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_NOTIFY_EMAIL,
-			[
+			array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_email',
 				'default'           => '',
-			]
+			)
 		);
 
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_DELETE_DATA,
-			[
+			array(
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => false,
-			]
+			)
 		);
 
 		// ---- Sections & fields ----
@@ -133,7 +142,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_compress_level',
 			esc_html__( 'Optimisation level', 'metamanager' ),
-			[ __CLASS__, 'field_compress_level' ],
+			array( __CLASS__, 'field_compress_level' ),
 			'metamanager-settings',
 			'mm_section_compression'
 		);
@@ -141,11 +150,11 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_BATCH_SIZE,
-			[
+			array(
 				'type'              => 'integer',
 				'sanitize_callback' => fn( $v ) => max( 10, min( 500, (int) $v ) ),
 				'default'           => 50,
-			]
+			)
 		);
 
 		add_settings_section(
@@ -158,7 +167,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_batch_size',
 			esc_html__( 'Max batch size', 'metamanager' ),
-			[ __CLASS__, 'field_batch_size' ],
+			array( __CLASS__, 'field_batch_size' ),
 			'metamanager-settings',
 			'mm_section_memory'
 		);
@@ -168,11 +177,11 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_MAX_REVISIONS,
-			[
+			array(
 				'type'              => 'integer',
 				'sanitize_callback' => fn( $v ) => max( 0, (int) $v ),
 				'default'           => 36,
-			]
+			)
 		);
 
 		add_settings_section(
@@ -185,7 +194,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_max_revisions',
 			esc_html__( 'Max revisions', 'metamanager' ),
-			[ __CLASS__, 'field_max_revisions' ],
+			array( __CLASS__, 'field_max_revisions' ),
 			'metamanager-settings',
 			'mm_section_revisions'
 		);
@@ -200,7 +209,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_notify_enabled',
 			esc_html__( 'Enable notifications', 'metamanager' ),
-			[ __CLASS__, 'field_notify_enabled' ],
+			array( __CLASS__, 'field_notify_enabled' ),
 			'metamanager-settings',
 			'mm_section_notifications'
 		);
@@ -208,7 +217,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_notify_email',
 			esc_html__( 'Notification email', 'metamanager' ),
-			[ __CLASS__, 'field_notify_email' ],
+			array( __CLASS__, 'field_notify_email' ),
 			'metamanager-settings',
 			'mm_section_notifications'
 		);
@@ -218,21 +227,21 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_API_DISABLED,
-			[
+			array(
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => false,
-			]
+			)
 		);
 
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_API_ALLOWED_IPS,
-			[
+			array(
 				'type'              => 'string',
 				'sanitize_callback' => fn( $v ) => sanitize_textarea_field( (string) $v ),
 				'default'           => '',
-			]
+			)
 		);
 
 		// --- Upload receipts ---
@@ -240,11 +249,11 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_UPLOAD_NOTIFY_EXTRA,
-			[
+			array(
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 				'default'           => '',
-			]
+			)
 		);
 
 		// --- Metadata embedding ---
@@ -252,11 +261,11 @@ class MM_Settings {
 		register_setting(
 			'mm_settings_group',
 			self::OPTION_AUTO_PROVENANCE,
-			[
+			array(
 				'type'              => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
 				'default'           => true,
-			]
+			)
 		);
 
 		// --- Uninstall ---
@@ -271,7 +280,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_api_disabled',
 			esc_html__( 'Disable REST API', 'metamanager' ),
-			[ __CLASS__, 'field_api_disabled' ],
+			array( __CLASS__, 'field_api_disabled' ),
 			'metamanager-settings',
 			'mm_section_api'
 		);
@@ -279,7 +288,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_api_allowed_ips',
 			esc_html__( 'IP allowlist', 'metamanager' ),
-			[ __CLASS__, 'field_api_allowed_ips' ],
+			array( __CLASS__, 'field_api_allowed_ips' ),
 			'metamanager-settings',
 			'mm_section_api'
 		);
@@ -294,7 +303,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_upload_notify_extra_email',
 			esc_html__( 'Additional recipients', 'metamanager' ),
-			[ __CLASS__, 'field_upload_notify_extra' ],
+			array( __CLASS__, 'field_upload_notify_extra' ),
 			'metamanager-settings',
 			'mm_section_upload_notify'
 		);
@@ -309,7 +318,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_auto_provenance',
 			esc_html__( 'Auto-embed site provenance', 'metamanager' ),
-			[ __CLASS__, 'field_auto_provenance' ],
+			array( __CLASS__, 'field_auto_provenance' ),
 			'metamanager-settings',
 			'mm_section_metadata'
 		);
@@ -324,7 +333,7 @@ class MM_Settings {
 		add_settings_field(
 			'mm_delete_data_on_uninstall',
 			esc_html__( 'Remove all data on uninstall', 'metamanager' ),
-			[ __CLASS__, 'field_delete_data' ],
+			array( __CLASS__, 'field_delete_data' ),
 			'metamanager-settings',
 			'mm_section_uninstall'
 		);
@@ -334,6 +343,9 @@ class MM_Settings {
 	// Field renderers
 	// -----------------------------------------------------------------------
 
+	/**
+	 * Field compress level.
+	 */
 	public static function field_compress_level(): void {
 		$value = self::get_compress_level();
 		echo '<select id="mm_compress_level" name="' . esc_attr( self::OPTION_COMPRESS_LEVEL ) . '">';
@@ -357,6 +369,9 @@ class MM_Settings {
 		echo '<p class="description">' . esc_html__( 'All compression is lossless — this controls optimisation effort for PNG (optipng) and WebP (cwebp). JPEG is always compressed at maximum lossless quality. Higher effort produces slightly smaller files but takes longer.', 'metamanager' ) . '</p>';
 	}
 
+	/**
+	 * Field batch size.
+	 */
 	public static function field_batch_size(): void {
 		$value = self::get_batch_size();
 		printf(
@@ -367,6 +382,9 @@ class MM_Settings {
 		echo '<p class="description">' . esc_html__( 'Maximum number of files processed per batch cycle (upload scan, cron tick, or WP-CLI batch). The plugin checks available memory before each cycle and automatically reduces this number if memory is limited. If memory is critically low, processing pauses and resumes on the next cycle.', 'metamanager' ) . '</p>';
 	}
 
+	/**
+	 * Field max revisions.
+	 */
 	public static function field_max_revisions(): void {
 		$value = self::get_max_revisions();
 		printf(
@@ -377,6 +395,9 @@ class MM_Settings {
 		echo '<p class="description">' . esc_html__( 'Maximum number of revisions stored per post (pages, posts, and media metadata). Set to 0 for unlimited revisions. Default: 36.', 'metamanager' ) . '</p>';
 	}
 
+	/**
+	 * Field notify enabled.
+	 */
 	public static function field_notify_enabled(): void {
 		$checked = (bool) get_option( self::OPTION_NOTIFY_ENABLED, false );
 		printf(
@@ -387,6 +408,9 @@ class MM_Settings {
 		echo ' <label for="mm_notify_enabled">' . esc_html__( 'Send an email when a job fails', 'metamanager' ) . '</label>';
 	}
 
+	/**
+	 * Field notify email.
+	 */
 	public static function field_notify_email(): void {
 		$value = self::get_notify_email();
 		printf(
@@ -398,6 +422,9 @@ class MM_Settings {
 		echo '<p class="description">' . esc_html__( 'Leave blank to use the WordPress admin email address.', 'metamanager' ) . '</p>';
 	}
 
+	/**
+	 * Field API disabled.
+	 */
 	public static function field_api_disabled(): void {
 		$checked = self::get_api_disabled();
 		printf(
@@ -409,6 +436,9 @@ class MM_Settings {
 		echo '<p class="description">' . esc_html__( 'Blocks unauthenticated external requests to /wp-json/metamanager/v1/*. Logged-in WordPress users are never blocked, so the compression status column and job dashboard continue to work normally.', 'metamanager' ) . '</p>';
 	}
 
+	/**
+	 * Field API allowed ips.
+	 */
 	public static function field_api_allowed_ips(): void {
 		$value = (string) get_option( self::OPTION_API_ALLOWED_IPS, '' );
 		printf(
@@ -427,6 +457,9 @@ class MM_Settings {
 		}
 	}
 
+	/**
+	 * Field upload notify extra.
+	 */
 	public static function field_upload_notify_extra(): void {
 		$value = (string) get_option( self::OPTION_UPLOAD_NOTIFY_EXTRA, '' );
 		printf(
@@ -437,6 +470,9 @@ class MM_Settings {
 		echo '<p class="description">' . esc_html__( 'Optional. Comma-separated list of addresses that will receive a copy of every upload receipt in addition to the admin and uploader.', 'metamanager' ) . '</p>';
 	}
 
+	/**
+	 * Field auto provenance.
+	 */
 	public static function field_auto_provenance(): void {
 		$checked = (bool) get_option( self::OPTION_AUTO_PROVENANCE, true );
 		printf(
@@ -448,6 +484,9 @@ class MM_Settings {
 		echo '<p class="description">' . esc_html__( 'When enabled (default), the Publisher (site name) and Website (site URL) fields are embedded as neutral provenance in every metadata job and on upload. This is not an authorship or copyright claim &mdash; it simply marks where the file was published. Disable if you want Metamanager to leave those fields untouched.', 'metamanager' ) . '</p>';
 	}
 
+	/**
+	 * Field delete data.
+	 */
 	public static function field_delete_data(): void {
 		$checked = self::get_delete_data();
 		printf(
@@ -463,6 +502,9 @@ class MM_Settings {
 	// Page renderer
 	// -----------------------------------------------------------------------
 
+	/**
+	 * Render page.
+	 */
 	public static function render_page(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to manage settings.', 'metamanager' ) );
@@ -544,11 +586,11 @@ class MM_Settings {
 	public static function get_api_allowed_ips(): array {
 		$raw = (string) get_option( self::OPTION_API_ALLOWED_IPS, '' );
 		if ( '' === trim( $raw ) ) {
-			return [];
+			return array();
 		}
 		// Split on newlines or commas, trim each entry.
 		$items = preg_split( '/[\r\n,]+/', $raw );
-		$items = array_map( 'trim', $items ?: [] );
+		$items = array_map( 'trim', $items ?: array() );
 		$items = array_filter( $items );
 		return array_values( $items );
 	}
@@ -561,7 +603,7 @@ class MM_Settings {
 	public static function get_upload_notify_extra_emails(): array {
 		$raw = (string) get_option( self::OPTION_UPLOAD_NOTIFY_EXTRA, '' );
 		if ( '' === trim( $raw ) ) {
-			return [];
+			return array();
 		}
 		$items = explode( ',', $raw );
 		$items = array_map( 'trim', $items );

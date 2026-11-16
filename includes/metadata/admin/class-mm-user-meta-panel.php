@@ -7,42 +7,66 @@
  * Person schema override.
  *
  * Stores data under user-meta key MM_META_KEY.
+  *
+  * @package Metamanager
  */
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * User meta panel.
+ *
+ * @package Metamanager
+ */
 class MM_User_Meta_Panel {
 
-	/** @var MM_Site_Settings */
+	/**
+	 * Site settings instance.
+	 *
+	 * @var MM_Site_Settings
+	 */
 	private MM_Site_Settings $settings;
 
 	/** Social profile fields. */
-	const SOCIAL_FIELDS = [
+	const SOCIAL_FIELDS = array(
 		'twitter'   => 'Twitter / X (@handle)',
 		'linkedin'  => 'LinkedIn Profile URL',
 		'instagram' => 'Instagram URL',
 		'bluesky'   => 'BlueSky Handle',
 		'website'   => 'Personal Website URL',
-	];
+	);
 
+	/**
+	 * Constructor.
+	 *
+	 * @param MM_Site_Settings $settings Settings.
+	 */
 	public function __construct( MM_Site_Settings $settings ) {
 		$this->settings = $settings;
 	}
 
+	/**
+	 * Register hooks.
+	 */
 	public function register_hooks(): void {
 		if ( ! $this->settings->get( 'authors.enabled', true ) ) {
 			return;
 		}
-		add_action( 'show_user_profile',        [ $this, 'render_fields' ] );
-		add_action( 'edit_user_profile',         [ $this, 'render_fields' ] );
-		add_action( 'personal_options_update',   [ $this, 'save_meta' ] );
-		add_action( 'edit_user_profile_update',  [ $this, 'save_meta' ] );
+		add_action( 'show_user_profile', array( $this, 'render_fields' ) );
+		add_action( 'edit_user_profile', array( $this, 'render_fields' ) );
+		add_action( 'personal_options_update', array( $this, 'save_meta' ) );
+		add_action( 'edit_user_profile_update', array( $this, 'save_meta' ) );
 	}
 
 	// -------------------------------------------------------------------------
 	// Render
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Render fields.
+	 *
+	 * @param \WP_User $user User object.
+	 */
 	public function render_fields( \WP_User $user ): void {
 		if ( ! current_user_can( 'edit_user', $user->ID ) ) {
 			return;
@@ -56,6 +80,11 @@ class MM_User_Meta_Panel {
 	// Save
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Save meta.
+	 *
+	 * @param int $user_id User ID.
+	 */
 	public function save_meta( int $user_id ): void {
 		if ( ! isset( $_POST['mm_meta_user_nonce'] ) ||
 			! wp_verify_nonce( sanitize_key( $_POST['mm_meta_user_nonce'] ), 'mm_meta_user_meta_save' ) ) {
@@ -67,17 +96,17 @@ class MM_User_Meta_Panel {
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification
-		$clean = [];
+		$clean = array();
 
 		// Noindex checkbox — checked = hide from search.
-		$noindex = ! empty( $_POST['mm_meta_noindex'] );
+		$noindex          = ! empty( $_POST['mm_meta_noindex'] );
 		$clean['noindex'] = $noindex;
 
 		// Social profiles.
 		foreach ( array_keys( self::SOCIAL_FIELDS ) as $field ) {
 			$val = sanitize_text_field( wp_unslash( $_POST[ 'mm_meta_social_' . $field ] ?? '' ) );
 			if ( $val ) {
-				if ( in_array( $field, [ 'linkedin', 'instagram', 'website' ], true ) ) {
+				if ( in_array( $field, array( 'linkedin', 'instagram', 'website' ), true ) ) {
 					$val = esc_url_raw( $val );
 				}
 				$clean[ 'social_' . $field ] = $val;
@@ -94,5 +123,4 @@ class MM_User_Meta_Panel {
 			update_user_meta( $user_id, MM_Upload_Notify::META_USER_RECEIPT, $wants ? '1' : '0' );
 		}
 	}
-
 }

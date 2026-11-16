@@ -3,16 +3,20 @@
  * Admin page shell wrapper.
  *
  * Injected variables (from MM_Metadata_Admin::render()):
+ *
  *   @var MM_Metadata_Admin $this
  *   @var MM_Site_Settings   $settings
  *   @var array              $pages
  *   @var string             $current_page   current sub-page slug
  *   @var string|null        $opt_group      option group for settings_fields()
  *   @var bool               $has_inner_form template handles its own <form>
+  *
+  * @package Metamanager
  */
+
 defined( 'ABSPATH' ) || exit;
 
-/** @var MM_Metadata_Admin $this */
+// Template context: $this is the MM_Metadata_Admin instance.
 $page_cfg = $pages[ $current_page ] ?? $pages['metamanager-business'];
 $template = $page_cfg['template'];
 $label    = $page_cfg['label'];
@@ -28,14 +32,14 @@ $label    = $page_cfg['label'];
 
 <?php if ( $has_inner_form ) : ?>
 
-<?php include MM_META_DIR . 'templates/admin/page-' . $template . '.php'; ?>
+	<?php include MM_META_DIR . 'templates/admin/page-' . $template . '.php'; ?>
 
 <?php else : ?>
 
 <form method="post" action="options.php" class="mm-meta-settings-form">
-<?php settings_fields( $opt_group ); ?>
-<?php include MM_META_DIR . 'templates/admin/page-' . $template . '.php'; ?>
-<?php submit_button( 'Save Settings' ); ?>
+	<?php settings_fields( $opt_group ); ?>
+	<?php include MM_META_DIR . 'templates/admin/page-' . $template . '.php'; ?>
+	<?php submit_button( 'Save Settings' ); ?>
 </form>
 
 <?php endif; ?>

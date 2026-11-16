@@ -4,15 +4,26 @@
  *
  * Removes meta/link tags that add noise, expose WP version, or are
  * not useful for content-marketing sites.
+  *
+  * @package Metamanager
  */
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Mod hygiene.
+ *
+ * @package Metamanager
+ */
 class MM_Mod_Hygiene extends MM_Mod_Base {
 
 	/**
 	 * Hygiene runs very early (module added first in Loader).
 	 * It registers removal hooks here rather than writing to $data.
+	 *
+	 * @param array            $data Data.
+	 * @param MM_Page_Context  $context Context.
+	 * @param MM_Site_Settings $settings Settings.
 	 */
 	public function populate( array &$data, MM_Page_Context $context, MM_Site_Settings $settings ): void {
 		// All hygiene hooks are registered once on init via register_hooks(),
@@ -49,13 +60,13 @@ class MM_Mod_Hygiene extends MM_Mod_Base {
 		}
 
 		if ( $h->get( 'hygiene.remove_pingback_header', true ) ) {
-			add_filter( 'wp_headers', [ $this, 'remove_pingback_header' ] );
+			add_filter( 'wp_headers', array( $this, 'remove_pingback_header' ) );
 			// Also remove from HTML head.
 			remove_action( 'wp_head', 'wp_really_simple_discovery' );
 		}
 
 		if ( $h->get( 'hygiene.remove_x_powered_by', true ) ) {
-			add_filter( 'wp_headers', [ $this, 'remove_x_powered_by' ] );
+			add_filter( 'wp_headers', array( $this, 'remove_x_powered_by' ) );
 			// PHP header removal (best-effort — may be set by server config).
 			if ( function_exists( 'header_remove' ) ) {
 				@header_remove( 'X-Powered-By' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
@@ -63,14 +74,14 @@ class MM_Mod_Hygiene extends MM_Mod_Base {
 		}
 
 		if ( $h->get( 'hygiene.remove_wp_dns_prefetch', true ) ) {
-			add_filter( 'wp_resource_hints', [ $this, 'remove_dns_prefetch_only' ], 10, 2 );
+			add_filter( 'wp_resource_hints', array( $this, 'remove_dns_prefetch_only' ), 10, 2 );
 		}
 
 		// Remove hentry microformat class from post_class() — schema.org
 		// validators flag it as an unrecognized type (hentry is hAtom,
 		// not schema.org). Default: on (suppressed).
 		if ( $h->get( 'hygiene.remove_hentry', true ) ) {
-			add_filter( 'post_class', [ $this, 'remove_hentry_class' ] );
+			add_filter( 'post_class', array( $this, 'remove_hentry_class' ) );
 		}
 	}
 
@@ -88,11 +99,23 @@ class MM_Mod_Hygiene extends MM_Mod_Base {
 		return $classes;
 	}
 
+	/**
+	 * Remove pingback header.
+	 *
+	 * @param array $headers Headers.
+	 * @return array Resulting array.
+	 */
 	public function remove_pingback_header( array $headers ): array {
 		unset( $headers['X-Pingback'] );
 		return $headers;
 	}
 
+	/**
+	 * Remove x powered by.
+	 *
+	 * @param array $headers Headers.
+	 * @return array Resulting array.
+	 */
 	public function remove_x_powered_by( array $headers ): array {
 		unset( $headers['X-Powered-By'] );
 		return $headers;
@@ -100,10 +123,13 @@ class MM_Mod_Hygiene extends MM_Mod_Base {
 
 	/**
 	 * Remove only DNS prefetch hints, preserving preconnect/preload/prefetch/prerender.
+	 *
+	 * @param array  $urls Urls.
+	 * @param string $relation_type Relation type.
 	 */
 	public function remove_dns_prefetch_only( array $urls, string $relation_type ): array {
 		if ( 'dns-prefetch' === $relation_type ) {
-			return [];
+			return array();
 		}
 		return $urls;
 	}
