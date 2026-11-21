@@ -4,6 +4,9 @@
 (function ($) {
 	'use strict';
 
+	var __ = wp.i18n.__;
+	var sprintf = wp.i18n.sprintf;
+
 	var ajax_url  = (window.gcmLinks && gcmLinks.ajax_url) || window.ajaxurl || '';
 	var nonce     = (window.gcmLinks && gcmLinks.nonce) || '';
 	var PER_PAGE  = 50;
@@ -22,12 +25,12 @@
 
 	function statusBadge(row) {
 		if (row.is_ignored === '1') {
-			return '<span class="gcm-badge gcm-badge--ignored">Ignored</span>';
+			return '<span class="gcm-badge gcm-badge--ignored">' + esc(__('Ignored', 'metamanager')) + '</span>';
 		}
 		if (row.is_broken === '1') {
-			return '<span class="gcm-badge gcm-badge--broken">Broken</span>';
+			return '<span class="gcm-badge gcm-badge--broken">' + esc(__('Broken', 'metamanager')) + '</span>';
 		}
-		return '<span class="gcm-badge gcm-badge--ok">OK</span>';
+		return '<span class="gcm-badge gcm-badge--ok">' + esc(__('OK', 'metamanager')) + '</span>';
 	}
 
 	function formatDate(dateStr) {
@@ -42,25 +45,25 @@
 		state.total = total;
 
 		if (!rows || !rows.length) {
-			$wrap.html('<p>No links found.</p>');
+			$wrap.html('<p>' + esc(__('No links found.', 'metamanager')) + '</p>');
 			renderPagination();
 			return;
 		}
 
 		var html = '<table class="wp-list-table widefat fixed striped gcm-links-table">' +
 			'<thead><tr>' +
-			'<th style="width:30%">URL</th>' +
-			'<th style="width:15%">Anchor</th>' +
-			'<th style="width:15%">Post</th>' +
-			'<th style="width:7%">HTTP</th>' +
-			'<th style="width:10%">Status</th>' +
-			'<th style="width:12%">Last Checked</th>' +
-			'<th style="width:11%">Actions</th>' +
+			'<th style="width:30%">' + esc(__('URL', 'metamanager')) + '</th>' +
+			'<th style="width:15%">' + esc(__('Anchor', 'metamanager')) + '</th>' +
+			'<th style="width:15%">' + esc(__('Post', 'metamanager')) + '</th>' +
+			'<th style="width:7%">' + esc(__('HTTP', 'metamanager')) + '</th>' +
+			'<th style="width:10%">' + esc(__('Status', 'metamanager')) + '</th>' +
+			'<th style="width:12%">' + esc(__('Last Checked', 'metamanager')) + '</th>' +
+			'<th style="width:11%">' + esc(__('Actions', 'metamanager')) + '</th>' +
 			'</tr></thead><tbody>';
 
 		$.each(rows, function (i, row) {
 			var ignored  = row.is_ignored === '1';
-			var ignLabel = ignored ? 'Unignore' : 'Ignore';
+			var ignLabel = ignored ? __('Unignore', 'metamanager') : __('Ignore', 'metamanager');
 			var ignVal   = ignored ? '0' : '1';
 
 			html += '<tr data-id="' + esc(row.id) + '">' +
@@ -71,8 +74,8 @@
 				'<td>' + statusBadge(row) + '</td>' +
 				'<td>' + esc(formatDate(row.last_checked)) + '</td>' +
 				'<td class="gcm-link-actions">' +
-				'<button class="button button-small gcm-recheck-link" data-id="' + esc(row.id) + '">Re-check</button> ' +
-				'<button class="button button-small gcm-ignore-link" data-id="' + esc(row.id) + '" data-ignore="' + ignVal + '">' + ignLabel + '</button>' +
+				'<button class="button button-small gcm-recheck-link" data-id="' + esc(row.id) + '">' + esc(__('Re-check', 'metamanager')) + '</button> ' +
+				'<button class="button button-small gcm-ignore-link" data-id="' + esc(row.id) + '" data-ignore="' + ignVal + '">' + esc(ignLabel) + '</button>' +
 				'</td>' +
 				'</tr>';
 		});
@@ -89,11 +92,13 @@
 
 		var pages = Math.ceil(state.total / PER_PAGE);
 		if (state.paged > 1) {
-			$pager.append('<button class="button gcm-page-btn" data-paged="' + (state.paged - 1) + '">&#9664; Prev</button> ');
+			$pager.append('<button class="button gcm-page-btn" data-paged="' + (state.paged - 1) + '">&#9664; ' + esc(__('Prev', 'metamanager')) + '</button> ');
 		}
-		$pager.append('<span>Page ' + state.paged + ' of ' + pages + '</span>');
+		$pager.append('<span>' + esc(sprintf(
+			/* translators: 1: current page number, 2: total number of pages. */
+			__('Page %1$d of %2$d', 'metamanager'), state.paged, pages)) + '</span>');
 		if (state.paged < pages) {
-			$pager.append(' <button class="button gcm-page-btn" data-paged="' + (state.paged + 1) + '">Next &#9654;</button>');
+			$pager.append(' <button class="button gcm-page-btn" data-paged="' + (state.paged + 1) + '">' + esc(__('Next', 'metamanager')) + ' &#9654;</button>');
 		}
 	}
 
@@ -106,7 +111,7 @@
 		var $count    = $('#gcm-scan-count');
 		var $total    = $('#gcm-scan-total');
 
-		$btn.prop('disabled', true).text('Scanning…');
+		$btn.prop('disabled', true).text(__('Scanning…', 'metamanager'));
 		$done.hide();
 		$progress.show();
 
@@ -118,7 +123,7 @@
 			}, function (res) {
 				if (!res || !res.success) {
 					$progress.hide();
-					$btn.prop('disabled', false).text('Scan All Posts for Links');
+					$btn.prop('disabled', false).text(__('Scan All Posts for Links', 'metamanager'));
 					return;
 				}
 				var d = res.data;
@@ -127,7 +132,7 @@
 				if (d.done) {
 					$progress.hide();
 					$done.show();
-					$btn.prop('disabled', false).text('Scan All Posts for Links');
+					$btn.prop('disabled', false).text(__('Scan All Posts for Links', 'metamanager'));
 					fetchLinks();
 				} else {
 					runBatch(d.new_offset);
@@ -142,7 +147,7 @@
 
 	function fetchLinks() {
 		var $wrap = $('#gcm-links-table-wrap');
-		$wrap.html('<p>Loading…</p>');
+		$wrap.html('<p>' + esc(__('Loading…', 'metamanager')) + '</p>');
 
 		$.post(ajax_url, {
 			action  : 'mm_meta_links_fetch',
@@ -154,7 +159,9 @@
 			if (res && res.success) {
 				renderTable(res.data.rows, res.data.total);
 			} else {
-				$wrap.html('<p class="gcm-error">Could not load links: ' + esc((res && res.data) ? res.data : 'unknown error') + '</p>');
+				$wrap.html('<p class="gcm-error">' + esc(sprintf(
+					/* translators: %s: error message. */
+					__('Could not load links: %s', 'metamanager'), (res && res.data) ? res.data : __('unknown error', 'metamanager'))) + '</p>');
 			}
 		});
 	}
@@ -162,7 +169,7 @@
 	// ── Row actions ───────────────────────────────────────────────────────
 
 	function recheckLink(id, $btn) {
-		$btn.text('Checking…').prop('disabled', true);
+		$btn.text(__('Checking…', 'metamanager')).prop('disabled', true);
 		$.post(ajax_url, {
 			action  : 'mm_meta_recheck_link',
 			_nonce  : nonce,
@@ -171,7 +178,7 @@
 			if (res && res.success) {
 				fetchLinks(); // reload table to reflect new status
 			} else {
-				$btn.text('Error').prop('disabled', false);
+				$btn.text(__('Error', 'metamanager')).prop('disabled', false);
 			}
 		});
 	}
@@ -234,14 +241,14 @@
 		// Re-check all visible rows.
 		$('#gcm-recheck-all').on('click', function () {
 			var $self = $(this);
-			$self.prop('disabled', true).text('Checking…');
+			$self.prop('disabled', true).text(__('Checking…', 'metamanager'));
 			var ids = [];
 			$('.gcm-recheck-link').each(function () {
 				ids.push($(this).data('id'));
 			});
 
 			if (!ids.length) {
-				$self.prop('disabled', false).text('Re-check All');
+				$self.prop('disabled', false).text(__('Re-check All', 'metamanager'));
 				return;
 			}
 
@@ -249,7 +256,7 @@
 			function next() {
 				if (done >= ids.length) {
 					fetchLinks();
-					$self.prop('disabled', false).text('Re-check All');
+					$self.prop('disabled', false).text(__('Re-check All', 'metamanager'));
 					return;
 				}
 				$.post(ajax_url, {
@@ -258,7 +265,9 @@
 					link_id : ids[done],
 				}, function () {
 					done++;
-					$self.text('Checking… (' + done + '/' + ids.length + ')');
+					$self.text(sprintf(
+						/* translators: 1: number of links checked, 2: total number of links. */
+						__('Checking… (%1$d/%2$d)', 'metamanager'), done, ids.length));
 					next();
 				});
 			}

@@ -99,7 +99,7 @@ class MM_Term_Meta_Panel {
 		wp_enqueue_media();
 		wp_enqueue_style( 'mm-meta-term-panel', MM_META_URL . 'assets/css/metadata-admin.css', [], MM_META_VERSION );
 		wp_enqueue_script( 'mm-meta-admin-metabox', MM_META_URL . 'assets/js/admin-metabox.js', [ 'jquery' ], MM_META_VERSION, true );
-		wp_enqueue_script( 'mm-meta-admin-media',   MM_META_URL . 'assets/js/admin-media.js',   [ 'jquery' ], MM_META_VERSION, true );
+		wp_enqueue_script( 'mm-meta-admin-media',   MM_META_URL . 'assets/js/admin-media.js',   [ 'jquery', 'wp-i18n' ], MM_META_VERSION, true );
 	}
 
 	// -------------------------------------------------------------------------

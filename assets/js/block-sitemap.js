@@ -35,9 +35,9 @@
 					label: __( 'Order By', 'metamanager' ),
 					value: attrs.orderBy,
 					options: [
-						{ value: 'menu_order', label: 'Menu Order' },
-						{ value: 'title', label: 'Title' },
-						{ value: 'date', label: 'Date' }
+						{ value: 'menu_order', label: __( 'Menu Order', 'metamanager' ) },
+						{ value: 'title', label: __( 'Title', 'metamanager' ) },
+						{ value: 'date', label: __( 'Date', 'metamanager' ) }
 					],
 					onChange: function ( v ) { setProps( { orderBy: v } ); }
 				} ),
