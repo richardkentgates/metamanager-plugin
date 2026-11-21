@@ -331,8 +331,10 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 		}
 
 		// Validate URL belongs to this site.
-		if ( ! str_starts_with( $url, home_url() ) ) {
-			WP_CLI::error( 'URL must start with ' . home_url() );
+		$url_host  = wp_parse_url( $url, PHP_URL_HOST );
+		$home_host = wp_parse_url( home_url(), PHP_URL_HOST );
+		if ( ! $url_host || ! $home_host || strtolower( $url_host ) !== strtolower( $home_host ) ) {
+			WP_CLI::error( 'URL must belong to this site: ' . home_url() );
 		}
 
 		$response = wp_remote_get( $url, [
