@@ -418,7 +418,7 @@ function mm_import_completed_jobs(): void {
 				// Unparseable — likely a partial write or corrupted file.
 				// Rename so the admin can inspect, rather than silently deleting.
 				$backup = $filepath . '.unparseable';
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Keep the unparseable job file for inspection; the job queue lives in wp-content, not the plugin folder.
 				rename( $filepath, $backup );
 				error_log( sprintf(
 					'[Metamanager] Unparseable result file renamed for inspection: %s',
