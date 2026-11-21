@@ -183,11 +183,13 @@ wp_enqueue_style( 'mm-meta-admin', MM_META_URL . 'assets/css/metadata-admin.css'
 wp_enqueue_media();
 
 wp_enqueue_script( 'mm-meta-admin-repeater', MM_META_URL . 'assets/js/admin-repeater.js', [ 'jquery', 'jquery-ui-sortable' ], MM_META_VERSION, true );
-wp_enqueue_script( 'mm-meta-admin-media',    MM_META_URL . 'assets/js/admin-media.js',    [ 'jquery' ],                        MM_META_VERSION, true );
+wp_enqueue_script( 'mm-meta-admin-media',    MM_META_URL . 'assets/js/admin-media.js',    [ 'jquery', 'wp-i18n' ],                        MM_META_VERSION, true );
+wp_set_script_translations( 'mm-meta-admin-media', 'metamanager', MM_META_DIR . 'languages' );
 wp_enqueue_script( 'mm-meta-admin-tabs',     MM_META_URL . 'assets/js/admin-tabs.js',     [],                                  MM_META_VERSION, true );
 
 if ( 'metamanager_page_mm-meta-links' === $hook ) {
-wp_enqueue_script( 'mm-meta-admin-links', MM_META_URL . 'assets/js/admin-links.js', [ 'jquery' ], MM_META_VERSION, true );
+wp_enqueue_script( 'mm-meta-admin-links', MM_META_URL . 'assets/js/admin-links.js', [ 'jquery', 'wp-i18n' ], MM_META_VERSION, true );
+wp_set_script_translations( 'mm-meta-admin-links', 'metamanager', MM_META_DIR . 'languages' );
 wp_localize_script( 'mm-meta-admin-links', 'gcmLinks', [
 'ajax_url' => admin_url( 'admin-ajax.php' ),
 'nonce'    => wp_create_nonce( 'mm_meta_links_nonce' ),
@@ -202,7 +204,7 @@ wp_localize_script( 'mm-meta-admin-links', 'gcmLinks', [
 public function ajax_tools_action(): void {
 check_ajax_referer( 'mm_meta_tools_nonce', '_nonce' );
 if ( ! current_user_can( 'manage_options' ) ) {
-wp_send_json_error( 'Unauthorized', 403 );
+wp_send_json_error( __( 'Unauthorized', 'metamanager' ), 403 );
 }
 
 $action = sanitize_key( $_POST['tools_action'] ?? '' );
@@ -211,24 +213,24 @@ $action = sanitize_key( $_POST['tools_action'] ?? '' );
 			case 'reset_settings':
 				update_option( MM_META_OPT_SETTINGS, MM_Site_Settings::settings_defaults() );
 				update_option( MM_META_OPT_BUSINESS, MM_Site_Settings::business_defaults() );
-				wp_send_json_success( 'Settings reset to defaults.' );
+				wp_send_json_success( __( 'Settings reset to defaults.', 'metamanager' ) );
 
 			case 'flush_rewrite':
 				flush_rewrite_rules();
-				wp_send_json_success( 'Rewrite rules flushed.' );
+				wp_send_json_success( __( 'Rewrite rules flushed.', 'metamanager' ) );
 
 			case 'ping_sitemap':
 				( new MM_Mod_Sitemap_Web( $this->settings ) )->send_ping();
-				wp_send_json_success( 'Ping sent.' );
+				wp_send_json_success( __( 'Ping sent.', 'metamanager' ) );
 
 			case 'purge_links':
 				global $wpdb;
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', MM_Mod_Links::table_name() ) );
-				wp_send_json_success( 'Link table purged.' );
+				wp_send_json_success( __( 'Link table purged.', 'metamanager' ) );
 
 			default:
-				wp_send_json_error( 'Unknown action.' );
+				wp_send_json_error( __( 'Unknown action.', 'metamanager' ) );
 		}
 	}
 

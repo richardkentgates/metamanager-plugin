@@ -303,7 +303,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 	public function ajax_fetch_links(): void {
 		check_ajax_referer( 'mm_meta_links_nonce', '_nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized', 403 );
+			wp_send_json_error( __( 'Unauthorized', 'metamanager' ), 403 );
 		}
 
 		global $wpdb;
@@ -354,7 +354,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 	public function ajax_recheck_link(): void {
 		check_ajax_referer( 'mm_meta_links_nonce', '_nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized', 403 );
+			wp_send_json_error( __( 'Unauthorized', 'metamanager' ), 403 );
 		}
 
 		global $wpdb;
@@ -362,13 +362,13 @@ class MM_Mod_Links extends MM_Mod_Base {
 		$table = self::table_name();
 
 		if ( ! $id ) {
-			wp_send_json_error( 'Invalid ID' );
+			wp_send_json_error( __( 'Invalid ID', 'metamanager' ) );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is a plugin-owned identifier
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT url FROM {$table} WHERE id = %d", $id ), ARRAY_A );
 		if ( ! $row ) {
-			wp_send_json_error( 'Not found' );
+			wp_send_json_error( __( 'Not found', 'metamanager' ) );
 		}
 
 		$code   = $this->head_request( $row['url'], 10 );
@@ -393,7 +393,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 	public function ajax_ignore_link(): void {
 		check_ajax_referer( 'mm_meta_links_nonce', '_nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized', 403 );
+			wp_send_json_error( __( 'Unauthorized', 'metamanager' ), 403 );
 		}
 
 		global $wpdb;
@@ -402,7 +402,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 		$table   = self::table_name();
 
 		if ( ! $id ) {
-			wp_send_json_error( 'Invalid ID' );
+			wp_send_json_error( __( 'Invalid ID', 'metamanager' ) );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -414,7 +414,7 @@ class MM_Mod_Links extends MM_Mod_Base {
 	public function ajax_scan_all_posts(): void {
 		check_ajax_referer( 'mm_meta_links_nonce', '_nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized', 403 );
+			wp_send_json_error( __( 'Unauthorized', 'metamanager' ), 403 );
 		}
 
 		$offset = max( 0, absint( wp_unslash( $_POST['offset'] ?? 0 ) ) );

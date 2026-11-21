@@ -2084,7 +2084,7 @@ class MM_Admin {
 	public static function ajax_status_refresh(): void {
 		check_ajax_referer( 'mm_status_refresh', 'nonce' );
 		if ( ! current_user_can( 'upload_files' ) ) {
-			wp_send_json_error( 'Unauthorized' );
+			wp_send_json_error( __( 'Unauthorized', 'metamanager' ) );
 		}
 
 		$job_root = defined( 'MM_JOB_ROOT' ) ? MM_JOB_ROOT : WP_CONTENT_DIR . '/metamanager-jobs';
@@ -2096,20 +2096,24 @@ class MM_Admin {
 		$installed_ver = $data['daemon_version'] ?? null;
 
 		if ( null !== $installed_ver ) {
-			$daemon_status = '<span style="color:#00a32a;font-weight:600;">Daemon v' . esc_html( $installed_ver ) . ' installed</span>';
+			$daemon_status = '<span style="color:#00a32a;font-weight:600;">' . esc_html( sprintf(
+				/* translators: %s: installed daemon version number. */
+				__( 'Daemon v%s installed', 'metamanager' ),
+				$installed_ver
+			) ) . '</span>';
 		} else {
-			$daemon_status = '<span style="color:#d63638;font-weight:600;">Daemon not installed</span>';
+			$daemon_status = '<span style="color:#d63638;font-weight:600;">' . esc_html__( 'Daemon not installed', 'metamanager' ) . '</span>';
 		}
 
 		$action_labels = [
-			'ok'       => 'Up to date',
-			'updated'  => 'Updated successfully',
-			'updating' => 'Updating...',
-			'failed'   => 'Update failed',
-			'error'    => 'Error',
-			'ahead'    => 'Ahead of required',
-			'waiting'  => 'Waiting for plugin',
-			'none'     => 'None',
+			'ok'       => __( 'Up to date', 'metamanager' ),
+			'updated'  => __( 'Updated successfully', 'metamanager' ),
+			'updating' => __( 'Updating...', 'metamanager' ),
+			'failed'   => __( 'Update failed', 'metamanager' ),
+			'error'    => __( 'Error', 'metamanager' ),
+			'ahead'    => __( 'Ahead of required', 'metamanager' ),
+			'waiting'  => __( 'Waiting for plugin', 'metamanager' ),
+			'none'     => __( 'None', 'metamanager' ),
 		];
 		$action = ( null !== $installed_ver ) ? 'ok' : 'error';
 		$color  = in_array( $action, [ 'ok', 'updated', 'ahead' ], true ) ? '#00a32a'
@@ -2129,13 +2133,13 @@ class MM_Admin {
 	public static function ajax_requeue_job(): void {
 		check_ajax_referer( 'mm_requeue_job', 'nonce' );
 		if ( ! current_user_can( 'edit_others_posts' ) ) {
-			wp_send_json_error( 'Permission denied.' );
+			wp_send_json_error( __( 'Permission denied.', 'metamanager' ) );
 		}
 		$job_id = absint( $_POST['job_id'] ?? 0 );
 		if ( MM_Job_Queue::requeue( $job_id ) ) {
 			wp_send_json_success();
 		} else {
-			wp_send_json_error( 'Job not found or file missing.' );
+			wp_send_json_error( __( 'Job not found or file missing.', 'metamanager' ) );
 		}
 	}
 
@@ -2155,7 +2159,7 @@ class MM_Admin {
 	public static function ajax_scan_library(): void {
 		check_ajax_referer( 'mm_scan_library', 'nonce' );
 		if ( ! current_user_can( 'edit_others_posts' ) ) {
-			wp_send_json_error( 'Permission denied.' );
+			wp_send_json_error( __( 'Permission denied.', 'metamanager' ) );
 		}
 
 		// Memory gate: pause if memory is critically low.
@@ -2268,7 +2272,7 @@ class MM_Admin {
 		$mime = $id ? (string) get_post_mime_type( $id ) : '';
 
 		if ( ! $id || ! current_user_can( 'edit_post', $id ) ) {
-			wp_send_json_error( 'Permission denied.' );
+			wp_send_json_error( __( 'Permission denied.', 'metamanager' ) );
 		}
 
 		if ( ! wp_attachment_is_image( $id ) && ! MM_Metadata::is_video_mime( $mime ) ) {
@@ -2301,7 +2305,7 @@ class MM_Admin {
 		check_ajax_referer( 'mm_bulk_meta_apply', 'nonce' );
 
 		if ( ! current_user_can( 'edit_others_posts' ) ) {
-			wp_send_json_error( 'Permission denied.' );
+			wp_send_json_error( __( 'Permission denied.', 'metamanager' ) );
 		}
 
 		$raw_ids      = array_map( 'absint', (array) ( $_POST['ids'] ?? [] ) );
@@ -2388,11 +2392,11 @@ class MM_Admin {
 		check_ajax_referer( 'mm_wc_product_link', 'nonce' );
 
 		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_send_json_error( 'Permission denied.' );
+			wp_send_json_error( __( 'Permission denied.', 'metamanager' ) );
 		}
 
 		if ( ! class_exists( 'WooCommerce' ) ) {
-			wp_send_json_error( 'WooCommerce not active.' );
+			wp_send_json_error( __( 'WooCommerce not active.', 'metamanager' ) );
 		}
 
 		$search = sanitize_text_field( wp_unslash( $_GET['search'] ?? '' ) );

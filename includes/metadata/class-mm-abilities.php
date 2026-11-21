@@ -310,7 +310,7 @@ class MM_Abilities {
 	public function ability_get_post_meta( array $input ) {
 		$post_id = absint( $input['post_id'] ?? 0 );
 		if ( ! $post_id || ! get_post( $post_id ) ) {
-			return new WP_Error( 'invalid_post', 'Post not found.' );
+			return new WP_Error( 'invalid_post', __( 'Post not found.', 'metamanager' ) );
 		}
 
 		$settings = MM_Site_Settings::get_instance();
@@ -371,11 +371,11 @@ class MM_Abilities {
 	public function ability_update_post_meta( array $input ) {
 		$post_id = absint( $input['post_id'] ?? 0 );
 		if ( ! $post_id || ! get_post( $post_id ) ) {
-			return new WP_Error( 'invalid_post', 'Post not found.' );
+			return new WP_Error( 'invalid_post', __( 'Post not found.', 'metamanager' ) );
 		}
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return new WP_Error( 'forbidden', 'You do not have permission to edit this post.' );
+			return new WP_Error( 'forbidden', __( 'You do not have permission to edit this post.', 'metamanager' ) );
 		}
 
 		$settings = MM_Site_Settings::get_instance();
@@ -437,13 +437,13 @@ class MM_Abilities {
 	public function ability_get_schema( array $input ) {
 		$url = esc_url_raw( $input['url'] ?? '' );
 		if ( ! $url || ! wp_parse_url( $url, PHP_URL_HOST ) ) {
-			return new WP_Error( 'invalid_url', 'A valid URL on this site is required.' );
+			return new WP_Error( 'invalid_url', __( 'A valid URL on this site is required.', 'metamanager' ) );
 		}
 
 		$host = wp_parse_url( $url, PHP_URL_HOST );
 		$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
 		if ( $host !== $site_host ) {
-			return new WP_Error( 'external_url', 'URL must belong to this site.' );
+			return new WP_Error( 'external_url', __( 'URL must belong to this site.', 'metamanager' ) );
 		}
 
 		// Temporarily switch context to the requested URL.
@@ -909,12 +909,12 @@ class MM_Abilities {
 		$taxonomy = sanitize_text_field( $input['taxonomy'] ?? '' );
 
 		if ( ! $term_id || ! taxonomy_exists( $taxonomy ) ) {
-			return new WP_Error( 'invalid_term', 'Term or taxonomy not found.' );
+			return new WP_Error( 'invalid_term', __( 'Term or taxonomy not found.', 'metamanager' ) );
 		}
 
 		$term = get_term( $term_id, $taxonomy );
 		if ( ! $term || is_wp_error( $term ) ) {
-			return new WP_Error( 'invalid_term', 'Term not found.' );
+			return new WP_Error( 'invalid_term', __( 'Term not found.', 'metamanager' ) );
 		}
 
 		$settings = MM_Site_Settings::get_instance();

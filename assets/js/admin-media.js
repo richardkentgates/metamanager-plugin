@@ -29,8 +29,8 @@
 
 			// Create a fresh frame each time.
 			var frame = wp.media({
-				title:    'Select Image',
-				button:   { text: 'Use this image' },
+				title:    wp.i18n.__('Select Image', 'metamanager'),
+				button:   { text: wp.i18n.__('Use this image', 'metamanager') },
 				multiple: false,
 				library:  { type: 'image' }
 			});
