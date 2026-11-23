@@ -413,10 +413,12 @@ class MM_Status {
 		}
 
 		$tmp = $status_file . '.tmp';
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, PluginCheck.CodeAnalysis.WriteFile.PluginDirectoryWrite -- Writes to wp-content, not the plugin folder.
 		@file_put_contents( $tmp, $json );
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_function
+		// Atomic replace so the dashboard never reads a half-written file; WP_Filesystem has no atomic move. The file lives in wp-content, not the plugin folder.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename, PluginCheck.CodeAnalysis.WriteFile.PluginDirectoryWrite
 		@rename( $tmp, $status_file );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
 		@chmod( $status_file, 0644 );
 	}
 

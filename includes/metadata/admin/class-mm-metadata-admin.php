@@ -105,6 +105,7 @@ $section_groups = [
 ];
 
 foreach ( $section_groups as $group => $section ) {
+// phpcs:ignore PluginCheck.CodeAnalysis.SettingSanitization.register_settingMissing -- Sanitised by the pre_update_option_mm_meta_settings filter (see note above).
 register_setting( $group, MM_META_OPT_SETTINGS );
 }
 

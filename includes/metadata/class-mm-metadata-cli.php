@@ -95,7 +95,7 @@ class MM_Metadata_CLI extends \WP_CLI_Command {
 		} else {
 			$json = '';
 			while ( !feof( STDIN ) ) {
-				$json .= fread( STDIN, 8192 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_operations_read
+				$json .= fread( STDIN, 8192 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_operations_read, WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Reading STDIN in WP-CLI; WP_Filesystem cannot read streams.
 			}
 		}
 

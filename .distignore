@@ -8,3 +8,5 @@ phpunit.xml
 
 # Server plugin — no dev dependencies
 vendor/
+phpcs.xml.dist
+phpunit.xml.dist

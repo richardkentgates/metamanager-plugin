@@ -828,10 +828,23 @@ class MM_Site_Settings {
 		}
 	}
 
+	/**
+	 * Check whether an array is a sequential list (keys 0..n-1 in order).
+	 *
+	 * Replacement for array_is_list(), which needs PHP 8.1 or the WordPress 6.5
+	 * polyfill, while this plugin supports PHP 8.0 and WordPress 6.2.
+	 *
+	 * @param array $value Array to test.
+	 * @return bool True when the array is a list.
+	 */
+	private static function is_list( array $value ): bool {
+		return array() === $value || array_keys( $value ) === range( 0, count( $value ) - 1 );
+	}
+
 	public static function deep_merge( array $base, array $override, bool $merge_lists = false ): array {
 		foreach ( $override as $key => $value ) {
 			if ( isset( $base[ $key ] ) && is_array( $base[ $key ] ) && is_array( $value ) ) {
-				$is_list = array_is_list( $base[ $key ] ) && array_is_list( $value );
+				$is_list = self::is_list( $base[ $key ] ) && self::is_list( $value );
 				$base[ $key ] = ( $is_list && ! $merge_lists )
 					? $value
 					: self::deep_merge( $base[ $key ], $value, $merge_lists );

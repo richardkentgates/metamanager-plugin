@@ -901,8 +901,8 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 		}
 
 		$month_name = date_i18n( 'F Y', mktime( 0, 0, 0, $month, 1, $year ) );
-		$days_in_month = (int) date( 't', mktime( 0, 0, 0, $month, 1, $year ) );
-		$first_day_of_week = (int) date( 'w', mktime( 0, 0, 0, $month, 1, $year ) );
+		$days_in_month = (int) gmdate( 't', gmmktime( 0, 0, 0, $month, 1, $year ) );
+		$first_day_of_week = (int) gmdate( 'w', gmmktime( 0, 0, 0, $month, 1, $year ) );
 
 		// Get events for this month.
 		$events = $this->get_events_for_month( $year, $month );
@@ -913,7 +913,7 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 			$saved = get_post_meta( $event->ID, 'mm_schema_fields', true );
 			$start = $saved['event_start_date'] ?? '';
 			if ( $start ) {
-				$day = (int) date( 'j', strtotime( $start ) );
+				$day = (int) gmdate( 'j', strtotime( $start ) );
 				$day_events[ $day ][] = $event;
 			}
 		}
@@ -1018,7 +1018,7 @@ class MM_Mod_Business_Contact extends MM_Mod_Base {
 	 */
 	private function get_events_for_month( int $year, int $month ): array {
 		$start_date = sprintf( '%04d-%02d-01', $year, $month );
-		$end_date   = sprintf( '%04d-%02d-%02d', $year, $month, (int) date( 't', mktime( 0, 0, 0, $month, 1, $year ) ) );
+		$end_date   = sprintf( '%04d-%02d-%02d', $year, $month, (int) gmdate( 't', gmmktime( 0, 0, 0, $month, 1, $year ) ) );
 
 		$query = new \WP_Query( [
 			'post_type'      => 'mm_event',
