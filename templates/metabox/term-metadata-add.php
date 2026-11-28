@@ -3,9 +3,13 @@
  * Term SEO fields — add-term form (divs, not table rows).
  *
  * Variables:
+ *
  *   @var string           $taxonomy
  *   @var MM_Site_Settings $settings  (not used yet but available)
+  *
+  * @package Metamanager
  */
+
 defined( 'ABSPATH' ) || exit;
 ?>
 <div class="form-field term-mm-meta-wrap">

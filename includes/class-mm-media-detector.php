@@ -13,6 +13,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Media detector.
+ *
+ * @package Metamanager
+ */
 class MM_Media_Detector {
 
 	/**
@@ -31,12 +36,12 @@ class MM_Media_Detector {
 	 */
 	public static function scan_content( string $content ): array {
 		if ( '' === $content ) {
-			return [];
+			return array();
 		}
 
-		$items   = [];
-		$seen    = [];
-		$results = [];
+		$items   = array();
+		$seen    = array();
+		$results = array();
 
 		// Images.
 		if ( preg_match_all( '/<img\b[^>]*?>/is', $content, $matches ) ) {
@@ -92,11 +97,11 @@ class MM_Media_Detector {
 				$href = esc_url_raw( $href );
 				if ( $href && ! isset( $seen[ $href ] ) ) {
 					$seen[ $href ] = true;
-					$results[]     = [
+					$results[]     = array(
 						'type'          => 'document',
 						'url'           => $href,
 						'attachment_id' => attachment_url_to_postid( $href ),
-					];
+					);
 				}
 			}
 		}
@@ -132,6 +137,8 @@ class MM_Media_Detector {
 
 	/**
 	 * Parse an <img> tag into a media record.
+	 *
+	 * @param string $tag Tag.
 	 */
 	private static function parse_img_tag( string $tag ): ?array {
 		if ( ! preg_match( '/\bsrc=["\']([^"\']+)["\']/i', $tag, $src ) ) {
@@ -176,7 +183,7 @@ class MM_Media_Detector {
 			}
 		}
 
-		return [
+		return array(
 			'type'          => 'image',
 			'url'           => $url,
 			'attachment_id' => $attachment_id,
@@ -184,14 +191,16 @@ class MM_Media_Detector {
 			'height'        => $height,
 			'alt'           => $alt,
 			'caption'       => $caption,
-		];
+		);
 	}
 
 	/**
 	 * Parse <source> tags inside a <video> element.
+	 *
+	 * @param string $inner Inner.
 	 */
 	private static function parse_video_sources( string $inner ): array {
-		$items = [];
+		$items = array();
 
 		// src attribute on <video> itself.
 		if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/i', $inner, $src ) ) {
@@ -210,9 +219,11 @@ class MM_Media_Detector {
 
 	/**
 	 * Parse <source> tags inside an <audio> element.
+	 *
+	 * @param string $inner Inner.
 	 */
 	private static function parse_audio_sources( string $inner ): array {
-		$items = [];
+		$items = array();
 
 		if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/i', $inner, $src ) ) {
 			$items[] = self::make_audio_record( esc_url_raw( $src[1] ) );
@@ -229,6 +240,8 @@ class MM_Media_Detector {
 
 	/**
 	 * Build a video media record from a URL.
+	 *
+	 * @param string $url URL.
 	 */
 	private static function make_video_record( string $url ): ?array {
 		if ( ! $url ) {
@@ -245,16 +258,18 @@ class MM_Media_Detector {
 			}
 		}
 
-		return [
+		return array(
 			'type'          => 'video',
 			'url'           => $url,
 			'attachment_id' => $attachment_id,
 			'duration'      => $duration,
-		];
+		);
 	}
 
 	/**
 	 * Build an audio media record from a URL.
+	 *
+	 * @param string $url URL.
 	 */
 	private static function make_audio_record( string $url ): ?array {
 		if ( ! $url ) {
@@ -271,18 +286,20 @@ class MM_Media_Detector {
 			}
 		}
 
-		return [
+		return array(
 			'type'          => 'audio',
 			'url'           => $url,
 			'attachment_id' => $attachment_id,
 			'duration'      => $duration,
-		];
+		);
 	}
 
 	/**
 	 * Build an embed media record from an iframe src URL.
 	 *
 	 * Detects YouTube and Vimeo and marks them as video embeds.
+	 *
+	 * @param string $url URL.
 	 */
 	private static function parse_iframe_src( string $url ): array {
 		$type = 'embed';
@@ -293,10 +310,10 @@ class MM_Media_Detector {
 			$type = 'video';
 		}
 
-		return [
+		return array(
 			'type'          => $type,
 			'url'           => $url,
 			'attachment_id' => 0,
-		];
+		);
 	}
 }
