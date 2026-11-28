@@ -4,46 +4,49 @@
  * Controls removal of WordPress-generated <head> clutter.
  *
  * @var MM_Site_Settings $settings
+ *
+ * @package Metamanager
  */
+
 defined( 'ABSPATH' ) || exit;
 $opt = MM_META_OPT_SETTINGS;
 $s   = $settings;
-$h   = $s->get( 'hygiene', [] );
+$h   = $s->get( 'hygiene', array() );
 
-$toggles = [
-	'remove_generator'       => [
+$toggles = array(
+	'remove_generator'       => array(
 		'label' => 'WordPress Generator Tag',
 		'desc'  => 'Removes <code>&lt;meta name="generator" content="WordPress X.X.X"&gt;</code>. Recommended — reduces version fingerprinting.',
-	],
-	'remove_oembed_links'    => [
+	),
+	'remove_oembed_links'    => array(
 		'label' => 'oEmbed Discovery Links',
 		'desc'  => 'Removes <code>&lt;link rel="alternate" type="application/json+oembed"&gt;</code> tags added by WordPress.',
-	],
-	'remove_shortlink'       => [
+	),
+	'remove_shortlink'       => array(
 		'label' => 'Shortlink Tag',
 		'desc'  => 'Removes <code>&lt;link rel="shortlink"&gt;</code>.',
-	],
-	'remove_wlw_manifest'    => [
+	),
+	'remove_wlw_manifest'    => array(
 		'label' => 'Windows Live Writer Manifest',
 		'desc'  => 'Removes <code>&lt;link rel="wlwmanifest"&gt;</code>. Safe to remove unless you use WLW.',
-	],
-	'remove_rsd_link'        => [
+	),
+	'remove_rsd_link'        => array(
 		'label' => 'RSD (Really Simple Discovery) Link',
 		'desc'  => 'Removes <code>&lt;link rel="EditURI"&gt;</code>.',
-	],
-	'remove_pingback_header' => [
+	),
+	'remove_pingback_header' => array(
 		'label' => 'X-Pingback HTTP Header',
 		'desc'  => 'Removes the <code>X-Pingback</code> server header.',
-	],
-	'remove_x_powered_by'   => [
+	),
+	'remove_x_powered_by'    => array(
 		'label' => 'X-Powered-By HTTP Header',
 		'desc'  => 'Removes <code>X-Powered-By: PHP</code> from server responses.',
-	],
-	'remove_wp_dns_prefetch' => [
+	),
+	'remove_wp_dns_prefetch' => array(
 		'label' => 'WordPress DNS Prefetch <link>',
 		'desc'  => 'Removes the WordPress-added <code>dns-prefetch</code> hint for s.w.org.',
-	],
-];
+	),
+);
 ?>
 <div class="mm-meta-panel" id="page-hygiene">
 

@@ -52,9 +52,9 @@ class MM_Cron_Tracker {
 	 * @param string $error   Error message (for failures).
 	 */
 	public static function record( string $hook, string $status, string $error = '' ): void {
-		$history   = get_option( self::OPTION_KEY, array() );
-		$now       = gmdate( 'Y-m-d\TH:i:s\Z' );
-		$next_run  = self::get_next_run( $hook );
+		$history  = get_option( self::OPTION_KEY, array() );
+		$now      = gmdate( 'Y-m-d\TH:i:s\Z' );
+		$next_run = self::get_next_run( $hook );
 
 		if ( ! isset( $history[ $hook ] ) ) {
 			$history[ $hook ] = array(

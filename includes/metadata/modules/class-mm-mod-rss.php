@@ -24,15 +24,31 @@
  *  - Toggle each cleanup individually.
  *  - Override the feed channel title (feed.feed_title).
  *  - Add a copyright notice to the channel (feed.feed_copyright).
+ *
+ * @package Metamanager
  */
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Mod RSS.
+ *
+ * @package Metamanager
+ */
 class MM_Mod_Rss extends MM_Mod_Base {
 
-	/** Nothing to add to the HTML <head>. */
+	/**
+	 * Nothing to add to the HTML <head>.
+	 *
+	 * @param array            $data Data.
+	 * @param MM_Page_Context  $context Context.
+	 * @param MM_Site_Settings $settings Settings.
+	 */
 	public function populate( array &$data, MM_Page_Context $context, MM_Site_Settings $settings ): void {}
 
+	/**
+	 * Register hooks.
+	 */
 	public function register_hooks(): void {
 		if ( ! $this->settings->get( 'feed.cleanup_enabled', true ) ) {
 			return;
@@ -40,12 +56,12 @@ class MM_Mod_Rss extends MM_Mod_Base {
 
 		// Remove the WordPress version disclosure generator tag from all feeds.
 		if ( $this->settings->get( 'feed.remove_generator', true ) ) {
-			add_filter( 'the_generator', [ $this, 'filter_generator' ], 10, 2 );
+			add_filter( 'the_generator', array( $this, 'filter_generator' ), 10, 2 );
 		}
 
 		// Strip wfw: / slash: elements and namespace declarations via output buffer.
 		if ( $this->settings->get( 'feed.remove_comments_elements', true ) ) {
-			add_action( 'template_redirect', [ $this, 'start_rss_buffer' ], 1 );
+			add_action( 'template_redirect', array( $this, 'start_rss_buffer' ), 1 );
 		}
 
 		// Force excerpt mode — suppress full post content in feeds.
@@ -58,13 +74,13 @@ class MM_Mod_Rss extends MM_Mod_Base {
 
 		// Override the feed channel title.
 		$title = trim( (string) $this->settings->get( 'feed.feed_title', '' ) );
-		if ( $title !== '' ) {
+		if ( '' !== $title ) {
 			add_filter( 'wp_title_rss', fn() => esc_html( $title ) );
 		}
 
 		// Append a <copyright> element to the channel.
 		$copyright = trim( (string) $this->settings->get( 'feed.feed_copyright', '' ) );
-		if ( $copyright !== '' ) {
+		if ( '' !== $copyright ) {
 			add_action(
 				'rss2_head',
 				function () use ( $copyright ): void {
@@ -87,7 +103,7 @@ class MM_Mod_Rss extends MM_Mod_Base {
 	 * @return string Empty string for feed types; unchanged for HTML <head>.
 	 */
 	public function filter_generator( string $gen, string $type ): string {
-		$feed_types = [ 'rss2', 'rss', 'atom', 'rdf', 'comment', 'export', 'opml' ];
+		$feed_types = array( 'rss2', 'rss', 'atom', 'rdf', 'comment', 'export', 'opml' );
 		return in_array( $type, $feed_types, true ) ? '' : $gen;
 	}
 
@@ -121,10 +137,12 @@ class MM_Mod_Rss extends MM_Mod_Base {
 	// Output buffer — wfw / slash cleanup
 	// -------------------------------------------------------------------------
 
-	/** Start buffering the feed template output on feed requests. */
+	/**
+	 * Start buffering the feed template output on feed requests.
+	 */
 	public function start_rss_buffer(): void {
 		if ( is_feed() ) {
-			ob_start( [ $this, 'clean_rss_output' ] );
+			ob_start( array( $this, 'clean_rss_output' ) );
 		}
 	}
 
