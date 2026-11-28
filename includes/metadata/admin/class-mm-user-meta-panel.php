@@ -17,13 +17,13 @@ class MM_User_Meta_Panel {
 	private MM_Site_Settings $settings;
 
 	/** Social profile fields. */
-	const SOCIAL_FIELDS = [
+	const SOCIAL_FIELDS = array(
 		'twitter'   => 'Twitter / X (@handle)',
 		'linkedin'  => 'LinkedIn Profile URL',
 		'instagram' => 'Instagram URL',
 		'bluesky'   => 'BlueSky Handle',
 		'website'   => 'Personal Website URL',
-	];
+	);
 
 	public function __construct( MM_Site_Settings $settings ) {
 		$this->settings = $settings;
@@ -33,10 +33,10 @@ class MM_User_Meta_Panel {
 		if ( ! $this->settings->get( 'authors.enabled', true ) ) {
 			return;
 		}
-		add_action( 'show_user_profile',        [ $this, 'render_fields' ] );
-		add_action( 'edit_user_profile',         [ $this, 'render_fields' ] );
-		add_action( 'personal_options_update',   [ $this, 'save_meta' ] );
-		add_action( 'edit_user_profile_update',  [ $this, 'save_meta' ] );
+		add_action( 'show_user_profile', array( $this, 'render_fields' ) );
+		add_action( 'edit_user_profile', array( $this, 'render_fields' ) );
+		add_action( 'personal_options_update', array( $this, 'save_meta' ) );
+		add_action( 'edit_user_profile_update', array( $this, 'save_meta' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -67,17 +67,17 @@ class MM_User_Meta_Panel {
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification
-		$clean = [];
+		$clean = array();
 
 		// Noindex checkbox — checked = hide from search.
-		$noindex = ! empty( $_POST['mm_meta_noindex'] );
+		$noindex          = ! empty( $_POST['mm_meta_noindex'] );
 		$clean['noindex'] = $noindex;
 
 		// Social profiles.
 		foreach ( array_keys( self::SOCIAL_FIELDS ) as $field ) {
 			$val = sanitize_text_field( wp_unslash( $_POST[ 'mm_meta_social_' . $field ] ?? '' ) );
 			if ( $val ) {
-				if ( in_array( $field, [ 'linkedin', 'instagram', 'website' ], true ) ) {
+				if ( in_array( $field, array( 'linkedin', 'instagram', 'website' ), true ) ) {
 					$val = esc_url_raw( $val );
 				}
 				$clean[ 'social_' . $field ] = $val;
@@ -94,5 +94,4 @@ class MM_User_Meta_Panel {
 			update_user_meta( $user_id, MM_Upload_Notify::META_USER_RECEIPT, $wants ? '1' : '0' );
 		}
 	}
-
 }

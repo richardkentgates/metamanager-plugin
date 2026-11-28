@@ -33,23 +33,23 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 		add_filter( 'wp_sitemaps_enabled', '__return_false' );
 
 		// Register rewrite rules and query var.
-		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
-		add_filter( 'query_vars', [ $this, 'add_query_var' ] );
-		add_action( 'template_redirect', [ $this, 'maybe_serve' ] );
+		add_action( 'init', array( $this, 'add_rewrite_rules' ) );
+		add_filter( 'query_vars', array( $this, 'add_query_var' ) );
+		add_action( 'template_redirect', array( $this, 'maybe_serve' ) );
 
 		// Append Sitemap: directives to WordPress-generated robots.txt.
-		add_filter( 'robots_txt', [ $this, 'append_robots_txt' ], 10, 2 );
+		add_filter( 'robots_txt', array( $this, 'append_robots_txt' ), 10, 2 );
 
 		// Ping on publish (async).
-		add_action( 'transition_post_status', [ $this, 'schedule_ping' ], 10, 3 );
-		add_action( 'mm_meta_sitemap_ping', [ $this, 'send_ping' ] );
+		add_action( 'transition_post_status', array( $this, 'schedule_ping' ), 10, 3 );
+		add_action( 'mm_meta_sitemap_ping', array( $this, 'send_ping' ) );
 
 		// Bust the sitemap cache whenever content or taxonomy changes.
-		foreach ( [ 'save_post', 'deleted_post', 'add_attachment', 'delete_attachment' ] as $hook ) {
-			add_action( $hook, [ $this, 'flush_sitemap_cache' ] );
+		foreach ( array( 'save_post', 'deleted_post', 'add_attachment', 'delete_attachment' ) as $hook ) {
+			add_action( $hook, array( $this, 'flush_sitemap_cache' ) );
 		}
-		foreach ( [ 'created_term', 'edited_term', 'delete_term' ] as $hook ) {
-			add_action( $hook, [ $this, 'flush_sitemap_cache' ] );
+		foreach ( array( 'created_term', 'edited_term', 'delete_term' ) as $hook ) {
+			add_action( $hook, array( $this, 'flush_sitemap_cache' ) );
 		}
 	}
 
@@ -149,42 +149,47 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 
 	private function render_index(): string {
 		$s        = $this->settings;
-		$sitemaps = [];
+		$sitemaps = array();
 
 		foreach ( $this->get_active_post_types() as $pt ) {
 			$count = $this->post_type_count( $pt );
 			if ( $count > 0 ) {
-				$sitemaps[] = [
+				$sitemaps[] = array(
 					'loc'     => home_url( '/sitemap-post-' . $pt . '.xml' ),
 					'lastmod' => $this->last_modified_post( $pt ),
-				];
+				);
 			}
 		}
 
 		foreach ( $this->get_active_taxonomies() as $taxonomy ) {
-			$count = wp_count_terms( [ 'taxonomy' => $taxonomy, 'hide_empty' => true ] );
+			$count = wp_count_terms(
+				array(
+					'taxonomy'   => $taxonomy,
+					'hide_empty' => true,
+				)
+			);
 			if ( ! is_wp_error( $count ) && $count > 0 ) {
-				$sitemaps[] = [
+				$sitemaps[] = array(
 					'loc'     => home_url( '/sitemap-tax-' . $taxonomy . '.xml' ),
 					'lastmod' => gmdate( 'Y-m-d' ),
-				];
+				);
 			}
 		}
 
 		// Video sitemap.
 		if ( $this->has_video_content() ) {
-			$sitemaps[] = [
+			$sitemaps[] = array(
 				'loc'     => home_url( '/sitemap-video.xml' ),
 				'lastmod' => gmdate( 'Y-m-d' ),
-			];
+			);
 		}
 
 		// Media sitemap.
 		if ( $this->has_media_attachments() ) {
-			$sitemaps[] = [
+			$sitemaps[] = array(
 				'loc'     => home_url( '/sitemap-media.xml' ),
 				'lastmod' => gmdate( 'Y-m-d' ),
-			];
+			);
 		}
 
 		$xml  = $this->xml_header();
@@ -207,13 +212,13 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 
 	private function render_post_sitemap( string $pt ): string {
 		$s    = $this->settings;
-		$args = [
+		$args = array(
 			'post_type'      => $pt,
 			'post_status'    => 'publish',
 			'posts_per_page' => (int) $s->get( 'sitemap.records_per_file', 1000 ),
 			'no_found_rows'  => true,
 			'fields'         => 'ids',
-		];
+		);
 
 		if ( $s->get( 'sitemap.exclude_password_protected', true ) ) {
 			$args['has_password'] = false;
@@ -221,18 +226,18 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 
 		// Exclude noindexed posts.
 		if ( $s->get( 'sitemap.exclude_noindexed', true ) ) {
-			$args['meta_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery
+			$args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery
 				'relation' => 'OR',
-				[
+				array(
 					'key'     => MM_META_KEY,
 					'compare' => 'NOT EXISTS',
-				],
-				[
+				),
+				array(
 					'key'     => MM_META_KEY,
 					'value'   => '"noindex":true',
 					'compare' => 'NOT LIKE',
-				],
-			];
+				),
+			);
 		}
 
 		$ids = get_posts( $args );
@@ -262,10 +267,12 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	private function render_tax_sitemap( string $taxonomy ): string {
-		$terms = get_terms( [
-			'taxonomy'   => $taxonomy,
-			'hide_empty' => true,
-		] );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => true,
+			)
+		);
 
 		$xml  = $this->xml_header();
 		$xml .= '<urlset xmlns="' . self::NS_SITEMAP . "\">\n";
@@ -305,15 +312,17 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 	 *   2. Video attachment pages with Metamanager metadata.
 	 */
 	private function render_video_sitemap(): string {
-		$entries = [];
+		$entries = array();
 
 		// 1. Self-hosted video tags in published posts.
-		$posts = get_posts( [
-			'post_type'      => 'post',
-			'post_status'    => 'publish',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-		] );
+		$posts = get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		);
 
 		foreach ( $posts as $post_id ) {
 			$post = get_post( $post_id );
@@ -331,19 +340,21 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 		}
 
 		// 2. Video attachment pages.
-		$attachments = get_posts( [
-			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
-			'posts_per_page' => -1,
-			'post_mime_type' => 'video',
-			'fields'         => 'all',
-		] );
+		$attachments = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'posts_per_page' => -1,
+				'post_mime_type' => 'video',
+				'fields'         => 'all',
+			)
+		);
 
 		foreach ( $attachments as $att ) {
 			$permalink = get_attachment_link( $att->ID );
 			$url       = wp_get_attachment_url( $att->ID );
 			if ( $permalink && $url ) {
-				$entries[ $permalink ] = [ $this->build_video_record( $att->ID, $att, $url ) ];
+				$entries[ $permalink ] = array( $this->build_video_record( $att->ID, $att, $url ) );
 			}
 		}
 
@@ -371,8 +382,8 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 	 * Extract self-hosted video records from a post's content.
 	 */
 	private function extract_selfhosted_videos( \WP_Post $post ): array {
-		$media = MM_Media_Detector::scan_content( $post->post_content );
-		$records = [];
+		$media   = MM_Media_Detector::scan_content( $post->post_content );
+		$records = array();
 
 		foreach ( $media as $item ) {
 			if ( 'video' !== $item['type'] ) {
@@ -382,20 +393,20 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 			if ( 0 === $item['attachment_id'] && str_starts_with( $item['url'], 'http' ) ) {
 				continue;
 			}
-			$records[] = [
-				'thumbnail'      => '',
-				'title'          => get_the_title( $post ),
-				'description'    => wp_strip_all_tags( $post->post_excerpt ),
-				'player_loc'     => '',
-				'content_loc'    => $item['url'],
-				'duration'       => $item['duration'] ?? null,
-				'pub_date'       => null,
-				'rating'         => null,
-				'family_friendly'=> null,
-				'tags'           => [],
-				'uploader'       => null,
-				'uploader_url'   => null,
-			];
+			$records[] = array(
+				'thumbnail'       => '',
+				'title'           => get_the_title( $post ),
+				'description'     => wp_strip_all_tags( $post->post_excerpt ),
+				'player_loc'      => '',
+				'content_loc'     => $item['url'],
+				'duration'        => $item['duration'] ?? null,
+				'pub_date'        => null,
+				'rating'          => null,
+				'family_friendly' => null,
+				'tags'            => array(),
+				'uploader'        => null,
+				'uploader_url'    => null,
+			);
 		}
 
 		return $records;
@@ -419,20 +430,20 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 		$title       = $meta( MM_Metadata::META_HEADLINE ) ?: trim( $att->post_title ) ?: basename( $url );
 		$description = wp_strip_all_tags( $att->post_excerpt ?: '' );
 
-		$record = [
-			'thumbnail'      => $thumbnail,
-			'title'          => $title,
-			'description'    => $description,
-			'player_loc'     => '',
-			'content_loc'    => $url,
-			'duration'       => null,
-			'pub_date'       => null,
-			'rating'         => null,
-			'family_friendly'=> null,
-			'tags'           => [],
-			'uploader'       => null,
-			'uploader_url'   => null,
-		];
+		$record = array(
+			'thumbnail'       => $thumbnail,
+			'title'           => $title,
+			'description'     => $description,
+			'player_loc'      => '',
+			'content_loc'     => $url,
+			'duration'        => null,
+			'pub_date'        => null,
+			'rating'          => null,
+			'family_friendly' => null,
+			'tags'            => array(),
+			'uploader'        => null,
+			'uploader_url'    => null,
+		);
 
 		$duration = $meta( MM_Metadata::META_DURATION );
 		if ( '' !== $duration && (int) $duration > 0 ) {
@@ -503,7 +514,7 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 			$xml .= '      <video:family_friendly>' . ( $v['family_friendly'] ? 'yes' : 'no' ) . "</video:family_friendly>\n";
 		}
 
-		foreach ( (array) ( $v['tags'] ?? [] ) as $tag ) {
+		foreach ( (array) ( $v['tags'] ?? array() ) as $tag ) {
 			if ( '' !== $tag ) {
 				$xml .= '      <video:tag>' . esc_xml( (string) $tag ) . "</video:tag>\n";
 			}
@@ -513,7 +524,7 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 			$info_attr = ! empty( $v['uploader_url'] )
 				? ' info="' . esc_attr( $v['uploader_url'] ) . '"'
 				: '';
-			$xml .= '      <video:uploader' . $info_attr . '>' . esc_xml( $v['uploader'] ) . "</video:uploader>\n";
+			$xml      .= '      <video:uploader' . $info_attr . '>' . esc_xml( $v['uploader'] ) . "</video:uploader>\n";
 		}
 
 		$xml .= "    </video:video>\n";
@@ -532,19 +543,21 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 	 */
 	private function render_media_sitemap(): string {
 		$mime_types = array_merge(
-			[ 'image' ],
+			array( 'image' ),
 			MM_Metadata::VIDEO_MIME_TYPES,
 			MM_Metadata::AUDIO_MIME_TYPES,
 			MM_Metadata::PDF_MIME_TYPES
 		);
 
-		$attachments = get_posts( [
-			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
-			'posts_per_page' => -1,
-			'post_mime_type' => implode( ',', $mime_types ),
-			'fields'         => 'all',
-		] );
+		$attachments = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'posts_per_page' => -1,
+				'post_mime_type' => implode( ',', $mime_types ),
+				'fields'         => 'all',
+			)
+		);
 
 		if ( ! $attachments ) {
 			return $this->render_empty_urlset( '', '' );
@@ -639,8 +652,8 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 			$xml .= '      <image:license>' . esc_xml( $copyright ) . "</image:license>\n";
 		}
 
-		$lat   = $meta( MM_Metadata::META_GPS_LAT );
-		$lon   = $meta( MM_Metadata::META_GPS_LON );
+		$lat = $meta( MM_Metadata::META_GPS_LAT );
+		$lon = $meta( MM_Metadata::META_GPS_LON );
 		if ( '' !== $lat && '' !== $lon ) {
 			$city    = $meta( MM_Metadata::META_CITY );
 			$country = $meta( MM_Metadata::META_COUNTRY );
@@ -690,21 +703,25 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 		global $wpdb;
 
 		// Check for video attachments.
-		$video = (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_status = 'inherit' AND post_mime_type LIKE %s",
-			'video/%'
-		) );
+		$video = (int) $wpdb->get_var(
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_status = 'inherit' AND post_mime_type LIKE %s",
+				'video/%'
+			)
+		);
 		if ( $video > 0 ) {
 			return true;
 		}
 
 		// Check for posts with self-hosted video tags.
-		$posts = get_posts( [
-			'post_type'      => 'post',
-			'post_status'    => 'publish',
-			'posts_per_page' => 20,
-			'fields'         => 'ids',
-		] );
+		$posts = get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'publish',
+				'posts_per_page' => 20,
+				'fields'         => 'ids',
+			)
+		);
 		foreach ( $posts as $post_id ) {
 			$post = get_post( $post_id );
 			if ( $post && $this->extract_selfhosted_videos( $post ) ) {
@@ -717,19 +734,21 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 
 	private function has_media_attachments(): bool {
 		$mime_types = array_merge(
-			[ 'image' ],
+			array( 'image' ),
 			MM_Metadata::VIDEO_MIME_TYPES,
 			MM_Metadata::AUDIO_MIME_TYPES,
 			MM_Metadata::PDF_MIME_TYPES
 		);
 
-		$count = get_posts( [
-			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
-			'posts_per_page' => 1,
-			'post_mime_type' => implode( ',', $mime_types ),
-			'fields'         => 'ids',
-		] );
+		$count = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'posts_per_page' => 1,
+				'post_mime_type' => implode( ',', $mime_types ),
+				'fields'         => 'ids',
+			)
+		);
 
 		return ! empty( $count );
 	}
@@ -752,7 +771,7 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 	}
 
 	public function send_ping(): void {
-		$urls = [ home_url( '/sitemap.xml' ) ];
+		$urls = array( home_url( '/sitemap.xml' ) );
 		if ( $this->settings->get( 'sitemap.video', true ) ) {
 			$urls[] = home_url( '/sitemap-video.xml' );
 		}
@@ -763,18 +782,24 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 		foreach ( $urls as $sitemap_url ) {
 			$encoded = rawurlencode( $sitemap_url );
 			if ( $this->settings->get( 'sitemap.ping_google', true ) ) {
-				wp_remote_get( 'https://www.google.com/ping?sitemap=' . $encoded, [
-					'timeout'   => 5,
-					'blocking'  => false,
-					'sslverify' => true,
-				] );
+				wp_remote_get(
+					'https://www.google.com/ping?sitemap=' . $encoded,
+					array(
+						'timeout'   => 5,
+						'blocking'  => false,
+						'sslverify' => true,
+					)
+				);
 			}
 			if ( $this->settings->get( 'sitemap.ping_bing', true ) ) {
-				wp_remote_get( 'https://www.bing.com/ping?sitemap=' . $encoded, [
-					'timeout'   => 5,
-					'blocking'  => false,
-					'sslverify' => true,
-				] );
+				wp_remote_get(
+					'https://www.bing.com/ping?sitemap=' . $encoded,
+					array(
+						'timeout'   => 5,
+						'blocking'  => false,
+						'sslverify' => true,
+					)
+				);
 			}
 		}
 	}
@@ -784,12 +809,12 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 	// -------------------------------------------------------------------------
 
 	private function get_active_post_types(): array {
-		$configured = $this->settings->get( 'sitemap.post_types', [] );
+		$configured = $this->settings->get( 'sitemap.post_types', array() );
 		return array_keys( array_filter( $configured ) );
 	}
 
 	private function get_active_taxonomies(): array {
-		$configured = $this->settings->get( 'sitemap.taxonomies', [] );
+		$configured = $this->settings->get( 'sitemap.taxonomies', array() );
 		return array_keys( array_filter( $configured ) );
 	}
 
@@ -800,10 +825,12 @@ class MM_Mod_Sitemap_Web extends MM_Mod_Base {
 
 	private function last_modified_post( string $pt ): string {
 		global $wpdb;
-		$date = $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			"SELECT MAX(post_modified_gmt) FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'",
-			$pt
-		) );
+		$date = $wpdb->get_var(
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				"SELECT MAX(post_modified_gmt) FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'",
+				$pt
+			)
+		);
 		return $date ? gmdate( 'Y-m-d', strtotime( $date ) ) : gmdate( 'Y-m-d' );
 	}
 

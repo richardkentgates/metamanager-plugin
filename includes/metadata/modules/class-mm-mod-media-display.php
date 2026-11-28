@@ -13,7 +13,7 @@ class MM_Mod_Media_Display {
 		$settings = MM_Site_Settings::get_instance();
 
 		if ( $settings->get( 'media.featured_image_citation', false ) ) {
-			add_filter( 'wp_get_attachment_image', [ $this, 'filter_featured_image_citation' ], 10, 5 );
+			add_filter( 'wp_get_attachment_image', array( $this, 'filter_featured_image_citation' ), 10, 5 );
 		}
 	}
 
@@ -44,12 +44,12 @@ class MM_Mod_Media_Display {
 	private function get_attachment_citation( int $attachment_id ): string {
 		$meta = static fn( string $key ): string => (string) get_post_meta( $attachment_id, $key, true );
 
-		$creator  = $meta( MM_Metadata::META_CREATOR );
+		$creator   = $meta( MM_Metadata::META_CREATOR );
 		$copyright = $meta( MM_Metadata::META_COPYRIGHT );
-		$owner    = $meta( MM_Metadata::META_OWNER );
-		$date     = $meta( MM_Metadata::META_DATE );
+		$owner     = $meta( MM_Metadata::META_OWNER );
+		$date      = $meta( MM_Metadata::META_DATE );
 
-		$parts = [];
+		$parts = array();
 
 		if ( $creator ) {
 			$parts[] = esc_html( $creator );

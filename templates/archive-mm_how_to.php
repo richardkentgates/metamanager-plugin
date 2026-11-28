@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 get_header();
 
 // Enqueue archive layout CSS.
-wp_enqueue_style( 'mm-archive-layouts', MM_META_URL . 'assets/css/archive-layouts.css', [], MM_VERSION );
+wp_enqueue_style( 'mm-archive-layouts', MM_META_URL . 'assets/css/archive-layouts.css', array(), MM_VERSION );
 
 // Get the CPT label for the heading.
 $pt = get_post_type_object( 'mm_how_to' );

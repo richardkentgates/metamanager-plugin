@@ -24,11 +24,11 @@ class MM_Mod_Discovery {
 			return;
 		}
 
-		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
-		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
-		add_action( 'template_redirect', [ $this, 'maybe_serve' ], 1 );
-		add_action( 'wp_ajax_mm_regenerate_discovery', [ $this, 'ajax_regenerate' ] );
-		add_action( 'update_option_mm_meta_settings', [ $this, 'clear_cache' ] );
+		add_action( 'init', array( $this, 'add_rewrite_rules' ) );
+		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
+		add_action( 'template_redirect', array( $this, 'maybe_serve' ), 1 );
+		add_action( 'wp_ajax_mm_regenerate_discovery', array( $this, 'ajax_regenerate' ) );
+		add_action( 'update_option_mm_meta_settings', array( $this, 'clear_cache' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -94,25 +94,31 @@ class MM_Mod_Discovery {
 		$description = get_bloginfo( 'description' );
 		$home        = home_url( '/' );
 
-		$lines = [];
+		$lines   = array();
 		$lines[] = "# {$name}";
 		$lines[] = '';
 		$lines[] = $description;
 		$lines[] = '';
-		$lines[] = "## Site Info";
+		$lines[] = '## Site Info';
 		$lines[] = "- URL: {$home}";
-		$lines[] = "- CMS: WordPress";
-		$lines[] = "- SEO Plugin: Metamanager";
+		$lines[] = '- CMS: WordPress';
+		$lines[] = '- SEO Plugin: Metamanager';
 
 		// MCP endpoint.
 		if ( class_exists( 'WP\MCP\Core\McpAdapter' ) ) {
-			$lines[] = "- MCP Endpoint: " . home_url( '/wp-json/metamanager-mcp/mcp' );
+			$lines[] = '- MCP Endpoint: ' . home_url( '/wp-json/metamanager-mcp/mcp' );
 		}
 
 		$lines[] = '';
 
 		// Pages.
-		$pages = get_pages( [ 'number' => 20, 'post_status' => 'publish', 'sort_column' => 'menu_order' ] );
+		$pages = get_pages(
+			array(
+				'number'      => 20,
+				'post_status' => 'publish',
+				'sort_column' => 'menu_order',
+			)
+		);
 		if ( $pages ) {
 			$lines[] = '## Pages';
 			foreach ( $pages as $page ) {
@@ -127,7 +133,12 @@ class MM_Mod_Discovery {
 		}
 
 		// Recent posts.
-		$posts = get_posts( [ 'number' => 20, 'post_status' => 'publish' ] );
+		$posts = get_posts(
+			array(
+				'number'      => 20,
+				'post_status' => 'publish',
+			)
+		);
 		if ( $posts ) {
 			$lines[] = '## Recent Posts';
 			foreach ( $posts as $post ) {
@@ -143,9 +154,21 @@ class MM_Mod_Discovery {
 		}
 
 		// Taxonomies.
-		$taxonomies = get_taxonomies( [ 'public' => true, 'show_in_rest' => true ], 'objects' );
+		$taxonomies = get_taxonomies(
+			array(
+				'public'       => true,
+				'show_in_rest' => true,
+			),
+			'objects'
+		);
 		foreach ( $taxonomies as $tax ) {
-			$terms = get_terms( [ 'taxonomy' => $tax->name, 'number' => 10, 'hide_empty' => true ] );
+			$terms = get_terms(
+				array(
+					'taxonomy'   => $tax->name,
+					'number'     => 10,
+					'hide_empty' => true,
+				)
+			);
 			if ( empty( $terms ) || is_wp_error( $terms ) ) {
 				continue;
 			}
@@ -197,38 +220,38 @@ class MM_Mod_Discovery {
 	private function generate_api_catalog(): string {
 		$home = home_url( '/' );
 
-		$catalog = [
-			'rel'   => 'catalog',
-			'href'  => $home,
-			'title' => get_bloginfo( 'name' ) . ' — API Catalog',
-			'linkset' => [
-				[
+		$catalog = array(
+			'rel'     => 'catalog',
+			'href'    => $home,
+			'title'   => get_bloginfo( 'name' ) . ' — API Catalog',
+			'linkset' => array(
+				array(
 					'rel'   => 'describedby',
 					'href'  => home_url( '/wp-json/' ),
 					'title' => 'WordPress REST API Root',
 					'type'  => 'application/json',
-				],
-			],
-		];
+				),
+			),
+		);
 
 		// MCP endpoint.
 		if ( class_exists( 'WP\MCP\Core\McpAdapter' ) ) {
-			$catalog['linkset'][] = [
+			$catalog['linkset'][] = array(
 				'rel'   => 'mcp-server',
 				'href'  => home_url( '/wp-json/metamanager-mcp/mcp' ),
 				'title' => 'Metamanager MCP Server',
 				'type'  => 'application/json',
-			];
+			);
 		}
 
 		// llms.txt.
 		if ( $this->settings->get( 'discovery.llms_txt_enabled', true ) ) {
-			$catalog['linkset'][] = [
+			$catalog['linkset'][] = array(
 				'rel'   => 'describedby',
 				'href'  => home_url( '/llms.txt' ),
 				'title' => 'Site description for AI agents',
 				'type'  => 'text/plain',
-			];
+			);
 		}
 
 		return wp_json_encode( $catalog, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );

@@ -31,12 +31,12 @@ class MM_Media_Detector {
 	 */
 	public static function scan_content( string $content ): array {
 		if ( '' === $content ) {
-			return [];
+			return array();
 		}
 
-		$items   = [];
-		$seen    = [];
-		$results = [];
+		$items   = array();
+		$seen    = array();
+		$results = array();
 
 		// Images.
 		if ( preg_match_all( '/<img\b[^>]*?>/is', $content, $matches ) ) {
@@ -92,11 +92,11 @@ class MM_Media_Detector {
 				$href = esc_url_raw( $href );
 				if ( $href && ! isset( $seen[ $href ] ) ) {
 					$seen[ $href ] = true;
-					$results[]     = [
+					$results[]     = array(
 						'type'          => 'document',
 						'url'           => $href,
 						'attachment_id' => attachment_url_to_postid( $href ),
-					];
+					);
 				}
 			}
 		}
@@ -176,7 +176,7 @@ class MM_Media_Detector {
 			}
 		}
 
-		return [
+		return array(
 			'type'          => 'image',
 			'url'           => $url,
 			'attachment_id' => $attachment_id,
@@ -184,14 +184,14 @@ class MM_Media_Detector {
 			'height'        => $height,
 			'alt'           => $alt,
 			'caption'       => $caption,
-		];
+		);
 	}
 
 	/**
 	 * Parse <source> tags inside a <video> element.
 	 */
 	private static function parse_video_sources( string $inner ): array {
-		$items = [];
+		$items = array();
 
 		// src attribute on <video> itself.
 		if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/i', $inner, $src ) ) {
@@ -212,7 +212,7 @@ class MM_Media_Detector {
 	 * Parse <source> tags inside an <audio> element.
 	 */
 	private static function parse_audio_sources( string $inner ): array {
-		$items = [];
+		$items = array();
 
 		if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/i', $inner, $src ) ) {
 			$items[] = self::make_audio_record( esc_url_raw( $src[1] ) );
@@ -245,12 +245,12 @@ class MM_Media_Detector {
 			}
 		}
 
-		return [
+		return array(
 			'type'          => 'video',
 			'url'           => $url,
 			'attachment_id' => $attachment_id,
 			'duration'      => $duration,
-		];
+		);
 	}
 
 	/**
@@ -271,12 +271,12 @@ class MM_Media_Detector {
 			}
 		}
 
-		return [
+		return array(
 			'type'          => 'audio',
 			'url'           => $url,
 			'attachment_id' => $attachment_id,
 			'duration'      => $duration,
-		];
+		);
 	}
 
 	/**
@@ -293,10 +293,10 @@ class MM_Media_Detector {
 			$type = 'video';
 		}
 
-		return [
+		return array(
 			'type'          => $type,
 			'url'           => $url,
 			'attachment_id' => 0,
-		];
+		);
 	}
 }

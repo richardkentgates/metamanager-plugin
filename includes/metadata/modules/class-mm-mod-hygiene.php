@@ -49,13 +49,13 @@ class MM_Mod_Hygiene extends MM_Mod_Base {
 		}
 
 		if ( $h->get( 'hygiene.remove_pingback_header', true ) ) {
-			add_filter( 'wp_headers', [ $this, 'remove_pingback_header' ] );
+			add_filter( 'wp_headers', array( $this, 'remove_pingback_header' ) );
 			// Also remove from HTML head.
 			remove_action( 'wp_head', 'wp_really_simple_discovery' );
 		}
 
 		if ( $h->get( 'hygiene.remove_x_powered_by', true ) ) {
-			add_filter( 'wp_headers', [ $this, 'remove_x_powered_by' ] );
+			add_filter( 'wp_headers', array( $this, 'remove_x_powered_by' ) );
 			// PHP header removal (best-effort — may be set by server config).
 			if ( function_exists( 'header_remove' ) ) {
 				@header_remove( 'X-Powered-By' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
@@ -63,14 +63,14 @@ class MM_Mod_Hygiene extends MM_Mod_Base {
 		}
 
 		if ( $h->get( 'hygiene.remove_wp_dns_prefetch', true ) ) {
-			add_filter( 'wp_resource_hints', [ $this, 'remove_dns_prefetch_only' ], 10, 2 );
+			add_filter( 'wp_resource_hints', array( $this, 'remove_dns_prefetch_only' ), 10, 2 );
 		}
 
 		// Remove hentry microformat class from post_class() — schema.org
 		// validators flag it as an unrecognized type (hentry is hAtom,
 		// not schema.org). Default: on (suppressed).
 		if ( $h->get( 'hygiene.remove_hentry', true ) ) {
-			add_filter( 'post_class', [ $this, 'remove_hentry_class' ] );
+			add_filter( 'post_class', array( $this, 'remove_hentry_class' ) );
 		}
 	}
 
@@ -103,7 +103,7 @@ class MM_Mod_Hygiene extends MM_Mod_Base {
 	 */
 	public function remove_dns_prefetch_only( array $urls, string $relation_type ): array {
 		if ( 'dns-prefetch' === $relation_type ) {
-			return [];
+			return array();
 		}
 		return $urls;
 	}

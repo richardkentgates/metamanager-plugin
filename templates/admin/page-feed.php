@@ -8,26 +8,26 @@
 defined( 'ABSPATH' ) || exit;
 $opt = MM_META_OPT_SETTINGS;
 $s   = $settings;
-$f   = $s->get( 'feed', [] );
+$f   = $s->get( 'feed', array() );
 
-$toggles = [
-	'cleanup_enabled'          => [
+$toggles = array(
+	'cleanup_enabled'          => array(
 		'label' => 'Enable RSS Cleanup',
 		'desc'  => 'Master switch. When off, all RSS cleanup is disabled and WordPress outputs its default feed unchanged.',
-	],
-	'remove_generator'         => [
+	),
+	'remove_generator'         => array(
 		'label' => 'Remove Generator Tag',
 		'desc'  => 'Removes <code>&lt;generator&gt;https://wordpress.org/?v=X.X.X&lt;/generator&gt;</code> from the feed channel. Recommended — avoids advertising the WordPress version to scrapers.',
-	],
-	'remove_comments_elements' => [
+	),
+	'remove_comments_elements' => array(
 		'label' => 'Remove Comment-API Elements',
 		'desc'  => 'Strips <code>&lt;wfw:commentRss&gt;</code>, <code>&lt;slash:comments&gt;</code>, and their namespace declarations from every feed item. These comment-API relics are unused by modern feed readers.',
-	],
-	'use_excerpt'              => [
+	),
+	'use_excerpt'              => array(
 		'label' => 'Use Excerpt Only (no full content)',
 		'desc'  => 'Suppress the <code>&lt;content:encoded&gt;</code> element so feed readers receive only the excerpt. Useful if you want to drive readers to the site rather than expose the full post in the feed.',
-	],
-];
+	),
+);
 ?>
 <div class="mm-meta-panel" id="page-feed">
 

@@ -8,7 +8,7 @@ defined( 'ABSPATH' ) || exit;
 class MM_Metadata_Loader {
 
 	private MM_Site_Settings $settings;
-	private MM_Page_Context  $context;
+	private MM_Page_Context $context;
 	private MM_Head_Emitter $document;
 
 	public function run(): void {
@@ -30,10 +30,10 @@ class MM_Metadata_Loader {
 
 		// Emit everything in one wp_head block at priority 2.
 		// Title is handled via pre_get_document_title filter (priority 1).
-		add_action( 'wp_head', [ $this->document, 'render' ], 2 );
+		add_action( 'wp_head', array( $this->document, 'render' ), 2 );
 
 		// Title filter — works for themes with add_theme_support('title-tag').
-		add_filter( 'pre_get_document_title', [ $this, 'filter_title' ], 10 );
+		add_filter( 'pre_get_document_title', array( $this, 'filter_title' ), 10 );
 
 		// --- Standalone modules (own hooks) ------------------------------------
 		( new MM_Mod_Sitemap_Web( $this->settings ) )->register_hooks();
@@ -79,7 +79,12 @@ class MM_Metadata_Loader {
 
 	public function filter_title( string $title ): string {
 		// Build a throw-away $data array just to run the Meta module's title logic.
-		$data = [ 'title' => '', 'meta' => [], 'links' => [], 'schema' => [] ];
+		$data = array(
+			'title'  => '',
+			'meta'   => array(),
+			'links'  => array(),
+			'schema' => array(),
+		);
 		( new MM_Mod_Head_Meta( $this->settings ) )->populate( $data, $this->context, $this->settings );
 		return $data['title'] ?: $title;
 	}
