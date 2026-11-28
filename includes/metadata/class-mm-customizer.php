@@ -50,11 +50,13 @@ class MM_Customizer {
 			] );
 
 			$wp_customize->add_control( "mm_archives_layout_{$slug}", [
+				/* translators: %s: Post type label, for example "Posts". */
 				'label'       => sprintf( __( '%s Archive Layout', 'metamanager' ), $label ),
 				'section'     => 'mm_archives',
 				'settings'    => [ 'default' => "mm_meta_settings[schema][archive_layouts][{$slug}]" ],
 				'type'        => 'select',
 				'choices'     => self::LAYOUTS,
+				/* translators: %s: Lowercase post type label, for example "posts". */
 				'description' => sprintf( __( 'Choose how %s archive pages display their listings.', 'metamanager' ), strtolower( $label ) ),
 			] );
 		}

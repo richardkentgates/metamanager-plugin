@@ -1139,11 +1139,11 @@ class MM_Schema_Post_Types {
 	public static function ajax_search_destinations(): void {
 		check_ajax_referer( 'mm_destination_link', 'nonce' );
 		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_send_json_error( 'Unauthorized' );
+			wp_send_json_error( __( 'Unauthorized', 'metamanager' ) );
 		}
 		$search = sanitize_text_field( wp_unslash( $_GET['search'] ?? '' ) );
 		if ( ! $search ) {
-			wp_send_json_error( 'Empty search' );
+			wp_send_json_error( __( 'Empty search', 'metamanager' ) );
 		}
 		$query = new \WP_Query( [
 			'post_type'      => 'mm_destination',
@@ -1164,11 +1164,11 @@ class MM_Schema_Post_Types {
 	public static function ajax_search_vessels(): void {
 		check_ajax_referer( 'mm_vessel_link', 'nonce' );
 		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_send_json_error( 'Unauthorized' );
+			wp_send_json_error( __( 'Unauthorized', 'metamanager' ) );
 		}
 		$search = sanitize_text_field( wp_unslash( $_GET['search'] ?? '' ) );
 		if ( ! $search ) {
-			wp_send_json_error( 'Empty search' );
+			wp_send_json_error( __( 'Empty search', 'metamanager' ) );
 		}
 		$query = new \WP_Query( [
 			'post_type'      => 'mm_vessel',
