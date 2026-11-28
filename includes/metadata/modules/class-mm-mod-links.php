@@ -240,7 +240,9 @@ class MM_Mod_Links extends MM_Mod_Base {
 			}
 		}
 
-		$response = wp_remote_head( $url, [
+		// wp_safe_remote_head() re-validates every redirect target, so a public
+		// URL cannot bounce the request to an internal or loopback address.
+		$response = wp_safe_remote_head( $url, [
 			'timeout'     => $timeout,
 			'redirection' => 3,
 			'user-agent'  => 'GCM-SEO-LinkChecker/1.0',
