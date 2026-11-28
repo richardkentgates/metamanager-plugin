@@ -248,10 +248,10 @@ class MM_Mod_Discovery {
 		check_ajax_referer( 'mm_tools_action', '_wpnonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized.' );
+			wp_send_json_error( __( 'Unauthorized.', 'metamanager' ) );
 		}
 
 		$this->clear_cache();
-		wp_send_json_success( 'Discovery files regenerated.' );
+		wp_send_json_success( __( 'Discovery files regenerated.', 'metamanager' ) );
 	}
 }

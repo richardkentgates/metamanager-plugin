@@ -186,7 +186,7 @@ class MM_Post_Meta_Panel {
 		wp_enqueue_script(
 			'mm-meta-admin-media',
 			MM_META_URL . 'assets/js/admin-media.js',
-			[ 'jquery' ],
+			[ 'jquery', 'wp-i18n' ],
 			MM_META_VERSION,
 			true
 		);
